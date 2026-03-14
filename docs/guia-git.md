@@ -1,18 +1,20 @@
+# Guía de Buenas Prácticas de Git
+
+Ramas, commits y flujo de trabajo para el equipo. Alineada con el [Backlog](Backlog.md) (HS-04: ramas, PR/MR) y el flujo CI/CD del [Despliegue](Despliegue.md) (feature → develop → main).
 
 ---
 
-### **Guía de Buenas Prácticas de Git: Ramas, Commits y Flujo de Trabajo**
+## Objetivo
 
-#### **Objetivo**
 Establecer un estándar claro y eficiente para el uso de Git en equipos de desarrollo, garantizando un historial limpio, una colaboración fluida y una integración continua de calidad.
 
 ---
 
-### **1. Estrategia de Ramas (Branching Strategy)**
+## 1. Estrategia de Ramas (Branching Strategy)
 
 La forma en que organizas tus ramas es la base de un buen flujo de trabajo. La estrategia más común y recomendada es **Git Flow** (o una versión simplificada del mismo).
 
-#### **1.1. Clasificación de Ramas Principales (Eternas)**
+### 1.1. Clasificación de Ramas Principales (Eternas)
 
 Estas ramas existen durante toda la vida del proyecto.
 
@@ -24,7 +26,7 @@ Estas ramas existen durante toda la vida del proyecto.
     *   **Propósito**: Es la rama de integración. Contiene la última versión de desarrollo con todas las nuevas funcionalidades que están siendo probadas y validadas para la próxima versión.
     *   **Regla de Oro**: Tampoco se hacen `commits` directos aquí. Nace de `main` y recibe las funcionalidades terminadas mediante PRs desde las ramas de apoyo.
 
-#### **1.2. Clasificación de Ramas de Apoyo (Temporales)**
+### 1.2. Clasificación de Ramas de Apoyo (Temporales)
 
 Estas ramas tienen una vida limitada y se crean para un propósito específico. Una vez cumplido su objetivo, se eliminan.
 
@@ -48,16 +50,16 @@ Estas ramas tienen una vida limitada y se crean para un propósito específico. 
 
 ---
 
-### **2. Buenas Prácticas para Commits**
+## 2. Buenas Prácticas para Commits
 
 Un buen commit no solo guarda el código, sino que cuenta la historia del proyecto.
 
-#### **2.1. ¿Cuándo hacer un commit?**
+### 2.1. ¿Cuándo hacer un commit?
 
 *   **Cambios Atómicos**: Cada commit debe representar un cambio lógico único y completo. Si estás arreglando un bug y refactorizando una función, haz dos commits separados.
 *   **Frecuencia**: Es mejor hacer commits pequeños y frecuentes que uno gigante al final del día. Facilita la revisión y el revertir cambios si algo sale mal.
 
-#### **2.2. ¿Cómo redactar un buen mensaje de commit?**
+### 2.2. ¿Cómo redactar un buen mensaje de commit?
 
 Sigue la **Convención de Commits Semánticos (Conventional Commits)**. Esto permite generar changelogs automáticos y entender el propósito del cambio de un vistazo.
 
@@ -91,15 +93,15 @@ Sigue la **Convención de Commits Semánticos (Conventional Commits)**. Esto per
 
 ---
 
-### **3. Resolución de Conflictos**
+## 3. Resolución de Conflictos
 
 Los conflictos ocurren cuando dos ramas modifican la misma línea de un archivo o cuando una rama elimina un archivo que otra modificó. No hay que temerles, sino gestionarlos con calma.
 
-#### **3.1. Prevención**
+### 3.1. Prevención
 *   **Sincronización Frecuente**: Actualiza tu rama de características (`feature/x`) con los cambios de `develop` a menudo (`git merge develop` o `git rebase develop`). Así los conflictos son más pequeños y manejables.
 *   **Comunicación en Equipo**: Si sabes que vas a trabajar en un módulo que un compañero está modificando, coordinen.
 
-#### **3.2. Proceso de Resolución (con Merge)**
+### 3.2. Proceso de Resolución (con Merge)
 
 1.  **Identificar**: Al hacer `git merge` (o un PR), Git te avisará del conflicto y marcará los archivos en conflicto.
 2.  **Inspeccionar**: Usa `git status` para ver qué archivos están en conflicto (usualmente listados como `both modified`).
@@ -115,21 +117,21 @@ Los conflictos ocurren cuando dos ramas modifican la misma línea de un archivo 
 4.  **Marcar como resuelto**: Una vez editado el archivo, guárdalo y añádelo al área de staging: `git add <archivo>`.
 5.  **Finalizar**: Una vez resueltos todos los conflictos y añadidos los archivos, ejecuta `git commit` (Git generará un mensaje por defecto que puedes modificar).
 
-#### **3.3. Herramientas Útiles**
+### 3.3. Herramientas Útiles
 *   **`git mergetool`**: Abre una herramienta visual configurada (como Meld, KDiff3, o el editor de código como VSCode) para facilitar la resolución.
 
 ---
 
-### **4. Comandos Clave de Git**
+## 4. Comandos Clave de Git
 
 Un compendio de los comandos esenciales para el día a día.
 
-#### **4.1. Configuración Inicial**
+### 4.1. Configuración Inicial
 *   `git config --global user.name "Tu Nombre"`
 *   `git config --global user.email "tu@email.com"`
 *   `git config --global core.editor "code --wait"` (Ejemplo para usar VSCode).
 
-#### **4.2. Básicos Diarios**
+### 4.2. Básicos Diarios
 *   `git init`: Inicializa un repositorio.
 *   `git clone <url>`: Clona un repositorio remoto.
 *   `git status`: Muestra el estado de los archivos.
@@ -139,17 +141,17 @@ Un compendio de los comandos esenciales para el día a día.
 *   `git push origin <rama>`: Sube tus commits locales al repositorio remoto.
 *   `git pull origin <rama>`: Descarga y fusiona los cambios del remoto a tu local (equivale a `git fetch` + `git merge`).
 
-#### **4.3. Ramas y Fusión**
+### 4.3. Ramas y Fusión
 *   `git branch`: Lista las ramas locales.
 *   `git branch <nombre-rama>`: Crea una nueva rama.
-*   `git checkout <nombre-rama>`: Cambia a otra rama.
-*   `git checkout -b <nombre-rama>`: Crea y cambia a una nueva rama (el más usado).
+*   `git checkout <nombre-rama>` / `git switch <nombre-rama>`: Cambia a otra rama.
+*   `git checkout -b <nombre-rama>` / `git switch -c <nombre-rama>`: Crea y cambia a una nueva rama (el más usado).
 *   `git merge <nombre-rama>`: Fusiona la rama especificada a la rama actual.
 *   `git merge --no-ff <nombre-rama>`: Fuerza un commit de merge aunque se pueda hacer fast-forward (recomendado para `feature/*`).
 *   `git branch -d <nombre-rama>`: Elimina una rama (solo si ya fue fusionada).
 *   `git branch -D <nombre-rama>`: Forza la eliminación de una rama (incluso si no se ha fusionado).
 
-#### **4.4. Para "Arreglar" el Desastre (¡Con Cuidado!)**
+### 4.4. Para "Arreglar" el Desastre (¡Con Cuidado!)
 *   `git restore <archivo>`: Descarta los cambios en un archivo sin staging (¡peligro!).
 *   `git restore --staged <archivo>`: Saca un archivo del staging area.
 *   `git commit --amend -m "Nuevo mensaje"`: Corrige el mensaje del último commit o añade archivos olvidados (solo si no lo has subido, ¡nunca modifiques commits públicos!).
@@ -158,7 +160,7 @@ Un compendio de los comandos esenciales para el día a día.
 *   `git reset --hard HEAD~1`: Deshace el último commit **Y TODOS LOS CAMBIOS** (¡muy peligroso!).
 *   `git rebase <rama>`: Reaplica los commits de la rama actual sobre la punta de otra rama (para una historia más lineal, pero requiere más cuidado que `merge`).
 
-#### **4.5. Remotos e Inspección**
+### 4.5. Remotos e Inspección
 *   `git fetch origin`: Descarga los cambios del remoto sin fusionarlos.
 *   `git remote -v`: Muestra las URLs de los repositorios remotos configurados.
 *   `git diff`: Muestra las diferencias en el código.
@@ -166,7 +168,7 @@ Un compendio de los comandos esenciales para el día a día.
 
 ---
 
-### **Flujo de Trabajo Típico (Día a Día)**
+## 5. Flujo de Trabajo Típico (Día a Día)
 
 1.  **Actualizar `develop` local**:
     ```bash
@@ -211,7 +213,7 @@ Un compendio de los comandos esenciales para el día a día.
 
 ---
 
-### **Resumen de Buenas Prácticas**
+## 6. Resumen de Buenas Prácticas
 
 1.  **Ramas**: `main` para producción, `develop` para integración, `feature/*` para nuevas funcionalidades, `hotfix/*` para urgencias.
 2.  **Commits**: Atómicos y con mensajes semánticos (`feat:`, `fix:`, `docs:`...).
@@ -220,4 +222,16 @@ Un compendio de los comandos esenciales para el día a día.
 5.  **Historial**: Prefiere `merge --no-ff` para ramas de features, ya que muestra claramente que fue una funcionalidad añadida.
 6.  **No reescribas historia pública**: Nunca uses `git commit --amend` o `git rebase` en commits que ya hayan sido subidos y compartidos con otros. Puede causar un caos.
 
-¡Espero que esta guía te sea de gran ayuda para empezar a trabajar de forma más profesional y ordenada con Git!
+---
+
+## Referencias del proyecto
+
+| Documento | Relación con esta guía |
+|-----------|------------------------|
+| [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas (main, develop, feature), protección, PR/MR. |
+| [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a `develop`/`main` dispara pipeline; despliegue a producción desde `main`. |
+| [Documentacion.md](Documentacion.md) | Visión general del producto (sin detalle de Git). |
+
+---
+
+*Esta guía aplica al desarrollo del Portal de Currículum Vitae y a cualquier proyecto que adopte el mismo flujo.*
