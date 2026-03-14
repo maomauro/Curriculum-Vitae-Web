@@ -4,6 +4,15 @@
 
 ---
 
+## 📋 Referencias
+
+- **Documentación del producto:** [Documentacion.md](Documentacion.md)  
+- **Modelo de datos:** [modelo.md](modelo.md)  
+- **Backlog y sprints:** [Backlog.md](Backlog.md)  
+- **Script BD SQL Server:** [../database/01_CreateSchema.sql](../database/01_CreateSchema.sql) y [../database/README.md](../database/README.md)
+
+---
+
 ## 🎯 OBJETIVO DE ESTE DOCUMENTO
 
 Recrear un **escenario profesional completo** de CI/CD como se trabaja en empresas reales, utilizando herramientas modernas y gratuitas, con el objetivo de **aprender el flujo completo** desde el commit hasta la producción.
@@ -352,7 +361,7 @@ DÍA 1: DESARROLLADOR
 │ │ ETAPA 4: DEPLOY A STAGING                                   │ │
 │ │ • Desplegar backend a Azure App Service (staging)           │ │
 │ │ • Desplegar frontend a Azure Static Web App (staging)       │ │
-│ │ • Ejecutar migraciones de BD                                │ │
+│ │ • Aplicar esquema de BD (script SQL o migraciones EF)       │ │
 │ │ • Smoke tests                                               │ │
 │ │ • Pruebas de integración                                    │ │
 │ └─────────────────────────────────────────────────────────────┘ │
@@ -387,7 +396,7 @@ DÍA 1: DESARROLLADOR
 │ │ ETAPA 5: DEPLOY A PRODUCCIÓN                                │ │
 │ │ • Desplegar backend a AKS (Kubernetes)                      │ │
 │ │ • Desplegar frontend a CDN                                  │ │
-│ │ • Ejecutar migraciones de BD con respaldo                   │ │
+│ │ • Aplicar esquema de BD (script/migraciones) con respaldo   │ │
 │ │ • Health checks                                             │ │
 │ │ • Canary deployment (10% tráfico)                           │ │
 │ │ • 100% rollout si todo OK                                   │ │
@@ -406,6 +415,8 @@ DÍA 1: DESARROLLADOR
 ## 🛠️ CONFIGURACIÓN PRÁCTICA PASO A PASO
 
 ### PASO 1: GitHub + GitHub Actions
+
+El workflow asume estructura del repo con `backend/` y `frontend/` en la raíz. Los jobs **sonarqube** y **Upload coverage** (Codecov) son opcionales: configurar `SONAR_TOKEN` y `CODECOV_TOKEN` en secrets si se usan; si no, se pueden comentar o usar `continue-on-error: true` para no bloquear el pipeline.
 
 **.github/workflows/ci.yml**
 ```yaml
@@ -506,6 +517,8 @@ jobs:
 
 ### PASO 2: Docker Compose Local (desarrollo)
 
+**Estructura esperada del repo:** raíz con carpetas `backend/` (.NET) y `frontend/` (Angular). La base de datos **PortalCV** debe existir antes de que el backend arranque: créala en el contenedor SQL Server y ejecuta el script `database/01_CreateSchema.sql` (o descomenta el bloque `CREATE DATABASE` en ese script y ejecútalo una vez).
+
 **docker-compose.yml**
 ```yaml
 version: '3.8'
@@ -561,14 +574,10 @@ services:
       - ./frontend:/app
       - /app/node_modules
 
-  # pgAdmin para SQL Server (alternativo: Azure Data Studio)
-  azure-data-studio:
-    image: datagrip/azure-data-studio:latest
-    container_name: portalcv-ads
-    ports:
-      - "3000:3000"
-    networks:
-      - portalcv-network
+  # Opcional: cliente para administrar SQL Server (Azure Data Studio u otra imagen)
+  # azure-data-studio:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest  # o usar Azure Data Studio en host
+  #   ...
 
 networks:
   portalcv-network:
@@ -757,3 +766,34 @@ spec:
 □ kubectl
 □ Helm (opcional)
 □ Postman / Insomnia
+□ Azure Data Studio o SSMS (para administrar SQL Server)
+```
+
+---
+
+## 🔐 SECRETS Y VARIABLES A CONFIGURAR
+
+| Entorno | Secret / Variable | Uso |
+|---------|-------------------|-----|
+| **GitHub Actions** | `DOCKER_USERNAME` | Usuario Docker Hub (o GHCR) |
+| **GitHub Actions** | `DOCKER_TOKEN` | Token de acceso para push de imágenes |
+| **GitHub Actions** | `CODECOV_TOKEN` | Opcional; para subir cobertura (Codecov) |
+| **GitHub Actions** | `SONAR_TOKEN` | Opcional; para SonarCloud |
+| **Deploy AKS** | `AZURE_CREDENTIALS` | JSON con service principal de Azure |
+| **Deploy AKS** | `AZURE_RESOURCE_GROUP` | Nombre del resource group |
+| **Deploy AKS** | `AKS_CLUSTER_NAME` | Nombre del cluster AKS |
+| **K8s** | `db-secret` (connection-string) | Cadena de conexión a SQL Server (producción) |
+
+---
+
+## 💡 SUGERENCIAS Y MEJORAS OPCIONALES
+
+| Sugerencia | Descripción |
+|------------|-------------|
+| **Crear BD en primer arranque** | Añadir un servicio init en docker-compose que ejecute `database/01_CreateSchema.sql` contra SQL Server al levantar por primera vez (por ejemplo con `sqlcmd` o script que espere al puerto 1433 y ejecute el script). |
+| **GitLab CI** | Si usas GitLab en lugar de GitHub, el Backlog referencia ambos; usa `.gitlab-ci.yml` con etapas equivalentes (build, test, docker build/push, deploy). Ver plantillas en GitLab. |
+| **Redis para caché** | Documentacion.md menciona Redis para el módulo público; en producción añade un contenedor Redis y variable `Redis__ConnectionString` en backend. |
+| **Health/Ready en backend** | Asegura que el backend exponga `/api/health` (liveness) y `/api/ready` (readiness, opcionalmente comprobando conexión a BD); los manifiestos K8s ya los referencian. |
+| **Versiones de acciones** | Considera fijar versiones de GitHub Actions (ej. `actions/checkout@v4`) y actualizar periódicamente; `@v3` sigue siendo válido. |
+| **SonarCloud opcional** | El job `sonarqube` puede fallar si no configuras `SONAR_TOKEN`; márcalo opcional con `continue-on-error: true` o condicional para no bloquear el pipeline. |
+| **Codecov opcional** | El paso "Upload coverage" requiere `CODECOV_TOKEN` si el repo es privado; en público a veces basta con `GITHUB_TOKEN`. Si falla, desactivar o añadir el token. |
