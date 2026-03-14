@@ -243,13 +243,12 @@ NÚCLEO DEL CV
 INFORMACIÓN PROFESIONAL
 ├── Perfil (puede tener múltiples perfiles)
 ├── Experiencia
-├── ReferenciaLaboral (opcional por experiencia)
 ├── Formacion
 ├── Habilidad
 └── Proyecto
 
 CONTACTOS Y REDES
-├── ReferenciaPersonal
+├── Referencia (laborales y personales)
 ├── FamiliarContacto
 └── RedSocial
 
@@ -305,6 +304,20 @@ ESTADÍSTICAS
 | UltimaVisita | datetime | Fecha última visita |
 | FechaActualizacion | datetime | Última actualización |
 
+#### Referencia
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| ReferenciaId | PK int | Identificador único |
+| CurriculumId | FK int | CV al que pertenece |
+| TipoReferencia | string(20) | Laboral \| Personal |
+| ExperienciaId | FK int (opcional) | Si es laboral, experiencia que avala |
+| Nombre | string(100) | Nombre del referente |
+| Apellido | string(100) | Apellido |
+| Email | string(100) | Contacto |
+| Telefono | string(20) | Contacto |
+| Parentesco | string(50) | Si es personal |
+| Cargo, Empresa, Relacion, etc. | — | Si es laboral (opcionales) |
+
 ### 4.3 Relaciones Clave
 
 ```
@@ -312,11 +325,10 @@ Usuario (1) ———— (1) Curriculum
 Curriculum (1) ———— (1) Personales
 Curriculum (1) ———— (N) Perfil
 Curriculum (1) ———— (N) Experiencia
-Experiencia (1) ———— (0..1) ReferenciaLaboral
+Curriculum (1) ———— (N) Referencia
 Curriculum (1) ———— (N) Formacion
 Curriculum (1) ———— (N) Habilidad
 Curriculum (1) ———— (N) Proyecto
-Curriculum (1) ———— (N) ReferenciaPersonal
 Curriculum (1) ———— (N) FamiliarContacto
 Curriculum (1) ———— (N) RedSocial
 Curriculum (1) ———— (N) VisitanteContacto
@@ -326,44 +338,38 @@ Curriculum (1) ———— (1) EstadisticasPublicas
 Usuario (N) ———— (N) Rol (vía UsuarioRol)
 ```
 
+### 4.4 Tabla Referencia (unificada)
+
+Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tanto referencias laborales como personales. Se distingue el tipo con el campo `TipoReferencia` (Laboral | Personal). Para referencias laborales puede usarse `ExperienciaId` (FK opcional) para indicar a qué experiencia pertenecen.
+
 ---
 
 ## 5. DIAGRAMA ENTIDAD RELACIÓN
 
 ```
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│   Usuario   │       │  Curriculum │       │ Personales  │
-├─────────────┤       ├─────────────┤       ├─────────────┤
-│ UsuarioId PK│──────▶│CurriculumId │◀──────│PersonalesId │
-│ Email       │1     1│ UsuarioId FK│      1│CurriculumId │
-│ PasswordHash│       │ UrlPublica  │       │ PrimerNombre│
-│ Estado      │       │ Estado      │       │ PrimerApell.│
-└─────────────┘       │ ContVisitas │       │ Email       │
-                      │ ContContact │       └─────────────┘
-                      └─────────────┘
+┌─────────────┐        ┌─────────────┐        ┌─────────────┐
+│   Usuario   │        │  Curriculum │        │ Personales  │
+├─────────────┤        ├─────────────┤        ├─────────────┤
+│ UsuarioId PK│──────▶│CurriculumId  │◀──────│PersonalesId │
+│ Email       │1      1│ UsuarioId FK│       1│CurriculumId │
+│ PasswordHash│        │ UrlPublica  │        │ PrimerNombre│
+│ Estado      │        │ Estado      │        │ PrimerApell.│
+└─────────────┘        │ ContVisitas │        │ Email       │
+                       │ ContContact │        └─────────────┘
+                       └─────────────┘
                             │
-          ┌─────────────────┼─────────────────┐
-          │                 │                 │
-          ▼                 ▼                 ▼
-   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-   │ Experiencia │   │  Formacion  │   │  Habilidad  │
-   ├─────────────┤   ├─────────────┤   ├─────────────┤
-   │ExpId PK     │   │FormId PK    │   │HabId PK     │
-   │CurriculumId │   │CurriculumId │   │CurriculumId │
-   │Empresa      │   │Titulo       │   │Nombre       │
-   │Cargo        │   │Institucion  │   │Tipo         │
-   └─────────────┘   └─────────────┘   └─────────────┘
-         │
-         │
-         ▼
-   ┌─────────────┐
-   │RefLaboral   │
-   ├─────────────┤
-   │RefLabId PK  │
-   │ExperienciaId│
-   │Nombre       │
-   │Telefono     │
-   └─────────────┘
+          ┌─────────────────┼─────────────────┬─────────────────┐
+          │                 │                 │                 │
+          ▼                 ▼                 ▼                 ▼
+   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌──────────────┐
+   │ Experiencia │   │  Formacion  │   │  Habilidad  │   │  Referencia  │
+   ├─────────────┤   ├─────────────┤   ├─────────────┤   ├──────────────┤
+   │ExpId PK     │   │FormId PK    │   │HabId PK     │   │ReferenciaId  │
+   │CurriculumId │   │CurriculumId │   │CurriculumId │   │CurriculumId  │
+   │Empresa      │   │Titulo       │   │Nombre       │   │TipoReferencia│
+   │Cargo        │   │Institucion  │   │Tipo         │   │Nombre        │
+   └─────────────┘   └─────────────┘   └─────────────┘   │Telefono      │
+                                                         └──────────────┘
 
 ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
 │VisitanteCont│   │AlertaVisita │   │Visibilidad  │
@@ -657,17 +663,17 @@ PORTAL DE CURRÍCULUM VITAE
 │   (Listado de CVs)      │      │    (Para publicadores)  │
 └─────────────────────────┘      └─────────────────────────┘
               ▼                               ▼
-┌─────────────────────────┐      ┌─────────────────────────┐
-│    DETALLE DE CV        │      │   ÁREA PRIVADA          │
+┌─────────────────────────┐       ┌─────────────────────────┐
+│    DETALLE DE CV        │       │   ÁREA PRIVADA          │
 │   (Información + Stats) │─────▶│   (Gestión de CV)       │
-└─────────────────────────┘      └─────────────────────────┘
+└─────────────────────────┘       └─────────────────────────┘
               ▼                               │
 ┌─────────────────────────┐                   │
 │   FORMULARIO CONTACTO   │                   │
 │   (Para reclutadores)   │                   │
 └─────────────────────────┘                   │
                                               │
-                ┌─────────────────────────────┼───────────────-───┐
+                ┌─────────────────────────────┼───────────────────┐
                 ▼                             ▼                   ▼
     ┌─────────────────────┐      ┌─────────────────────┐    ┌─────────────┐
     │   EDITOR CV         │      │   CONFIGURACIÓN     │    │SEGUIMIENTO  │
