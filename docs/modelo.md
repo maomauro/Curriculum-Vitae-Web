@@ -1,4 +1,4 @@
-**Modelo de datos completo**:
+**Modelo de datos completo** (alineado con Documentacion.md):
 ---
 
 # 🧩 **1. Entidades principales del dominio**
@@ -13,15 +13,14 @@ Estas son las tablas raíz del sistema:
 - **Formacion**
 - **Habilidad**
 - **Proyecto**
-- **ReferenciaPersonal**
-- **ReferenciaLaboral**
+- **Referencia** (laborales y personales, una sola tabla)
 - **FamiliarContacto**
 - **RedSocial**
 - **VisitanteContacto**
 - **AlertaVisita**
 - **VisibilidadSeccion**
+- **EstadisticasPublicas** (vista materializada)
 - **Rol**
-- **PerfilSistema**
 - **UsuarioRol**
 
 ---
@@ -35,18 +34,17 @@ Usuario 1 — 1 Curriculum
 Curriculum 1 — 1 Personales
 Curriculum 1 — N Perfil
 Curriculum 1 — N Experiencia
-Experiencia 1 — 1 ReferenciaLaboral
 Curriculum 1 — N Formacion
 Curriculum 1 — N Habilidad
 Curriculum 1 — N Proyecto
-Curriculum 1 — N ReferenciaPersonal
+Curriculum 1 — N Referencia
 Curriculum 1 — N FamiliarContacto
 Curriculum 1 — N RedSocial
 Curriculum 1 — N VisitanteContacto
 Curriculum 1 — N AlertaVisita
 Curriculum 1 — N VisibilidadSeccion
+Curriculum 1 — 1 EstadisticasPublicas
 Usuario N — N Rol (via UsuarioRol)
-Rol 1 — N PerfilSistema
 ```
 
 ---
@@ -68,12 +66,7 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 
 ## **Rol**
 - RolId (PK)
-- NombreRol (Visitante, CRUD, Admin)
-- Descripcion
-
-## **PerfilSistema**
-- PerfilSistemaId (PK)
-- NombrePerfil
+- NombreRol (Visitante, Publicador, Admin)
 - Descripcion
 
 ## **UsuarioRol**
@@ -90,6 +83,8 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - UsuarioId (FK, UNIQUE)
 - UrlPublica
 - Estado
+- ContadorVisitas
+- ContadorContactos
 - FechaCreacion
 - FechaActualizacion
 
@@ -140,7 +135,20 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 
 ---
 
-# 🟨 **D. Tablas hijas de Personales**
+# 🟨 **D. Contactos y redes (hijas de Curriculum)**
+
+## **Referencia** (laborales y personales)
+- ReferenciaId (PK)
+- CurriculumId (FK)
+- TipoReferencia (Laboral | Personal)
+- ExperienciaId (FK, opcional) — si es laboral, experiencia que avala
+- Nombre
+- Apellido
+- Email
+- Telefono
+- Parentesco (si es personal)
+- Cargo, Empresa, Relacion, Observaciones, AdjuntoSoporte (si es laboral, opcionales)
+- FechaRegistro
 
 ## **FamiliarContacto**
 - FamiliarId (PK)
@@ -151,15 +159,6 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - Email
 - Telefono
 - EsContactoPrincipal (bool)
-
-## **ReferenciaPersonal**
-- ReferenciaPersonalId (PK)
-- CurriculumId (FK)
-- Nombre
-- Apellido
-- Email
-- Telefono
-- Parentesco
 
 ## **RedSocial**
 - RedSocialId (PK)
@@ -195,20 +194,6 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - TipoContrato
 - MotivoRetiro
 - Funciones
-- FechaRegistro
-
-## **ReferenciaLaboral** (1 a 1 con Experiencia)
-- ReferenciaLaboralId (PK)
-- ExperienciaId (FK)
-- Nombre
-- Apellido
-- Cargo
-- Empresa
-- Telefono
-- Email
-- Relacion
-- Observaciones
-- AdjuntoSoporte
 - FechaRegistro
 
 ---
@@ -289,17 +274,27 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 
 ---
 
+# 🟦 **L. Estadísticas**
+
+## **EstadisticasPublicas** (vista materializada)
+- EstadisticasId (PK)
+- CurriculumId (FK)
+- TotalVisitas
+- TotalContactos
+- UltimaVisita
+- FechaActualizacion
+
+---
+
 # 🎯 **¿Qué logramos con este modelo?**
 
 - Está **completo**, **coherente** y **normalizado**.
 - Respeta la regla: **un usuario = un CV**.
-- Separa correctamente:
-  - Referencias personales
-  - Referencias laborales
-  - Familiares
-  - Redes sociales
+- **Referencia** en una sola tabla (TipoReferencia: Laboral | Personal), vinculada a Curriculum; ExperienciaId opcional para referencias laborales.
+- Separa correctamente: Familiares, Redes sociales, Visitantes y alertas, Visibilidad.
+- Vista **EstadisticasPublicas** para métricas de visitas y contactos.
 - Permite escalar sin romper nada.
-- Es perfecto para documentarlo en Azure DevOps.
+- Alineado con la documentación base del proyecto (Documentacion.md).
 
 ---
 
