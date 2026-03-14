@@ -1,3 +1,12 @@
+## 📋 Referencias
+
+- **Documentación del producto:** [Documentacion.md](Documentacion.md)  
+- **Modelo de datos:** [modelo.md](modelo.md)  
+- **Script BD SQL Server:** [../database/01_CreateSchema.sql](../database/01_CreateSchema.sql)  
+- **Despliegue / CI-CD:** [Despliegue.md](Despliegue.md)
+
+---
+
 ## 📊 JERARQUÍA AZURE DEVOPS
 ```
 Epic (Épica)
@@ -74,7 +83,7 @@ Además:
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
 | **HS-01** | Historia Técnica | Modelado de base de datos | [ ] Refinar modelo entidad-relación<br>[ ] Definir tipos de datos SQL Server<br>[ ] Diseñar índices estratégicos<br>[ ] Definir constraints y reglas<br>[ ] Diseñar estrategia de particionamiento<br>[ ] Crear diagrama físico | DBA | 8 |
-| **HS-02** | Historia Técnica | Implementación de base de datos | [ ] Crear script DDL completo<br>[ ] Crear índices optimizados<br>[ ] Crear triggers de actualización<br>[ ] Crear vistas para consultas frecuentes | Backend | 8 |
+| **HS-02** | Historia Técnica | Implementación de base de datos | [ ] Crear script DDL completo (ver `database/01_CreateSchema.sql`)<br>[ ] Crear índices optimizados<br>[ ] (Opcional) Triggers para sincronizar estadísticas<br>[ ] (Opcional) Vistas para consultas frecuentes | Backend | 8 |
 | **HS-03** | Historia Técnica | Datos de prueba y documentación | [ ] Crear datos de prueba ofuscados (10+ CVs)<br>[ ] Pruebas de rendimiento<br>[ ] Crear diccionario de datos completo<br>[ ] Plan de backup y mantenimiento | DBA | 5 |
 
 ---
@@ -83,11 +92,11 @@ Además:
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
-| **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio GitLab<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
+| **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio (GitHub recomendado o GitLab)<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para PR/MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
 | **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar Docker y docker-compose<br>[ ] Crear docker-compose.yml con SQL Server<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
 | **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
-| **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar .gitlab-ci.yml (build, test)<br>[ ] Configurar análisis de código (SonarQube opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
+| **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions o .gitlab-ci.yml: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
 
 ---
 
@@ -174,9 +183,10 @@ Además:
 | **HS-36** | Historia Técnica | API: CRUD Formación Académica | CRUD completo formaciones | 5 |
 | **HS-37** | Historia Técnica | API: CRUD Habilidades | CRUD completo habilidades | 5 |
 | **HS-38** | Historia Técnica | API: CRUD Proyectos | CRUD completo proyectos | 5 |
-| **HS-39** | Historia Técnica | API: CRUD Referencias Personales | CRUD completo referencias | 3 |
+| **HS-39** | Historia Técnica | API: CRUD Referencias | CRUD referencias (laborales y personales, tabla unificada) | 3 |
 | **HS-40** | Historia Técnica | API: CRUD Redes Sociales | CRUD completo redes | 3 |
-| **HS-41** | Historia Técnica | Autorización y propiedad | Middleware que valida dueño | 3 |
+| **HS-40b** | Historia Técnica | API: CRUD Contactos familiares | `GET/POST/PUT/DELETE /api/familiares` (FamiliarContacto) | 2 |
+| **HS-41** | Historia Técnica | Autorización y propiedad | Middleware que valida dueño del CV | 3 |
 
 ---
 
@@ -192,6 +202,7 @@ Además:
 | **HS-47** | Historia Usuario | Editor de proyectos | HS-38 | 5 |
 | **HS-48** | Historia Usuario | Editor de referencias | HS-39 | 3 |
 | **HS-49** | Historia Usuario | Editor de redes sociales | HS-40 | 3 |
+| **HS-49b** | Historia Usuario | Editor de contactos familiares | HS-40b | 2 |
 | **HS-50** | Historia Usuario | Vista previa del CV | HS-11 | 5 |
 | **HS-51** | Historia Usuario | Barra de progreso | - | 2 |
 
@@ -243,13 +254,13 @@ Además:
 
 | Épica | Features | Historias | Story Points |
 |-------|----------|-----------|--------------|
-| **Épica 0: Fundación Técnica** | 2 | 8 | 40 |
-| **Épica 1: Módulo Público** | 2 | 16 | 62 |
+| **Épica 0: Fundación Técnica** | 2 | 8 | 45 |
+| **Épica 1: Módulo Público** | 2 | 16 | 65 |
 | **Épica 2: Autenticación** | 2 | 8 | 32 |
-| **Épica 3: Gestión de CV** | 2 | 19 | 78 |
-| **Épica 4: Seguimiento** | 2 | 9 | 34 |
+| **Épica 3: Gestión de CV** | 2 | 21 | 95 |
+| **Épica 4: Seguimiento** | 2 | 9 | 37 |
 | **Épica 5: Administración** | 1 | 2 | 13 |
-| **TOTAL** | **11** | **62** | **259** |
+| **TOTAL** | **11** | **64** | **287** |
 
 ---
 
@@ -264,9 +275,9 @@ Además:
 | **Sprint 5** | Épica 2 Backend | HS-25 a HS-29 (APIs Auth) |
 | **Sprint 6** | Épica 2 Frontend | HS-30 a HS-32 (UI Auth) |
 | **Sprint 7** | Épica 3 Backend (parte 1) | HS-33 a HS-37 (APIs core) |
-| **Sprint 8** | Épica 3 Backend (parte 2) | HS-38 a HS-41 (APIs complementarias) |
+| **Sprint 8** | Épica 3 Backend (parte 2) | HS-38 a HS-41, HS-40b (APIs complementarias + familiares) |
 | **Sprint 9** | Épica 3 Frontend (parte 1) | HS-42 a HS-46 (Editores core) |
-| **Sprint 10** | Épica 3 Frontend (parte 2) | HS-47 a HS-51 (Editores complementarios) |
+| **Sprint 10** | Épica 3 Frontend (parte 2) | HS-47 a HS-51, HS-49b (Editores complementarios + familiares) |
 | **Sprint 11** | Épica 4 Completa | HS-52 a HS-60 (Dashboard y Config) |
 | **Sprint 12** | Épica 5 + Polishing | HS-61, HS-62 + bugs |
 
@@ -280,4 +291,16 @@ Además:
 2. ✅ **Features** → Agrupaciones lógicas dentro de cada épica
 3. ✅ **Historias de Usuario/Técnicas** → Funcionalidades específicas
 4. ✅ **Tareas** → Detalle dentro de cada historia (en el sprint planning)
+
+---
+
+## 💡 SUGERENCIAS Y MEJORAS OPCIONALES
+
+| Sugerencia | Descripción |
+|------------|-------------|
+| **Criterios de aceptación** | Añadir 2-3 criterios de aceptación por historia al detallar en Azure DevOps (ej.: "Dado X, cuando Y, entonces Z"). |
+| **Definition of Done** | Definir DoD del equipo (ej.: código en main/develop, pruebas pasando, sin deuda en Sonar, documentación actualizada). |
+| **Épica 5 – Auditoría** | Documentacion.md incluye "Auditoría" en el módulo Admin; considerar añadir HS-63: "Vista de auditoría y logs del sistema" (5 SP). |
+| **Dependencia HS-50** | Vista previa (HS-50) podría depender también de HS-33/34 para datos mínimos; opcional aclarar en la historia. |
+| **Priorización** | Si el tiempo aprieta, Épica 4 (Seguimiento) y Épica 5 (Administración) son SHOULD/COULD HAVE; se puede lanzar MVP sin ellas. |
 
