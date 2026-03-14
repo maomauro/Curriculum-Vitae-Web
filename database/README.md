@@ -48,3 +48,10 @@ Scripts SQL Server para crear y mantener la base de datos del proyecto. El model
 - La tabla **Referencia** agrupa referencias laborales y personales (`TipoReferencia`: `Laboral` | `Personal`). Si es laboral, `ExperienciaId` puede apuntar a la experiencia que avala.
 - **EstadisticasPublicas** es una tabla de resumen; puede mantenerse sincronizada con `Curriculum` (ContadorVisitas, ContadorContactos) mediante trigger o job según necesites.
 - Para **Docker** (SQL Server en contenedor), usa la misma cadena de conexión que en `docs/Despliegue.md` y ejecuta este script sobre la base de datos creada o la que indiques en `ConnectionStrings`.
+
+## Ver también
+
+- [docs/Documentacion.md](../docs/Documentacion.md) — visión del producto y modelo de datos
+- [docs/modelo.md](../docs/modelo.md) — detalle de tablas y relaciones
+- [docs/Backlog.md](../docs/Backlog.md) — épica 0 y script DDL (HS-02)
+- [docs/Despliegue.md](../docs/Despliegue.md) — docker-compose y conexión a SQL Server

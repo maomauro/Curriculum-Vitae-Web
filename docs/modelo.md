@@ -298,3 +298,7 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 
 ---
 
+**Ver también:** [Documentacion.md](Documentacion.md) (visión y modelo de alto nivel) · [Backlog.md](Backlog.md) · [database/01_CreateSchema.sql](../database/01_CreateSchema.sql) (script DDL)
+
+---
+

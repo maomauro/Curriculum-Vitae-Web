@@ -4,6 +4,8 @@
 
 ## Versión 1.0 - Fundamentos del Sistema
 
+**Referencias:** [Backlog](Backlog.md) · [modelo de datos](modelo.md) · [Despliegue / CI-CD](Despliegue.md) · [Guía Git](Guia-git.md) · [database/README](../database/README.md)
+
 ---
 
 ## 1. VISIÓN GENERAL DEL PROYECTO
@@ -85,8 +87,8 @@
 | **Detalle de CV** | Vista | Visualización completa del CV | ✅ | ✅ | ✅ |
 | **Dashboard Público** | Vista | Estadísticas y métricas del CV | ✅ | ✅ | ✅ |
 | **Formulario Contacto** | Formulario | Para reclutadores contactar profesionales | ✅ | ✅ | ✅ |
-| **Registro** | Formulario | Creación de cuenta para publicadores | ✅ | ✅ | ✅ |
-| **Login** | Formulario | Acceso al sistema para publicadores | ✅ | ✅ | ✅ |
+| **Registro** | Formulario | Creación de cuenta para publicadores | ❌ | ✅ | ✅ |
+| **Login** | Formulario | Acceso al sistema para publicadores | ❌ | ✅ | ✅ |
 | **Editor CV** | Formularios | Gestión completa del CV (CRUD) | ❌ | ✅ | ✅ |
 | - Personales | Formulario | Datos personales del profesional | ❌ | ✅ | ✅ |
 | - Perfil | Formulario | Perfiles y aspiraciones profesionales | ❌ | ✅ | ✅ |
