@@ -70,16 +70,73 @@ Además:
 
 ---
 
+## 📝 DESCRIPCIÓN DE TAREAS (por Feature)
+
+Las tareas son el desglose técnico de cada historia; en sprint planning se asignan y estiman en horas.
+
+**Feature 0.1 – Base de datos**
+| Tarea | Descripción |
+|-------|-------------|
+| Refinar modelo entidad-relación | Ajustar entidades y relaciones según Documentacion.md y modelo.md (Usuario, Curriculum, Referencia unificada, etc.). |
+| Definir tipos de datos SQL Server | Asignar tipos (int, nvarchar, datetime2, bit, etc.) y longitudes a cada campo. |
+| Diseñar índices estratégicos | Índices para UrlPublica, CurriculumId en tablas hijas, búsqueda por nombre/ciudad. |
+| Definir constraints y reglas | PK, FK, UNIQUE, CHECK (estados, tipos); reglas de negocio en BD. |
+| Diseñar estrategia de particionamiento | (Opcional) Si se prevé mucho volumen, definir particionamiento por fechas o rangos. |
+| Crear diagrama físico | Diagrama ER o físico con tablas, columnas y relaciones para documentación. |
+| Crear script DDL completo | Script ejecutable que cree todas las tablas (ver `database/01_CreateSchema.sql`). |
+| Crear índices optimizados | Incluir en el script los índices definidos en el diseño. |
+| Triggers para sincronizar estadísticas | (Opcional) Triggers que actualicen EstadisticasPublicas o contadores al insertar/actualizar. |
+| Crear vistas para consultas frecuentes | (Opcional) Vistas que simplifiquen consultas complejas o reportes. |
+| Crear datos de prueba ofuscados | Insertar 10+ CVs con datos realistas pero anónimos (nombres, emails ofuscados). |
+| Pruebas de rendimiento | Ejecutar consultas típicas y medir tiempos; ajustar índices si hace falta. |
+| Crear diccionario de datos completo | Documentar cada tabla y columna (nombre, tipo, descripción, reglas). |
+| Plan de backup y mantenimiento | Definir frecuencia de backup, retención y tareas de mantenimiento (índices, estadísticas). |
+
+**Feature 0.2 – Configuración de entornos**
+| Tarea | Descripción |
+|-------|-------------|
+| Configurar repositorio (GitHub/GitLab) | Crear repo, estructura inicial, .gitignore; opcional mirror. |
+| Estructurar ramas (main, develop, feature) | Crear ramas principales y documentar flujo (ver Guia-git.md). |
+| Proteger ramas principales | Reglas: no push directo a main/develop; PR/MR obligatorio. |
+| Configurar templates para PR/MR | Plantillas de descripción, checklist (tests, documentación). |
+| Configurar tablero ágil | Boards, milestones, labels para épicas, features e historias. |
+| Configurar Docker y docker-compose | Instalar Docker; definir servicios (SQL Server, backend, frontend). |
+| Crear docker-compose.yml con SQL Server | Archivo con servicios, redes, volúmenes y variables de entorno. |
+| Conectar proyectos a BD existente | Connection string en backend; verificar conectividad desde contenedor/host. |
+| Verificar datos de prueba funcionando | Ejecutar script de BD y comprobar que backend/frontend lean datos. |
+| Crear solución .NET con arquitectura por capas | Proyectos: API, dominio, aplicación, infraestructura (o similar). |
+| Configurar Entity Framework | DbContext, mapeos a tablas, migraciones o script DDL. |
+| Configurar autenticación JWT base | Generación y validación de tokens; refresh token opcional. |
+| Configurar Swagger/OpenAPI | Documentación de endpoints y pruebas desde Swagger UI. |
+| Implementar middleware básico | Logging de requests; manejo global de excepciones y respuestas de error. |
+| Crear proyecto Angular con estructura de módulos | Módulos por área (público, auth, editor, dashboard). |
+| Configurar lazy loading | Carga bajo demanda de módulos para reducir bundle inicial. |
+| Implementar servicios base (HttpClient) | Servicio de API con métodos por dominio. |
+| Configurar interceptores | Interceptor de auth (token en header); interceptor de errores (toast/redirect). |
+| Crear componentes base | Header, footer, layout principal, rutas base. |
+| Configurar pipeline CI/CD | Workflow (GitHub Actions o .gitlab-ci.yml): build backend, build frontend, test. |
+| Configurar análisis de código | (Opcional) SonarQube/SonarCloud en el pipeline. |
+| Documentar guía de inicio rápido | Cómo clonar, levantar BD, backend y frontend (README o docs). |
+| Crear README principal del proyecto | Descripción del proyecto, enlaces a documentación, requisitos e instrucciones básicas. |
+
+---
+
 ## 📋 BACKLOG CON LA JERARQUÍA AZURE DEVOPS
 
 ### ÉPICA 0: FUNDACIÓN TÉCNICA (INFRAESTRUCTURA BASE)
 
 **Prioridad:** MUST HAVE  
-**Objetivo:** Establecer toda la infraestructura técnica necesaria para comenzar el desarrollo
+**Dependencia:** Ninguna (es la base del proyecto).
+
+**Descripción:** Cubre el diseño e implementación de la base de datos SQL Server, el control de versiones, el entorno de desarrollo local (Docker, backend .NET, frontend Angular) y el pipeline CI/CD inicial. Sin esta épica no puede arrancar el desarrollo funcional del portal.
 
 ---
 
 #### FEATURE 0.1: BASE DE DATOS SQL SERVER
+
+**Descripción:** Diseño, implementación y documentación de la base de datos que soporta todo el portal: usuarios, roles, curriculum, personales, referencias, visitantes, alertas y estadísticas. Incluye script DDL, índices, datos de prueba y plan de mantenimiento.
+
+---
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
@@ -90,6 +147,8 @@ Además:
 ---
 
 #### FEATURE 0.2: CONFIGURACIÓN DE ENTORNOS
+
+**Descripción:** Configuración del repositorio (GitHub/GitLab), ramas y tablero ágil; entorno local con Docker y SQL Server; solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
@@ -104,11 +163,17 @@ Además:
 ### ÉPICA 1: MÓDULO PÚBLICO
 
 **Prioridad:** MUST HAVE  
-**Dependencia:** Épica 0 completada
+**Dependencia:** Épica 0 completada.
+
+**Descripción:** Todo lo que un visitante (reclutador) puede hacer sin registrarse: buscar y listar CVs, ver detalle y estadísticas públicas, enviar mensajes de contacto. Incluye las APIs REST públicas, rate limiting, caché, y la interfaz (landing, búsqueda, filtros, detalle, contacto, compartir).
 
 ---
 
 #### FEATURE 1.1: BACKEND - APIs Públicas
+
+**Descripción:** Endpoints REST para el uso público del portal: listado paginado de CVs, búsqueda con sugerencias, detalle por URL pública, estadísticas, envío de contacto, filtros (ciudades, habilidades). Incluye middleware de rate limiting y caché para rendimiento.
+
+---
 
 | ID | Tipo | Título | Descripción | Endpoints | Story Points |
 |----|------|--------|-------------|-----------|--------------|
@@ -121,9 +186,13 @@ Además:
 | **HS-15** | Historia Técnica | Sistema de rate limiting | Controlar spam en formularios | Middleware | 3 |
 | **HS-16** | Historia Técnica | Sistema de caché | Redis/memoria para performance | Middleware | 3 |
 
+**Criterios de aceptación (resumen):** Listado (HS-09) paginado y filtrable; búsqueda (HS-10) con sugerencias; detalle (HS-11) por URL pública; stats (HS-12) coherentes con datos; contacto (HS-13) persiste y notifica; filtros (HS-14) con datos reales; rate limiting (HS-15) limita envíos por IP; caché (HS-16) reduce carga en consultas repetidas.
+
 ---
 
 #### FEATURE 1.2: FRONTEND - Interfaz Pública
+
+**Descripción:** Pantallas que ve el visitante: landing con buscador, resultados en tarjetas con paginación y filtros, vista detalle del CV, estadísticas públicas, formulario de contacto y opción de compartir en redes. Sin necesidad de login.
 
 | ID | Tipo | Título | Descripción | Depende de | Story Points |
 |----|------|--------|-------------|------------|--------------|
@@ -136,16 +205,24 @@ Además:
 | **HS-23** | Historia Usuario | Formulario de contacto | Como reclutador quiero contactar al profesional sin registrarme | HS-13 | 5 |
 | **HS-24** | Historia Usuario | Compartir en redes | Como reclutador quiero compartir CVs interesantes con mi equipo | - | 2 |
 
+**Criterios de aceptación (resumen):** Landing (HS-17) con buscador visible; autocompletado (HS-18) al escribir; listado (HS-19) en tarjetas con paginación; filtros (HS-20) aplicables y visibles; detalle (HS-21) muestra todas las secciones visibles; estadísticas (HS-22) visibles en detalle; formulario contacto (HS-23) enviable sin login; compartir (HS-24) con enlace o redes sociales.
+
 ---
 
 ### ÉPICA 2: AUTENTICACIÓN DE PUBLICADORES
 
 **Prioridad:** MUST HAVE  
-**Dependencia:** Épica 0 completada
+**Dependencia:** Épica 0 completada.
+
+**Descripción:** Permite que un profesional se registre, confirme su email, inicie sesión con JWT, renueve el token y recupere su contraseña. Solo publicadores y administradores usan autenticación; los visitantes no. Incluye backend (APIs auth) y frontend (páginas de registro, login y recuperación).
 
 ---
 
 #### FEATURE 2.1: BACKEND - Autenticación
+
+**Descripción:** APIs de registro, confirmación de email, login con JWT, refresh token y flujo de recuperación de contraseña (solicitar y restablecer). Incluye generación y validación de tokens y envío de correos de confirmación/reset.
+
+---
 
 | ID | Tipo | Título | Descripción | Endpoints | Story Points |
 |----|------|--------|-------------|-----------|--------------|
@@ -155,9 +232,13 @@ Además:
 | **HS-28** | Historia Técnica | API: Refresh token | Renovar access token | `POST /api/auth/refresh` | 3 |
 | **HS-29** | Historia Técnica | API: Recuperación de contraseña | Solicitar y restablecer | `POST /api/auth/forgot-password`<br>`POST /api/auth/reset-password` | 5 |
 
+**Criterios de aceptación (resumen):** Registro (HS-25) crea usuario y envía email; confirmación (HS-26) valida token y activa cuenta; login (HS-27) devuelve access y refresh token; refresh (HS-28) renueva access sin re-login; forgot/reset (HS-29) envían enlace y permiten nueva contraseña de forma segura.
+
 ---
 
 #### FEATURE 2.2: FRONTEND - Interfaz de Autenticación
+
+**Descripción:** Páginas y flujos para que el publicador se registre, confirme email, inicie sesión y recupere su contraseña. Integración con las APIs de autenticación y manejo de tokens en el cliente.
 
 | ID | Tipo | Título | Descripción | Depende de | Story Points |
 |----|------|--------|-------------|------------|--------------|
@@ -165,16 +246,27 @@ Además:
 | **HS-31** | Historia Usuario | Página de login | Como publicador quiero iniciar sesión para gestionar mi CV | HS-27 | 3 |
 | **HS-32** | Historia Usuario | Recuperación de contraseña | Como publicador quiero recuperar mi acceso si olvido la contraseña | HS-29 | 3 |
 
+**Criterios de aceptación (resumen):**  
+- **HS-30:** Formulario de registro con email y contraseña; validación; mensaje de “revisa tu correo”; redirección tras confirmación.  
+- **HS-31:** Formulario login; guardado de token; redirección al área privada; manejo de error de credenciales.  
+- **HS-32:** Flujo “¿Olvidaste contraseña?” → email con enlace → formulario nueva contraseña → confirmación.
+
 ---
 
 ### ÉPICA 3: GESTIÓN DE CV
 
 **Prioridad:** MUST HAVE  
-**Dependencia:** Épica 0 + Épica 2 completadas
+**Dependencia:** Épica 0 + Épica 2 completadas.
+
+**Descripción:** Permite al publicador crear y editar todo el contenido de su CV: datos personales, perfil profesional, experiencia, formación, habilidades, proyectos, referencias (laborales y personales), redes sociales y contactos familiares. Incluye autorización (solo el dueño del CV), editores en frontend y vista previa.
 
 ---
 
 #### FEATURE 3.1: BACKEND - CRUDs de CV
+
+**Descripción:** APIs REST para leer y actualizar cada sección del CV (personales, perfil, experiencia, formación, habilidades, proyectos, referencias, redes, familiares). Middleware que valida que el usuario autenticado sea el dueño del curriculum sobre el que actúa.
+
+---
 
 | ID | Tipo | Título | Endpoints | Story Points |
 |----|------|--------|-----------|--------------|
@@ -189,34 +281,46 @@ Además:
 | **HS-40b** | Historia Técnica | API: CRUD Contactos familiares | `GET/POST/PUT/DELETE /api/familiares` (FamiliarContacto) | 2 |
 | **HS-41** | Historia Técnica | Autorización y propiedad | Middleware que valida dueño del CV | 3 |
 
+**Criterios de aceptación (resumen):** Cada endpoint (HS-33 a HS-40b) permite GET/PUT o CRUD según corresponda; solo el dueño del CV puede modificar sus datos; respuestas 403 si el token no corresponde al curriculum; HS-41 aplicado en todos los endpoints privados del CV.
+
 ---
 
 #### FEATURE 3.2: FRONTEND - Editor de CV
 
-| ID | Tipo | Título | Depende de | Story Points |
-|----|------|--------|------------|--------------|
-| **HS-42** | Historia Usuario | Editor de datos personales | HS-33 | 8 |
-| **HS-43** | Historia Usuario | Editor de perfil profesional | HS-34 | 5 |
-| **HS-44** | Historia Usuario | Editor de experiencia laboral | HS-35 | 8 |
-| **HS-45** | Historia Usuario | Editor de formación académica | HS-36 | 5 |
-| **HS-46** | Historia Usuario | Editor de habilidades | HS-37 | 5 |
-| **HS-47** | Historia Usuario | Editor de proyectos | HS-38 | 5 |
-| **HS-48** | Historia Usuario | Editor de referencias | HS-39 | 3 |
-| **HS-49** | Historia Usuario | Editor de redes sociales | HS-40 | 3 |
-| **HS-49b** | Historia Usuario | Editor de contactos familiares | HS-40b | 2 |
-| **HS-50** | Historia Usuario | Vista previa del CV | HS-11 | 5 |
-| **HS-51** | Historia Usuario | Barra de progreso | - | 2 |
+**Descripción:** Formularios y pantallas para que el publicador edite cada bloque de su CV (personales, perfil, experiencia, formación, habilidades, proyectos, referencias, redes, familiares), con vista previa y barra de progreso de completitud.
+
+| ID | Tipo | Título | Descripción | Depende de | Story Points |
+|----|------|--------|-------------|------------|--------------|
+| **HS-42** | Historia Usuario | Editor de datos personales | Como publicador quiero editar mis datos personales para que mi CV refleje mi información actual | HS-33 | 8 |
+| **HS-43** | Historia Usuario | Editor de perfil profesional | Como publicador quiero gestionar uno o más perfiles profesionales (nombre, descripción, aspiración salarial) | HS-34 | 5 |
+| **HS-44** | Historia Usuario | Editor de experiencia laboral | Como publicador quiero añadir, editar y eliminar experiencias laborales (empresa, cargo, fechas, funciones, referencia laboral opcional) | HS-35 | 8 |
+| **HS-45** | Historia Usuario | Editor de formación académica | Como publicador quiero gestionar mi formación (título, institución, fechas, tipo, descripción) | HS-36 | 5 |
+| **HS-46** | Historia Usuario | Editor de habilidades | Como publicador quiero listar habilidades con tipo (técnica, blanda, idioma) y nivel | HS-37 | 5 |
+| **HS-47** | Historia Usuario | Editor de proyectos | Como publicador quiero describir proyectos destacados (nombre, rol, stack, aporte, logros) | HS-38 | 5 |
+| **HS-48** | Historia Usuario | Editor de referencias | Como publicador quiero gestionar referencias personales y laborales (tipo, datos de contacto, parentesco/cargo según tipo) | HS-39 | 3 |
+| **HS-49** | Historia Usuario | Editor de redes sociales | Como publicador quiero añadir enlaces a redes (LinkedIn, GitHub, etc.) | HS-40 | 3 |
+| **HS-49b** | Historia Usuario | Editor de contactos familiares | Como publicador quiero gestionar contactos de emergencia (parentesco, nombre, teléfono, email) | HS-40b | 2 |
+| **HS-50** | Historia Usuario | Vista previa del CV | Como publicador quiero ver una vista previa de cómo se verá mi CV en público antes de publicar | HS-11 | 5 |
+| **HS-51** | Historia Usuario | Barra de progreso | Como publicador quiero ver el grado de completitud de mi CV para saber qué secciones completar | - | 2 |
+
+**Criterios de aceptación (resumen):** Cada editor permite crear, editar y eliminar ítems de su sección; los datos se persisten vía API; validaciones en frontend y mensajes de error claros; vista previa (HS-50) refleja visibilidad configurada; barra de progreso (HS-51) se actualiza según secciones completadas.
 
 ---
 
 ### ÉPICA 4: SEGUIMIENTO Y CONFIGURACIÓN
 
 **Prioridad:** SHOULD HAVE  
-**Dependencia:** Épica 3 completada
+**Dependencia:** Épica 3 completada.
+
+**Descripción:** El publicador puede ver estadísticas agregadas (dashboard), listar y marcar como leídos los contactos recibidos, consultar notificaciones y configurar qué secciones de su CV son visibles públicamente. Mejora la experiencia del publicador sin ser obligatoria para el MVP.
 
 ---
 
 #### FEATURE 4.1: BACKEND - Dashboard y Alertas
+
+**Descripción:** APIs para el área privada del publicador: estadísticas del dashboard, lista de contactos recibidos, marcar contacto como leído, notificaciones y CRUD de visibilidad por sección del CV.
+
+---
 
 | ID | Tipo | Título | Endpoints | Story Points |
 |----|------|--------|-----------|--------------|
@@ -226,28 +330,42 @@ Además:
 | **HS-55** | Historia Técnica | API: Notificaciones | `GET /api/notificaciones` | 3 |
 | **HS-56** | Historia Técnica | API: Visibilidad secciones | `GET /api/visibilidad`<br>`PUT /api/visibilidad` | 3 |
 
+**Criterios de aceptación (resumen):** Dashboard stats (HS-52) devuelve métricas del CV del usuario; contactos (HS-53) listado paginado; marcar leído (HS-54) actualiza estado; notificaciones (HS-55) listado reciente; visibilidad (HS-56) GET/PUT por sección, solo dueño del CV.
+
 ---
 
 #### FEATURE 4.2: FRONTEND - Dashboard y Configuración
 
-| ID | Tipo | Título | Depende de | Story Points |
-|----|------|--------|------------|--------------|
-| **HS-57** | Historia Usuario | Dashboard con gráficos | HS-52 | 8 |
-| **HS-58** | Historia Usuario | Lista de contactos recibidos | HS-53, HS-54 | 5 |
-| **HS-59** | Historia Usuario | Campanita de notificaciones | HS-55 | 3 |
-| **HS-60** | Historia Usuario | Configuración de visibilidad | HS-56 | 5 |
+**Descripción:** Pantallas para que el publicador vea gráficos de visitas y contactos, liste y marque como leídos los mensajes recibidos, consulte notificaciones (campanita) y active/desactive la visibilidad de cada sección de su CV.
+
+| ID | Tipo | Título | Descripción | Depende de | Story Points |
+|----|------|--------|-------------|------------|--------------|
+| **HS-57** | Historia Usuario | Dashboard con gráficos | Como publicador quiero ver un dashboard con gráficos de visitas y contactos para medir el impacto de mi CV | HS-52 | 8 |
+| **HS-58** | Historia Usuario | Lista de contactos recibidos | Como publicador quiero ver la lista de mensajes de reclutadores y marcar como leídos los que ya revisé | HS-53, HS-54 | 5 |
+| **HS-59** | Historia Usuario | Campanita de notificaciones | Como publicador quiero recibir notificaciones (nuevos contactos, visitas) y verlas en una campanita | HS-55 | 3 |
+| **HS-60** | Historia Usuario | Configuración de visibilidad | Como publicador quiero activar o ocultar secciones de mi CV (ej. referencias, aspiración salarial) para el público | HS-56 | 5 |
+
+**Criterios de aceptación (resumen):** Dashboard muestra datos coherentes con la API; lista de contactos paginada y con acción “marcar leído”; notificaciones visibles y actualizables; visibilidad por sección guardada y aplicada en la vista pública del CV.
 
 ---
 
 ### ÉPICA 5: ADMINISTRACIÓN
 
 **Prioridad:** COULD HAVE  
-**Dependencia:** Épica 3 completada
+**Dependencia:** Épica 3 completada.
 
-| ID | Tipo | Título | Descripción | Story Points |
-|----|------|--------|-------------|--------------|
-| **HS-61** | Historia Usuario | Gestión de usuarios (Admin) | Como admin quiero ver y gestionar publicadores | 8 |
-| **HS-62** | Historia Usuario | Gestión de roles | Como admin quiero asignar permisos | 5 |
+**Descripción:** Funcionalidades exclusivas del rol administrador: listar y gestionar usuarios (publicadores), activar/desactivar/bloquear, y asignar roles/permisos. No es necesaria para el lanzamiento inicial del portal.
+
+---
+
+#### FEATURE 5.1: ADMINISTRACIÓN DEL SISTEMA
+
+**Descripción:** Backend y frontend para que un usuario con rol Admin pueda ver y gestionar publicadores (estado, datos básicos) y asignar roles (Visitante, Publicador, Admin) a los usuarios.
+
+| ID | Tipo | Título | Descripción | Criterios de aceptación | Story Points |
+|----|------|--------|-------------|-------------------------|--------------|
+| **HS-61** | Historia Usuario | Gestión de usuarios (Admin) | Como admin quiero ver y gestionar publicadores (listar, activar, desactivar, bloquear, ver detalle) | Listado paginado; filtros por estado; acciones sobre usuario sin afectar su CV; solo usuarios con rol Admin acceden. | 8 |
+| **HS-62** | Historia Usuario | Gestión de roles | Como admin quiero asignar y quitar roles (Publicador, Admin) a usuarios para controlar permisos | Asignación por usuario; al menos un Admin debe quedar; auditoría básica de cambios de rol. | 5 |
 
 ---
 
@@ -299,7 +417,6 @@ Además:
 
 | Sugerencia | Descripción |
 |------------|-------------|
-| **Criterios de aceptación** | Añadir 2-3 criterios de aceptación por historia al detallar en Azure DevOps (ej.: "Dado X, cuando Y, entonces Z"). |
 | **Definition of Done** | Definir DoD del equipo (ej.: código en main/develop, pruebas pasando, sin deuda en Sonar, documentación actualizada). |
 | **Épica 5 – Auditoría** | Documentacion.md incluye "Auditoría" en el módulo Admin; considerar añadir HS-63: "Vista de auditoría y logs del sistema" (5 SP). |
 | **Dependencia HS-50** | Vista previa (HS-50) podría depender también de HS-33/34 para datos mínimos; opcional aclarar en la historia. |
