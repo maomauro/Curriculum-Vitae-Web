@@ -243,7 +243,7 @@ CREATE NONCLUSTERED INDEX IX_Experiencia_CurriculumId ON dbo.Experiencia (Curric
 -- Referencia.ExperienciaId (FK añadida después de crear Experiencia)
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Referencia_Experiencia')
     ALTER TABLE dbo.Referencia
-    ADD CONSTRAINT FK_Referencia_Experiencia FOREIGN KEY (ExperienciaId) REFERENCES dbo.Experiencia (ExperienciaId) ON DELETE SET NULL;
+    ADD CONSTRAINT FK_Referencia_Experiencia FOREIGN KEY (ExperienciaId) REFERENCES dbo.Experiencia (ExperienciaId) ON DELETE NO ACTION;
 
 -- -----------------------------------------------------------------------------
 -- G. FORMACIÓN ACADÉMICA
