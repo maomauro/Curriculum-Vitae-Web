@@ -30,11 +30,18 @@ WITH PublicCVs AS (
         p.Pais,
         per.NombrePerfil,
         per.DescripcionPerfil,
-        Habilidades = STRING_AGG(h.Nombre, N', ')
+        Habilidades = STUFF(
+            (
+                SELECT N', ' + h2.Nombre
+                FROM dbo.Habilidad h2
+                WHERE h2.CurriculumId = c.CurriculumId
+                FOR XML PATH(''), TYPE
+            ).value('.', N'NVARCHAR(MAX)'),
+            1, 2, N''
+        )
     FROM dbo.Curriculum c
     INNER JOIN dbo.Personales p ON p.CurriculumId = c.CurriculumId
     LEFT JOIN dbo.Perfil per ON per.CurriculumId = c.CurriculumId
-    LEFT JOIN dbo.Habilidad h ON h.CurriculumId = c.CurriculumId
     WHERE c.Estado = N'Publicado'
       AND (@Ciudad IS NULL OR @Ciudad = '' OR p.Ciudad = @Ciudad)
       AND (

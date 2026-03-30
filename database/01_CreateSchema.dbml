@@ -1,0 +1,243 @@
+Table Rol {
+  RolId int [pk, increment, not null]
+  NombreRol varchar(50) [not null]
+  Descripcion varchar(255)
+}
+
+Table Usuario {
+  UsuarioId int [pk, increment, not null]
+  Email varchar(100) [not null]
+  PasswordHash varchar(255) [not null]
+  Estado varchar(20) [not null, default: 'Activo']
+  FechaRegistro datetime [not null, default: `now()`]
+}
+
+Table UsuarioRol {
+  UsuarioRolId int [pk, increment, not null]
+  UsuarioId int [not null]
+  RolId int [not null]
+  indexes {
+    (UsuarioId, RolId) [unique]
+  }
+}
+
+Table Curriculum {
+  CurriculumId int [pk, increment, not null]
+  UsuarioId int [not null]
+  UrlPublica varchar(255) [not null]
+  Estado varchar(20) [not null, default: 'Borrador']
+  ContadorVisitas int [not null, default: 0]
+  ContadorContactos int [not null, default: 0]
+  FechaCreacion datetime [not null, default: `now()`]
+  FechaActualizacion datetime [not null, default: `now()`]
+  indexes {
+    (UrlPublica) [name: "IX_Curriculum_UrlPublica"]
+    (Estado) [name: "IX_Curriculum_Estado"]
+  }
+}
+
+Table Personales {
+  PersonalesId int [pk, increment, not null]
+  CurriculumId int [not null]
+  TipoIdentificacion varchar(50)
+  NumeroDocumento varchar(50)
+  FechaExpedicion date
+  LugarExpedicion varchar(100)
+  LibretaMilitarNumero varchar(50)
+  LibretaMilitarClase varchar(20)
+  PasaporteNumero varchar(50)
+  PasaporteVigencia date
+  VisaNumero varchar(50)
+  VisaVigencia date
+  VisaClase varchar(50)
+  PrimerNombre varchar(50) [not null]
+  SegundoNombre varchar(50)
+  PrimerApellido varchar(50) [not null]
+  SegundoApellido varchar(50)
+  FechaNacimiento date
+  LugarNacimiento varchar(100)
+  Genero varchar(20)
+  Nacionalidad varchar(50)
+  TipoSangre varchar(10)
+  EPS varchar(100)
+  Pencion varchar(100)
+  Cesantias varchar(100)
+  Email varchar(100)
+  Celular varchar(20)
+  TelefonoFijo varchar(20)
+  Pais varchar(50)
+  Departamento varchar(50)
+  Ciudad varchar(50)
+  Barrio varchar(100)
+  CodigoPostal varchar(20)
+  Direccion varchar(255)
+  TipoResidencia varchar(50)
+}
+
+Table Referencia {
+  ReferenciaId int [pk, increment, not null]
+  CurriculumId int [not null]
+  TipoReferencia varchar(20) [not null]
+  ExperienciaId int
+  Nombre varchar(100) [not null]
+  Apellido varchar(100)
+  Email varchar(100)
+  Telefono varchar(20)
+  Parentesco varchar(50)
+  Cargo varchar(100)
+  Empresa varchar(150)
+  Relacion varchar(100)
+  Observaciones varchar(500)
+  AdjuntoSoporte varchar(500)
+  FechaRegistro datetime [not null, default: `now()`]
+  indexes {
+    (CurriculumId) [name: "IX_Referencia_CurriculumId"]
+    (TipoReferencia) [name: "IX_Referencia_TipoReferencia"]
+  }
+}
+
+Table FamiliarContacto {
+  FamiliarId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Parentesco varchar(50)
+  Nombres varchar(100)
+  Apellidos varchar(100)
+  Email varchar(100)
+  Telefono varchar(20)
+  EsContactoPrincipal boolean [not null, default: 0]
+}
+
+Table RedSocial {
+  RedSocialId int [pk, increment, not null]
+  CurriculumId int [not null]
+  NombreRed varchar(50) [not null]
+  LinkPublico varchar(500)
+  UsuarioContacto varchar(100)
+}
+
+Table Perfil {
+  PerfilId int [pk, increment, not null]
+  CurriculumId int [not null]
+  NombrePerfil varchar(100)
+  DescripcionPerfil text
+  AspiracionSalarialPesos decimal(18,2)
+  AspiracionSalarialDolares decimal(18,2)
+}
+
+Table Experiencia {
+  ExperienciaId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Empresa varchar(150)
+  Cargo varchar(100)
+  Sector varchar(100)
+  FechaInicio date
+  FechaFin date
+  TipoContrato varchar(50)
+  MotivoRetiro varchar(255)
+  Funciones text
+  FechaRegistro datetime [not null, default: `now()`]
+  indexes {
+    (CurriculumId) [name: "IX_Experiencia_CurriculumId"]
+  }
+}
+
+Table Formacion {
+  FormacionId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Titulo varchar(200)
+  Institucion varchar(200)
+  Area varchar(100)
+  FechaInicio date
+  FechaFin date
+  TipoFormacion varchar(50)
+  Descripcion text
+  AdjuntoSoporte varchar(500)
+}
+
+Table Habilidad {
+  HabilidadId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Nombre varchar(100) [not null]
+  Tipo varchar(30)
+  Nivel varchar(30)
+  Descripcion varchar(500)
+  indexes {
+    (CurriculumId) [name: "IX_Habilidad_CurriculumId"]
+    (Nombre) [name: "IX_Habilidad_Nombre"]
+  }
+}
+
+Table Proyecto {
+  ProyectoId int [pk, increment, not null]
+  CurriculumId int [not null]
+  NombreProyecto varchar(200)
+  Rol varchar(100)
+  EquipoTamano int
+  DuracionMeses int
+  StackTecnologico varchar(500)
+  Aporte text
+  Logro text
+  Desafio text
+}
+
+Table VisitanteContacto {
+  VisitanteContactoId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Nombre varchar(100)
+  Correo varchar(100) [not null]
+  Empresa varchar(150)
+  MotivoContacto varchar(255)
+  ComoMeEncontraste varchar(255)
+  Mensaje text
+  FechaContacto datetime [not null, default: `now()`]
+  indexes {
+    (CurriculumId) [name: "IX_VisitanteContacto_CurriculumId"]
+    (FechaContacto) [name: "IX_VisitanteContacto_FechaContacto"]
+  }
+}
+
+Table AlertaVisita {
+  AlertaVisitaId int [pk, increment, not null]
+  CurriculumId int [not null]
+  FechaVisita datetime [not null, default: `now()`]
+  Origen varchar(255)
+  TipoVisita varchar(20)
+  indexes {
+    (CurriculumId) [name: "IX_AlertaVisita_CurriculumId"]
+    (FechaVisita) [name: "IX_AlertaVisita_FechaVisita"]
+  }
+}
+
+Table VisibilidadSeccion {
+  VisibilidadSeccionId int [pk, increment, not null]
+  CurriculumId int [not null]
+  NombreSeccion varchar(100) [not null]
+  EsVisible boolean [not null, default: 1]
+}
+
+Table EstadisticasPublicas {
+  EstadisticasId int [pk, increment, not null]
+  CurriculumId int [not null]
+  TotalVisitas int [not null, default: 0]
+  TotalContactos int [not null, default: 0]
+  UltimaVisita datetime
+  FechaActualizacion datetime [not null, default: `now()`]
+}
+
+Ref: UsuarioRol.UsuarioId > Usuario.UsuarioId
+Ref: UsuarioRol.RolId > Rol.RolId
+Ref: Curriculum.UsuarioId > Usuario.UsuarioId
+Ref: Personales.CurriculumId > Curriculum.CurriculumId
+Ref: Referencia.CurriculumId > Curriculum.CurriculumId
+Ref: Referencia.ExperienciaId > Experiencia.ExperienciaId
+Ref: FamiliarContacto.CurriculumId > Curriculum.CurriculumId
+Ref: RedSocial.CurriculumId > Curriculum.CurriculumId
+Ref: Perfil.CurriculumId > Curriculum.CurriculumId
+Ref: Experiencia.CurriculumId > Curriculum.CurriculumId
+Ref: Formacion.CurriculumId > Curriculum.CurriculumId
+Ref: Habilidad.CurriculumId > Curriculum.CurriculumId
+Ref: Proyecto.CurriculumId > Curriculum.CurriculumId
+Ref: VisitanteContacto.CurriculumId > Curriculum.CurriculumId
+Ref: AlertaVisita.CurriculumId > Curriculum.CurriculumId
+Ref: VisibilidadSeccion.CurriculumId > Curriculum.CurriculumId
+Ref: EstadisticasPublicas.CurriculumId > Curriculum.CurriculumId

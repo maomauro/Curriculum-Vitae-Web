@@ -22,14 +22,34 @@ GO
 INSERT INTO dbo.Usuario (Email, PasswordHash, Estado)
 VALUES
     (N'juan.perez@example.com', N'HashedPassword1', N'Activo'),
-    (N'maria.gomez@example.com', N'HashedPassword2', N'Activo');
+    (N'maria.gomez@example.com', N'HashedPassword2', N'Activo'),
+    (N'ana.lopez@example.com', N'HashedPassword3', N'Activo'),
+    (N'carlos.rivera@example.com', N'HashedPassword4', N'Activo'),
+    (N'laura.moreno@example.com', N'HashedPassword5', N'Activo'),
+    (N'diego.sanchez@example.com', N'HashedPassword6', N'Activo'),
+    (N'sofia.castillo@example.com', N'HashedPassword7', N'Activo'),
+    (N'nicolas.martinez@example.com', N'HashedPassword8', N'Activo'),
+    (N'camila.rodriguez@example.com', N'HashedPassword9', N'Activo'),
+    (N'fernando.torres@example.com', N'HashedPassword10', N'Activo'),
+    (N'paula.mendoza@example.com', N'HashedPassword11', N'Activo'),
+    (N'javier.fernandez@example.com', N'HashedPassword12', N'Activo');
 GO
 
 -- Currículums de prueba
 INSERT INTO dbo.Curriculum (UsuarioId, UrlPublica, Estado, ContadorVisitas, ContadorContactos)
 VALUES
     (1, N'juan-perez', N'Publicado', 42, 5),
-    (2, N'maria-gomez', N'Borrador', 7, 1);
+    (2, N'maria-gomez', N'Borrador', 7, 1),
+    (3, N'ana-lopez', N'Publicado', 18, 3),
+    (4, N'carlos-rivera', N'Publicado', 65, 12),
+    (5, N'laura-moreno', N'Borrador', 4, 0),
+    (6, N'diego-sanchez', N'Publicado', 29, 6),
+    (7, N'sofia-castillo', N'Publicado', 52, 9),
+    (8, N'nicolas-martinez', N'Publicado', 13, 2),
+    (9, N'camila-rodriguez', N'Borrador', 0, 0),
+    (10, N'fernando-torres', N'Publicado', 21, 4),
+    (11, N'paula-mendoza', N'Publicado', 34, 7),
+    (12, N'javier-fernandez', N'Borrador', 5, 1);
 GO
 
 -- Información personal
@@ -52,7 +72,17 @@ INSERT INTO dbo.Personales (
 )
 VALUES
     (1, N'Cédula', N'123456789', N'Juan', N'Carlos', N'Pérez', N'Sánchez', '1988-04-12', N'Colombia', N'Antioquia', N'Medellín', N'El Poblado', N'Calle 10 #45-60', N'juan.perez@correo.com', N'3112345678'),
-    (2, N'Cédula', N'987654321', N'María', N'Fernanda', N'Gómez', N'Ramírez', '1992-09-25', N'Colombia', N'Valle del Cauca', N'Cali', N'San Fernando', N'Carrera 12 #34-56', N'maria.gomez@correo.com', N'3123456789');
+    (2, N'Cédula', N'987654321', N'María', N'Fernanda', N'Gómez', N'Ramírez', '1992-09-25', N'Colombia', N'Valle del Cauca', N'Cali', N'San Fernando', N'Carrera 12 #34-56', N'maria.gomez@correo.com', N'3123456789'),
+    (3, N'Cédula', N'112233445', N'Ana', N'Lucía', N'López', N'García', '1990-01-20', N'Colombia', N'Bogotá', N'Bogotá', N'Chapinero', N'Carrera 5 #45-23', N'ana.lopez@correo.com', N'3201234567'),
+    (4, N'Cédula', N'223344556', N'Carlos', N'Andrés', N'Rivera', N'Soto', '1985-07-18', N'Colombia', N'Atlántico', N'Barranquilla', N'El Prado', N'Carrera 24 #12-89', N'carlos.rivera@correo.com', N'3212345678'),
+    (5, N'Cédula', N'334455667', N'Laura', N'Isabel', N'Moreno', N'Gómez', '1993-03-10', N'Colombia', N'Boyacá', N'Tunja', N'Centro', N'Carrera 8 #15-20', N'laura.moreno@correo.com', N'3223456789'),
+    (6, N'Cédula', N'445566778', N'Diego', N'María', N'Sánchez', N'Romero', '1989-11-05', N'Colombia', N'Cundinamarca', N'Bogotá', N'Usaquén', N'Cra 7 #120-45', N'diego.sanchez@correo.com', N'3234567890'),
+    (7, N'Cédula', N'556677889', N'Sofía', N'Valentina', N'Castillo', N'Pérez', '1991-06-22', N'Colombia', N'Antioquia', N'Medellín', N'Laureles', N'Calle 33 #78-45', N'sofia.castillo@correo.com', N'3245678901'),
+    (8, N'Cédula', N'667788990', N'Nicolás', N'José', N'Martínez', N'Lozano', '1987-02-14', N'Colombia', N'Valle del Cauca', N'Cali', N'Granada', N'Carrera 39 #14-65', N'nicolas.martinez@correo.com', N'3256789012'),
+    (9, N'Cédula', N'778899001', N'Camila', N'Sofía', N'Rodríguez', N'Hernández', '1995-12-08', N'Colombia', N'Valle del Cauca', N'Cali', N'Ciudad Jardín', N'Calle 4 #23-78', N'camila.rodriguez@correo.com', N'3267890123'),
+    (10, N'Cédula', N'889900112', N'Fernando', N'David', N'Torres', N'Gómez', '1986-10-30', N'Colombia', N'Antioquia', N'Medellín', N'El Poblado', N'Carrera 14 #34-56', N'fernando.torres@correo.com', N'3278901234'),
+    (11, N'Cédula', N'990011223', N'Paula', N'Daniela', N'Mendoza', N'Castro', '1994-05-16', N'Colombia', N'Bogotá', N'Bogotá', N'Chico', N'Carrera 11 #10-22', N'paula.mendoza@correo.com', N'3289012345'),
+    (12, N'Cédula', N'001122334', N'Javier', N'Andrés', N'Fernández', N'Gutiérrez', '1984-09-02', N'Colombia', N'Santander', N'Bucaramanga', N'Cabecera', N'Carrera 21 #38-90', N'javier.fernandez@correo.com', N'3290123456');
 GO
 
 -- Perfil profesional
@@ -162,10 +192,22 @@ VALUES
 GO
 
 -- Estadísticas públicas
-INSERT INTO dbo.EstadisticasPublicas (CurriculumId, TotalVisitas, TotalContactos, UltimaVisita)
-VALUES
-    (1, 42, 5, GETDATE()),
-    (2, 7, 1, DATEADD(DAY, -1, GETDATE()));
+MERGE dbo.EstadisticasPublicas AS target
+USING (
+    VALUES
+        (1, 42, 5, GETDATE()),
+        (2, 7, 1, DATEADD(DAY, -1, GETDATE()))
+) AS source (CurriculumId, TotalVisitas, TotalContactos, UltimaVisita)
+ON target.CurriculumId = source.CurriculumId
+WHEN MATCHED THEN
+    UPDATE SET
+        TotalVisitas = source.TotalVisitas,
+        TotalContactos = source.TotalContactos,
+        UltimaVisita = source.UltimaVisita,
+        FechaActualizacion = SYSDATETIME()
+WHEN NOT MATCHED THEN
+    INSERT (CurriculumId, TotalVisitas, TotalContactos, UltimaVisita)
+    VALUES (source.CurriculumId, source.TotalVisitas, source.TotalContactos, source.UltimaVisita);
 GO
 
 PRINT N'Script 02_InsertTestData.sql ejecutado correctamente.';

@@ -14,13 +14,19 @@ BEGIN
     CREATE DATABASE [PortalCV];
 END
 GO
+*/
 USE [PortalCV];
 GO
-*/
 
 -- =============================================================================
--- LIMPIEZA: Eliminar tablas en orden inverso de dependencias (para re-ejecutar)
+-- LIMPIEZA: Eliminar vistas y tablas en orden inverso de dependencias (para re-ejecutar)
 -- =============================================================================
+
+IF OBJECT_ID(N'dbo.vw_VisitasYContactosPorCurriculum', N'V') IS NOT NULL DROP VIEW dbo.vw_VisitasYContactosPorCurriculum;
+IF OBJECT_ID(N'dbo.vw_CurriculumPersonales', N'V') IS NOT NULL DROP VIEW dbo.vw_CurriculumPersonales;
+IF OBJECT_ID(N'dbo.vw_CurriculumResumen', N'V') IS NOT NULL DROP VIEW dbo.vw_CurriculumResumen;
+IF OBJECT_ID(N'dbo.vw_EstadisticasDesdeCurriculum', N'V') IS NOT NULL DROP VIEW dbo.vw_EstadisticasDesdeCurriculum;
+GO
 
 IF OBJECT_ID(N'dbo.UsuarioRol', N'U') IS NOT NULL            DROP TABLE dbo.UsuarioRol;
 IF OBJECT_ID(N'dbo.EstadisticasPublicas', N'U') IS NOT NULL   DROP TABLE dbo.EstadisticasPublicas;
@@ -99,7 +105,8 @@ CREATE TABLE dbo.Curriculum (
 );
 
 CREATE NONCLUSTERED INDEX IX_Curriculum_UrlPublica ON dbo.Curriculum (UrlPublica);
-CREATE NONCLUSTERED INDEX IX_Curriculum_Estado ON dbo.Curriculum (Estado);
+CREATE NONCLUSTERED INDEX IX_Curriculum_Estado_Visitas ON dbo.Curriculum (Estado, ContadorVisitas DESC, CurriculumId)
+    INCLUDE (UrlPublica);
 
 -- -----------------------------------------------------------------------------
 -- C. INFORMACIÓN PERSONAL (Personales - 1 a 1 con Curriculum)
@@ -149,6 +156,9 @@ CREATE TABLE dbo.Personales (
     CONSTRAINT FK_Personales_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT UQ_Personales_CurriculumId UNIQUE (CurriculumId)
 );
+
+CREATE NONCLUSTERED INDEX IX_Personales_Ciudad ON dbo.Personales (Ciudad)
+    INCLUDE (CurriculumId, PrimerNombre, PrimerApellido);
 
 -- -----------------------------------------------------------------------------
 -- D. CONTACTOS Y REDES
@@ -239,6 +249,8 @@ CREATE TABLE dbo.Experiencia (
 );
 
 CREATE NONCLUSTERED INDEX IX_Experiencia_CurriculumId ON dbo.Experiencia (CurriculumId);
+CREATE NONCLUSTERED INDEX IX_Experiencia_Empresa_Curriculum ON dbo.Experiencia (Empresa, CurriculumId)
+    INCLUDE (Cargo, Sector, FechaInicio);
 
 -- Referencia.ExperienciaId (FK añadida después de crear Experiencia)
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Referencia_Experiencia')
@@ -264,6 +276,8 @@ CREATE TABLE dbo.Formacion (
     CONSTRAINT FK_Formacion_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
 
+CREATE NONCLUSTERED INDEX IX_Formacion_Titulo_Institucion ON dbo.Formacion (Titulo, Institucion, CurriculumId);
+
 -- -----------------------------------------------------------------------------
 -- H. HABILIDADES
 -- -----------------------------------------------------------------------------
@@ -282,7 +296,8 @@ CREATE TABLE dbo.Habilidad (
 );
 
 CREATE NONCLUSTERED INDEX IX_Habilidad_CurriculumId ON dbo.Habilidad (CurriculumId);
-CREATE NONCLUSTERED INDEX IX_Habilidad_Nombre ON dbo.Habilidad (Nombre);
+CREATE NONCLUSTERED INDEX IX_Habilidad_Nombre_Curriculum ON dbo.Habilidad (Nombre, CurriculumId)
+    INCLUDE (Tipo, Nivel);
 
 -- -----------------------------------------------------------------------------
 -- I. PROYECTOS
@@ -369,27 +384,192 @@ CREATE TABLE dbo.EstadisticasPublicas (
     CONSTRAINT FK_EstadisticasPublicas_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT UQ_EstadisticasPublicas_CurriculumId UNIQUE (CurriculumId)
 );
-
--- Vista que mantiene EstadisticasPublicas alineada con Curriculum (opcional: usar en lugar de tabla o sincronizar por job/trigger)
--- CREATE OR ALTER VIEW dbo.vw_EstadisticasDesdeCurriculum AS
--- SELECT c.CurriculumId, c.ContadorVisitas AS TotalVisitas, c.ContadorContactos AS TotalContactos, c.FechaActualizacion AS UltimaVisita, c.FechaActualizacion
--- FROM dbo.Curriculum c;
-
 GO
 
--- =============================================================================
--- DATOS INICIALES: Roles del sistema
--- =============================================================================
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Rol)
+-- -----------------------------------------------------------------------------
+-- TRIGGERS DE SINCRONIZACIÓN DE CONTADORES (Cursos y Estadísticas)
+-- -----------------------------------------------------------------------------
+-- Trigger para mantener en sincronía el contador de contactos y la tabla
+-- EstadisticasPublicas cada vez que se inserta/actualiza/elimina un registro
+-- de VisitanteContacto.
+CREATE TRIGGER dbo.trg_VisitanteContacto_SyncEstadisticas
+ON dbo.VisitanteContacto
+AFTER INSERT, UPDATE, DELETE
+AS
 BEGIN
-    SET IDENTITY_INSERT dbo.Rol ON;
-    INSERT INTO dbo.Rol (RolId, NombreRol, Descripcion) VALUES
-        (1, N'Visitante', N'Usuario no autenticado que consulta información pública'),
-        (2, N'Publicador', N'Profesional dueño de un CV'),
-        (3, N'Admin', N'Administrador del sistema');
-    SET IDENTITY_INSERT dbo.Rol OFF;
-END
+    SET NOCOUNT ON;
+
+    DECLARE @Now DATETIME2(0) = SYSDATETIME();
+
+    DECLARE @Curriculos TABLE (CurriculumId INT PRIMARY KEY);
+    DECLARE @ContactCounts TABLE (CurriculumId INT PRIMARY KEY, ContactCount INT NOT NULL);
+
+    INSERT INTO @Curriculos (CurriculumId)
+    SELECT DISTINCT CurriculumId FROM inserted
+    UNION
+    SELECT DISTINCT CurriculumId FROM deleted;
+
+    INSERT INTO @ContactCounts (CurriculumId, ContactCount)
+    SELECT CurriculumId, COUNT(*) AS ContactCount
+    FROM dbo.VisitanteContacto
+    WHERE CurriculumId IN (SELECT CurriculumId FROM @Curriculos)
+    GROUP BY CurriculumId;
+
+    UPDATE c
+    SET ContadorContactos = ISNULL(cc.ContactCount, 0)
+    FROM dbo.Curriculum c
+    INNER JOIN @Curriculos ch ON c.CurriculumId = ch.CurriculumId
+    LEFT JOIN @ContactCounts cc ON c.CurriculumId = cc.CurriculumId;
+
+    UPDATE ep
+    SET TotalContactos = ISNULL(cc.ContactCount, 0),
+        FechaActualizacion = @Now
+    FROM dbo.EstadisticasPublicas ep
+    INNER JOIN @Curriculos ch ON ep.CurriculumId = ch.CurriculumId
+    LEFT JOIN @ContactCounts cc ON ep.CurriculumId = cc.CurriculumId;
+
+    INSERT INTO dbo.EstadisticasPublicas (CurriculumId, TotalVisitas, TotalContactos, UltimaVisita, FechaActualizacion)
+    SELECT ch.CurriculumId, 0, ISNULL(cc.ContactCount, 0), NULL, @Now
+    FROM @Curriculos ch
+    LEFT JOIN dbo.EstadisticasPublicas ep ON ep.CurriculumId = ch.CurriculumId
+    LEFT JOIN @ContactCounts cc ON cc.CurriculumId = ch.CurriculumId
+    WHERE ep.CurriculumId IS NULL;
+END;
+GO
+
+-- Trigger para mantener en sincronía el contador de visitas y la tabla
+-- EstadisticasPublicas cada vez que se inserta/actualiza/elimina un registro
+-- de AlertaVisita.
+CREATE TRIGGER dbo.trg_AlertaVisita_SyncEstadisticas
+ON dbo.AlertaVisita
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Now DATETIME2(0) = SYSDATETIME();
+
+    DECLARE @Curriculos TABLE (CurriculumId INT PRIMARY KEY);
+    DECLARE @AlertCounts TABLE (
+        CurriculumId INT PRIMARY KEY,
+        VisitCount INT NOT NULL,
+        LatestVisit DATETIME2(0) NULL
+    );
+
+    INSERT INTO @Curriculos (CurriculumId)
+    SELECT DISTINCT CurriculumId FROM inserted
+    UNION
+    SELECT DISTINCT CurriculumId FROM deleted;
+
+    INSERT INTO @AlertCounts (CurriculumId, VisitCount, LatestVisit)
+    SELECT CurriculumId,
+           COUNT(*) AS VisitCount,
+           MAX(FechaVisita) AS LatestVisit
+    FROM dbo.AlertaVisita
+    WHERE CurriculumId IN (SELECT CurriculumId FROM @Curriculos)
+    GROUP BY CurriculumId;
+
+    UPDATE c
+    SET ContadorVisitas = ISNULL(ac.VisitCount, 0)
+    FROM dbo.Curriculum c
+    INNER JOIN @Curriculos ch ON c.CurriculumId = ch.CurriculumId
+    LEFT JOIN @AlertCounts ac ON c.CurriculumId = ac.CurriculumId;
+
+    UPDATE ep
+    SET TotalVisitas = ISNULL(ac.VisitCount, 0),
+        UltimaVisita = ac.LatestVisit,
+        FechaActualizacion = @Now
+    FROM dbo.EstadisticasPublicas ep
+    INNER JOIN @Curriculos ch ON ep.CurriculumId = ch.CurriculumId
+    LEFT JOIN @AlertCounts ac ON ep.CurriculumId = ac.CurriculumId;
+
+    INSERT INTO dbo.EstadisticasPublicas (CurriculumId, TotalVisitas, TotalContactos, UltimaVisita, FechaActualizacion)
+    SELECT ch.CurriculumId, ISNULL(ac.VisitCount, 0), 0, ac.LatestVisit, @Now
+    FROM @Curriculos ch
+    LEFT JOIN dbo.EstadisticasPublicas ep ON ep.CurriculumId = ch.CurriculumId
+    LEFT JOIN @AlertCounts ac ON ac.CurriculumId = ch.CurriculumId
+    WHERE ep.CurriculumId IS NULL;
+END;
+GO
+
+-- -----------------------------------------------------------------------------
+-- VISTAS (resúmenes y combinaciones comunes para consultas frecuentes)
+-- -----------------------------------------------------------------------------
+-- Vista que mantiene EstadisticasPublicas alineada con Curriculum (opcional: usar en lugar de tabla o sincronizar por job/trigger)
+IF OBJECT_ID(N'dbo.vw_EstadisticasDesdeCurriculum', N'V') IS NOT NULL
+    DROP VIEW dbo.vw_EstadisticasDesdeCurriculum;
+GO
+CREATE VIEW dbo.vw_EstadisticasDesdeCurriculum AS
+SELECT
+    c.CurriculumId,
+    c.ContadorVisitas AS TotalVisitas,
+    c.ContadorContactos AS TotalContactos,
+    c.FechaActualizacion AS UltimaVisita,
+    c.FechaActualizacion AS FechaActualizacion
+FROM dbo.Curriculum c;
+GO
+
+-- Vista de resumen de Curriculum con datos de usuario y estadísticas (un solo registro por curriculum)
+IF OBJECT_ID(N'dbo.vw_CurriculumResumen', N'V') IS NOT NULL
+    DROP VIEW dbo.vw_CurriculumResumen;
+GO
+CREATE VIEW dbo.vw_CurriculumResumen AS
+SELECT
+    c.CurriculumId,
+    u.Email AS UsuarioEmail,
+    c.UrlPublica,
+    c.Estado AS CurriculumEstado,
+    c.ContadorVisitas,
+    c.ContadorContactos,
+    ep.TotalVisitas,
+    ep.TotalContactos,
+    ep.UltimaVisita,
+    ep.FechaActualizacion AS EstadisticasActualizacion
+FROM dbo.Curriculum c
+INNER JOIN dbo.Usuario u ON c.UsuarioId = u.UsuarioId
+LEFT JOIN dbo.EstadisticasPublicas ep ON ep.CurriculumId = c.CurriculumId;
+GO
+
+-- Vista que exhibe información personal asociada a cada Curriculum (un perfil por curriculum)
+IF OBJECT_ID(N'dbo.vw_CurriculumPersonales', N'V') IS NOT NULL
+    DROP VIEW dbo.vw_CurriculumPersonales;
+GO
+CREATE VIEW dbo.vw_CurriculumPersonales AS
+SELECT
+    c.CurriculumId,
+    u.Email AS UsuarioEmail,
+    p.PrimerNombre,
+    p.SegundoNombre,
+    p.PrimerApellido,
+    p.SegundoApellido,
+    p.TelefonoFijo,
+    p.Celular,
+    p.Email AS EmailPersonal,
+    p.Pais,
+    p.Ciudad,
+    p.Direccion
+FROM dbo.Curriculum c
+INNER JOIN dbo.Personales p ON p.CurriculumId = c.CurriculumId
+INNER JOIN dbo.Usuario u ON c.UsuarioId = u.UsuarioId;
+GO
+
+-- Vista para reportes de visitas/contactos por Curriculum, incluye totales y última visita
+IF OBJECT_ID(N'dbo.vw_VisitasYContactosPorCurriculum', N'V') IS NOT NULL
+    DROP VIEW dbo.vw_VisitasYContactosPorCurriculum;
+GO
+CREATE VIEW dbo.vw_VisitasYContactosPorCurriculum AS
+SELECT
+    c.CurriculumId,
+    c.UrlPublica,
+    c.Estado,
+    c.ContadorVisitas,
+    c.ContadorContactos,
+    ISNULL(ep.TotalVisitas, 0) AS TotalVisitasHistorico,
+    ISNULL(ep.TotalContactos, 0) AS TotalContactosHistorico,
+    ep.UltimaVisita
+FROM dbo.Curriculum c
+LEFT JOIN dbo.EstadisticasPublicas ep ON ep.CurriculumId = c.CurriculumId;
+
 GO
 
 PRINT N'Script 01_CreateSchema.sql ejecutado correctamente.';
