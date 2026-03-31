@@ -12,6 +12,7 @@ Portal web para conectar profesionales (publicadores de CV) con reclutadores. Lo
 | [docs/Despliegue.md](docs/Despliegue.md) | Guía CI/CD, Docker, Azure, Kubernetes |
 | [docs/DevOps.md](docs/DevOps.md) | Operación técnica, prácticas y lineamientos DevOps |
 | [docs/Plan-Backup-Mantenimiento.md](docs/Plan-Backup-Mantenimiento.md) | Política básica de backups, retención e índices/estadísticas |
+| [docs/Politica-Proteccion-Ramas.md](docs/Politica-Proteccion-Ramas.md) | Política obligatoria de protección de ramas y PR/MR |
 | [docs/Guia-git.md](docs/Guia-git.md) | Buenas prácticas Git (ramas, commits, flujo) |
 | [database/README.md](database/README.md) | Scripts SQL Server y creación de la base de datos |
 | [database/01_CreateSchema.dbml](database/01_CreateSchema.dbml) | Modelo DBML del esquema de base de datos |

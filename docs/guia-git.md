@@ -230,6 +230,7 @@ Un compendio de los comandos esenciales para el día a día.
 |-----------|------------------------|
 | [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas (main, develop, feature), protección, PR/MR. |
 | [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a `develop`/`main` dispara pipeline; despliegue a producción desde `main`. |
+| [Politica-Proteccion-Ramas.md](Politica-Proteccion-Ramas.md) | Reglas obligatorias para bloquear push directo y exigir PR/MR con aprobación y CI. |
 | [Documentacion.md](Documentacion.md) | Visión general del producto (sin detalle de Git). |
 
 ---
