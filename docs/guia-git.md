@@ -224,13 +224,51 @@ Un compendio de los comandos esenciales para el día a día.
 
 ---
 
+## 7. Plantillas de PR/MR
+
+Para estandarizar revisiones, el proyecto tiene dos tipos de plantilla.
+
+### 7.1. Plantilla estándar
+
+Úsala cuando el cambio tenga alcance medio o alto:
+
+1. Nueva funcionalidad (`feat`).
+2. Correcciones con impacto en varios módulos.
+3. Cambios con impacto en base de datos.
+4. Cambios de arquitectura o comportamiento.
+
+Archivos:
+
+- GitHub: [.github/PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md)
+- GitLab: [.gitlab/merge_request_templates/Default.md](../.gitlab/merge_request_templates/Default.md)
+
+### 7.2. Plantilla corta (hotfix/docs/chore)
+
+Úsala para cambios rápidos y de bajo riesgo:
+
+1. Hotfix puntual.
+2. Ajustes de documentación.
+3. Tareas técnicas pequeñas (`chore`).
+
+Archivos:
+
+- GitHub: [.github/PULL_REQUEST_TEMPLATE/hotfix-short.md](../.github/PULL_REQUEST_TEMPLATE/hotfix-short.md)
+- GitLab: [.gitlab/merge_request_templates/Hotfix-Short.md](../.gitlab/merge_request_templates/Hotfix-Short.md)
+
+### 7.3. Regla práctica de elección
+
+1. Si el cambio toca base de datos o lógica de negocio, usa plantilla estándar.
+2. Si el cambio se puede validar en pocos pasos y riesgo bajo, usa plantilla corta.
+3. Ante duda, usa plantilla estándar.
+
+---
+
 ## Referencias del proyecto
 
 | Documento | Relación con esta guía |
 |-----------|------------------------|
 | [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas (main, develop, feature), protección, PR/MR. |
 | [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a `develop`/`main` dispara pipeline; despliegue a producción desde `main`. |
-| [Politica-Proteccion-Ramas.md](Politica-Proteccion-Ramas.md) | Reglas obligatorias para bloquear push directo y exigir PR/MR con aprobación y CI. |
 | [Documentacion.md](Documentacion.md) | Visión general del producto (sin detalle de Git). |
 
 ---
