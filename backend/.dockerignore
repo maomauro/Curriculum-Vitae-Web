@@ -1,0 +1,14 @@
+# Archivos que Docker NO debe copiar al construir la imagen del backend.
+# Esto hace el build más rápido y la imagen más pequeña.
+
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+.git/
+.gitignore
+README.md
+Dockerfile
+docker-compose.yml

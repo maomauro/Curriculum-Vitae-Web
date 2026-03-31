@@ -1,0 +1,95 @@
+# docker-compose.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# Orquestador de servicios para PortalCV en entorno local/desarrollo.
+# Levanta 3 contenedores: base de datos, backend y frontend.
+#
+# Uso:
+#   Levantar todo:       docker-compose up -d
+#   Ver logs:            docker-compose logs -f
+#   Detener todo:        docker-compose down
+#   Detener + borrar BD: docker-compose down -v
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── 1. BASE DE DATOS (SQL Server) ──────────────────────────────────────────
+  # Imagen oficial de Microsoft para SQL Server 2022 en Linux.
+  # Es la misma base de datos que usas en desarrollo, ahora en contenedor.
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: portalcv-db
+    environment:
+      # Acepta la licencia de SQL Server (requerido por Microsoft)
+      ACCEPT_EULA: "Y"
+      # Contraseña del usuario SA (administrador).
+      # IMPORTANTE: cámbiala en producción y usa un archivo .env
+      SA_PASSWORD: "PortalCV_Dev2026!"
+      MSSQL_PID: "Developer"          # Edición gratuita para desarrollo
+    ports:
+      # Puerto local 1433 → puerto interno 1433
+      # Así puedes conectarte con SSMS o Azure Data Studio desde tu máquina
+      - "1433:1433"
+    volumes:
+      # Volumen persistente: los datos de la BD sobreviven al reinicio del contenedor
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - portalcv-network
+    healthcheck:
+      # Verifica que SQL Server esté listo antes de levantar el backend
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P 'PortalCV_Dev2026!' -Q 'SELECT 1' -No"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── 2. BACKEND (.NET 8 API) ────────────────────────────────────────────────
+  # Construye la imagen desde el Dockerfile en la carpeta backend/.
+  # Solo arranca cuando la base de datos está lista (depends_on + condition).
+  backend:
+    build:
+      context: ./backend          # Carpeta donde está el Dockerfile del backend
+      dockerfile: Dockerfile
+    container_name: portalcv-api
+    environment:
+      # Cadena de conexión a SQL Server (usa el nombre del servicio "db" como host)
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=PortalCV;User Id=SA;Password=PortalCV_Dev2026!;TrustServerCertificate=True;"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+    ports:
+      # Puerto local 5000 → puerto interno 8080 del contenedor
+      - "5000:8080"
+    depends_on:
+      db:
+        condition: service_healthy   # Espera a que SQL Server esté listo
+    networks:
+      - portalcv-network
+
+  # ── 3. FRONTEND (Angular + Nginx) ──────────────────────────────────────────
+  # Construye la imagen desde el Dockerfile en la carpeta frontend/.
+  # Solo depende del backend para que la URL de la API esté disponible.
+  frontend:
+    build:
+      context: ./frontend         # Carpeta donde está el Dockerfile del frontend
+      dockerfile: Dockerfile
+    container_name: portalcv-web
+    ports:
+      # Puerto local 4200 → puerto interno 80 de Nginx
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - portalcv-network
+
+# ─── VOLÚMENES ────────────────────────────────────────────────────────────────
+# Los volúmenes persisten datos aunque el contenedor se detenga o elimine.
+volumes:
+  sqlserver_data:
+    name: portalcv-sqlserver-data
+
+# ─── RED INTERNA ──────────────────────────────────────────────────────────────
+# Todos los servicios comparten una red privada.
+# Se comunican entre sí por nombre de servicio (ej: "db", "backend").
+networks:
+  portalcv-network:
+    name: portalcv-network
+    driver: bridge
