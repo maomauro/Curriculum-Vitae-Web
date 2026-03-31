@@ -4,7 +4,8 @@
 # Levanta 3 contenedores: base de datos, backend y frontend.
 #
 # Uso:
-#   Levantar todo:       docker-compose up -d
+#   Levantar solo BD:    docker-compose up -d db db-init
+#   Levantar todo:       docker-compose --profile app up -d
 #   Ver logs:            docker-compose logs -f
 #   Detener todo:        docker-compose down
 #   Detener + borrar BD: docker-compose down -v
@@ -47,10 +48,13 @@ services:
     container_name: portalcv-db-init
     environment:
       SA_PASSWORD: ${SA_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
     volumes:
       # Monta la carpeta scripts/ local → /scripts dentro del contenedor
       - ./scripts:/scripts
-    command: /bin/bash /scripts/init-db.sh
+    entrypoint: ["/bin/bash", "/scripts/init-db.sh"]
     depends_on:
       db:
         condition: service_healthy   # Espera a que SQL Server esté listo
@@ -62,12 +66,13 @@ services:
   # Construye la imagen desde el Dockerfile en la carpeta backend/.
   # Solo arranca cuando la inicialización de BD completó exitosamente.
   backend:
+    profiles: ["app"]
     build:
       context: ./backend          # Carpeta donde está el Dockerfile del backend
       dockerfile: Dockerfile
     container_name: portalcv-api
     environment:
-      ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${DB_NAME};User Id=${APP_DB_USER};Password=${APP_DB_PASSWORD};TrustServerCertificate=True;"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:8080"
     ports:
@@ -82,6 +87,7 @@ services:
   # Construye la imagen desde el Dockerfile en la carpeta frontend/.
   # Solo depende del backend para que la URL de la API esté disponible.
   frontend:
+    profiles: ["app"]
     build:
       context: ./frontend         # Carpeta donde está el Dockerfile del frontend
       dockerfile: Dockerfile
