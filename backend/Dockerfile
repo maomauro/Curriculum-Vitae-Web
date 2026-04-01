@@ -1,28 +1,28 @@
 # ─── ETAPA 1: Compilación ───────────────────────────────────────────────────
-# Usamos la imagen oficial del SDK de .NET 8 para compilar el proyecto.
-# Esta imagen incluye todo lo necesario para compilar pero NO se incluye
-# en la imagen final (solo se usa dentro del proceso de build).
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Usamos la imagen oficial del SDK de .NET 10 para compilar el proyecto.
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 # Directorio de trabajo dentro del contenedor
 WORKDIR /src
 
-# Copiamos primero el archivo de proyecto para restaurar dependencias.
-# Esto aprovecha el cache de Docker: si no cambia el .csproj, no re-descarga.
-COPY ["*.csproj", "./"]
-RUN dotnet restore
+# Copiamos primero archivos de solución y proyectos para aprovechar cache.
+COPY ["PortalCV.Backend/PortalCV.Backend.slnx", "PortalCV.Backend/"]
+COPY ["PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj", "PortalCV.Backend/PortalCV.Api/"]
+COPY ["PortalCV.Backend/PortalCV.Application/PortalCV.Application.csproj", "PortalCV.Backend/PortalCV.Application/"]
+COPY ["PortalCV.Backend/PortalCV.Domain/PortalCV.Domain.csproj", "PortalCV.Backend/PortalCV.Domain/"]
+COPY ["PortalCV.Backend/PortalCV.Infrastructure/PortalCV.Infrastructure.csproj", "PortalCV.Backend/PortalCV.Infrastructure/"]
+RUN dotnet restore "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj"
 
 # Copiamos el resto del código fuente
 COPY . .
 
 # Compilamos y publicamos en modo Release en la carpeta /app/publish
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 
 # ─── ETAPA 2: Ejecución ─────────────────────────────────────────────────────
 # Usamos la imagen de runtime (más liviana, sin el SDK de compilación).
-# Esto reduce el tamaño final del contenedor considerablemente.
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 
@@ -33,5 +33,4 @@ COPY --from=build /app/publish .
 EXPOSE 8080
 
 # Comando que se ejecuta cuando arranca el contenedor.
-# Reemplaza "BackendApp" con el nombre real de tu .dll cuando tengas el proyecto.
-ENTRYPOINT ["dotnet", "BackendApp.dll"]
+ENTRYPOINT ["dotnet", "PortalCV.Api.dll"]

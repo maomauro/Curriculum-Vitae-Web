@@ -8,10 +8,10 @@
 docker-compose.override.yml
 
 # ── .NET / Backend ───────────────────────────────────────────────────────────
-backend/bin/
-backend/obj/
-backend/*.user
-backend/.vs/
+backend/**/bin/
+backend/**/obj/
+backend/**/*.user
+**/.vs/
 
 # ── Node / Frontend ──────────────────────────────────────────────────────────
 frontend/node_modules/
