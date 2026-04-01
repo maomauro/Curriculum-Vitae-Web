@@ -1,3 +1,6 @@
 <Solution>
   <Project Path="PortalCV.Api/PortalCV.Api.csproj" />
+  <Project Path="PortalCV.Application/PortalCV.Application.csproj" />
+  <Project Path="PortalCV.Domain/PortalCV.Domain.csproj" />
+  <Project Path="PortalCV.Infrastructure/PortalCV.Infrastructure.csproj" />
 </Solution>
