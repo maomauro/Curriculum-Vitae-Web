@@ -8,7 +8,7 @@ WORKDIR /app
 # Copiamos package.json primero para aprovechar el cache de Docker.
 # Si no cambia package.json, no re-instala dependencias en builds posteriores.
 COPY package*.json ./
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copiamos el resto del código fuente de Angular
 COPY . .
@@ -27,8 +27,13 @@ FROM nginx:alpine AS runtime
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiamos los archivos compilados de Angular al directorio de Nginx.
-# Reemplaza "nombre-del-proyecto" con el nombre real de tu app Angular.
-COPY --from=build /app/dist/nombre-del-proyecto/browser /usr/share/nginx/html
+# Se detecta automáticamente el primer directorio dist/<app>/browser.
+COPY --from=build /app/dist /tmp/dist
+RUN set -eux; \
+	app_dir="$(find /tmp/dist -mindepth 2 -maxdepth 2 -type d -name browser | head -n 1)"; \
+	test -n "$app_dir"; \
+	cp -a "$app_dir"/. /usr/share/nginx/html/; \
+	rm -rf /tmp/dist
 
 # Puerto estándar HTTP
 EXPOSE 80
