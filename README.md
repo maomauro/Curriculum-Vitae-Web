@@ -9,7 +9,7 @@ Portal web para conectar profesionales (publicadores de CV) con reclutadores. Lo
 | [docs/Documentacion.md](docs/Documentacion.md) | Visión del producto, componentes, seguridad, modelo de datos, arquitectura |
 | [docs/Backlog.md](docs/Backlog.md) | Épicas, historias de usuario y plan de sprints |
 | [docs/Modelo.md](docs/Modelo.md) | Modelo de datos detallado (tablas y relaciones) |
-| [docs/Despliegue.md](docs/Despliegue.md) | Guía CI/CD, Docker, Azure, Kubernetes |
+| [docs/Despliegue.md](docs/Despliegue.md) | Guía CI/CD y despliegue — GitHub Actions, Azure Container Apps, Static Web Apps |
 | [docs/DevOps.md](docs/DevOps.md) | Operación técnica, prácticas y lineamientos DevOps |
 | [docs/Plan-Backup-Mantenimiento.md](docs/Plan-Backup-Mantenimiento.md) | Política básica de backups, retención e índices/estadísticas |
 | [docs/Politica-Proteccion-Ramas.md](docs/Politica-Proteccion-Ramas.md) | Política obligatoria de protección de ramas y PR/MR |

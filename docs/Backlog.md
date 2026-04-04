@@ -45,7 +45,7 @@ Además:
 │
 └── 🔧 Feature 0.2: Configuración de Entornos
      ├── 📝 Historia Técnica: Repositorio y control de versiones
-     │    ├── Tarea: Configurar GitLab (ramas, protect, templates)
+     │    ├── Tarea: Configurar GitHub (ramas, protección de ramas, PR templates)
      │    └── Tarea: Configurar tablero ágil (boards, milestones)
      │
      ├── 📝 Historia Técnica: Entorno de desarrollo local
@@ -64,7 +64,7 @@ Además:
      │    └── Tarea: Configurar servicios base (HttpClient, interceptores)
      │
      └── 📝 Historia Técnica: CI/CD y documentación
-          ├── Tarea: Configurar CI/CD básico (.gitlab-ci.yml)
+          ├── Tarea: Configurar CI/CD básico (.github/workflows/ci.yml)
           └── Tarea: Documentar guía de inicio rápido
 ```
 
@@ -95,7 +95,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 **Feature 0.2 – Configuración de entornos**
 | Tarea | Descripción |
 |-------|-------------|
-| Configurar repositorio (GitHub/GitLab) | Crear repo, estructura inicial, .gitignore; opcional mirror. |
+| Configurar repositorio (GitHub) | Crear repo, estructura inicial, .gitignore, PR templates. |
 | Estructurar ramas (main, develop, feature) | Crear ramas principales y documentar flujo (ver Guia-git.md). |
 | Proteger ramas principales | Reglas: no push directo a main/develop; PR/MR obligatorio. |
 | Configurar templates para PR/MR | Plantillas de descripción, checklist (tests, documentación). |
@@ -114,7 +114,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Implementar servicios base (HttpClient) | Servicio de API con métodos por dominio. |
 | Configurar interceptores | Interceptor de auth (token en header); interceptor de errores (toast/redirect). |
 | Crear componentes base | Header, footer, layout principal, rutas base. |
-| Configurar pipeline CI/CD | Workflow (GitHub Actions o .gitlab-ci.yml): build backend, build frontend, test. |
+| Configurar pipeline CI/CD | Workflow GitHub Actions (.github/workflows/ci.yml): build backend, build frontend, test. |
 | Configurar análisis de código | (Opcional) SonarQube/SonarCloud en el pipeline. |
 | Documentar guía de inicio rápido | Cómo clonar, levantar BD, backend y frontend (README o docs). |
 | Crear README principal del proyecto | Descripción del proyecto, enlaces a documentación, requisitos e instrucciones básicas. |
@@ -148,15 +148,15 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 #### FEATURE 0.2: CONFIGURACIÓN DE ENTORNOS
 
-**Descripción:** Configuración del repositorio (GitHub/GitLab), ramas y tablero ágil; entorno local con Docker y SQL Server; solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
+**Descripción:** Configuración del repositorio (GitHub), ramas y tablero ágil; entorno local con Docker y SQL Server; solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
-| **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio (GitHub recomendado o GitLab)<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para PR/MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
+| **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio (GitHub)<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para PR/MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
 | **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar Docker y docker-compose<br>[ ] Crear docker-compose.yml con SQL Server<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
 | **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
-| **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions o .gitlab-ci.yml: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
+| **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
 
 ---
 
@@ -184,7 +184,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | **HS-13** | Historia Técnica | API: Formulario de contacto | Guardar contacto y generar alerta | `POST /api/public/contact/{cvId}` | 5 |
 | **HS-14** | Historia Técnica | API: Categorías y filtros | Ciudades, habilidades populares | `GET /api/public/filters` | 2 |
 | **HS-15** | Historia Técnica | Sistema de rate limiting | Controlar spam en formularios | Middleware | 3 |
-| **HS-16** | Historia Técnica | Sistema de caché | Redis/memoria para performance | Middleware | 3 |
+| **HS-16** | Historia Técnica | Sistema de caché | IMemoryCache (.NET in-process) para performance | Middleware | 3 |
 
 **Criterios de aceptación (resumen):** Listado (HS-09) paginado y filtrable; búsqueda (HS-10) con sugerencias; detalle (HS-11) por URL pública; stats (HS-12) coherentes con datos; contacto (HS-13) persiste y notifica; filtros (HS-14) con datos reales; rate limiting (HS-15) limita envíos por IP; caché (HS-16) reduce carga en consultas repetidas.
 
