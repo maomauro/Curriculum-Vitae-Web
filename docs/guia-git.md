@@ -83,22 +83,21 @@ git pull origin develop
 main       ─────────────────────────────────── producción
               ↑ PR
 develop    ──────────────────────────────────── integración
-              ↑ PR           ↑ PR               ↑ PR
-feat/docs   feat/hs08-cicd-docs   feat/frontend-angular
-5 commits      1 commit              3 commits
-(docs)         (CI/CD + karma)       (CORS + JWT vars)
+              ↑ PR       ↑ PR         ↑ PR
+feat/docs  feat/infra  feat/frontend  feat/backend
+6 commits   1 commit    3 commits     0 commits
+(docs)      (CI/CD)     (CORS+JWT)    (nueva)
 ```
 
 **PRs pendientes de abrir en GitHub:**
 
 | Rama | Destino | Contenido |
 |------|---------|-----------|
-| `feat/docs` | `develop` | 5 commits de documentación (Despliegue, DevOps, Diseño, audit) |
-| `feat/hs08-cicd-docs` | `develop` | CI/CD GitHub Actions + karma headless |
-| `feat/frontend-angular` | `develop` | CORS backend + variables JWT + limpieza scaffold |
+| `feat/docs` | `develop` | 6 commits de documentación (Despliegue, DevOps, Diseño, audit, guia-git) |
+| `feat/infra` | `develop` | CI/CD GitHub Actions + karma headless |
+| `feat/frontend` | `develop` | CORS backend + variables JWT + limpieza scaffold |
 
-> Después de los 3 merges, crear desde develop las ramas de largo plazo:
-> `feat/frontend`, `feat/backend`, `feat/infra`.
+> `feat/backend` ya existe en `develop` (0 commits, lista para trabajo .NET).
 
 ---
 
