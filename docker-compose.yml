@@ -62,7 +62,7 @@ services:
       - portalcv-network
     restart: "no"                    # Solo corre una vez, no reinicia
 
-  # ── 3. BACKEND (.NET 8 API) ────────────────────────────────────────────────
+  # ── 3. BACKEND (.NET 10 API) ───────────────────────────────────────────────
   # Construye la imagen desde el Dockerfile en la carpeta backend/.
   # Solo arranca cuando la inicialización de BD completó exitosamente.
   backend:
