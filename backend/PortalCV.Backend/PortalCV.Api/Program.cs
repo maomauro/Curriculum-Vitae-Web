@@ -25,6 +25,19 @@ namespace PortalCV.Api
 
             builder.Services.AddInfrastructure(builder.Configuration);
 
+            // Configurar CORS para permitir requests del frontend
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", corsBuilder =>
+                {
+                    corsBuilder
+                        .WithOrigins("http://localhost:4200", "http://localhost:3000", "http://portalcv-web")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
@@ -101,6 +114,8 @@ namespace PortalCV.Api
 
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.UseSerilogRequestLogging();
+
+            app.UseCors("AllowFrontend");
 
             if (app.Environment.IsDevelopment())
             {
