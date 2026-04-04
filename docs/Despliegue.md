@@ -142,7 +142,7 @@ package-and-deploy:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: upload
         app_location: /frontend
-        output_location: dist/portalcv-web
+        output_location: dist/portalcv-web/browser
 ```
 
 ---
@@ -192,11 +192,41 @@ package-and-deploy:
 | Repo | `maomauro/Curriculum-Vitae-Web` |
 | Rama | `main` |
 | App location | `/frontend` |
-| Output location | `dist/portalcv-web` |
+| Output location | `dist/portalcv-web/browser` |
 | API location | -- (API separada en Container Apps) |
 
-> Static Web Apps detecta automaticamente Angular y configura el build.
-> Configura `BACKEND_URL` como application setting apuntando al dominio de Container Apps.
+> Angular es una SPA compilada: los archivos resultantes son HTML + JS + CSS estaticos sin capacidad
+> de leer variables de entorno en runtime. La URL del backend se inyecta en TIEMPO DE BUILD
+> a traves de `src/environments/environment.prod.ts` y el mecanismo `fileReplacements` de Angular CLI.
+> Azure Static Web Apps solo sirve esos archivos estaticos + maneja el enrutamiento SPA.
+
+**Archivo requerido: `frontend/public/staticwebapp.config.json`**
+
+Este archivo le indica a Azure Static Web Apps que redirija todas las rutas a `index.html`
+(necesario para que el router de Angular funcione correctamente):
+
+```json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*", "/*.{css,js,png,jpg,jpeg,gif,ico,svg,woff,woff2}"]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff"
+  }
+}
+```
+
+> Sin este archivo, navegar directamente a `/auth/login` o recargar la pagina
+> devuelve 404 en Azure Static Web Apps.
+
+**Archivos de environments requeridos en el codigo Angular:**
+
+| Archivo | Entorno | `apiUrl` apunta a |
+|---------|---------|-------------------|
+| `src/environments/environment.ts` | Desarrollo local | `http://localhost:5000/api` |
+| `src/environments/environment.prod.ts` | Produccion | `https://portalcv-api.azurecontainerapps.io/api` |
 
 ### Configuracion de Azure SQL (ya existente)
 
@@ -223,6 +253,10 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 | `AZURE_SQL_CONN_PROD` | Cadena de conexion Azure SQL con portalcv_app_prod | Ver `.env` comentado (linea Azure) |
 
 > `GITHUB_TOKEN` es automatico -- no requiere creacion manual.
+
+> **Nota frontend:** La URL de produccion del backend (`apiUrl` en `environment.prod.ts`)
+> se define directamente en el codigo fuente -- no requiere secret adicional porque es
+> una URL publica (el HTTPS del Container App es accesible sin autenticacion para el cliente).
 
 ---
 
@@ -283,7 +317,99 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 
 ---
 
-## 8. Checklist de despliegue inicial
+## 8. Arquitectura del frontend Angular
+
+### Estructura de modulos (implementada en HS-07)
+
+```
+src/app/
++-- core/                  Servicios singleton, interceptores, guards
+|   +-- services/
+|   |   +-- api.service.ts       Cliente HTTP base (usa environment.apiUrl)
+|   |   +-- auth.service.ts      Gestion de sesion y token JWT
+|   +-- interceptors/
+|   |   +-- auth.interceptor.ts  Inyecta Bearer token en cada request
+|   |   +-- error.interceptor.ts Manejo centralizado de errores HTTP
+|   +-- guards/                  Proteccion de rutas autenticadas
++-- features/              Modulos por area funcional (lazy loading)
+|   +-- public/            Landing, busqueda, detalle CV, contacto
+|   +-- auth/              Login, registro
+|   +-- editor/            Editor de CV (datos, experiencia, habilidades...)
+|   +-- dashboard/         Estadisticas y alertas del publicador
++-- layout/                Header, Footer, MainLayout (shell de la app)
++-- shared/                Componentes y pipes reutilizables
+```
+
+### Como funciona la URL del backend segun entorno
+
+Angular es codigo que se ejecuta en el navegador del usuario. A diferencia del backend (.NET),
+NO puede leer variables de entorno del servidor en runtime. La URL del API se fija en BUILD TIME:
+
+```
+DESARROLLO LOCAL
+  environment.ts           --> apiUrl = http://localhost:5000/api
+  ng serve                 --> usa este archivo
+  Angular DevServer        --> proxy al backend en Docker Compose
+
+PRODUCCION
+  environment.prod.ts      --> apiUrl = https://portalcv-api.azurecontainerapps.io/api
+  ng build --configuration production --> reemplaza environment.ts por environment.prod.ts
+  Resultado: archivos JS estaticos con la URL de prod embebida
+```
+
+El mecanismo de reemplazo se configura en `angular.json` bajo `fileReplacements`:
+
+```json
+"configurations": {
+  "production": {
+    "fileReplacements": [
+      {
+        "replace": "src/environments/environment.ts",
+        "with":    "src/environments/environment.prod.ts"
+      }
+    ]
+  }
+}
+```
+
+### Enrutamiento SPA en Azure Static Web Apps
+
+Azure Static Web Apps sirve archivos estaticos. Cuando el usuario navega directamente a
+`/auth/login` o recarga la pagina, el servidor busca ese archivo fisico -- que no existe.
+Para que Angular maneje esas rutas se necesita `frontend/public/staticwebapp.config.json`:
+
+```json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*", "/*.{css,js,png,jpg,jpeg,gif,ico,svg,woff,woff2}"]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff"
+  }
+}
+```
+
+### CORS: quien permite que el frontend llame al backend
+
+El frontend (en `azurestaticapps.net`) llama al backend (en `azurecontainerapps.io`).
+Son dominios distintos -- el backend necesita permitir ese origen en su configuracion CORS.
+El backend .NET ya tiene CORS configurado; al crear el Container App hay que agregar el
+dominio del Static Web App como origen permitido en las variables de entorno.
+
+### Pendiente implementar (rama feat/hs-frontend-config)
+
+| Tarea | Archivo | Detalle |
+|-------|---------|---------|
+| Crear environments | `src/environments/environment.ts` y `environment.prod.ts` | Con `apiUrl` por entorno |
+| Conectar ApiService | `core/services/api.service.ts` | Usar `environment.apiUrl` en lugar de URL hardcodeada |
+| Configurar fileReplacements | `angular.json` | Reemplazo automatico en build produccion |
+| Crear config SPA | `public/staticwebapp.config.json` | Fallback al index.html para rutas Angular |
+
+---
+
+## 9. Checklist de despliegue inicial
 
 ```
 AZURE
