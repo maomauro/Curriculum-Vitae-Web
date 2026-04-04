@@ -1,265 +1,244 @@
 # Guía de Buenas Prácticas de Git
 
-Ramas, commits y flujo de trabajo para el equipo. Alineada con el [Backlog](Backlog.md) (HS-04: ramas, PR/MR) y el flujo CI/CD del [Despliegue](Despliegue.md) (feature → develop → main).
+Ramas, commits y flujo de trabajo para el proyecto. Alineada con el [Backlog](Backlog.md) (HS-04) y el flujo CI/CD del [Despliegue](Despliegue.md) (feature → develop → main).
 
 ---
 
-## Objetivo
+## 1. Estrategia de Ramas
 
-Establecer un estándar claro y eficiente para el uso de Git en equipos de desarrollo, garantizando un historial limpio, una colaboración fluida y una integración continua de calidad.
+### 1.1. Ramas permanentes
 
----
+Existen durante toda la vida del proyecto. **No se eliminarán nunca.**
 
-## 1. Estrategia de Ramas (Branching Strategy)
+| Rama | Propósito | Protección |
+|------|-----------|-----------|
+| `main` | Código desplegado en producción. Solo se actualiza por PR desde `develop`. | Push directo bloqueado |
+| `develop` | Rama de integración. Recibe el trabajo terminado de las ramas de trabajo. | Push directo bloqueado |
 
-La forma en que organizas tus ramas es la base de un buen flujo de trabajo. La estrategia más común y recomendada es **Git Flow** (o una versión simplificada del mismo).
+### 1.2. Ramas de trabajo (largo plazo)
 
-### 1.1. Clasificación de Ramas Principales (Eternas)
+En lugar de crear una rama por historia técnica, se mantienen **cuatro ramas de trabajo** de larga duración, una por área. Cada área acumula commits con mensajes semánticos que identifican la historia (`feat(hs09): api listado cvs`).
 
-Estas ramas existen durante toda la vida del proyecto.
+| Rama | Área | Qué incluye |
+|------|------|-------------|
+| `feat/frontend` | Frontend Angular | Layouts, AdminLTE, páginas, componentes, services, environments |
+| `feat/backend` | Backend .NET | Endpoints, CRUDs, middleware, servicios de aplicación |
+| `feat/infra` | Infraestructura | Docker, GitHub Actions, scripts SQL, configuración Azure |
+| `feat/docs` | Documentación | Cambios en `/docs`, `README.md`, `database/README.md` |
 
-*   **`main` (o `master`)**:
-    *   **Propósito**: Contiene el código listo para producción. Es la imagen fiel de lo que está desplegado y funcionando para los usuarios.
-    *   **Regla de Oro**: Está estrictamente prohibido hacer `commit` directo en `main`. Solo se actualiza mediante *Pull Requests (PRs) / Merge Requests (MRs)* desde `develop` (o `hotfix`). Cada `merge` a `main` debería idealmente generar una nueva versión (tag).
+**Ciclo de vida de una rama de trabajo:**
 
-*   **`develop`**:
-    *   **Propósito**: Es la rama de integración. Contiene la última versión de desarrollo con todas las nuevas funcionalidades que están siendo probadas y validadas para la próxima versión.
-    *   **Regla de Oro**: Tampoco se hacen `commits` directos aquí. Nace de `main` y recibe las funcionalidades terminadas mediante PRs desde las ramas de apoyo.
-
-### 1.2. Clasificación de Ramas de Apoyo (Temporales)
-
-Estas ramas tienen una vida limitada y se crean para un propósito específico. Una vez cumplido su objetivo, se eliminan.
-
-*   **`feature/*` (o `feat/*`)**:
-    *   **Propósito**: Desarrollar una nueva funcionalidad específica.
-    *   **¿De dónde nace?**: Siempre de la rama `develop` más actualizada.
-    *   **¿Dónde se integra?**: De vuelta a `develop` cuando la funcionalidad está **completa y testeada**. Se recomienda usar `--no-ff` (no fast-forward) para preservar la historia de la rama.
-
-*   **`bugfix/*`**:
-    *   **Propósito**: Corregir un error encontrado durante el desarrollo en `develop` y que no es crítico para producción.
-    *   **¿De dónde nace?**: De `develop`.
-    *   **¿Dónde se integra?**: De vuelta a `develop`.
-
-*   **`hotfix/*`**:
-    *   **Propósito**: Corregir un error crítico en producción (en `main`) de forma urgente.
-    *   **¿De dónde nace?**: Directamente de la rama `main`.
-    *   **¿Dónde se integra?**: Se mergea a `main` (para desplegar la solución) Y TAMBIÉN a `develop` (para que la corrección esté presente en el próximo ciclo de desarrollo). Es una de las pocas ramas que se mergea a dos ramas principales.
-
-*   **`release/*`** (Opcional, para proyectos más formales):
-    *   **Propósito**: Preparar una nueva versión para producción. Aquí se hacen los últimos retoques, se corrige la documentación, se actualiza la versión, etc. Una vez estable, se mergea a `main` y a `develop`.
-
----
-
-## 2. Buenas Prácticas para Commits
-
-Un buen commit no solo guarda el código, sino que cuenta la historia del proyecto.
-
-### 2.1. ¿Cuándo hacer un commit?
-
-*   **Cambios Atómicos**: Cada commit debe representar un cambio lógico único y completo. Si estás arreglando un bug y refactorizando una función, haz dos commits separados.
-*   **Frecuencia**: Es mejor hacer commits pequeños y frecuentes que uno gigante al final del día. Facilita la revisión y el revertir cambios si algo sale mal.
-
-### 2.2. ¿Cómo redactar un buen mensaje de commit?
-
-Sigue la **Convención de Commits Semánticos (Conventional Commits)**. Esto permite generar changelogs automáticos y entender el propósito del cambio de un vistazo.
-
-**Estructura del mensaje:**
 ```
-<tipo>(<ámbito opcional>): <descripción breve>
-
-<cuerpo opcional, más detallado>
-
-<pie opcional, ej: "Fixes: #123">
+develop
+  └─ feat/frontend      ← commits de múltiples historias acumuladas
+       │  feat(hs61): crear AdminLayoutComponent
+       │  feat(hs17): landing page con buscador
+       │  ...
+       └─ PR → develop  (cuando hay un bloque funcional estable)
+            └─ feat/frontend se crea nuevamente desde develop actualizado
 ```
 
-**Clasificación por tipo:**
+> `feat/docs` se cierra y recrea después de cada bloque de documentación.
+> `feat/frontend` y `feat/backend` se mantienen abiertas más tiempo y se mergean periódicamente.
 
-| Tipo | Descripción | Ejemplo |
-| :--- | :--- | :--- |
-| **`feat`** | Nueva funcionalidad para el usuario. | `feat(auth): añadir botón de "Iniciar con Google"` |
-| **`fix`** | Corrección de un error. | `fix(api): corregir error 500 al obtener usuario` |
-| **`docs`** | Cambios en la documentación. | `docs(readme): actualizar instrucciones de instalación` |
-| **`style`** | Cambios de formato, espacios, comas, etc. No afectan el código. | `style: aplicar formateo automático de prettier` |
-| **`refactor`** | Cambio en el código que no corrige un error ni añade funcionalidad. | `refactor(utils): simplificar función de validación de email` |
-| **`perf`** | Mejora de rendimiento. | `perf(db): optimizar consulta de listado de productos` |
-| **`test`** | Añadir o corregir tests. | `test(cart): añadir tests para el cálculo del total` |
-| **`chore`** | Cambios en herramientas, configuración, librerías, etc. | `chore(deps): actualizar dependencia de lodash a 4.17.21` |
-| **`ci`** | Cambios en la configuración de integración continua. | `ci: actualizar versión de Node en el pipeline de GitHub` |
+### 1.3. Ramas de emergencia (corto plazo)
 
-**Reglas de Oro:**
-*   **Verbo en imperativo**: "Añadir", "Corregir", no "Añadido" ni "Correcciones".
-*   **Primera línea < 50 caracteres**: Debe ser un resumen conciso.
-*   **Cuerpo explicativo**: Si el cambio lo requiere, explica el **qué** y el **por qué**, no el cómo (el cómo ya lo muestra el código).
+Solo para situaciones especiales. Se eliminan tras el merge.
+
+| Rama | Origen | Destino | Cuándo usarla |
+|------|--------|---------|---------------|
+| `hotfix/*` | `main` | `main` + `develop` | Bug crítico en producción que no puede esperar el ciclo normal |
+| `bugfix/*` | `develop` | `develop` | Bug en develop que bloquea a otros |
 
 ---
 
-## 3. Resolución de Conflictos
+## 2. Flujo de Trabajo Diario
 
-Los conflictos ocurren cuando dos ramas modifican la misma línea de un archivo o cuando una rama elimina un archivo que otra modificó. No hay que temerles, sino gestionarlos con calma.
+```bash
+# 1. Actualizar la rama de trabajo con los últimos cambios de develop
+git checkout feat/frontend
+git fetch origin
+git rebase origin/develop   # historia más limpia que merge
 
-### 3.1. Prevención
-*   **Sincronización Frecuente**: Actualiza tu rama de características (`feature/x`) con los cambios de `develop` a menudo (`git merge develop` o `git rebase develop`). Así los conflictos son más pequeños y manejables.
-*   **Comunicación en Equipo**: Si sabes que vas a trabajar en un módulo que un compañero está modificando, coordinen.
+# 2. Trabajar y hacer commits atómicos
+git add src/app/layout/containers/admin-layout.component.ts
+git commit -m "feat(hs61): crear AdminLayoutComponent con shell AdminLTE"
 
-### 3.2. Proceso de Resolución (con Merge)
+git add src/app/layout/components/sidebar/sidebar.component.ts
+git commit -m "feat(hs61): implementar SidebarComponent con navegacion"
 
-1.  **Identificar**: Al hacer `git merge` (o un PR), Git te avisará del conflicto y marcará los archivos en conflicto.
-2.  **Inspeccionar**: Usa `git status` para ver qué archivos están en conflicto (usualmente listados como `both modified`).
-3.  **Resolver**: Abre los archivos conflictivos. Busca los marcadores de conflicto de Git:
-    ```
-    <<<<<<< HEAD (tus cambios locales)
-    ... tu código ...
-    =======
-    ... el código de la rama que estás mergeando ...
-    >>>>>>> nombre-de-la-rama
-    ```
-    *   **Elige**: Decide qué código conservar. Puede ser el tuyo, el de la otra rama, o una mezcla de ambos. **¡Borra los marcadores `<`, `=`, `>`!**
-4.  **Marcar como resuelto**: Una vez editado el archivo, guárdalo y añádelo al área de staging: `git add <archivo>`.
-5.  **Finalizar**: Una vez resueltos todos los conflictos y añadidos los archivos, ejecuta `git commit` (Git generará un mensaje por defecto que puedes modificar).
+# 3. Subir la rama al remoto
+git push origin feat/frontend
 
-### 3.3. Herramientas Útiles
-*   **`git mergetool`**: Abre una herramienta visual configurada (como Meld, KDiff3, o el editor de código como VSCode) para facilitar la resolución.
+# 4. Cuando el bloque es estable → crear PR en GitHub (feat/frontend → develop)
 
----
+# 5. Tras el merge del PR, actualizar develop local
+git checkout develop
+git pull origin develop
+```
 
-## 4. Comandos Clave de Git
+### Estado actual de las ramas (post-limpieza)
 
-Un compendio de los comandos esenciales para el día a día.
+```
+main       ─────────────────────────────────── producción
+              ↑ PR
+develop    ──────────────────────────────────── integración
+              ↑ PR       ↑ PR         ↑ PR
+feat/docs  feat/infra  feat/frontend  feat/backend
+6 commits   1 commit    3 commits     0 commits
+(docs)      (CI/CD)     (CORS+JWT)    (nueva)
+```
 
-### 4.1. Configuración Inicial
-*   `git config --global user.name "Tu Nombre"`
-*   `git config --global user.email "tu@email.com"`
-*   `git config --global core.editor "code --wait"` (Ejemplo para usar VSCode).
+**PRs pendientes de abrir en GitHub:**
 
-### 4.2. Básicos Diarios
-*   `git init`: Inicializa un repositorio.
-*   `git clone <url>`: Clona un repositorio remoto.
-*   `git status`: Muestra el estado de los archivos.
-*   `git add <archivo>`: Añade archivos al staging area.
-*   `git commit -m "mensaje"`: Crea un commit con los archivos del staging.
-*   `git log --oneline --graph`: Muestra el historial de forma compacta y gráfica.
-*   `git push origin <rama>`: Sube tus commits locales al repositorio remoto.
-*   `git pull origin <rama>`: Descarga y fusiona los cambios del remoto a tu local (equivale a `git fetch` + `git merge`).
+| Rama | Destino | Contenido |
+|------|---------|-----------|
+| `feat/docs` | `develop` | 6 commits de documentación (Despliegue, DevOps, Diseño, audit, guia-git) |
+| `feat/infra` | `develop` | CI/CD GitHub Actions + karma headless |
+| `feat/frontend` | `develop` | CORS backend + variables JWT + limpieza scaffold |
 
-### 4.3. Ramas y Fusión
-*   `git branch`: Lista las ramas locales.
-*   `git branch <nombre-rama>`: Crea una nueva rama.
-*   `git checkout <nombre-rama>` / `git switch <nombre-rama>`: Cambia a otra rama.
-*   `git checkout -b <nombre-rama>` / `git switch -c <nombre-rama>`: Crea y cambia a una nueva rama (el más usado).
-*   `git merge <nombre-rama>`: Fusiona la rama especificada a la rama actual.
-*   `git merge --no-ff <nombre-rama>`: Fuerza un commit de merge aunque se pueda hacer fast-forward (recomendado para `feature/*`).
-*   `git branch -d <nombre-rama>`: Elimina una rama (solo si ya fue fusionada).
-*   `git branch -D <nombre-rama>`: Forza la eliminación de una rama (incluso si no se ha fusionado).
-
-### 4.4. Para "Arreglar" el Desastre (¡Con Cuidado!)
-*   `git restore <archivo>`: Descarta los cambios en un archivo sin staging (¡peligro!).
-*   `git restore --staged <archivo>`: Saca un archivo del staging area.
-*   `git commit --amend -m "Nuevo mensaje"`: Corrige el mensaje del último commit o añade archivos olvidados (solo si no lo has subido, ¡nunca modifiques commits públicos!).
-*   `git reset --soft HEAD~1`: Deshace el último commit, pero deja los cambios en staging.
-*   `git reset --mixed HEAD~1`: (Por defecto) Deshace el último commit y staging, deja los cambios sin trackear.
-*   `git reset --hard HEAD~1`: Deshace el último commit **Y TODOS LOS CAMBIOS** (¡muy peligroso!).
-*   `git rebase <rama>`: Reaplica los commits de la rama actual sobre la punta de otra rama (para una historia más lineal, pero requiere más cuidado que `merge`).
-
-### 4.5. Remotos e Inspección
-*   `git fetch origin`: Descarga los cambios del remoto sin fusionarlos.
-*   `git remote -v`: Muestra las URLs de los repositorios remotos configurados.
-*   `git diff`: Muestra las diferencias en el código.
-*   `git blame <archivo>`: Muestra quién cambió qué y en qué commit (útil para saber el contexto de una línea).
+> `feat/backend` ya existe en `develop` (0 commits, lista para trabajo .NET).
 
 ---
 
-## 5. Flujo de Trabajo Típico (Día a Día)
+## 3. Commits — Convención Semántica
 
-1.  **Actualizar `develop` local**:
-    ```bash
-    git checkout develop
-    git pull origin develop
-    ```
+```
+<tipo>(<ámbito>): <descripción breve>
 
-2.  **Crear una nueva rama de funcionalidad**:
-    ```bash
-    git checkout -b feature/nueva-ventana-modal
-    ```
+<cuerpo opcional — qué y por qué, no cómo>
+```
 
-3.  **Trabajar y hacer commits atómicos**:
-    ```bash
-    git add src/components/Modal.jsx
-    git commit -m "feat(modal): crear estructura básica del componente"
-    # ... más trabajo ...
-    git add src/styles/modal.css
-    git commit -m "feat(modal): añadir estilos base"
-    ```
+**Tipos disponibles:**
 
-4.  **(Opcional pero recomendado) Sincronizarse con `develop` para evitar conflictos grandes**:
-    ```bash
-    git fetch origin develop
-    git rebase origin/develop
-    # Resolver conflictos si los hay, y luego git add . y git rebase --continue
-    ```
+| Tipo | Cuándo usarlo | Ejemplo |
+|------|--------------|---------|
+| `feat` | Nueva funcionalidad | `feat(hs09): api listado cvs paginado` |
+| `fix` | Corrección de error | `fix(auth): corregir token expirado no redirige` |
+| `docs` | Documentación | `docs: actualizar Despliegue.md con output_location` |
+| `chore` | Config, deps, herramientas | `chore: actualizar admin-lte a 4.0.1` |
+| `refactor` | Código sin cambio de comportamiento | `refactor(api-service): extraer baseUrl a environment` |
+| `test` | Tests | `test(auth): añadir test login incorrecto` |
+| `ci` | Pipeline CI/CD | `ci: agregar job package-and-deploy a main` |
+| `style` | Formato, espacios (no lógica) | `style: aplicar prettier` |
+| `perf` | Mejora de rendimiento | `perf(cache): añadir IMemoryCache en CvController` |
 
-5.  **Subir la rama al remoto para compartir o crear un PR**:
-    ```bash
-    git push origin feature/nueva-ventana-modal
-    ```
-
-6.  **En la plataforma (GitHub/GitLab), crear un Pull Request (PR) hacia `develop`**.
-
-7.  **Una vez aprobado el PR y mergeado, eliminar la rama local y remota**:
-    ```bash
-    git checkout develop
-    git pull origin develop
-    git branch -d feature/nueva-ventana-modal
-    ```
+**Reglas:**
+- Verbo en **imperativo**: "crear", "corregir", "añadir" — no "creado", "correcciones"
+- Primera línea **< 72 caracteres**
+- El ámbito (`hs09`, `auth`, `docker`) es opcional pero útil para rastrear historias del backlog
+- **Nunca** reescribir commits ya subidos a origin (no `amend`, no `rebase` de commits públicos)
 
 ---
 
-## 6. Resumen de Buenas Prácticas
+## 4. Pull Requests
 
-1.  **Ramas**: `main` para producción, `develop` para integración, `feature/*` para nuevas funcionalidades, `hotfix/*` para urgencias.
-2.  **Commits**: Atómicos y con mensajes semánticos (`feat:`, `fix:`, `docs:`...).
-3.  **Pull Requests**: Úsalos para todo merge a ramas principales. Son el punto de control para revisión de código y discusión.
-4.  **Sincronización**: Actualiza tu rama frecuentemente con `develop` para minimizar conflictos.
-5.  **Historial**: Prefiere `merge --no-ff` para ramas de features, ya que muestra claramente que fue una funcionalidad añadida.
-6.  **No reescribas historia pública**: Nunca uses `git commit --amend` o `git rebase` en commits que ya hayan sido subidos y compartidos con otros. Puede causar un caos.
+### Cuándo crear un PR
+
+- Cuando la rama de trabajo tiene un **bloque funcional estable** (no necesariamente completo)
+- Antes de que la rama diverja demasiado de `develop` (evitar conflictos grandes)
+- Siempre que se quiera llevar código a `develop` o `main`
+
+### Checklist antes de abrir el PR
+
+```
+[ ] Los tests pasan localmente (dotnet test / ng test)
+[ ] El CI pasa en la rama (verificar en GitHub Actions)
+[ ] No hay archivos de configuración con credenciales reales
+[ ] Los commits tienen mensajes semánticos
+[ ] Se actualizó documentación si aplica
+```
+
+### Plantillas disponibles
+
+| Plantilla | Cuándo usarla |
+|-----------|--------------|
+| `.github/PULL_REQUEST_TEMPLATE.md` | Cambios de código con impacto medio/alto (`feat`, `fix`, `refactor`) |
+| `.github/PULL_REQUEST_TEMPLATE/hotfix-short.md` | Cambios rápidos y de bajo riesgo (`docs`, `chore`, `hotfix`) |
 
 ---
 
-## 7. Plantillas de PR/MR
+## 5. Resolución de Conflictos
 
-Para estandarizar revisiones, el proyecto tiene dos tipos de plantilla.
+### Prevención
 
-### 7.1. Plantilla estándar
+Actualiza la rama de trabajo con develop frecuentemente:
 
-Úsala cuando el cambio tenga alcance medio o alto:
+```bash
+git fetch origin
+git rebase origin/develop   # historia más lineal que merge
+# si hay conflictos: resolver → git add . → git rebase --continue
+```
 
-1. Nueva funcionalidad (`feat`).
-2. Correcciones con impacto en varios módulos.
-3. Cambios con impacto en base de datos.
-4. Cambios de arquitectura o comportamiento.
+### Proceso de resolución
 
-Archivos:
+1. `git status` → identificar archivos en conflicto
+2. Abrir cada archivo y resolver los marcadores:
+   ```
+   <<<<<<< HEAD (tus cambios)
+   ...
+   =======
+   ... (cambios de la otra rama)
+   >>>>>>> nombre-rama
+   ```
+3. Borrar los marcadores y dejar el código correcto
+4. `git add <archivo>` → marcar como resuelto
+5. `git rebase --continue` o `git commit` según el caso
 
-- GitHub: [.github/PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md)
-- GitLab: [.gitlab/merge_request_templates/Default.md](../.gitlab/merge_request_templates/Default.md)
+---
 
-### 7.2. Plantilla corta (hotfix/docs/chore)
+## 6. Comandos de Referencia
 
-Úsala para cambios rápidos y de bajo riesgo:
+### Ramas
 
-1. Hotfix puntual.
-2. Ajustes de documentación.
-3. Tareas técnicas pequeñas (`chore`).
+```bash
+git branch -a                              # listar todas las ramas (local + remoto)
+git checkout -b feat/frontend              # crear y cambiar a nueva rama
+git branch -d feat/docs                    # eliminar rama local (solo si merged)
+git push origin --delete feat/docs         # eliminar rama en remoto
+git branch --merged develop                # ver qué ramas ya están merged en develop
+```
 
-Archivos:
+### Sincronización
 
-- GitHub: [.github/PULL_REQUEST_TEMPLATE/hotfix-short.md](../.github/PULL_REQUEST_TEMPLATE/hotfix-short.md)
-- GitLab: [.gitlab/merge_request_templates/Hotfix-Short.md](../.gitlab/merge_request_templates/Hotfix-Short.md)
+```bash
+git fetch origin                           # descargar cambios sin aplicar
+git pull origin develop                    # actualizar develop local
+git rebase origin/develop                  # reaplicar mis commits sobre develop actualizado
+git push origin feat/frontend              # subir mis commits al remoto
+git push origin feat/frontend --force-with-lease  # push tras rebase (seguro)
+```
 
-### 7.3. Regla práctica de elección
+### Inspección
 
-1. Si el cambio toca base de datos o lógica de negocio, usa plantilla estándar.
-2. Si el cambio se puede validar en pocos pasos y riesgo bajo, usa plantilla corta.
-3. Ante duda, usa plantilla estándar.
+```bash
+git log --oneline --graph --all            # grafo completo de todas las ramas
+git log origin/develop..feat/frontend      # commits de mi rama que no están en develop
+git diff origin/develop                    # diferencias respecto a develop
+git status                                 # estado del working tree
+```
+
+### Correcciones (solo commits locales — no publicados)
+
+```bash
+git commit --amend -m "nuevo mensaje"      # corregir mensaje del último commit
+git reset --soft HEAD~1                    # deshacer último commit, mantener cambios staged
+git restore <archivo>                      # descartar cambios no staged de un archivo
+```
+
+---
+
+## 7. Resumen: Qué hacer y qué no hacer
+
+| ✅ Hacer | ❌ No hacer |
+|---------|-----------|
+| Commits pequeños y atómicos | Un commit gigante con todo el día |
+| Mensajes semánticos con ámbito | `git commit -m "cambios"` |
+| Actualizar la rama con develop antes de trabajar | Dejarla divergir semanas |
+| PR cuando hay un bloque estable | Acumular work-in-progress interminablemente |
+| Eliminar ramas ya mergeadas | Dejar ramas fantasma en el remoto |
+| `--force-with-lease` si necesitas re-push tras rebase | `--force` que puede borrar trabajo de otros |
+| Crear rama de trabajo desde develop actualizado | Crear rama desde una feature antigua |
 
 ---
 
@@ -267,10 +246,10 @@ Archivos:
 
 | Documento | Relación con esta guía |
 |-----------|------------------------|
-| [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas (main, develop, feature), protección, PR/MR. |
-| [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a `develop`/`main` dispara pipeline; despliegue a producción desde `main`. |
-| [Documentacion.md](Documentacion.md) | Visión general del producto (sin detalle de Git). |
+| [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas, protección de ramas, PR/MR |
+| [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a feature dispara CI; merge a main despliega a producción |
+| [DevOps.md](DevOps.md) | Stack tecnológico, convenciones de commits, pipeline detallado |
 
 ---
 
-*Esta guía aplica al desarrollo del Portal de Currículum Vitae y a cualquier proyecto que adopte el mismo flujo.*
+*Esta guía aplica al desarrollo del Portal de Currículum Vitae.*
