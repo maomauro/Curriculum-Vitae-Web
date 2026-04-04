@@ -1,10 +1,10 @@
 ## 📋 Referencias
 
 - **Documentación del producto:** [Documentacion.md](Documentacion.md)  
-- **Modelo de datos:** [modelo.md](modelo.md)  
+- **Modelo de datos:** [Modelo.md](Modelo.md)  
 - **Script BD SQL Server:** [../database/01_CreateSchema.sql](../database/01_CreateSchema.sql)  
 - **Despliegue / CI-CD:** [Despliegue.md](Despliegue.md)  
-- **Git (ramas, commits, flujo):** [Guia-git.md](Guia-git.md)
+- **Git (ramas, commits, flujo):** [guia-git.md](guia-git.md)
 
 ---
 
@@ -77,7 +77,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 **Feature 0.1 – Base de datos**
 | Tarea | Descripción |
 |-------|-------------|
-| Refinar modelo entidad-relación | Ajustar entidades y relaciones según Documentacion.md y modelo.md (Usuario, Curriculum, Referencia unificada, etc.). |
+| Refinar modelo entidad-relación | Ajustar entidades y relaciones según Documentacion.md y Modelo.md (Usuario, Curriculum, Referencia unificada, etc.). |
 | Definir tipos de datos SQL Server | Asignar tipos (int, nvarchar, datetime2, bit, etc.) y longitudes a cada campo. |
 | Diseñar índices estratégicos | Índices para UrlPublica, CurriculumId en tablas hijas, búsqueda por nombre/ciudad. |
 | Definir constraints y reglas | PK, FK, UNIQUE, CHECK (estados, tipos); reglas de negocio en BD. |
@@ -96,7 +96,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Tarea | Descripción |
 |-------|-------------|
 | Configurar repositorio (GitHub) | Crear repo, estructura inicial, .gitignore, PR templates. |
-| Estructurar ramas (main, develop, feature) | Crear ramas principales y documentar flujo (ver Guia-git.md). |
+| Estructurar ramas (main, develop, feature) | Crear ramas principales y documentar flujo (ver guia-git.md). |
 | Proteger ramas principales | Reglas: no push directo a main/develop; PR/MR obligatorio. |
 | Configurar templates para PR/MR | Plantillas de descripción, checklist (tests, documentación). |
 | Configurar tablero ágil | Boards, milestones, labels para épicas, features e historias. |
@@ -154,7 +154,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 |----|------|--------|--------|-------------|--------------|
 | **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio (GitHub)<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para PR/MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
 | **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar Docker y docker-compose<br>[ ] Crear docker-compose.yml con SQL Server<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
-| **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones) | Backend | 8 |
+| **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones)<br>[ ] Eliminar scaffold WeatherForecast (WeatherForecast.cs + WeatherForecastController.cs) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
 | **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
 | **HS-61** | Historia Técnica | Arquitectura de layouts + AdminLTE 4 | [ ] Instalar `admin-lte@4` y configurar `angular.json`<br>[ ] Crear `PublicLayoutComponent` (sección pública, sin sidebar)<br>[ ] Crear `AuthLayoutComponent` (página centrada, patrón AdminLTE login)<br>[ ] Crear `AdminLayoutComponent` (sidebar + topbar AdminLTE)<br>[ ] Refactorizar `app-routing-module.ts` → 3 shells de layout<br>[ ] Añadir `authGuard` en rutas privadas (editor, dashboard)<br>[ ] Eliminar `MainLayoutComponent` actual | Frontend | 8 |

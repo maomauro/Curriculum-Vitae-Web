@@ -4,7 +4,7 @@
 
 ## Versión 1.0 - Fundamentos del Sistema
 
-**Referencias:** [Backlog](Backlog.md) · [modelo de datos](modelo.md) · [Despliegue / CI-CD](Despliegue.md) · [Guía Git](Guia-git.md) · [database/README](../database/README.md)
+**Referencias:** [Backlog](Backlog.md) · [modelo de datos](Modelo.md) · [Despliegue / CI-CD](Despliegue.md) · [Guía Git](guia-git.md) · [database/README](../database/README.md)
 
 ---
 

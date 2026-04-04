@@ -100,7 +100,7 @@ package-and-deploy:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: upload
         app_location: /frontend
-        output_location: dist/portalcv-web
+        output_location: dist/portalcv-web/browser
 ```
 
 ---
@@ -171,7 +171,7 @@ Copiar `.env.example` a `.env` y ajustar si es necesario. La cadena de conexion 
 ### Local
 
 - Logs de Serilog en consola (docker compose logs backend)
-- Swagger UI disponible en http://localhost:5000/swagger
+- Swagger UI: http://localhost:5000/swagger (Docker Compose) / http://localhost:5083/swagger (dotnet run directo)
 
 ### Produccion (Azure)
 

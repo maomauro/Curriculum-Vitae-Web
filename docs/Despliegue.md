@@ -6,7 +6,6 @@
 
 - [Documentacion.md](Documentacion.md) -- Vision del producto y arquitectura
 - [Backlog.md](Backlog.md) -- Epicas, historias y plan de sprints
-- [QuickStart.md](QuickStart.md) -- Instrucciones de inicio rapido
 - [database/README.md](../database/README.md) -- Scripts SQL Server
 
 ---
@@ -347,9 +346,10 @@ NO puede leer variables de entorno del servidor en runtime. La URL del API se fi
 
 ```
 DESARROLLO LOCAL
-  environment.ts           --> apiUrl = http://localhost:5000/api
+  environment.ts           --> apiUrl = http://localhost:5000/api   (Docker Compose: PORT_BACKEND=5000)
+                                           http://localhost:5083/api   (dotnet run directo: launchSettings.json)
   ng serve                 --> usa este archivo
-  Angular DevServer        --> proxy al backend en Docker Compose
+  Angular DevServer        --> proxy al backend
 
 PRODUCCION
   environment.prod.ts      --> apiUrl = https://portalcv-api.azurecontainerapps.io/api

@@ -1,6 +1,6 @@
 # Base de datos - Portal de Currículum Vitae
 
-Scripts SQL Server para crear y mantener la base de datos del proyecto. El modelo está alineado con `docs/Documentacion.md` y `docs/modelo.md`.
+Scripts SQL Server para crear y mantener la base de datos del proyecto. El modelo está alineado con `docs/Documentacion.md` y `docs/Modelo.md`.
 
 ## Requisitos
 
@@ -52,6 +52,6 @@ Scripts SQL Server para crear y mantener la base de datos del proyecto. El model
 ## Ver también
 
 - [docs/Documentacion.md](../docs/Documentacion.md) — visión del producto y modelo de datos
-- [docs/modelo.md](../docs/modelo.md) — detalle de tablas y relaciones
+- [docs/Modelo.md](../docs/Modelo.md) — detalle de tablas y relaciones
 - [docs/Backlog.md](../docs/Backlog.md) — épica 0 y script DDL (HS-02)
 - [docs/Despliegue.md](../docs/Despliegue.md) — docker-compose y conexión a SQL Server
