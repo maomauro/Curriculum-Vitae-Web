@@ -157,6 +157,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
 | **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
+| **HS-61** | Historia Técnica | Arquitectura de layouts + AdminLTE 4 | [ ] Instalar `admin-lte@4` y configurar `angular.json`<br>[ ] Crear `PublicLayoutComponent` (sección pública, sin sidebar)<br>[ ] Crear `AuthLayoutComponent` (página centrada, patrón AdminLTE login)<br>[ ] Crear `AdminLayoutComponent` (sidebar + topbar AdminLTE)<br>[ ] Refactorizar `app-routing-module.ts` → 3 shells de layout<br>[ ] Añadir `authGuard` en rutas privadas (editor, dashboard)<br>[ ] Eliminar `MainLayoutComponent` actual | Frontend | 8 |
 
 ---
 
