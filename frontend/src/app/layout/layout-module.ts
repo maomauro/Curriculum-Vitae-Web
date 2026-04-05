@@ -2,16 +2,16 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-import { HeaderComponent } from './components/header.component';
-import { FooterComponent } from './components/footer.component';
-import { MainLayoutComponent } from './containers/main-layout.component';
+import { PublicLayoutComponent } from './containers/public-layout.component';
+import { AuthLayoutComponent } from './containers/auth-layout.component';
+import { AdminLayoutComponent } from './containers/admin-layout.component';
 
 @NgModule({
-  declarations: [HeaderComponent, FooterComponent, MainLayoutComponent],
+  declarations: [PublicLayoutComponent, AuthLayoutComponent, AdminLayoutComponent],
   imports: [
     CommonModule,
     RouterModule
   ],
-  exports: [HeaderComponent, FooterComponent, MainLayoutComponent]
+  exports: [PublicLayoutComponent, AuthLayoutComponent, AdminLayoutComponent]
 })
 export class LayoutModule { }
