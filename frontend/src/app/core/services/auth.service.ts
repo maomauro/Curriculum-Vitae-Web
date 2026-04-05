@@ -4,6 +4,12 @@ import { tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ApiService } from './api.service';
 
+export interface RegisterRequest {
+  nombre: string;
+  email: string;
+  password: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -76,6 +82,22 @@ export class AuthService {
   private getUserFromStorage(): UserInfo | null {
     const userStr = localStorage.getItem(this.userKey);
     return userStr ? JSON.parse(userStr) : null;
+  }
+
+  register(nombre: string, email: string, password: string): Observable<LoginResponse> {
+    return this.apiService.post<LoginResponse>('auth/register', { nombre, email, password }).pipe(
+      tap(response => {
+        if (response && response.token) {
+          this.setToken(response.token);
+          this.setUser(response.user);
+          this.currentUserSubject.next(response.user);
+        }
+      }),
+      catchError(error => {
+        console.error('Register error:', error);
+        throw error;
+      })
+    );
   }
 
   isAuthenticated(): boolean {
