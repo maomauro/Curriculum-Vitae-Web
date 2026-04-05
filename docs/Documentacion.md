@@ -4,7 +4,7 @@
 
 ## Versión 1.0 - Fundamentos del Sistema
 
-**Referencias:** [Backlog](Backlog.md) · [modelo de datos](modelo.md) · [Despliegue / CI-CD](Despliegue.md) · [Guía Git](Guia-git.md) · [database/README](../database/README.md)
+**Referencias:** [Backlog](Backlog.md) · [modelo de datos](Modelo.md) · [Despliegue / CI-CD](Despliegue.md) · [Guía Git](guia-git.md) · [database/README](../database/README.md)
 
 ---
 
@@ -403,7 +403,7 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 ┌────────────────────────────────────────────────────────────┐
 │                    CAPA DE PRESENTACIÓN                    │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │              Angular / React SPA                     │  │
+│  │                   Angular SPA                        │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │  │
 │  │  │  Módulo     │  │  Módulo     │  │  Módulo     │   │  │
 │  │  │  Público    │  │  Autentic.  │  │  Editor CV  │   │  │
@@ -420,7 +420,7 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 │                      API GATEWAY                            │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  • Rate Limiting      • Autenticación JWT             │  │
-│  │  • Caché (Redis)      • Logging Centralizado          │  │
+│  │  • Caché (IMemoryCache) • Logging Centralizado        │  │
 │  │  • Compresión         • Enrutamiento                  │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -450,11 +450,12 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 │                      CAPA DE DATOS                         │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │  │
-│  │  │   SQL DB    │  │    Redis    │  │    Blob     │   │  │
-│  │  │  (Principal)│  │   (Caché)   │  │  Storage    │   │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘   │  │
+│  │  ┌─────────────┐  ┌──────────────────────────────────┐  │  │
+│  │  │   SQL DB    │  │  IMemoryCache (.NET in-process)  │  │  │
+│  │  │  (Principal)│  │  TTL: roles 15min, CV 5min       │  │  │
+│  │  └─────────────┘  └──────────────────────────────────┘  │  │
 │  │                                                      │  │
-│  │  • Entity Framework / Prisma (ORM)                   │  │
+│  │  • Entity Framework (ORM)                            │  │
 │  │  • Migraciones automáticas                           │  │
 │  │  • Vistas materializadas para estadísticas           │  │
 │  │  • Índices optimizados para búsqueda                 │  │
@@ -477,7 +478,7 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 Flujo:
 1. Request del cliente
 2. CDN sirve contenido estático
-3. API consulta caché (Redis)
+3. API consulta IMemoryCache (in-process)
 4. Si no está en caché → consulta DB
 5. Almacena en caché (TTL: 5 min)
 6. Responde al cliente

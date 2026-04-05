@@ -1,799 +1,436 @@
-# 📦 GUÍA COMPLETA DE INTEGRACIÓN Y DESPLIEGUE CONTINUO (CI/CD)
-
-## Escenario Profesional Empresarial
+# Guia de CI/CD y Despliegue -- Portal CV Web
 
 ---
 
-## 📋 Referencias
+## Referencias
 
-- **Documentación del producto:** [Documentacion.md](Documentacion.md)  
-- **Modelo de datos:** [modelo.md](modelo.md)  
-- **Backlog y sprints:** [Backlog.md](Backlog.md)  
-- **Script BD SQL Server:** [../database/01_CreateSchema.sql](../database/01_CreateSchema.sql) y [../database/README.md](../database/README.md)
-
----
-
-## 🎯 OBJETIVO DE ESTE DOCUMENTO
-
-Recrear un **escenario profesional completo** de CI/CD como se trabaja en empresas reales, utilizando herramientas modernas y gratuitas, con el objetivo de **aprender el flujo completo** desde el commit hasta la producción.
+- [Documentacion.md](Documentacion.md) -- Vision del producto y arquitectura
+- [Backlog.md](Backlog.md) -- Epicas, historias y plan de sprints
+- [database/README.md](../database/README.md) -- Scripts SQL Server
 
 ---
 
-## 📊 MAPA MENTAL DEL PIPELINE CI/CD
+## 1. Decisiones de infraestructura
+
+### Stack definitivo
+
+| Capa | Herramienta | Justificacion |
+|------|-------------|---------------|
+| **Control de versiones** | GitHub | Estandar de la industria; integrado con Actions |
+| **CI/CD** | GitHub Actions | Gratuito (2000 min/mes), integrado al repo |
+| **Registro de contenedores** | GitHub Container Registry (GHCR) | Gratuito, integrado con el mismo repositorio |
+| **Backend (runtime)** | Azure Container Apps | Free tier generoso; usa el Dockerfile existente; scale-to-zero |
+| **Frontend (runtime)** | Azure Static Web Apps | Gratuito; servir Angular como SPA estatica con CDN global |
+| **Base de datos** | Azure SQL Database Free Tier | Gratuito siempre; ya configurada y operativa |
+| **Cache** | IMemoryCache (.NET in-process) | Integrado en .NET, $0; suficiente para la escala inicial |
+| **Almacenamiento de archivos** | -- | Pospuesto a Epica 3 (adjuntos/soportes) |
+
+### Por que no otras opciones
+
+| Descartado | Motivo |
+|------------|--------|
+| Azure App Service F1 | CPU limitada a 60 min/dia -- se agota con .NET + EF Core |
+| Azure App Service con Docker | Requiere tier B1 minimo (~$13/mes) para usar contenedores |
+| Redis (Azure Cache) | Minimo $55/mes; IMemoryCache es suficiente para esta escala |
+| AKS / Kubernetes | Sobredimensionado para este proyecto en fase inicial |
+| AWS / GCP | Stack ya definido sobre Azure; no hay ventaja en dividir nube |
+
+### Arquitectura de entornos
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PIPELINE CI/CD COMPLETO                             │
-│                     (Flujo profesional empresarial)                         │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-                                    │
-                                    ▼
-┌───────────────────────────────────────────────────────────────────────────┐
-│                            1. CÓDIGO FUENTE                               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
-│  │   GitHub    │  │   GitLab    │  │  Bitbucket  │  │   Azure     │       │
-│  │  (Principal)│  │  (Backup)   │  │  (Opcional) │  │   DevOps    │       │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
-└───────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                        2. GIT PUSH / PULL REQUEST                          │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  feature/nueva-funcionalidad → develop → main (producción)          │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-└────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│                        3. CI/CD PIPELINE (AUTOMATIZACIÓN)                │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │                        ETAPA 1: BUILD                             │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │   │
-│  │  │ Compilar     │  │  Restaurar   │  │  Instalar    │             │   │
-│  │  │ Backend .NET │  │  Paquetes    │  │ Dependencias │             │   │
-│  │  │              │  │  NuGet       │  │ Frontend     │             │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘             │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                                    │                                     │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │                        ETAPA 2: TEST                              │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │   │
-│  │  │ Pruebas      │  │ Pruebas de   │  │ Análisis de  │             │   │
-│  │  │ Unitarias    │  │ Integración  │  │ Calidad      │             │   │
-│  │  │ (Backend)    │  │              │  │ (SonarQube)  │             │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘             │   │
-│  │  ┌──────────────┐  ┌──────────────┐                               │   │
-│  │  │ Pruebas      │  │ Pruebas de   │                               │   │
-│  │  │ Frontend     │  │ Seguridad    │                               │   │
-│  │  │ (Karma/Jest) │  │ (SAST/DAST)  │                               │   │
-│  │  └──────────────┘  └──────────────┘                               │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                                    │                                     │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │                        ETAPA 3: PACKAGE                           │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │   │
-│  │  │ Crear        │  │ Construir    │  │ Taggear      │             │   │
-│  │  │ Artefactos   │  │ Imágenes     │  │ Versión      │             │   │
-│  │  │              │  │ Docker       │  │ (v1.0.0)     │             │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘             │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                                    │                                     │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │                        ETAPA 4: PUBLISH                           │   │
-│  │  ┌────────────────────────────────────────────────────────────┐   │   │
-│  │  │                    REGISTRO DE CONTENEDORES                │   │   │
-│  │  │  ┌────────────┐  ┌─────────────┐  ┌────────────┐           │   │   │
-│  │  │  │Docker Hub  │  │   Azure     │  │   Amazon   │           │   │   │
-│  │  │  │            │  │Container Reg│  │   ECR      │           │   │   │
-│  │  │  └────────────┘  └─────────────┘  └────────────┘           │   │   │
-│  │  └────────────────────────────────────────────────────────────┘   │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                                    │                                     │
-│  ┌───────────────────────────────────────────────────────────────────┐   │
-│  │                        ETAPA 5: DEPLOY                            │   │
-│  │  ┌───────────────────────────────────────────────────────────┐    │   │
-│  │  │                    ENTORNOS                               │    │   │
-│  │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │    │   │
-│  │  │  │ Desarrollo │  │   Staging  │  │ Producción │           │    │   │
-│  │  │  │ (dev)      │  │   (test)   │  │  (prod)    │           │    │   │
-│  │  │  └────────────┘  └────────────┘  └────────────┘           │    │   │
-│  │  └───────────────────────────────────────────────────────────┘    │   │
-│  │                                                                   │   │
-│  │  ┌────────────────────────────────────────────────────────────┐   │   │
-│  │  │                    PLATAFORMAS DE DESPLIEGUE               │   │   │
-│  │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐            │   │   │
-│  │  │  │Azure AKS   │  │   AWS EKS  │  │   Google   │            │   │   │
-│  │  │  │(Kubernetes)│  │(Kubernetes)│  │    GKE     │            │   │   │
-│  │  │  └────────────┘  └────────────┘  └────────────┘            │   │   │
-│  │  │  ┌────────────┐  ┌────────────┐                            │   │   │
-│  │  │  │Azure App   │  │   Azure    │                            │   │   │
-│  │  │  │  Service   │  │   SQL DB   │                            │   │   │
-│  │  │  └────────────┘  └────────────┘                            │   │   │
-│  │  └────────────────────────────────────────────────────────────┘   │   │
-│  └───────────────────────────────────────────────────────────────────┘   │
-│                                    │                                     │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │                        ETAPA 6: MONITOREO                          │  │
-│  │  ┌────────────┐  ┌────────────┐  ┌─────────────┐  ┌─────────────┐  │  │
-│  │  │Application │  │   Azure    │  │   Grafana   │  │   Logs      │  │  │
-│  │  │ Insights   │  │  Monitor   │  │ + Prometheus│  │Centralizados│  │  │
-│  │  └────────────┘  └────────────┘  └─────────────┘  └─────────────┘  │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------+
+|                  DESARROLLO LOCAL                   |
+|  Docker Compose                                     |
+|  +-- portalcv-db      (SQL Server 2022)             |
+|  +-- portalcv-api     (.NET 10 --> puerto 5000)     |
+|  +-- portalcv-web     (Angular+Nginx --> puerto 4200)|
++-----------------------------------------------------+
+                        |  git push / PR
+                        v
++-----------------------------------------------------+
+|              CI -- GitHub Actions                   |
+|  +-- Job backend:  dotnet restore + build           |
+|  +-- Job frontend: npm ci + ng build + ng test      |
+|  +-- Job deploy (solo push a main):                 |
+|       +-- docker build + push --> GHCR              |
+|       +-- az containerapp update (backend)          |
+|           az staticwebapp deploy (frontend)         |
++-----------------------------------------------------+
+                        |
+                        v
++-----------------------------------------------------+
+|                  PRODUCCION (Azure)                 |
+|                                                     |
+|  Azure Static Web Apps                              |
+|  +-- Angular SPA con CDN global                     |
+|       +-- llama a -->                               |
+|                                                     |
+|  Azure Container Apps                               |
+|  +-- .NET 10 API (imagen desde GHCR)                |
+|       +-- conecta a -->                             |
+|                                                     |
+|  Azure SQL Database Free Tier                       |
+|  +-- sql-portalcv-mao.database.windows.net          |
+|       +-- usuario: portalcv_app_prod                |
++-----------------------------------------------------+
 ```
 
 ---
 
-## 🧰 HERRAMIENTAS PROFESIONALES POR CATEGORÍA
+## 2. Pipeline CI/CD
 
-### 1. CONTROL DE VERSIONES (Repositorios)
-
-| Herramienta | Uso Profesional | Plan Gratuito | Por qué usarla |
-|-------------|-----------------|---------------|----------------|
-| **GitHub** | Principal (más popular) | ✅ Repos públicos ilimitados<br>✅ Repos privados con hasta 3 colaboradores<br>✅ GitHub Actions (2000 min/mes) | Comunidad más grande, integraciones, Actions potente |
-| **GitLab** | Alternativa/Backup | ✅ Repos ilimitados públicos/privados<br>✅ CI/CD incluido (400 min/mes)<br>✅ Todo en uno | CI/CD integrado nativamente, mejor para autogestionado |
-| **Azure DevOps** | Empresas Microsoft | ✅ 5 usuarios gratis<br>✅ Repos ilimitados<br>✅ Pipelines (1800 min/mes) | Perfecto para stack .NET, integración con Azure |
-| **Bitbucket** | Equipos pequeños | ✅ Hasta 5 usuarios gratis<br>✅ Pipelines (50 min/mes) | Integración con Jira |
-
-**📌 RECOMENDACIÓN PROFESIONAL:** 
-- Usa **GitHub** como principal (es el estándar de la industria)
-- Configura **GitLab** como mirror/backup (aprendes dos plataformas)
-- Usa **Azure DevOps** si tu stack es 100% Microsoft
-
----
-
-### 2. CI/CD (Automatización)
-
-| Herramienta | Tipo | Gratuito | Características |
-|-------------|------|----------|-----------------|
-| **GitHub Actions** | Integrado en GitHub | 2000 min/mes | YAML, ecosistema enorme, marketplace |
-| **GitLab CI/CD** | Integrado en GitLab | 400 min/mes | YAML, todo en uno, mejor para autogestionado |
-| **Azure Pipelines** | Independiente | 1800 min/mes | 10 jobs paralelos, muy potente |
-| **Jenkins** | Self-hosted | ✅ Completamente gratis | Altamente configurable, requiere mantenimiento |
-| **CircleCI** | Cloud | 2500 min/mes | Muy popular, fácil de usar |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- **GitHub Actions** para empezar (ya tienes el código ahí)
-- **Jenkins** para aprender (es el estándar en empresas grandes con infraestructura propia)
-
----
-
-### 3. REGISTRO DE CONTENEDORES (Container Registry)
-
-| Herramienta | Gratuito | Límites | Uso |
-|-------------|----------|---------|-----|
-| **Docker Hub** | ✅ Sí | 1 repositorio privado gratis<br>Pull ilimitado público | Estándar de la industria |
-| **GitHub Container Registry** | ✅ Sí | Incluido con GitHub | Integrado con GitHub Packages |
-| **Azure Container Registry** | ✅ Sí (Básico) | 10 GB almacenamiento gratis | Para desplegar en Azure |
-| **Amazon ECR** | ⚠️ Limitado | 500 MB/mes gratis | Solo para AWS |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- Usa **Docker Hub** + **GitHub Container Registry** en paralelo
-- Aprende ambos: Docker Hub es estándar, GHCR está creciendo
-
----
-
-### 4. NUBE GRATUITA PARA DESPLIEGUE
-
-#### Opción 1: Microsoft Azure (RECOMENDADA PARA .NET)
-
-| Servicio | Gratuito | Límites | Para qué |
-|----------|----------|---------|----------|
-| **Azure Free Account** | $200 crédito por 30 días | - | Probar servicios pagos |
-| **Azure App Service** | ✅ Siempre gratis | 10 apps web, 1 GB almacenamiento | Frontend + Backend |
-| **Azure SQL Database** | ✅ Siempre gratis | 250 GB, 1 DB | Base de datos SQL Server |
-| **Azure Container Instances** | ✅ Siempre gratis | Cierto límite | Ejecutar contenedores |
-| **Azure Kubernetes Service (AKS)** | ✅ Siempre gratis | Cluster gratis (pago solo por nodos) | Orquestación |
-| **Azure DevOps** | ✅ Siempre gratis | 5 usuarios, pipelines incluidos | CI/CD |
-
-#### Opción 2: Amazon Web Services (AWS)
-
-| Servicio | Gratuito | Límites |
-|----------|----------|---------|
-| **AWS Free Tier** | 12 meses | 750 horas/mes de EC2, 5 GB S3 |
-| **Amazon RDS** | 12 meses | 750 horas/mes, 20 GB |
-| **Amazon ECR** | 12 meses | 500 MB/mes |
-
-#### Opción 3: Google Cloud Platform (GCP)
-
-| Servicio | Gratuito | Límites |
-|----------|----------|---------|
-| **GCP Free Tier** | $300 crédito por 90 días | - |
-| **Cloud SQL** | ✅ Siempre gratis | 1 instancia, 10 GB |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- **Azure** para stack .NET (integración perfecta)
-- Usa los **$200 crédito** para aprovisionar AKS y SQL Database
-- Después de los créditos, usa los servicios "siempre gratis"
-
----
-
-### 5. ORQUESTACIÓN DE CONTENEDORES
-
-| Herramienta | Gratuito | Dónde | Descripción |
-|-------------|----------|-------|-------------|
-| **Azure Kubernetes Service (AKS)** | ✅ Cluster gratis | Azure | Kubernetes gestionado, pago solo por nodos |
-| **Minikube** | ✅ Completamente gratis | Local | Kubernetes local para desarrollo |
-| **Kind** | ✅ Completamente gratis | Local | Kubernetes en Docker |
-| **K3s** | ✅ Completamente gratis | Local/Edge | Kubernetes liviano |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- **Minikube** para desarrollo local
-- **AKS** para producción (usando créditos Azure)
-- Aprende Kubernetes: es el estándar en la industria
-
----
-
-### 6. BASE DE DATOS EN LA NUBE
-
-| Opción | Gratuito | Tipo | Conexión |
-|--------|----------|------|----------|
-| **Azure SQL Database** | ✅ Siempre gratis | SQL Server | Cadena de conexión estándar |
-| **Amazon RDS** | 12 meses | SQL Server/PostgreSQL/MySQL | VPC/complejo |
-| **ElephantSQL** | ✅ Siempre gratis | PostgreSQL (20 MB) | Muy simple para empezar |
-| **MongoDB Atlas** | ✅ Siempre gratis | MongoDB (512 MB) | NoSQL |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- **Azure SQL Database** (siempre gratis) + **Azure Data Studio** para administrar
-- Aprende a configurar firewall y conexiones seguras
-
----
-
-### 7. PRUEBAS Y CALIDAD DE CÓDIGO
-
-| Herramienta | Gratuito | Tipo | Descripción |
-|-------------|----------|------|-------------|
-| **SonarQube** | ✅ Sí (Community) | Análisis estático | Calidad de código, bugs, vulnerabilidades |
-| **SonarCloud** | ✅ Sí (público) | Análisis estático | Versión cloud, integración con GitHub |
-| **Snyk** | ✅ Sí (limitado) | Seguridad | Encuentra vulnerabilidades en dependencias |
-| **OWASP ZAP** | ✅ Completamente gratis | Seguridad | Pruebas de penetración |
-| **Jest / Karma** | ✅ Gratis | Testing frontend | Pruebas unitarias Angular |
-| **xUnit / NUnit** | ✅ Gratis | Testing backend | Pruebas unitarias .NET |
-| **Postman / Insomnia** | ✅ Gratis | Testing APIs | Pruebas manuales y automatizadas |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- **SonarQube** auto-hosteado o **SonarCloud** en la nube
-- **Snyk** para dependencias
-- Automatizar en el pipeline
-
----
-
-### 8. MONITOREO Y OBSERVABILIDAD
-
-| Herramienta | Gratuito | Descripción |
-|-------------|----------|-------------|
-| **Azure Application Insights** | 5 GB/mes gratis | APM, métricas, logs |
-| **Prometheus** | ✅ Completamente gratis | Métricas, alertas (self-hosted) |
-| **Grafana** | ✅ Completamente gratis | Dashboards (self-hosted) |
-| **ELK Stack** (Elasticsearch) | ✅ Gratis | Logs centralizados |
-| **New Relic** | 100 GB/mes gratis | APM, infraestructura |
-
-**📌 RECOMENDACIÓN PROFESIONAL:**
-- **Azure Application Insights** (si estás en Azure)
-- **Prometheus + Grafana** (estándar en Kubernetes)
-
----
-
-## 🔄 FLUJO COMPLETO DE TRABAJO PROFESIONAL
-
-### Escenario: Desarrollo de una nueva funcionalidad
+### Flujo completo
 
 ```
-DÍA 1: DESARROLLADOR
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. git checkout -b feature/nueva-funcionalidad                  │
-│ 2. Código, código, código...                                    │
-│ 3. Pruebas locales: docker-compose up                           │
-│ 4. git commit -m "feat: agregar nueva funcionalidad"            │
-│ 5. git push origin feature/nueva-funcionalidad                  │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ PIPELINE CI (Continous Integration) - AUTOMÁTICO                │
-│                                                                 │
-│ GITHUB ACTIONS / GITLAB CI                                      │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ ETAPA 1: BUILD                                              │ │
-│ │ • Backend: dotnet restore → dotnet build                    │ │
-│ │ • Frontend: npm install → npm run build                     │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ ETAPA 2: TEST                                               │ │
-│ │ • Backend: dotnet test /coverage                            │ │
-│ │ • Frontend: npm run test                                    │ │
-│ │ • Calidad: SonarQube analysis                               │ │
-│ │ • Seguridad: Snyk check                                     │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ ETAPA 3: PACKAGE                                            │ │
-│ │ • docker build -t backend:feature-123                       │ │
-│ │ • docker build -t frontend:feature-123                      │ │
-│ │ • docker push a registro (Docker Hub/GHCR)                  │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ PULL REQUEST CREADO                                             │
-│                                                                 │
-│ Título: "feat: nueva funcionalidad"                             │
-│ Asignado a: Tech Lead                                           │
-│ Labels: enhancement, ready-for-review                           │
-│ Pipeline: ✅ Passed                                             │
-│ Coverage: 85% (+2%)                                             │
-│ SonarQube: ✅ No issues                                         │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ REVISIÓN DE CÓDIGO (Code Review)                                │
-│                                                                 │
-│ Tech Lead:                                                      │
-│ • Revisa código                                                 │
-│ • Comentarios: "Mejor si usas async/await aquí"                 │
-│ • Aprueba cambios                                               │
-│                                                                 │
-│ Desarrollador:                                                  │
-│ • Ajusta según comentarios                                      │
-│ • git push nuevamente (pipeline se ejecuta otra vez)            │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ MERGE A DEVELOP (Integración)                                   │
-│                                                                 │
-│ git checkout develop                                            │
-│ git merge feature/nueva-funcionalidad                           │
-│ git push origin develop                                         │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ PIPELINE CD (Continous Deployment) - AUTOMÁTICO A STAGING       │
-│                                                                 │
-│ GITLAB CI / GITHUB ACTIONS                                      │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ ETAPA 4: DEPLOY A STAGING                                   │ │
-│ │ • Desplegar backend a Azure App Service (staging)           │ │
-│ │ • Desplegar frontend a Azure Static Web App (staging)       │ │
-│ │ • Aplicar esquema de BD (script SQL o migraciones EF)       │ │
-│ │ • Smoke tests                                               │ │
-│ │ • Pruebas de integración                                    │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ PRUEBAS EN STAGING                                              │
-│                                                                 │
-│ QA Team:                                                        │
-│ • Pruebas funcionales                                           │
-│ • Pruebas de regresión                                          │
-│ • Pruebas de carga (opcional)                                   │
-│ • Reporte: ✅ Todo OK                                           │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ MERGE A MAIN (Producción)                                       │
-│                                                                 │
-│ git checkout main                                               │
-│ git merge develop                                               │
-│ git tag -a v1.2.0 -m "Release v1.2.0"                           │
-│ git push origin main --tags                                     │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ PIPELINE CD A PRODUCCIÓN                                        │
-│                                                                 │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ ETAPA 5: DEPLOY A PRODUCCIÓN                                │ │
-│ │ • Desplegar backend a AKS (Kubernetes)                      │ │
-│ │ • Desplegar frontend a CDN                                  │ │
-│ │ • Aplicar esquema de BD (script/migraciones) con respaldo   │ │
-│ │ • Health checks                                             │ │
-│ │ • Canary deployment (10% tráfico)                           │ │
-│ │ • 100% rollout si todo OK                                   │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ ETAPA 6: MONITOREO                                          │ │
-│ │ • Application Insights: todo OK                             │ │
-│ │ • Azure Monitor: alertas configuradas                       │ │
-│ │ • Grafana: dashboards actualizados                          │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+feature/* --push--> CI (build + test)
+                          |  aprobado
+develop   --PR---> CI (build + test)
+                          |  merge a develop
+main      --PR---> CI (build + test + package + deploy)
+                          |  merge a main
+                   PRODUCCION ACTUALIZADA
 ```
 
----
+### Archivo .github/workflows/ci.yml (actual)
 
-## 🛠️ CONFIGURACIÓN PRÁCTICA PASO A PASO
+El pipeline en produccion esta en [../.github/workflows/ci.yml](../.github/workflows/ci.yml).
 
-### PASO 1: GitHub + GitHub Actions
+**Jobs actuales:**
 
-El workflow asume estructura del repo con `backend/` y `frontend/` en la raíz. Los jobs **sonarqube** y **Upload coverage** (Codecov) son opcionales: configurar `SONAR_TOKEN` y `CODECOV_TOKEN` en secrets si se usan; si no, se pueden comentar o usar `continue-on-error: true` para no bloquear el pipeline.
+| Job | Trigger | Acciones |
+|-----|---------|----------|
+| `backend` | Todo push y PR | `dotnet restore` --> `dotnet build --configuration Release` |
+| `frontend` | Todo push y PR | `npm ci` --> `ng build --configuration production` --> `ng test --configuration ci` |
 
-**.github/workflows/ci.yml**
+**Jobs a agregar (HS-deploy -- pendiente):**
+
 ```yaml
-name: CI Pipeline
+# Solo en push a main
+package-and-deploy:
+  needs: [backend, frontend]
+  if: github.ref == 'refs/heads/main'
+  steps:
+    # 1. Build y push imagen backend a GHCR
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-on:
-  push:
-    branches: [ develop, main ]
-  pull_request:
-    branches: [ develop, main ]
+    - uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: ghcr.io/maomauro/portalcv-backend:${{ github.sha }}
 
-jobs:
-  build-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      
-      - name: Restore dependencies
-        run: dotnet restore ./backend
-        
-      - name: Build
-        run: dotnet build ./backend --no-restore
-        
-      - name: Test
-        run: dotnet test ./backend --no-build --verbosity normal --collect:"XPlat Code Coverage"
-        
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+    # 2. Actualizar Azure Container Apps con nueva imagen
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  build-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-          
-      - name: Install dependencies
-        run: npm ci --prefix ./frontend
-        
-      - name: Build
-        run: npm run build --prefix ./frontend
-        
-      - name: Test
-        run: npm test --prefix ./frontend -- --watch=false --browsers=ChromeHeadless
+    - run: |
+        az containerapp update \
+          --name portalcv-api \
+          --resource-group rg-portalcv \
+          --image ghcr.io/maomauro/portalcv-backend:${{ github.sha }}
 
-  sonarqube:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: SonarQube Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  docker-build:
-    needs: [build-backend, build-frontend]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-          
-      - name: Build and push Backend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/portalcv-backend:latest
-            ${{ secrets.DOCKER_USERNAME }}/portalcv-backend:${{ github.sha }}
-            
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/portalcv-frontend:latest
-            ${{ secrets.DOCKER_USERNAME }}/portalcv-frontend:${{ github.sha }}
+    # 3. Deploy frontend a Azure Static Web Apps
+    - uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: upload
+        app_location: /frontend
+        output_location: dist/portalcv-web/browser
 ```
 
 ---
 
-### PASO 2: Docker Compose Local (desarrollo)
+## 3. Recursos Azure
 
-**Estructura esperada del repo:** raíz con carpetas `backend/` (.NET) y `frontend/` (Angular). La base de datos **PortalCV** debe existir antes de que el backend arranque: créala en el contenedor SQL Server y ejecuta el script `database/01_CreateSchema.sql` (o descomenta el bloque `CREATE DATABASE` en ese script y ejecútalo una vez).
+### Recursos a crear (orden recomendado)
 
-**docker-compose.yml**
-```yaml
-version: '3.8'
+```
+1. Resource Group:    rg-portalcv
+2. Azure SQL DB:      sql-portalcv-mao.database.windows.net/PortalCV   <-- ya existe
+3. Container Apps:    portalcv-api   (imagen: ghcr.io/maomauro/portalcv-backend)
+   +-- Container Apps Environment: env-portalcv
+4. Static Web App:    portalcv-web   (conectado al repo GitHub, rama main)
+```
 
-services:
-  # Base de datos SQL Server
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: portalcv-sqlserver
-    environment:
-      ACCEPT_EULA: Y
-      SA_PASSWORD: "YourStrong!Password123"
-      MSSQL_PID: Express
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserver_data:/var/opt/mssql
-    networks:
-      - portalcv-network
+### Configuracion de Azure Container Apps (backend)
 
-  # Backend API
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: portalcv-backend
-    environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PortalCV;User Id=sa;Password=YourStrong!Password123;TrustServerCertificate=True
-      - ASPNETCORE_ENVIRONMENT=Development
-    ports:
-      - "5000:8080"
-    depends_on:
-      - sqlserver
-    networks:
-      - portalcv-network
-    volumes:
-      - ./backend:/app
-      - ~/.nuget/packages:/root/.nuget/packages
+| Parametro | Valor |
+|-----------|-------|
+| Nombre | `portalcv-api` |
+| Imagen | `ghcr.io/maomauro/portalcv-backend:latest` |
+| CPU | 0.25 vCPU |
+| Memoria | 0.5 Gi |
+| Min replicas | 0 (scale-to-zero) |
+| Max replicas | 1 |
+| Puerto | 8080 |
+| Ingress | Externo (HTTPS habilitado) |
 
-  # Frontend Angular
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: portalcv-frontend
-    ports:
-      - "4200:80"
-    depends_on:
-      - backend
-    networks:
-      - portalcv-network
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+**Variables de entorno requeridas en Container Apps:**
 
-  # Opcional: cliente para administrar SQL Server (Azure Data Studio u otra imagen)
-  # azure-data-studio:
-  #   image: mcr.microsoft.com/mssql/server:2022-latest  # o usar Azure Data Studio en host
-  #   ...
+| Variable | Descripcion |
+|----------|-------------|
+| `ConnectionStrings__DefaultConnection` | Cadena a Azure SQL con `portalcv_app_prod` |
+| `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `Jwt__Issuer` | `PortalCV.Api` |
+| `Jwt__Audience` | `PortalCV.Client` |
+| `Jwt__Key` | Clave JWT de produccion (secret) |
+| `Auth__DemoUser__Email` | Email del usuario demo |
+| `Auth__DemoUser__Password` | Password del usuario demo |
 
-networks:
-  portalcv-network:
-    driver: bridge
+### Configuracion de Azure Static Web Apps (frontend)
 
-volumes:
-  sqlserver_data:
+| Parametro | Valor |
+|-----------|-------|
+| Nombre | `portalcv-web` |
+| Repo | `maomauro/Curriculum-Vitae-Web` |
+| Rama | `main` |
+| App location | `/frontend` |
+| Output location | `dist/portalcv-web/browser` |
+| API location | -- (API separada en Container Apps) |
+
+> Angular es una SPA compilada: los archivos resultantes son HTML + JS + CSS estaticos sin capacidad
+> de leer variables de entorno en runtime. La URL del backend se inyecta en TIEMPO DE BUILD
+> a traves de `src/environments/environment.prod.ts` y el mecanismo `fileReplacements` de Angular CLI.
+> Azure Static Web Apps solo sirve esos archivos estaticos + maneja el enrutamiento SPA.
+
+**Archivo requerido: `frontend/public/staticwebapp.config.json`**
+
+Este archivo le indica a Azure Static Web Apps que redirija todas las rutas a `index.html`
+(necesario para que el router de Angular funcione correctamente):
+
+```json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*", "/*.{css,js,png,jpg,jpeg,gif,ico,svg,woff,woff2}"]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff"
+  }
+}
+```
+
+> Sin este archivo, navegar directamente a `/auth/login` o recargar la pagina
+> devuelve 404 en Azure Static Web Apps.
+
+**Archivos de environments requeridos en el codigo Angular:**
+
+| Archivo | Entorno | `apiUrl` apunta a |
+|---------|---------|-------------------|
+| `src/environments/environment.ts` | Desarrollo local | `http://localhost:5000/api` |
+| `src/environments/environment.prod.ts` | Produccion | `https://portalcv-api.azurecontainerapps.io/api` |
+
+### Configuracion de Azure SQL (ya existente)
+
+| Parametro | Valor |
+|-----------|-------|
+| Servidor | `sql-portalcv-mao.database.windows.net` |
+| Base de datos | `PortalCV` |
+| Admin | `sqladmin` |
+| Usuario app (prod) | `portalcv_app_prod` |
+| Permisos | SELECT, INSERT, UPDATE, DELETE, EXECUTE sobre `dbo` |
+| Firewall | Permitir servicios Azure (`Allow Azure services: ON`) |
+
+---
+
+## 4. GitHub Secrets a configurar
+
+Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
+
+| Secret | Descripcion | Como obtener |
+|--------|-------------|--------------|
+| `AZURE_CREDENTIALS` | JSON del Service Principal de Azure | `az ad sp create-for-rbac --role contributor --scopes /subscriptions/.../resourceGroups/rg-portalcv --json-auth` |
+| `AZURE_STATIC_WEB_APPS_TOKEN` | Token del Static Web App | Portal Azure --> Static Web App --> Manage token |
+| `JWT_KEY_PROD` | Clave de firma JWT produccion | Generar string aleatorio >= 32 chars |
+| `AZURE_SQL_CONN_PROD` | Cadena de conexion Azure SQL con portalcv_app_prod | Ver `.env` comentado (linea Azure) |
+
+> `GITHUB_TOKEN` es automatico -- no requiere creacion manual.
+
+> **Nota frontend:** La URL de produccion del backend (`apiUrl` en `environment.prod.ts`)
+> se define directamente en el codigo fuente -- no requiere secret adicional porque es
+> una URL publica (el HTTPS del Container App es accesible sin autenticacion para el cliente).
+
+---
+
+## 5. Base de datos -- Scripts por entorno
+
+| Entorno | Scripts | Como ejecutar |
+|---------|---------|---------------|
+| Local (Docker) | `01_CreateSchema.sql`, `02_InsertTestData.sql` | Automatico al levantar `docker compose up` |
+| Azure SQL (prod) | `05_AzureSQL_CreateSchema.sql`, `06_AzureSQL_SeedRoles.sql` | Ejecutar una sola vez desde Azure Data Studio o portal |
+
+> Los scripts `05_` y `06_` NO incluyen `USE [PortalCV]` -- conectar directamente a la BD destino.
+> Los scripts de produccion son idempotentes y ya fueron ejecutados.
+
+---
+
+## 6. Flujo Git hacia Produccion
+
+```
+1. DESARROLLO
+   git checkout -b feat/nombre-historia
+   # ... commits de trabajo ...
+   git push origin feat/nombre-historia
+   # CI valida build + tests en la feature branch
+
+2. INTEGRACION
+   PR: feat/nombre-historia --> develop
+   # CI vuelve a validar
+   # merge aprobado --> develop actualizado
+
+3. RELEASE
+   PR: develop --> main
+   # CI build + test + package + deploy
+   # merge aprobado --> produccion actualizada automaticamente
 ```
 
 ---
 
-### PASO 3: Despliegue en Azure AKS
+## 7. Cache en el backend
 
-**azure-aks-deploy.yml** (para GitHub Actions)
-```yaml
-name: Deploy to AKS
+**Decision:** IMemoryCache (.NET in-process) en lugar de Redis.
 
-on:
-  push:
-    tags:
-      - 'v*'
+| Aspecto | Detalle |
+|---------|---------|
+| Implementacion | `builder.Services.AddMemoryCache()` + `IMemoryCache` inyectado en servicios |
+| Costo | $0 -- integrado en .NET sin dependencias externas |
+| Limitacion | Cache local por instancia -- no compartido entre replicas |
+| Escala actual | 1 replica en Container Apps -- no hay problema de consistencia |
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-          
-      - name: Set AKS Context
-        uses: azure/aks-set-context@v3
-        with:
-          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
-          
-      - name: Deploy to Kubernetes
-        run: |
-          # Actualizar imágenes en los YAML
-          sed -i "s|BACKEND_IMAGE|${{ secrets.DOCKER_USERNAME }}/portalcv-backend:${{ github.sha }}|g" k8s/backend-deployment.yaml
-          sed -i "s|FRONTEND_IMAGE|${{ secrets.DOCKER_USERNAME }}/portalcv-frontend:${{ github.sha }}|g" k8s/frontend-deployment.yaml
-          
-          # Aplicar configuraciones
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/secrets.yaml
-          kubectl apply -f k8s/configmap.yaml
-          kubectl apply -f k8s/backend-deployment.yaml
-          kubectl apply -f k8s/backend-service.yaml
-          kubectl apply -f k8s/frontend-deployment.yaml
-          kubectl apply -f k8s/frontend-service.yaml
-          kubectl apply -f k8s/ingress.yaml
-          
-      - name: Verify Deployment
-        run: |
-          kubectl rollout status deployment/backend -n portalcv
-          kubectl rollout status deployment/frontend -n portalcv
-          
-      - name: Smoke Tests
-        run: |
-          # Obtener IP del Ingress
-          INGRESS_IP=$(kubectl get ingress portalcv-ingress -n portalcv -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          curl -f http://$INGRESS_IP/api/health || exit 1
-```
+**TTL recomendados por tipo de dato:**
+
+| Dato | TTL sugerido |
+|------|-------------|
+| Roles y permisos | 15 minutos |
+| Datos de perfil CV | 5 minutos |
+| Listas de categorias | 30 minutos |
+
+> Si el proyecto escala a multiples replicas, migrar a Azure Cache for Redis o SQL-backed cache.
 
 ---
 
-### PASO 4: Kubernetes Manifests
+## 8. Arquitectura del frontend Angular
 
-**k8s/backend-deployment.yaml**
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-  namespace: portalcv
-spec:
-  replicas: 3
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-      - name: backend
-        image: BACKEND_IMAGE  # Reemplazado por CI/CD
-        ports:
-        - containerPort: 8080
-        env:
-        - name: ConnectionStrings__DefaultConnection
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: connection-string
-        - name: ASPNETCORE_ENVIRONMENT
-          value: "Production"
-        livenessProbe:
-          httpGet:
-            path: /api/health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /api/ready
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-```
-
----
-
-## 🎓 APRENDIZAJE PROGRESIVO (Roadmap de Estudio)
-
-### Fase 1: Fundamentos (Semanas 1-2)
-- [ ] Git avanzado (ramas, merge, rebase, tags)
-- [ ] GitHub (repos, issues, pull requests)
-- [ ] Docker básico (images, containers, docker-compose)
-- [ ] Conceptos de CI/CD
-
-### Fase 2: CI Básico (Semanas 3-4)
-- [ ] GitHub Actions: workflows básicos
-- [ ] Build y test automáticos
-- [ ] Integración con SonarCloud
-- [ ] Artefactos y caché
-
-### Fase 3: Contenedores y Registros (Semanas 5-6)
-- [ ] Docker avanzado (multi-stage builds)
-- [ ] Docker Hub vs GitHub Container Registry
-- [ ] Seguridad en imágenes
-- [ ] Tags semánticos (v1.0.0)
-
-### Fase 4: Despliegue en Nube (Semanas 7-8)
-- [ ] Azure Free Account
-- [ ] Azure App Service (PaaS)
-- [ ] Azure SQL Database
-- [ ] Conexiones seguras
-
-### Fase 5: Kubernetes (Semanas 9-10)
-- [ ] Minikube local
-- [ ] Pods, Deployments, Services
-- [ ] ConfigMaps y Secrets
-- [ ] Health checks (liveness/readiness)
-
-### Fase 6: CD Completo (Semanas 11-12)
-- [ ] AKS cluster en Azure
-- [ ] Despliegue automático a staging
-- [ ] Estrategias: Rolling update, Blue/Green
-- [ ] Rollback automático
-
-### Fase 7: Monitoreo (Semanas 13-14)
-- [ ] Application Insights
-- [ ] Prometheus + Grafana
-- [ ] Centralized logging (ELK)
-- [ ] Alertas
-
----
-
-## ✅ CHECKLIST DE HERRAMIENTAS A INSTALAR
+### Estructura de modulos (implementada en HS-07)
 
 ```
-📦 HERRAMIENTAS LOCALES
-□ Git
-□ Docker Desktop
-□ VS Code + extensiones (GitHub, Docker, Kubernetes)
-□ .NET SDK 8.0
-□ Node.js 20.x + Angular CLI
-□ Azure CLI
-□ kubectl
-□ Helm (opcional)
-□ Postman / Insomnia
-□ Azure Data Studio o SSMS (para administrar SQL Server)
+src/app/
++-- core/                  Servicios singleton, interceptores, guards
+|   +-- services/
+|   |   +-- api.service.ts       Cliente HTTP base (usa environment.apiUrl)
+|   |   +-- auth.service.ts      Gestion de sesion y token JWT
+|   +-- interceptors/
+|   |   +-- auth.interceptor.ts  Inyecta Bearer token en cada request
+|   |   +-- error.interceptor.ts Manejo centralizado de errores HTTP
+|   +-- guards/                  Proteccion de rutas autenticadas
++-- features/              Modulos por area funcional (lazy loading)
+|   +-- public/            Landing, busqueda, detalle CV, contacto
+|   +-- auth/              Login, registro
+|   +-- editor/            Editor de CV (datos, experiencia, habilidades...)
+|   +-- dashboard/         Estadisticas y alertas del publicador
++-- layout/                Header, Footer, MainLayout (shell de la app)
++-- shared/                Componentes y pipes reutilizables
 ```
 
+### Como funciona la URL del backend segun entorno
+
+Angular es codigo que se ejecuta en el navegador del usuario. A diferencia del backend (.NET),
+NO puede leer variables de entorno del servidor en runtime. La URL del API se fija en BUILD TIME:
+
+```
+DESARROLLO LOCAL
+  environment.ts           --> apiUrl = http://localhost:5000/api   (Docker Compose: PORT_BACKEND=5000)
+                                           http://localhost:5083/api   (dotnet run directo: launchSettings.json)
+  ng serve                 --> usa este archivo
+  Angular DevServer        --> proxy al backend
+
+PRODUCCION
+  environment.prod.ts      --> apiUrl = https://portalcv-api.azurecontainerapps.io/api
+  ng build --configuration production --> reemplaza environment.ts por environment.prod.ts
+  Resultado: archivos JS estaticos con la URL de prod embebida
+```
+
+El mecanismo de reemplazo se configura en `angular.json` bajo `fileReplacements`:
+
+```json
+"configurations": {
+  "production": {
+    "fileReplacements": [
+      {
+        "replace": "src/environments/environment.ts",
+        "with":    "src/environments/environment.prod.ts"
+      }
+    ]
+  }
+}
+```
+
+### Enrutamiento SPA en Azure Static Web Apps
+
+Azure Static Web Apps sirve archivos estaticos. Cuando el usuario navega directamente a
+`/auth/login` o recarga la pagina, el servidor busca ese archivo fisico -- que no existe.
+Para que Angular maneje esas rutas se necesita `frontend/public/staticwebapp.config.json`:
+
+```json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*", "/*.{css,js,png,jpg,jpeg,gif,ico,svg,woff,woff2}"]
+  },
+  "globalHeaders": {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff"
+  }
+}
+```
+
+### CORS: quien permite que el frontend llame al backend
+
+El frontend (en `azurestaticapps.net`) llama al backend (en `azurecontainerapps.io`).
+Son dominios distintos -- el backend necesita permitir ese origen en su configuracion CORS.
+El backend .NET ya tiene CORS configurado; al crear el Container App hay que agregar el
+dominio del Static Web App como origen permitido en las variables de entorno.
+
+### Pendiente implementar (rama feat/hs-frontend-config)
+
+| Tarea | Archivo | Detalle |
+|-------|---------|---------|
+| Crear environments | `src/environments/environment.ts` y `environment.prod.ts` | Con `apiUrl` por entorno |
+| Conectar ApiService | `core/services/api.service.ts` | Usar `environment.apiUrl` en lugar de URL hardcodeada |
+| Configurar fileReplacements | `angular.json` | Reemplazo automatico en build produccion |
+| Crear config SPA | `public/staticwebapp.config.json` | Fallback al index.html para rutas Angular |
+
 ---
 
-## 🔐 SECRETS Y VARIABLES A CONFIGURAR
+## 9. Checklist de despliegue inicial
 
-| Entorno | Secret / Variable | Uso |
-|---------|-------------------|-----|
-| **GitHub Actions** | `DOCKER_USERNAME` | Usuario Docker Hub (o GHCR) |
-| **GitHub Actions** | `DOCKER_TOKEN` | Token de acceso para push de imágenes |
-| **GitHub Actions** | `CODECOV_TOKEN` | Opcional; para subir cobertura (Codecov) |
-| **GitHub Actions** | `SONAR_TOKEN` | Opcional; para SonarCloud |
-| **Deploy AKS** | `AZURE_CREDENTIALS` | JSON con service principal de Azure |
-| **Deploy AKS** | `AZURE_RESOURCE_GROUP` | Nombre del resource group |
-| **Deploy AKS** | `AKS_CLUSTER_NAME` | Nombre del cluster AKS |
-| **K8s** | `db-secret` (connection-string) | Cadena de conexión a SQL Server (producción) |
+```
+AZURE
+[ ] Crear Resource Group rg-portalcv
+[ ] Verificar Azure SQL Database operativa (ya hecho)
+[ ] Crear Container Apps Environment (env-portalcv)
+[ ] Crear Container App portalcv-api
+[ ] Configurar variables de entorno en Container App
+[ ] Configurar firewall Azure SQL: Allow Azure services ON
+[ ] Crear Azure Static Web App portalcv-web (conectar a repo)
 
----
+GITHUB
+[ ] Configurar secrets: AZURE_CREDENTIALS, AZURE_STATIC_WEB_APPS_TOKEN, JWT_KEY_PROD
+[ ] Hacer merge de feat/hs08-cicd-docs --> develop --> main
+[ ] Verificar que el pipeline CI pase en main
+[ ] Confirmar que Container Apps recibe la imagen
+[ ] Confirmar que Static Web Apps despliega el frontend
 
-## 💡 SUGERENCIAS Y MEJORAS OPCIONALES
-
-| Sugerencia | Descripción |
-|------------|-------------|
-| **Crear BD en primer arranque** | Añadir un servicio init en docker-compose que ejecute `database/01_CreateSchema.sql` contra SQL Server al levantar por primera vez (por ejemplo con `sqlcmd` o script que espere al puerto 1433 y ejecute el script). |
-| **GitLab CI** | Si usas GitLab en lugar de GitHub, el Backlog referencia ambos; usa `.gitlab-ci.yml` con etapas equivalentes (build, test, docker build/push, deploy). Ver plantillas en GitLab. |
-| **Redis para caché** | Documentacion.md menciona Redis para el módulo público; en producción añade un contenedor Redis y variable `Redis__ConnectionString` en backend. |
-| **Health/Ready en backend** | Asegura que el backend exponga `/api/health` (liveness) y `/api/ready` (readiness, opcionalmente comprobando conexión a BD); los manifiestos K8s ya los referencian. |
-| **Versiones de acciones** | Considera fijar versiones de GitHub Actions (ej. `actions/checkout@v4`) y actualizar periódicamente; `@v3` sigue siendo válido. |
-| **SonarCloud opcional** | El job `sonarqube` puede fallar si no configuras `SONAR_TOKEN`; márcalo opcional con `continue-on-error: true` o condicional para no bloquear el pipeline. |
-| **Codecov opcional** | El paso "Upload coverage" requiere `CODECOV_TOKEN` si el repo es privado; en público a veces basta con `GITHUB_TOKEN`. Si falla, desactivar o añadir el token. |
+VALIDACION
+[ ] https://portalcv-api.azurecontainerapps.io/swagger accesible
+[ ] https://portalcv-web.azurestaticapps.net carga la app Angular
+[ ] Frontend puede hacer login contra la API
+[ ] API conecta correctamente a Azure SQL
+```
