@@ -1,19 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, Renderer2 } from '@angular/core';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: false,
-  template: `
-    <div class="login-page" style="min-height: 100vh;">
-      <div class="login-box">
-        <div class="text-center mb-4">
-          <a routerLink="/" class="text-decoration-none">
-            <span class="brand-text fw-bold fs-3">PortalCV</span>
-          </a>
-        </div>
-        <router-outlet></router-outlet>
-      </div>
-    </div>
-  `
+  template: `<router-outlet></router-outlet>`
 })
-export class AuthLayoutComponent { }
+export class AuthLayoutComponent implements OnInit, OnDestroy {
+  constructor(private renderer: Renderer2) {}
+
+  ngOnInit(): void {
+    this.renderer.addClass(document.body, 'login-page');
+    this.renderer.addClass(document.body, 'bg-body-secondary');
+  }
+
+  ngOnDestroy(): void {
+    this.renderer.removeClass(document.body, 'login-page');
+    this.renderer.removeClass(document.body, 'bg-body-secondary');
+  }
+}

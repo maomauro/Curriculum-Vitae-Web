@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, Renderer2 } from '@angular/core';
+
+// Clases que pueden haber quedado de otras vistas
+const CLASSES_TO_REMOVE = ['layout-fixed', 'sidebar-expand-lg', 'bg-body-tertiary', 'login-page', 'bg-body-secondary'];
 
 @Component({
   selector: 'app-public-layout',
@@ -13,4 +16,12 @@ import { Component } from '@angular/core';
     </div>
   `
 })
-export class PublicLayoutComponent { }
+export class PublicLayoutComponent implements OnInit, OnDestroy {
+  constructor(private renderer: Renderer2) {}
+
+  ngOnInit(): void {
+    CLASSES_TO_REMOVE.forEach(c => this.renderer.removeClass(document.body, c));
+  }
+
+  ngOnDestroy(): void {}
+}
