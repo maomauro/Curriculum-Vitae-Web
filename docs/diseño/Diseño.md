@@ -1,6 +1,6 @@
 # Diseño UI — Portal CV
 
-Documento de arquitectura visual. Cada vista tiene su propio archivo detallado en `docs/vistas/`.
+Documento de arquitectura visual. Cada vista tiene su propio archivo detallado en `docs/diseño/vistas/`.
 
 ---
 
