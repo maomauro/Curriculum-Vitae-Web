@@ -127,6 +127,229 @@ const routes: Routes = [
 
 ---
 
+## 3.5 Guía visual de implementación
+
+Esta sección muestra cómo "pintar" cada layout en pantalla, relacionando el mockup visual con el componente Angular y las clases CSS de AdminLTE 4.
+
+### Cómo leer los mockups
+
+Cada bloque del mockup indica:
+- Qué **componente Angular** lo renderiza
+- Qué **clase CSS de AdminLTE 4** lo produce visualmente
+
+El desarrollador debe trasladar cada bloque del mockup a su componente correspondiente usando exactamente esas clases.
+
+---
+
+### Layout 1 — `PublicLayoutComponent`
+
+**Rutas:** `/` · `/cvs` · `/cv/:id`  
+**Clases `<body>`:** ninguna especial (Bootstrap 5 estándar)
+
+```
++--------------------------------------------------------------+
+| NavbarPublicComponent  →  nav.navbar.navbar-expand-lg        |
+|  [PortalCV]  [Inicio]  [Buscar CVs]      [Login] [Registro]  |
++--------------------------------------------------------------+
+|                                                              |
+|                   <router-outlet>                            |
+|        (HomeComponent / CvsComponent / CvDetailComponent)    |
+|                                                              |
++--------------------------------------------------------------+
+| FooterPublicComponent  →  footer.bg-dark                     |
++--------------------------------------------------------------+
+```
+
+**Estructura Angular del componente:**
+```html
+<!-- public-layout.component.ts -->
+<div class="d-flex flex-column min-vh-100">
+  <app-navbar-public></app-navbar-public>      <!-- barra superior -->
+  <main class="flex-grow-1">
+    <router-outlet></router-outlet>             <!-- páginas public -->
+  </main>
+  <app-footer-public></app-footer-public>       <!-- footer -->
+</div>
+```
+
+---
+
+### Layout 2 — `AuthLayoutComponent`
+
+**Rutas:** `/auth/login` · `/auth/register`  
+**Clases `<body>`:** `login-page bg-body-secondary`  
+*(se añaden via `Renderer2` en `ngOnInit` y se eliminan en `ngOnDestroy`)*
+
+```
++--------------------------------------------------------------+
+|              fondo gris claro  (bg-body-secondary)           |
+|                                                              |
+|          ┌─────────────────────────────────┐                 |
+|          │  .login-logo                    │                 |
+|          │        PortalCV                 │                 |
+|          ├─────────────────────────────────┤                 |
+|          │  .card > .login-card-body       │                 |
+|          │  "Inicia sesión para continuar" │   .login-box    |
+|          │                                 │   (max 360px,   |
+|          │  [ correo electrónico    ✉ ]    │   centrado por  |
+|          │  [ contraseña            🔒 ]   │   AdminLTE CSS) |
+|          │  [      Iniciar sesión      ]   │                 |
+|          │                                 │                 |
+|          │  ¿No tienes cuenta? Regístrate  │                 |
+|          └─────────────────────────────────┘                 |
+|                                                              |
++--------------------------------------------------------------+
+```
+
+**Estructura Angular del componente:**
+```html
+<!-- auth-layout.component.ts: el <body> recibe las clases, el template es solo: -->
+<router-outlet></router-outlet>
+
+<!-- login.component.ts / register.component.ts -->
+<div class="login-box">
+  <div class="login-logo">
+    <a routerLink="/"><b>Portal</b>CV</a>
+  </div>
+  <div class="card">
+    <div class="card-body login-card-body">
+      <p class="login-box-msg">Inicia sesión para continuar</p>
+      <form>
+        <div class="input-group mb-3">
+          <input type="email" class="form-control" placeholder="Correo">
+          <div class="input-group-text"><span class="bi bi-envelope"></span></div>
+        </div>
+        <!-- ... -->
+      </form>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+### Layout 3 — `AdminLayoutComponent`
+
+**Rutas:** `/dashboard` · `/editor`  
+**Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary`  
+*(se añaden via `Renderer2` en `ngOnInit` y se eliminan en `ngOnDestroy`)*
+
+```
++--------------------------------------------------------------+
+| TopbarComponent  →  nav.app-header.navbar.navbar-expand      |
+|  [ ☰ toggle ]  [ PortalCV ]               [ usuario ▾ ]     |
++--------------------------------------------------------------+
+| SidebarComponent         |  app-main                        |
+| aside.app-sidebar        |  <router-outlet>                  |
+|                          |                                   |
+|  .sidebar-brand          |  DashboardComponent               |
+|  ┌─ PortalCV ──────┐     |       o                          |
+|  .sidebar-wrapper        |  EditorComponent                  |
+|  ul.sidebar-menu         |                                   |
+|   li.nav-item            |                                   |
+|    a.nav-link            |                                   |
+|     i.nav-icon           |                                   |
+|    [ Dashboard    ]      |                                   |
+|    [ Editor de CV ]      |                                   |
+|    [ Crear CV     ]      |                                   |
+|                          |                                   |
++--------------------------+-----------------------------------+
+| footer.app-footer                                            |
++--------------------------------------------------------------+
+```
+
+**Estructura Angular del componente:**
+```html
+<!-- admin-layout.component.ts -->
+<!-- El <body> tiene aplicadas: layout-fixed sidebar-expand-lg bg-body-tertiary -->
+<div class="app-wrapper">
+
+  <!-- TopbarComponent -->
+  <nav class="app-header navbar navbar-expand bg-body">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" data-lte-toggle="sidebar">
+            <i class="bi bi-list"></i>
+          </a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        <!-- dropdown usuario -->
+      </ul>
+    </div>
+  </nav>
+
+  <!-- SidebarComponent -->
+  <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+    <div class="sidebar-brand">
+      <a class="brand-link">
+        <span class="brand-text fw-light">PortalCV</span>
+      </a>
+    </div>
+    <div class="sidebar-wrapper">
+      <nav class="mt-2">
+        <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview">
+          <li class="nav-item">
+            <a routerLink="/dashboard" class="nav-link">
+              <i class="nav-icon bi bi-speedometer2"></i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/editor" class="nav-link">
+              <i class="nav-icon bi bi-file-earmark-person"></i>
+              <p>Editor de CV</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Área de contenido -->
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="app-footer">...</footer>
+</div>
+```
+
+---
+
+### Tabla de mapeo — componente Angular → clase AdminLTE 4
+
+| Componente Angular | Etiqueta HTML | Clase CSS AdminLTE 4 | Rol visual |
+|---|---|---|---|
+| `AdminLayoutComponent` | `<div>` | `app-wrapper` | Contenedor raíz del panel |
+| `TopbarComponent` | `<nav>` | `app-header navbar navbar-expand bg-body` | Barra superior |
+| `SidebarComponent` | `<aside>` | `app-sidebar bg-body-secondary shadow` | Menú lateral |
+| *(dentro de sidebar)* | `<div>` | `sidebar-brand` | Logo en el sidebar |
+| *(dentro de sidebar)* | `<div>` | `sidebar-wrapper` | Área scrollable del menú |
+| *(dentro de sidebar)* | `<ul>` | `nav sidebar-menu flex-column` | Lista de links |
+| *(dentro de sidebar)* | `<li>` | `nav-item` | Ítem de menú |
+| *(dentro de sidebar)* | `<a>` | `nav-link` | Link de menú (activo: `active`) |
+| *(dentro de sidebar)* | `<i>` | `nav-icon bi bi-*` | Ícono del ítem |
+| *(contenido)* | `<main>` | `app-main` | Área de contenido principal |
+| *(páginas internas)* | `<div>` | `app-content-header` | Título de la sub-página |
+| *(páginas internas)* | `<div>` | `app-content` | Cuerpo de la sub-página |
+| *(layout)* | `<footer>` | `app-footer` | Pie de página del panel |
+
+---
+
+### Clases del `<body>` por layout
+
+| Layout | Clases `<body>` | Cómo se aplican |
+|---|---|---|
+| **Admin** | `layout-fixed sidebar-expand-lg bg-body-tertiary` | `AdminLayoutComponent` via `Renderer2` |
+| **Auth** | `login-page bg-body-secondary` | `AuthLayoutComponent` via `Renderer2` |
+| **Public** | *(ninguna)* | `PublicLayoutComponent` las limpia via `Renderer2` |
+
+> **Importante:** Las clases del `<body>` no se ponen en `index.html`. Cada layout las gestiona en `ngOnInit()` (add) y `ngOnDestroy()` (remove) usando `Renderer2`, para evitar que persistan al navegar entre secciones.
+
+---
+
 ## 4. Estructura de carpetas propuesta
 
 ```
