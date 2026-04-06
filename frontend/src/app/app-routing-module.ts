@@ -6,16 +6,7 @@ import { AdminLayoutComponent } from './layout/containers/admin-layout.component
 import { authGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-  {
-    path: '',
-    component: PublicLayoutComponent,
-    children: [
-      {
-        path: '',
-        loadChildren: () => import('./features/public/public-module').then(m => m.PublicModule)
-      }
-    ]
-  },
+  // Sección Auth — /auth/login, /auth/register
   {
     path: 'auth',
     component: AuthLayoutComponent,
@@ -26,18 +17,37 @@ const routes: Routes = [
       }
     ]
   },
+  // Sección privada — /dashboard, /editor (requiere autenticación)
   {
-    path: '',
+    path: 'dashboard',
     component: AdminLayoutComponent,
     canActivate: [authGuard],
     children: [
       {
-        path: 'editor',
-        loadChildren: () => import('./features/editor/editor-module').then(m => m.EditorModule)
-      },
-      {
-        path: 'dashboard',
+        path: '',
         loadChildren: () => import('./features/dashboard/dashboard-module').then(m => m.DashboardModule)
+      }
+    ]
+  },
+  {
+    path: 'editor',
+    component: AdminLayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./features/editor/editor-module').then(m => m.EditorModule)
+      }
+    ]
+  },
+  // Sección pública — /, /cvs, /cv/:id (debe ir al final)
+  {
+    path: '',
+    component: PublicLayoutComponent,
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./features/public/public-module').then(m => m.PublicModule)
       }
     ]
   }
