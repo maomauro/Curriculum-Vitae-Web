@@ -1,1 +1,12 @@
+// Variables de paleta — Portal CV
+// Se sobreescriben antes de que AdminLTE/Bootstrap carguen sus tokens
+:root {
+  --bs-primary:        #2c7be5;   // Azul corporativo
+  --bs-primary-rgb:    44, 123, 229;
+  --bs-secondary:      #6c757d;
+  --bs-success:        #00b74a;
+  --bs-info:           #39c0ed;
+  --bs-warning:        #ffa900;
+  --bs-danger:         #f93154;
+}
 /* You can add global styles to this file, and also import other style files */
