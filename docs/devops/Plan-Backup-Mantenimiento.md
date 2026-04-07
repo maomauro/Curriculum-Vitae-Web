@@ -5,7 +5,7 @@ Definir una politica minima para proteger la base de datos PortalCV y mantener u
 
 ## Alcance
 - Base de datos: PortalCV
-- Motor: SQL Server 2016+
+- Motor: SQL Server 2022 (imagen Docker: mcr.microsoft.com/mssql/server:2022-latest)
 - Entorno: aplicar en desarrollo y produccion con la misma logica
 
 ## Frecuencia de Backups
@@ -27,9 +27,13 @@ Definir una politica minima para proteger la base de datos PortalCV y mantener u
 2. Actualizar estadisticas de tablas principales:
    - Curriculum
    - Personales
-   - Habilidad
+   - Perfil
    - Experiencia
    - Formacion
+   - Habilidad
+   - Proyecto
+   - AlertaVisita
+   - EstadisticasPublicas
 
 ## Validacion de Recuperacion
 1. Realizar una prueba de restauracion 1 vez al mes en ambiente no productivo.

@@ -146,9 +146,15 @@ CREATE TABLE dbo.Personales (
     CodigoPostal       NVARCHAR(20) NULL,
     Direccion          NVARCHAR(255) NULL,
     TipoResidencia     NVARCHAR(50) NULL,
+    -- Foto y privacidad de contacto
+    FotoUrl            NVARCHAR(500) NULL,
+    PrivacidadEmail    NVARCHAR(20)  NOT NULL DEFAULT N'Publico',
+    PrivacidadTelefono NVARCHAR(20)  NOT NULL DEFAULT N'Publico',
     CONSTRAINT PK_Personales PRIMARY KEY CLUSTERED (PersonalesId),
     CONSTRAINT FK_Personales_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
-    CONSTRAINT UQ_Personales_CurriculumId UNIQUE (CurriculumId)
+    CONSTRAINT UQ_Personales_CurriculumId UNIQUE (CurriculumId),
+    CONSTRAINT CK_Personales_PrivEmail   CHECK (PrivacidadEmail    IN (N'Publico', N'SoloFormulario', N'Oculto')),
+    CONSTRAINT CK_Personales_PrivTel     CHECK (PrivacidadTelefono IN (N'Publico', N'Parcial',        N'Oculto'))
 );
 
 CREATE NONCLUSTERED INDEX IX_Personales_Ciudad ON dbo.Personales (Ciudad)
@@ -217,6 +223,7 @@ CREATE TABLE dbo.Perfil (
     DescripcionPerfil       NVARCHAR(MAX) NULL,
     AspiracionSalarialPesos DECIMAL(18,2) NULL,
     AspiracionSalarialDolares DECIMAL(18,2) NULL,
+    EsActivo                  BIT           NOT NULL DEFAULT 1,
     CONSTRAINT PK_Perfil PRIMARY KEY CLUSTERED (PerfilId),
     CONSTRAINT FK_Perfil_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
@@ -236,6 +243,8 @@ CREATE TABLE dbo.Experiencia (
     TipoContrato   NVARCHAR(50) NULL,
     MotivoRetiro   NVARCHAR(255) NULL,
     Funciones      NVARCHAR(MAX) NULL,
+    EsActual       BIT           NOT NULL DEFAULT 0,
+    AdjuntoSoporte NVARCHAR(500) NULL,
     FechaRegistro  DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
     CONSTRAINT PK_Experiencia PRIMARY KEY CLUSTERED (ExperienciaId),
     CONSTRAINT FK_Experiencia_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
@@ -265,6 +274,8 @@ CREATE TABLE dbo.Formacion (
     TipoFormacion  NVARCHAR(50) NULL,
     Descripcion    NVARCHAR(MAX) NULL,
     AdjuntoSoporte NVARCHAR(500) NULL,
+    FechaVigencia  DATE          NULL,
+    DuracionHoras  INT           NULL,
     CONSTRAINT PK_Formacion PRIMARY KEY CLUSTERED (FormacionId),
     CONSTRAINT FK_Formacion_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
@@ -281,11 +292,20 @@ CREATE TABLE dbo.Habilidad (
     Nombre       NVARCHAR(100) NOT NULL,
     Tipo         NVARCHAR(30)  NULL,
     Nivel        NVARCHAR(30)  NULL,
-    Descripcion  NVARCHAR(500) NULL,
+    Descripcion    NVARCHAR(500) NULL,
+    -- Niveles CEFR para idiomas (sólo aplica cuando Tipo = 'Idioma')
+    NivelLectura   NVARCHAR(5)   NULL,
+    NivelEscritura NVARCHAR(5)   NULL,
+    NivelEscucha   NVARCHAR(5)   NULL,
+    NivelHabla     NVARCHAR(5)   NULL,
     CONSTRAINT PK_Habilidad PRIMARY KEY CLUSTERED (HabilidadId),
     CONSTRAINT FK_Habilidad_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT CK_Habilidad_Tipo CHECK (Tipo IN (N'Tecnica', N'Blanda', N'Idioma', N'Otra')),
-    CONSTRAINT CK_Habilidad_Nivel CHECK (Nivel IN (N'Basico', N'Intermedio', N'Avanzado', N'Experto'))
+    CONSTRAINT CK_Habilidad_Nivel CHECK (Nivel IN (N'Basico', N'Intermedio', N'Avanzado', N'Experto')),
+    CONSTRAINT CK_Habilidad_NivelLectura   CHECK (NivelLectura   IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelLectura   IS NULL),
+    CONSTRAINT CK_Habilidad_NivelEscritura CHECK (NivelEscritura IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelEscritura IS NULL),
+    CONSTRAINT CK_Habilidad_NivelEscucha   CHECK (NivelEscucha   IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelEscucha   IS NULL),
+    CONSTRAINT CK_Habilidad_NivelHabla     CHECK (NivelHabla     IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelHabla     IS NULL)
 );
 
 CREATE NONCLUSTERED INDEX IX_Habilidad_CurriculumId ON dbo.Habilidad (CurriculumId);
@@ -322,6 +342,7 @@ CREATE TABLE dbo.VisitanteContacto (
     Correo              NVARCHAR(100) NOT NULL,
     Empresa             NVARCHAR(150) NULL,
     MotivoContacto     NVARCHAR(255) NULL,
+    Asunto              NVARCHAR(255) NULL,
     ComoMeEncontraste   NVARCHAR(255) NULL,
     Mensaje             NVARCHAR(MAX) NULL,
     FechaContacto       DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
@@ -338,9 +359,14 @@ CREATE TABLE dbo.AlertaVisita (
     FechaVisita    DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
     Origen         NVARCHAR(255) NULL,
     TipoVisita     NVARCHAR(20)  NULL,
+    EsLeida        BIT           NOT NULL DEFAULT 0,
+    Titulo         NVARCHAR(255) NULL,
+    Descripcion    NVARCHAR(MAX) NULL,
+    Ciudad         NVARCHAR(100) NULL,
+    Pais           NVARCHAR(100) NULL,
     CONSTRAINT PK_AlertaVisita PRIMARY KEY CLUSTERED (AlertaVisitaId),
     CONSTRAINT FK_AlertaVisita_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
-    CONSTRAINT CK_AlertaVisita_TipoVisita CHECK (TipoVisita IN (N'SoloVista', N'ConContacto'))
+    CONSTRAINT CK_AlertaVisita_TipoVisita CHECK (TipoVisita IN (N'Vista', N'Contacto', N'Descarga', N'Sistema'))
 );
 
 CREATE NONCLUSTERED INDEX IX_AlertaVisita_CurriculumId ON dbo.AlertaVisita (CurriculumId);

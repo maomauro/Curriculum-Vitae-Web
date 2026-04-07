@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor CV — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    /* AdminLTE 4 — AdminLayout (mismo que dashboard) */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      background: #F4F6F9;
+      margin: 0;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background: #343A40;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+    }
+    .topbar .btn-hamburger {
+      background: none; border: none; color: #ADB5BD;
+      font-size: 1.2rem; cursor: pointer; padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .topbar .btn-hamburger:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .topbar .brand {
+      color: #fff; font-size: 1.15rem; font-weight: 700;
+      text-decoration: none; margin-right: auto;
+    }
+    .topbar .brand span { color: #2C7BE5; }
+    .topbar .nav-center {
+      color: #CED4DA; font-size: .85rem; display: flex; align-items: center; gap: 6px;
+    }
+    .topbar .user-menu {
+      display: flex; align-items: center; gap: 8px;
+      color: #fff; font-size: .875rem; cursor: pointer;
+    }
+    .topbar .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: #2D3748;
+      width: 220px;
+      min-height: calc(100vh - 56px);
+      position: fixed;
+      top: 56px; left: 0;
+      padding: 20px 0;
+      overflow: hidden;
+      transition: width .25s;
+    }
+    .sidebar.collapsed { width: 60px; }
+
+    .sidebar-user {
+      padding: 0 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 8px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .sidebar-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;
+    }
+    .sidebar-username { color: #fff; font-weight: 700; font-size: .95rem; white-space: nowrap; }
+    .sidebar-role     { color: #A0AEC0; font-size: .78rem; white-space: nowrap; }
+
+    .nav-item-sidebar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px;
+      color: #A0AEC0; text-decoration: none;
+      font-size: .875rem; white-space: nowrap;
+      transition: background .2s, color .2s;
+    }
+    .nav-item-sidebar:hover  { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-item-sidebar.active {
+      background: rgba(44,123,229,.2); color: #fff;
+      border-left: 3px solid #2C7BE5;
+    }
+    .nav-item-sidebar i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+    /* MAIN */
+    .main-content {
+      margin-left: 220px;
+      margin-top: 56px;
+      padding: 28px;
+      transition: margin-left .25s;
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+      background: #fff; border-radius: 10px;
+      padding: 20px 24px; margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .page-header h4 { font-weight: 700; color: #212529; margin: 0; }
+
+    /* TABS */
+    .nav-tabs .nav-link {
+      color: #6C757D; font-weight: 500;
+      border: none; border-bottom: 2px solid transparent;
+      padding: 10px 20px;
+    }
+    .nav-tabs .nav-link:hover { color: #2C7BE5; border-color: transparent; }
+    .nav-tabs .nav-link.active {
+      color: #2C7BE5; font-weight: 700;
+      border-bottom: 2px solid #2C7BE5;
+      background: none;
+    }
+    .nav-tabs { border-bottom: 1px solid #DEE2E6; margin-bottom: 0; }
+
+    /* FORM CARD */
+    .form-card {
+      background: #fff; border-radius: 0 0 10px 10px;
+      padding: 28px 32px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .form-label { font-weight: 600; font-size: .875rem; color: #343A40; }
+    .form-control { border-color: #DEE2E6; font-size: .9rem; }
+    .form-control:focus { border-color: #2C7BE5; box-shadow: none; }
+
+    /* Item de lista (experiencia/educación/habilidades) */
+    .list-item {
+      border: 1px solid #E9ECEF; border-radius: 8px;
+      padding: 16px 20px; margin-bottom: 12px; background: #FAFAFA;
+    }
+    .list-item .item-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .list-item .item-title { font-weight: 700; color: #343A40; font-size: .9rem; }
+    .list-item .item-subtitle { color: #6C757D; font-size: .8rem; }
+
+    .btn-delete-item {
+      background: none; border: none; color: #DC3545;
+      font-size: .85rem; cursor: pointer; padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .btn-delete-item:hover { background: #FFF0F0; }
+
+    /* Skill bar */
+    .skill-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .skill-name { width: 140px; font-size: .875rem; font-weight: 600; color: #343A40; }
+    .skill-progress { flex: 1; height: 8px; background: #E9ECEF; border-radius: 4px; }
+    .skill-fill { height: 8px; background: #2C7BE5; border-radius: 4px; }
+    .skill-level { width: 30px; font-size: .8rem; color: #6C757D; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="btn-hamburger" onclick="toggleSidebar()">
+      <i class="bi bi-list"></i>
+    </button>
+    <a href="#" class="brand"><span>Portal</span>CV</a>
+    <div class="nav-center d-none d-md-flex">
+      <i class="bi bi-person-circle"></i>
+      <span>Ana García — Frontend Developer</span>
+    </div>
+    <div class="user-menu ms-3">
+      <div class="user-avatar">AG</div>
+      <span class="d-none d-md-inline">Ana García</span>
+      <i class="bi bi-chevron-down small"></i>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">AG</div>
+      <div class="sidebar-username">Ana García</div>
+      <div class="sidebar-role">Frontend Developer</div>
+    </div>
+    <nav>
+      <a href="dashboard.html" class="nav-item-sidebar">
+        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+      </a>
+      <a href="alertas.html" class="nav-item-sidebar">
+        <i class="bi bi-bell-fill"></i><span>Alertas</span>
+        <span class="nav-badge">5</span>
+      </a>
+      <a href="mi-cv.html" class="nav-item-sidebar active">
+        <i class="bi bi-file-earmark-person-fill"></i><span>Mi CV</span>
+      </a>
+      <a href="datos-personales.html" class="nav-item-sidebar">
+        <i class="bi bi-person-lines-fill"></i><span>Datos Personales</span>
+      </a>
+      <a href="perfil.html" class="nav-item-sidebar">
+        <i class="bi bi-person-badge-fill"></i><span>Perfil</span>
+      </a>
+      <a href="experiencia.html" class="nav-item-sidebar">
+        <i class="bi bi-briefcase-fill"></i><span>Experiencia</span>
+      </a>
+      <a href="educacion.html" class="nav-item-sidebar">
+        <i class="bi bi-mortarboard-fill"></i><span>Educación</span>
+      </a>
+      <a href="habilidades.html" class="nav-item-sidebar">
+        <i class="bi bi-stars"></i><span>Habilidades</span>
+      </a>
+      <a href="proyectos.html" class="nav-item-sidebar">
+        <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
+      </a>
+      <a href="configuracion.html" class="nav-item-sidebar">
+        <i class="bi bi-gear-fill"></i><span>Configuración</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h4><i class="bi bi-pencil-square me-2 text-primary"></i>Editor de Curriculum Vitae</h4>
+      <a href="../publica/detalle-cv.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-eye me-1"></i>Vista previa
+      </a>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs px-2 bg-white rounded-top border-start border-end border-top" style="border-color:#DEE2E6;">
+      <li class="nav-item">
+        <a class="nav-link active" href="#datos" data-bs-toggle="tab">
+          <i class="bi bi-person-fill me-1"></i>Datos Personales
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#perfil" data-bs-toggle="tab">
+          <i class="bi bi-person-badge me-1"></i>Perfil Profesional
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#experiencia" data-bs-toggle="tab">
+          <i class="bi bi-briefcase-fill me-1"></i>Experiencia
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#educacion" data-bs-toggle="tab">
+          <i class="bi bi-mortarboard-fill me-1"></i>Educación
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#habilidades" data-bs-toggle="tab">
+          <i class="bi bi-stars me-1"></i>Habilidades
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#proyectos" data-bs-toggle="tab">
+          <i class="bi bi-kanban-fill me-1"></i>Proyectos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#referencias" data-bs-toggle="tab">
+          <i class="bi bi-person-badge-fill me-1"></i>Referencias
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#redes" data-bs-toggle="tab">
+          <i class="bi bi-share-fill me-1"></i>Redes Sociales
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#familiares" data-bs-toggle="tab">
+          <i class="bi bi-people-fill me-1"></i>Familiares
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#visibilidad" data-bs-toggle="tab">
+          <i class="bi bi-shield-check-fill me-1"></i>Visibilidad
+        </a>
+      </li>
+    </ul>
+
+    <!-- TAB CONTENT -->
+    <div class="tab-content">
+
+      <!-- TAB: Datos Personales -->
+      <div class="tab-pane fade show active" id="datos">
+        <div class="form-card">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" value="Ana">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Apellidos</label>
+              <input type="text" class="form-control" value="García López">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cargo / Título profesional</label>
+              <input type="text" class="form-control" value="Frontend Developer">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" value="ana.garcia@email.com">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input type="tel" class="form-control" value="+34 612 345 678">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad</label>
+              <input type="text" class="form-control" value="Madrid, España">
+            </div>
+            <div class="col-12">
+              <label class="form-label">LinkedIn</label>
+              <input type="url" class="form-control" value="https://linkedin.com/in/ana-garcia-dev">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Resumen profesional</label>
+              <textarea class="form-control" rows="4">Desarrolladora frontend con 5 años de experiencia construyendo interfaces modernas y responsivas. Apasionada por la accesibilidad web y el rendimiento. Experiencia con Angular, React y Vue.js en proyectos de escala empresarial.</textarea>
+            </div>
+            <div class="col-12 text-end">
+              <button class="btn btn-primary px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Perfil Profesional → tabla Perfil -->
+      <div class="tab-pane fade" id="perfil">
+        <div class="form-card">
+          <p class="text-muted small mb-4">Define tu perfil profesional público: un titular, resumen y tus aspiraciones salariales. Esta información acompaña tu CV en el directorio.</p>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Nombre del perfil <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" value="Frontend Developer Senior" placeholder="Ej: Desarrollador Full Stack Senior">
+              <div class="form-text">El titular que verán los reclutadores al encontrar tu CV.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Descripción del perfil</label>
+              <textarea class="form-control" rows="4" placeholder="Breve descripción de tu perfil profesional...">Desarrolladora frontend con más de 5 años de experiencia construyendo interfaces modernas y accesibles. Especialista en Angular y TypeScript. Apasionada por el rendimiento y la experiencia de usuario.</textarea>
+              <div class="form-text">Máx. 500 caracteres. Aparece como resumen en los resultados de búsqueda.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Aspiración salarial (COP)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" value="6000000" placeholder="0">
+                <span class="input-group-text">/mes</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Aspiración salarial (USD)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" value="2500" placeholder="0">
+                <span class="input-group-text">/mes</span>
+              </div>
+            </div>
+            <div class="col-12 text-end">
+              <button class="btn btn-primary px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Experiencia -->
+      <div class="tab-pane fade" id="experiencia">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Frontend Developer Senior</div>
+                <div class="item-subtitle">Tech Solutions SL · Feb 2022 – Presente · Madrid</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Empresa</label>
+                <input type="text" class="form-control form-control-sm" value="Tech Solutions SL">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cargo</label>
+                <input type="text" class="form-control form-control-sm" value="Frontend Developer Senior">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2022-02">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="text" class="form-control form-control-sm" value="Presente" placeholder="Presente">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control form-control-sm" rows="2">Lideré el desarrollo del módulo de reportes en Angular 16. Reduje el tiempo de carga en un 40% mediante lazy loading y optimización de bundles.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Frontend Developer</div>
+                <div class="item-subtitle">Startup Digital SA · Mar 2020 – Ene 2022 · Barcelona</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Empresa</label>
+                <input type="text" class="form-control form-control-sm" value="Startup Digital SA">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cargo</label>
+                <input type="text" class="form-control form-control-sm" value="Frontend Developer">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2020-03">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="month" class="form-control form-control-sm" value="2022-01">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control form-control-sm" rows="2">Desarrollo de landing pages y e-commerce con React y TypeScript. Integración con APIs REST y pasarelas de pago.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar experiencia
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Educación -->
+      <div class="tab-pane fade" id="educacion">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Ingeniería Informática</div>
+                <div class="item-subtitle">Universidad Complutense de Madrid · 2015 – 2019</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Institución</label>
+                <input type="text" class="form-control form-control-sm" value="Universidad Complutense de Madrid">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Título</label>
+                <input type="text" class="form-control form-control-sm" value="Grado en Ingeniería Informática">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2015-09">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="month" class="form-control form-control-sm" value="2019-06">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar educación
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Habilidades -->
+      <div class="tab-pane fade" id="habilidades">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div class="item-title">Habilidades técnicas</div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+
+            <div class="skill-row">
+              <span class="skill-name">Angular</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:90%;"></div>
+              </div>
+              <span class="skill-level">5/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">TypeScript</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:85%;"></div>
+              </div>
+              <span class="skill-level">4/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">React</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:70%;"></div>
+              </div>
+              <span class="skill-level">3/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">CSS / SCSS</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:80%;"></div>
+              </div>
+              <span class="skill-level">4/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">Node.js</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:55%;"></div>
+              </div>
+              <span class="skill-level">3/5</span>
+            </div>
+
+            <!-- Nuevo ítem -->
+            <div class="row g-2 mt-2 pt-2 border-top">
+              <div class="col-md-6">
+                <label class="form-label">Nueva habilidad</label>
+                <input type="text" class="form-control form-control-sm" placeholder="Ej: Docker">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Nivel (1–5)</label>
+                <select class="form-select form-select-sm">
+                  <option>1 – Básico</option>
+                  <option>2 – Elemental</option>
+                  <option selected>3 – Intermedio</option>
+                  <option>4 – Avanzado</option>
+                  <option>5 – Experto</option>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-outline-primary btn-sm w-100">
+                  <i class="bi bi-plus"></i> Añadir
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="text-end mt-3">
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Proyectos -->
+      <div class="tab-pane fade" id="proyectos">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">PortalCV — Plataforma de currículums</div>
+                <div class="item-subtitle">Proyecto personal · Angular + .NET · 2025 – 2026</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-8">
+                <label class="form-label">Nombre del proyecto</label>
+                <input type="text" class="form-control form-control-sm" value="PortalCV — Plataforma de currículums">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tipo</label>
+                <select class="form-select form-select-sm">
+                  <option selected>Personal</option>
+                  <option>Profesional</option>
+                  <option>Académico</option>
+                  <option>Open Source</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2025-09">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="text" class="form-control form-control-sm" value="Presente">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control form-control-sm" rows="2">Plataforma web fullstack para publicar y buscar CVs. Frontend con Angular 20 y AdminLTE, backend con ASP.NET Core y SQL Server en Azure.</textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">URL del proyecto (opcional)</label>
+                <input type="url" class="form-control form-control-sm" value="https://github.com/maomauro/Curriculum-Vitae-Web" placeholder="https://...">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Tecnologías utilizadas</label>
+                <input type="text" class="form-control form-control-sm" value="Angular, TypeScript, .NET, SQL Server, Docker, Azure" placeholder="Ej: Angular, Node.js, MongoDB">
+              </div>
+            </div>
+          </div>
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Design System Corporativo</div>
+                <div class="item-subtitle">Proyecto profesional · Angular + Storybook · 2023</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-8">
+                <label class="form-label">Nombre del proyecto</label>
+                <input type="text" class="form-control form-control-sm" value="Design System Corporativo">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tipo</label>
+                <select class="form-select form-select-sm">
+                  <option>Personal</option>
+                  <option selected>Profesional</option>
+                  <option>Académico</option>
+                  <option>Open Source</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2023-01">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="month" class="form-control form-control-sm" value="2023-08">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control form-control-sm" rows="2">Diseño e implementación de una librería de componentes reutilizables con Angular y Storybook para estandarizar la UI en 3 productos de la empresa.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar proyecto
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Referencias -->
+      <div class="tab-pane fade" id="referencias">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Marta Sánchez — Tech Lead en Accenture</div>
+                <div class="item-subtitle">marta.sanchez@accenture.com · +34 611 222 333</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Nombre completo</label>
+                <input type="text" class="form-control form-control-sm" value="Marta Sánchez">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cargo y empresa</label>
+                <input type="text" class="form-control form-control-sm" value="Tech Lead en Accenture">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control form-control-sm" value="marta.sanchez@accenture.com">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" class="form-control form-control-sm" value="+34 611 222 333">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Relación profesional</label>
+                <input type="text" class="form-control form-control-sm" value="Supervisora directa durante 3 años en Accenture España">
+              </div>
+            </div>
+          </div>
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Carlos Vega — CTO en Startup Digital SA</div>
+                <div class="item-subtitle">cvega@startupdigital.es · +34 622 444 555</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Nombre completo</label>
+                <input type="text" class="form-control form-control-sm" value="Carlos Vega">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cargo y empresa</label>
+                <input type="text" class="form-control form-control-sm" value="CTO en Startup Digital SA">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control form-control-sm" value="cvega@startupdigital.es">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" class="form-control form-control-sm" value="+34 622 444 555">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Relación profesional</label>
+                <input type="text" class="form-control form-control-sm" value="Director técnico durante mi etapa como Frontend Developer (2020-2022)">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar referencia
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Redes Sociales -->
+      <div class="tab-pane fade" id="redes">
+        <div class="form-card">
+          <p class="text-muted small mb-4">Agrega tus perfiles profesionales. Solo se mostrarán los que actives.</p>
+          <div class="row g-3">
+
+            <div class="col-12">
+              <label class="form-label">
+                <i class="bi bi-linkedin me-2 text-primary"></i>LinkedIn
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">linkedin.com/in/</span>
+                <input type="text" class="form-control" value="ana-garcia-dev">
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">
+                <i class="bi bi-github me-2"></i>GitHub
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">github.com/</span>
+                <input type="text" class="form-control" value="anagarcia">
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">
+                <i class="bi bi-globe me-2 text-success"></i>Portafolio / Web personal
+              </label>
+              <input type="url" class="form-control" value="https://anagarcia.dev" placeholder="https://...">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">
+                <i class="bi bi-twitter-x me-2"></i>X (Twitter)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">x.com/</span>
+                <input type="text" class="form-control" placeholder="tu_usuario" value="">
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">
+                <i class="bi bi-stack-overflow me-2 text-warning"></i>Stack Overflow
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">stackoverflow.com/users/</span>
+                <input type="text" class="form-control" placeholder="id/nombre" value="">
+              </div>
+            </div>
+
+            <div class="col-12 text-end">
+              <button class="btn btn-primary px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Contactos Familiares → tabla FamiliarContacto -->
+      <div class="tab-pane fade" id="familiares">
+        <div class="form-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h6 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Contactos Familiares</h6>
+              <p class="text-muted small mb-0">Personas de contacto de emergencia. No se publican en tu CV.</p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar familiar
+            </button>
+          </div>
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Carlos García Martínez</div>
+                <div class="item-subtitle">Hermano · carlos.garcia@email.com · +34 654 321 987</div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-star-fill me-1"></i>Contacto principal</span>
+                <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+              </div>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label">Parentesco</label>
+                <select class="form-select form-select-sm">
+                  <option selected>Hermano/a</option>
+                  <option>Padre / Madre</option>
+                  <option>Cónyuge / Pareja</option>
+                  <option>Hijo/a</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Nombres</label>
+                <input type="text" class="form-control form-control-sm" value="Carlos">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Apellidos</label>
+                <input type="text" class="form-control form-control-sm" value="García Martínez">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control form-control-sm" value="carlos.garcia@email.com">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" class="form-control form-control-sm" value="+34 654 321 987">
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check form-switch mb-1">
+                  <input class="form-check-input" type="checkbox" id="principal1" checked>
+                  <label class="form-check-label small" for="principal1">Contacto principal</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar familiar
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Configuración de Visibilidad -->
+      <div class="tab-pane fade" id="visibilidad">
+        <div class="form-card">
+          <p class="text-muted small mb-4">
+            Controla qué secciones de tu CV son visibles para reclutadores y visitantes. Los cambios se aplican de inmediato.
+          </p>
+
+          <div class="row g-3">
+
+            <!-- Sección con toggle -->
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-person-fill me-2 text-primary"></i>Datos Personales</div>
+                    <div class="text-muted" style="font-size:.8rem;">Nombre, cargo, ciudad, email de contacto</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" checked disabled title="Siempre visible">
+                    <label class="form-check-label text-muted small">Siempre visible</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-briefcase-fill me-2 text-primary"></i>Experiencia Laboral</div>
+                    <div class="text-muted" style="font-size:.8rem;">Historial de empleos y descripciones</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togExp" checked>
+                    <label class="form-check-label text-muted small" for="togExp">Visible</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Educación</div>
+                    <div class="text-muted" style="font-size:.8rem;">Estudios académicos y certificaciones</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togEdu" checked>
+                    <label class="form-check-label text-muted small" for="togEdu">Visible</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-stars me-2 text-primary"></i>Habilidades</div>
+                    <div class="text-muted" style="font-size:.8rem;">Competencias técnicas y niveles</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togHab" checked>
+                    <label class="form-check-label text-muted small" for="togHab">Visible</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-kanban-fill me-2 text-primary"></i>Proyectos</div>
+                    <div class="text-muted" style="font-size:.8rem;">Portfolio de proyectos destacados</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togProy" checked>
+                    <label class="form-check-label text-muted small" for="togProy">Visible</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-person-badge-fill me-2 text-primary"></i>Referencias</div>
+                    <div class="text-muted" style="font-size:.8rem;">Contactos de referencia laboral</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togRef">
+                    <label class="form-check-label text-muted small" for="togRef">Oculto</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="list-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-bold small"><i class="bi bi-share-fill me-2 text-primary"></i>Redes Sociales</div>
+                    <div class="text-muted" style="font-size:.8rem;">LinkedIn, GitHub, portafolio web</div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togRedes" checked>
+                    <label class="form-check-label text-muted small" for="togRedes">Visible</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Config adicional: email público -->
+            <div class="col-12">
+              <div class="list-item">
+                <div class="fw-bold small mb-2"><i class="bi bi-envelope-fill me-2 text-primary"></i>Mostrar email directamente en el CV</div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="emailOption" id="emailPublico" checked>
+                  <label class="form-check-label small" for="emailPublico">
+                    Mostrar email público — Los reclutadores lo verán directamente
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="emailOption" id="emailFormulario">
+                  <label class="form-check-label small" for="emailFormulario">
+                    Solo formulario de contacto — Tu email queda oculto
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="emailOption" id="emailOculto">
+                  <label class="form-check-label small" for="emailOculto">
+                    No mostrar email ni formulario
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 text-end">
+              <button class="btn btn-primary px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar configuración
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      sidebar.classList.toggle('collapsed');
+      main.style.marginLeft = sidebar.classList.contains('collapsed') ? '60px' : '220px';
+    }
+  </script>
+</body>
+</html>

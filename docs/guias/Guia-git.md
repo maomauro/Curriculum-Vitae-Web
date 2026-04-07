@@ -1,6 +1,6 @@
 # Guía de Buenas Prácticas de Git
 
-Ramas, commits y flujo de trabajo para el proyecto. Alineada con el [Backlog](Backlog.md) (HS-04) y el flujo CI/CD del [Despliegue](Despliegue.md) (feature → develop → main).
+Ramas, commits y flujo de trabajo para el proyecto. Alineada con el [Backlog](../arquitectura/Backlog.md) (HS-04) y el flujo CI/CD del [Despliegue](../devops/Despliegue.md) (feature → develop → main).
 
 ---
 
@@ -23,7 +23,8 @@ En lugar de crear una rama por historia técnica, se mantienen **cuatro ramas de
 |------|------|-------------|
 | `feat/frontend` | Frontend Angular | Layouts, AdminLTE, páginas, componentes, services, environments |
 | `feat/backend` | Backend .NET | Endpoints, CRUDs, middleware, servicios de aplicación |
-| `feat/infra` | Infraestructura | Docker, GitHub Actions, scripts SQL, configuración Azure |
+| `feat/database` | Base de datos | Scripts SQL Server, migraciones, datos de prueba, scripts Azure SQL |
+| `feat/infra` | Infraestructura | Docker, GitHub Actions, configuración Azure |
 | `feat/docs` | Documentación | Cambios en `/docs`, `README.md`, `database/README.md` |
 
 **Ciclo de vida de una rama de trabajo:**
@@ -83,21 +84,21 @@ git pull origin develop
 main       ─────────────────────────────────── producción
               ↑ PR
 develop    ──────────────────────────────────── integración
-              ↑ PR       ↑ PR         ↑ PR
-feat/docs  feat/infra  feat/frontend  feat/backend
-6 commits   1 commit    3 commits     0 commits
-(docs)      (CI/CD)     (CORS+JWT)    (nueva)
+              ↑ PR       ↑ PR         ↑ PR         ↑ PR       ↑ PR
+feat/docs  feat/infra  feat/frontend  feat/backend  feat/database
+(docs)      (CI/CD)     (CORS+JWT)    (nueva)       (nueva)
 ```
 
 **PRs pendientes de abrir en GitHub:**
 
 | Rama | Destino | Contenido |
 |------|---------|-----------|
-| `feat/docs` | `develop` | 6 commits de documentación (Despliegue, DevOps, Diseño, audit, guia-git) |
+| `feat/docs` | `develop` | Documentación: reorganización de carpetas, links, devops |
 | `feat/infra` | `develop` | CI/CD GitHub Actions + karma headless |
 | `feat/frontend` | `develop` | CORS backend + variables JWT + limpieza scaffold |
 
-> `feat/backend` ya existe en `develop` (0 commits, lista para trabajo .NET).
+> `feat/backend` lista para trabajo .NET.  
+> `feat/database` lista para scripts SQL, migraciones y datos de prueba.
 
 ---
 
@@ -246,9 +247,9 @@ git restore <archivo>                      # descartar cambios no staged de un a
 
 | Documento | Relación con esta guía |
 |-----------|------------------------|
-| [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas, protección de ramas, PR/MR |
-| [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a feature dispara CI; merge a main despliega a producción |
-| [DevOps.md](DevOps.md) | Stack tecnológico, convenciones de commits, pipeline detallado |
+| [Backlog.md](../arquitectura/Backlog.md) | HS-04: configuración de repositorio, ramas, protección de ramas, PR/MR |
+| [Despliegue.md](../devops/Despliegue.md) | Flujo CI/CD: push a feature dispara CI; merge a main despliega a producción |
+| [DevOps.md](../devops/DevOps.md) | Stack tecnológico, convenciones de commits, pipeline detallado |
 
 ---
 

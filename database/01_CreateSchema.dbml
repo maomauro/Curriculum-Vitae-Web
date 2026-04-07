@@ -72,6 +72,9 @@ Table Personales {
   CodigoPostal varchar(20)
   Direccion varchar(255)
   TipoResidencia varchar(50)
+  FotoUrl varchar(500)
+  PrivacidadEmail varchar(20) [not null, default: 'Publico']
+  PrivacidadTelefono varchar(20) [not null, default: 'Publico']
 }
 
 Table Referencia {
@@ -122,6 +125,7 @@ Table Perfil {
   DescripcionPerfil text
   AspiracionSalarialPesos decimal(18,2)
   AspiracionSalarialDolares decimal(18,2)
+  EsActivo boolean [not null, default: 1]
 }
 
 Table Experiencia {
@@ -135,6 +139,8 @@ Table Experiencia {
   TipoContrato varchar(50)
   MotivoRetiro varchar(255)
   Funciones text
+  EsActual boolean [not null, default: 0]
+  AdjuntoSoporte varchar(500)
   FechaRegistro datetime [not null, default: `now()`]
   indexes {
     (CurriculumId) [name: "IX_Experiencia_CurriculumId"]
@@ -152,6 +158,8 @@ Table Formacion {
   TipoFormacion varchar(50)
   Descripcion text
   AdjuntoSoporte varchar(500)
+  FechaVigencia date
+  DuracionHoras int
 }
 
 Table Habilidad {
@@ -161,6 +169,10 @@ Table Habilidad {
   Tipo varchar(30)
   Nivel varchar(30)
   Descripcion varchar(500)
+  NivelLectura varchar(5)
+  NivelEscritura varchar(5)
+  NivelEscucha varchar(5)
+  NivelHabla varchar(5)
   indexes {
     (CurriculumId) [name: "IX_Habilidad_CurriculumId"]
     (Nombre) [name: "IX_Habilidad_Nombre"]
@@ -187,6 +199,7 @@ Table VisitanteContacto {
   Correo varchar(100) [not null]
   Empresa varchar(150)
   MotivoContacto varchar(255)
+  Asunto varchar(255)
   ComoMeEncontraste varchar(255)
   Mensaje text
   FechaContacto datetime [not null, default: `now()`]
@@ -202,6 +215,11 @@ Table AlertaVisita {
   FechaVisita datetime [not null, default: `now()`]
   Origen varchar(255)
   TipoVisita varchar(20)
+  EsLeida boolean [not null, default: 0]
+  Titulo varchar(255)
+  Descripcion text
+  Ciudad varchar(100)
+  Pais varchar(100)
   indexes {
     (CurriculumId) [name: "IX_AlertaVisita_CurriculumId"]
     (FechaVisita) [name: "IX_AlertaVisita_FechaVisita"]

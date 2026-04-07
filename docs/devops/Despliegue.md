@@ -4,9 +4,9 @@
 
 ## Referencias
 
-- [Documentacion.md](Documentacion.md) -- Vision del producto y arquitectura
-- [Backlog.md](Backlog.md) -- Epicas, historias y plan de sprints
-- [database/README.md](../database/README.md) -- Scripts SQL Server
+- [Documentacion.md](../arquitectura/Documentacion.md) -- Vision del producto y arquitectura
+- [Backlog.md](../arquitectura/Backlog.md) -- Epicas, historias y plan de sprints
+- [database/README.md](../../database/README.md) -- Scripts SQL Server
 
 ---
 
@@ -318,7 +318,7 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 
 ## 8. Arquitectura del frontend Angular
 
-### Estructura de modulos (implementada en HS-07)
+### Estructura de modulos (diseno final)
 
 ```
 src/app/
@@ -329,13 +329,16 @@ src/app/
 |   +-- interceptors/
 |   |   +-- auth.interceptor.ts  Inyecta Bearer token en cada request
 |   |   +-- error.interceptor.ts Manejo centralizado de errores HTTP
-|   +-- guards/                  Proteccion de rutas autenticadas
+|   +-- guards/                  authGuard (rutas privadas), adminGuard (admin)
 +-- features/              Modulos por area funcional (lazy loading)
-|   +-- public/            Landing, busqueda, detalle CV, contacto
-|   +-- auth/              Login, registro
-|   +-- editor/            Editor de CV (datos, experiencia, habilidades...)
-|   +-- dashboard/         Estadisticas y alertas del publicador
-+-- layout/                Header, Footer, MainLayout (shell de la app)
+|   +-- public/            Landing, busqueda de CVs, detalle CV (con pestana analitica)
+|   +-- auth/              Login, registro, recuperacion de contrasena
+|   +-- privado/           10 rutas planas protegidas (authGuard):
+|   |                      /dashboard, /alertas, /mi-cv, /datos-personales, /perfil,
+|   |                      /experiencia, /educacion, /habilidades, /proyectos, /configuracion
+|   +-- admin/             Panel de administracion (adminGuard): /admin
++-- layout/                Shells de la app por contexto:
+|                          PublicLayoutComponent, AuthLayoutComponent, AdminLayoutComponent
 +-- shared/                Componentes y pipes reutilizables
 ```
 
