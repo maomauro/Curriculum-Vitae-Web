@@ -2,9 +2,9 @@
 
 - **Documentación del producto:** [Documentacion.md](Documentacion.md)  
 - **Modelo de datos:** [Modelo.md](Modelo.md)  
-- **Script BD SQL Server:** [../database/01_CreateSchema.sql](../database/01_CreateSchema.sql)  
-- **Despliegue / CI-CD:** [Despliegue.md](Despliegue.md)  
-- **Git (ramas, commits, flujo):** [guia-git.md](guia-git.md)
+- **Script BD SQL Server:** [../../scripts/01_CreateSchema.sql](../../scripts/01_CreateSchema.sql)  
+- **Despliegue / CI-CD:** [../devops/Despliegue.md](../devops/Despliegue.md)  
+- **Git (ramas, commits, flujo):** [../guias/Guia-git.md](../guias/Guia-git.md)
 
 ---
 
