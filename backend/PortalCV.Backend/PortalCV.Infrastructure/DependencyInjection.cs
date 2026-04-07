@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
 
         // Servicios de aplicación
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPublicCvService, PublicCvService>();
         services.AddScoped<ICvEditorService, CvEditorService>();
         services.AddScoped<IAlertaService, AlertaService>();
