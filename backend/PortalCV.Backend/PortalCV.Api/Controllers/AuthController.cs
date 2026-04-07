@@ -83,4 +83,17 @@ public class AuthController : ControllerBase
 
         return Ok(new { email, role });
     }
+
+    /// <summary>
+    /// Recuperación de contraseña — fase 1: solicitar enlace de reset.
+    /// En producción enviaría un email con token temporal; por ahora devuelve
+    /// un mensaje genérico (no revela si el email existe).
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public IActionResult ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        // Respuesta genérica por seguridad: no revelar si el email existe.
+        return Ok(new { message = "Si el correo está registrado, recibirás las instrucciones en breve." });
+    }
 }

@@ -52,6 +52,20 @@ public class PublicController : ControllerBase
         return Ok(detalle);
     }
 
+    /// <summary>Estadísticas públicas de un CV (visitas, contactos, última visita).</summary>
+    [HttpGet("cvs/{urlPublica}/stats")]
+    public async Task<IActionResult> GetEstadisticas(string urlPublica, CancellationToken ct = default)
+    {
+        var stats = await _publicCvService.GetEstadisticasAsync(urlPublica, ct);
+        if (stats is null) return NotFound();
+        return Ok(stats);
+    }
+
+    /// <summary>Listas de ciudades y habilidades disponibles para filtros del buscador.</summary>
+    [HttpGet("filters")]
+    public async Task<IActionResult> GetFiltros(CancellationToken ct = default)
+        => Ok(await _publicCvService.GetFiltrosAsync(ct));
+
     /// <summary>Formulario de contacto para el propietario de un CV.</summary>
     [HttpPost("cvs/{curriculumId:int}/contactar")]
     public async Task<IActionResult> Contactar(

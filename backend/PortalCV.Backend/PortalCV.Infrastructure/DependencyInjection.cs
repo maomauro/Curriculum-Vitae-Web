@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PortalCV.Application.Interfaces;
+using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data;
+using PortalCV.Infrastructure.Repositories;
+using PortalCV.Infrastructure.Services;
 
 namespace PortalCV.Infrastructure;
 
@@ -19,6 +23,16 @@ public static class DependencyInjection
         services.AddDbContext<PortalCvDbContext>(options =>
             options.UseSqlServer(connectionString));
 
+        // Repositorios genéricos
+        services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<ICurriculumRepository, CurriculumRepository>();
+
+        // Servicios de aplicación
+        services.AddScoped<IPublicCvService, PublicCvService>();
+        services.AddScoped<ICvEditorService, CvEditorService>();
+        services.AddScoped<IAlertaService, AlertaService>();
+
         return services;
     }
 }
+

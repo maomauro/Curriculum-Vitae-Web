@@ -109,3 +109,15 @@ public record ContactarCvRequest(
     string? Asunto,
     string? ComoMeEncontraste,
     string? Mensaje);
+
+public record CvEstadisticasDto(
+    int CurriculumId,
+    string UrlPublica,
+    int TotalVisitas,
+    int TotalContactos,
+    DateTime? UltimaVisita,
+    DateTime FechaActualizacion);
+
+public record FiltrosPublicosDto(
+    IEnumerable<string> Ciudades,
+    IEnumerable<string> Habilidades);

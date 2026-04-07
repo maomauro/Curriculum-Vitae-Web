@@ -20,24 +20,29 @@ public sealed class GlobalExceptionMiddleware
         {
             await _next(context);
         }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Recurso no encontrado en {Method} {Path}", context.Request.Method, context.Request.Path);
+            await WriteErrorResponseAsync(context, (int)HttpStatusCode.NotFound, ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Acceso no autorizado en {Method} {Path}", context.Request.Method, context.Request.Path);
+            await WriteErrorResponseAsync(context, (int)HttpStatusCode.Forbidden, ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error no controlado en la solicitud {Method} {Path}", context.Request.Method, context.Request.Path);
-            await WriteErrorResponseAsync(context);
+            await WriteErrorResponseAsync(context, (int)HttpStatusCode.InternalServerError, "Ocurrió un error interno del servidor.");
         }
     }
 
-    private static Task WriteErrorResponseAsync(HttpContext context)
+    private static Task WriteErrorResponseAsync(HttpContext context, int statusCode, string message)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        context.Response.StatusCode = statusCode;
 
-        var payload = JsonSerializer.Serialize(new
-        {
-            message = "Ocurrio un error interno del servidor.",
-            statusCode = context.Response.StatusCode
-        });
-
+        var payload = JsonSerializer.Serialize(new { message, statusCode });
         return context.Response.WriteAsync(payload);
     }
 }
