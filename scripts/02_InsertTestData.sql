@@ -102,11 +102,12 @@ INSERT INTO dbo.Experiencia (
     FechaFin,
     TipoContrato,
     MotivoRetiro,
-    Funciones
+    Funciones,
+    EsActual
 )
 VALUES
-    (1, N'Tech Solutions S.A.S.', N'Analista de Desarrollo', N'Tecnología', '2018-06-01', '2022-11-30', N'Termino fijo', N'Búsqueda de nuevos retos', N'Diseño y desarrollo de APIs REST, optimización de consultas y despliegue continuo.'),
-    (2, N'Creative Studio', N'Diseñadora UX', N'Diseño', '2020-03-15', NULL, N'Contrato indefinido', NULL, N'Investigación de usuarios, prototipado y pruebas de usabilidad para apps móviles.');
+    (1, N'Tech Solutions S.A.S.', N'Analista de Desarrollo', N'Tecnología', '2018-06-01', '2022-11-30', N'Termino fijo',       N'Búsqueda de nuevos retos', N'Diseño y desarrollo de APIs REST, optimización de consultas y despliegue continuo.', 0),
+    (2, N'Creative Studio',       N'Diseñadora UX',          N'Diseño',     '2020-03-15', NULL,         N'Contrato indefinido', NULL,                        N'Investigación de usuarios, prototipado y pruebas de usabilidad para apps móviles.',  1);
 GO
 
 -- Referencias
@@ -174,10 +175,12 @@ VALUES
 GO
 
 -- Alertas de visita
-INSERT INTO dbo.AlertaVisita (CurriculumId, FechaVisita, Origen, TipoVisita)
+INSERT INTO dbo.AlertaVisita (CurriculumId, FechaVisita, Origen, TipoVisita, EsLeida, Titulo, Descripcion, Ciudad, Pais)
 VALUES
-    (1, GETDATE(), N'Página pública', N'ConContacto'),
-    (2, DATEADD(DAY, -3, GETDATE()), N'Página pública', N'SoloVista');
+    (1, GETDATE(),                    N'Página pública', N'Contacto', 0, N'Nuevo mensaje de contacto recibido',  N'Andrea López de Empresa S.A. te envió un mensaje.',           N'Bogotá',      N'Colombia'),
+    (2, DATEADD(DAY, -3, GETDATE()),  N'Página pública', N'Vista',    1, N'Nueva visita a tu CV',                N'Alguien ha consultado tu perfil desde Barranquilla.',         N'Barranquilla', N'Colombia'),
+    (1, DATEADD(DAY, -1, GETDATE()),  N'Google',         N'Descarga', 0, N'Descarga de tu CV',                   N'Un visitante descargó tu CV en formato PDF.',                 N'Medellín',    N'Colombia'),
+    (1, DATEADD(DAY, -7, GETDATE()),  NULL,              N'Sistema',  1, N'Tu CV fue publicado exitosamente',    N'Tu perfil ya es visible al público.',                         NULL,           NULL);
 GO
 
 -- Visibilidad de secciones

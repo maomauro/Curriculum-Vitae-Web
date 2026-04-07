@@ -132,6 +132,9 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - CodigoPostal
 - Direccion
 - TipoResidencia
+- FotoUrl
+- PrivacidadEmail (Publico | SoloFormulario | Oculto)
+- PrivacidadTelefono (Publico | Parcial | Oculto)
 
 ---
 
@@ -178,6 +181,7 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - DescripcionPerfil
 - AspiracionSalarialPesos
 - AspiracionSalarialDolares
+- EsActivo (bool)
 
 ---
 
@@ -194,6 +198,8 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - TipoContrato
 - MotivoRetiro
 - Funciones
+- EsActual (bool)
+- AdjuntoSoporte
 - FechaRegistro
 
 ---
@@ -211,6 +217,8 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - TipoFormacion
 - Descripcion
 - AdjuntoSoporte
+- FechaVigencia
+- DuracionHoras
 
 ---
 
@@ -221,8 +229,12 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - CurriculumId (FK)
 - Nombre
 - Tipo (Tecnica, Blanda, Idioma, Otra)
-- Nivel (Basico, Intermedio, Avanzado, Experto)
+- Nivel (Basico, Intermedio, Avanzado, Experto; NULL si es Idioma)
 - Descripcion
+- NivelLectura (A1-C2, solo si Tipo='Idioma')
+- NivelEscritura (A1-C2, solo si Tipo='Idioma')
+- NivelEscucha (A1-C2, solo si Tipo='Idioma')
+- NivelHabla (A1-C2, solo si Tipo='Idioma')
 
 ---
 
@@ -251,6 +263,7 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - Correo
 - Empresa
 - MotivoContacto
+- Asunto
 - ComoMeEncontraste
 - Mensaje
 - FechaContacto
@@ -260,7 +273,12 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - CurriculumId (FK)
 - FechaVisita
 - Origen
-- TipoVisita (SoloVista / ConContacto)
+- TipoVisita (Vista / Contacto / Descarga / Sistema)
+- EsLeida (bool)
+- Titulo
+- Descripcion
+- Ciudad
+- Pais
 
 ---
 

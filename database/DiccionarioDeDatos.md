@@ -86,6 +86,9 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | CodigoPostal         | varchar(20)      | Código postal                               |                               |
 | Direccion            | varchar(255)     | Dirección                                   |                               |
 | TipoResidencia       | varchar(50)      | Tipo de residencia                          |                               |
+| FotoUrl              | varchar(500)     | URL de la foto de perfil                    |                               |
+| PrivacidadEmail      | varchar(20)      | Visibilidad del email en el CV público      | not null, default: 'Publico'; IN ('Publico','SoloFormulario','Oculto') |
+| PrivacidadTelefono   | varchar(20)      | Visibilidad del teléfono en el CV público   | not null, default: 'Publico'; IN ('Publico','Parcial','Oculto') |
 
 ---
 
@@ -146,6 +149,7 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | DescripcionPerfil      | text             | Descripción del perfil                       |                               |
 | AspiracionSalarialPesos| decimal(18,2)    | Aspiración salarial en pesos                 |                               |
 | AspiracionSalarialDolares| decimal(18,2)  | Aspiración salarial en dólares               |                               |
+| EsActivo               | boolean        | Indica si el perfil está activo/habilitado   | not null, default: 1          |
 
 ---
 
@@ -162,6 +166,8 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | TipoContrato   | varchar(50)    | Tipo de contrato                             |                               |
 | MotivoRetiro   | varchar(255)   | Motivo de retiro                             |                               |
 | Funciones      | text           | Funciones realizadas                         |                               |
+| EsActual       | boolean        | Indica si es el trabajo actual (sin FechaFin)| not null, default: 0          |
+| AdjuntoSoporte | varchar(500)   | URL de soporte adjunto (carta laboral, etc.) |                               |
 | FechaRegistro  | datetime       | Fecha de registro                            | not null, default: now()      |
 
 ---
@@ -179,6 +185,8 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | TipoFormacion  | varchar(50)    | Tipo de formación                            |                               |
 | Descripcion    | text           | Descripción adicional                        |                               |
 | AdjuntoSoporte | varchar(500)   | Soporte adjunto                              |                               |
+| FechaVigencia  | date           | Fecha de vigencia/expiración del certificado |                               |
+| DuracionHoras  | int            | Duración en horas (para cursos)              |                               |
 
 ---
 
@@ -191,6 +199,10 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | Tipo         | varchar(30)    | Tipo de habilidad                           |                               |
 | Nivel        | varchar(30)    | Nivel de dominio                            |                               |
 | Descripcion  | varchar(500)   | Descripción de la habilidad                 |                               |
+| NivelLectura   | varchar(5)     | Nivel de lectura CEFR (solo idiomas)        | IN ('A1','A2','B1','B2','C1','C2') o NULL |
+| NivelEscritura | varchar(5)     | Nivel de escritura CEFR (solo idiomas)      | IN ('A1','A2','B1','B2','C1','C2') o NULL |
+| NivelEscucha   | varchar(5)     | Nivel de escucha CEFR (solo idiomas)        | IN ('A1','A2','B1','B2','C1','C2') o NULL |
+| NivelHabla     | varchar(5)     | Nivel de habla CEFR (solo idiomas)          | IN ('A1','A2','B1','B2','C1','C2') o NULL |
 
 ---
 
@@ -219,6 +231,7 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | Correo             | varchar(100)   | Correo electrónico del visitante            | not null                     |
 | Empresa            | varchar(150)   | Empresa del visitante                       |                               |
 | MotivoContacto     | varchar(255)   | Motivo del contacto                         |                               |
+| Asunto             | varchar(255)   | Asunto del mensaje de contacto              |                               |
 | ComoMeEncontraste  | varchar(255)   | Cómo encontró el CV                         |                               |
 | Mensaje            | text           | Mensaje enviado                             |                               |
 | FechaContacto      | datetime       | Fecha del contacto                          | not null, default: now()      |
@@ -232,7 +245,12 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | CurriculumId   | int            | CV asociado                                 | FK Curriculum.CurriculumId, not null |
 | FechaVisita    | datetime       | Fecha de la visita                          | not null, default: now()      |
 | Origen         | varchar(255)   | Origen de la visita                         |                               |
-| TipoVisita     | varchar(20)    | Tipo de visita                              |                               |
+| TipoVisita     | varchar(20)    | Tipo de visita                              | IN ('Vista','Contacto','Descarga','Sistema') |
+| EsLeida        | boolean        | Indica si la alerta fue leída               | not null, default: 0          |
+| Titulo         | varchar(255)   | Título descriptivo de la alerta             |                               |
+| Descripcion    | text           | Texto descriptivo de la alerta              |                               |
+| Ciudad         | varchar(100)   | Ciudad del visitante (si aplica)            |                               |
+| Pais           | varchar(100)   | País del visitante (si aplica)              |                               |
 
 ---
 
