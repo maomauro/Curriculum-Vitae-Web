@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscar CVs — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    body { font-family: 'Source Sans 3', sans-serif; background: #F8F9FA; }
+
+    .navbar { background: #fff; border-bottom: 1px solid #DEE2E6; }
+    .navbar-brand { color: #2C7BE5 !important; font-weight: 700; font-size: 1.4rem; }
+    .nav-link { color: #495057 !important; font-weight: 500; }
+    .nav-link:hover { color: #2C7BE5 !important; }
+
+    /* Barra de filtros */
+    .filter-bar {
+      background: #fff;
+      border-bottom: 1px solid #DEE2E6;
+      padding: 14px 0;
+    }
+
+    /* Avatar iniciales */
+    .avatar-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 700; flex-shrink: 0;
+    }
+    .avatar-circle.green  { background: #28A745; }
+    .avatar-circle.purple { background: #6F42C1; }
+    .avatar-circle.orange { background: #FD7E14; }
+    .avatar-circle.teal   { background: #20C997; }
+    .avatar-circle.red    { background: #DC3545; }
+
+    /* Card CV */
+    .card-cv { border: none; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,.08); transition: box-shadow .2s; }
+    .card-cv:hover { box-shadow: 0 4px 18px rgba(44,123,229,.15); }
+    .card-cv .card-body { padding: 24px; }
+    .cv-name { font-size: 1.1rem; font-weight: 700; color: #212529; margin-bottom: 2px; }
+    .cv-title { font-size: .9rem; color: #6C757D; margin-bottom: 12px; }
+    .badge-tech {
+      font-size: .75rem; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; background: #EBF3FB; color: #2C7BE5;
+      border: none; margin: 2px;
+    }
+
+    footer { background: #343A40; color: #ADB5BD; padding: 28px 0; font-size: .9rem; }
+    footer a { color: #ADB5BD; text-decoration: none; margin-left: 20px; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="home.html">
+        <i class="bi bi-file-earmark-person-fill me-1"></i>PortalCV
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav me-auto ms-3 gap-1">
+          <li class="nav-item"><a class="nav-link" href="home.html">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link active fw-semibold" href="#">Buscar CVs</a></li>
+        </ul>
+        <div class="d-flex gap-2">
+          <a href="login.html" class="btn btn-outline-primary btn-sm px-3">Iniciar sesión</a>
+          <a href="register.html" class="btn btn-primary btn-sm px-3">Registrarse</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- BARRA DE FILTROS -->
+  <div class="filter-bar">
+    <div class="container">
+      <div class="d-flex gap-3 align-items-center flex-wrap">
+        <div class="input-group" style="max-width: 420px;">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text" class="form-control border-start-0" placeholder="Buscar por nombre, cargo o tecnología..." value="Frontend">
+        </div>
+        <select class="form-select" style="width: auto;">
+          <option selected>Ordenar por: Más recientes</option>
+          <option>Nombre A-Z</option>
+          <option>Más visitados</option>
+        </select>
+        <span class="text-muted ms-auto small">6 resultados encontrados</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRID DE CVs -->
+  <main class="py-5">
+    <div class="container">
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+
+        <!-- Card 1 -->
+        <div class="col">
+          <div class="card card-cv h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-circle">AG</div>
+                <div>
+                  <div class="cv-name">Ana García</div>
+                  <div class="cv-title">Frontend Developer</div>
+                </div>
+              </div>
+              <p class="text-muted small mb-3">
+                Desarrolladora frontend con 5 años de experiencia en aplicaciones web modernas y diseño responsivo.
+              </p>
+              <div class="mb-3">
+                <span class="badge-tech">React</span>
+                <span class="badge-tech">Angular</span>
+                <span class="badge-tech">TypeScript</span>
+              </div>
+              <a href="detalle-cv.html" class="btn btn-outline-primary btn-sm w-100">
+                Ver perfil <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="col">
+          <div class="card card-cv h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-circle green">CR</div>
+                <div>
+                  <div class="cv-name">Carlos Ruiz</div>
+                  <div class="cv-title">Backend Developer</div>
+                </div>
+              </div>
+              <p class="text-muted small mb-3">
+                Especialista en APIs REST con .NET y Node.js. Experiencia en arquitecturas de microservicios y cloud.
+              </p>
+              <div class="mb-3">
+                <span class="badge-tech">Node.js</span>
+                <span class="badge-tech">.NET</span>
+                <span class="badge-tech">Docker</span>
+              </div>
+              <a href="detalle-cv.html" class="btn btn-outline-primary btn-sm w-100">
+                Ver perfil <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="col">
+          <div class="card card-cv h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-circle purple">LM</div>
+                <div>
+                  <div class="cv-name">Laura Martínez</div>
+                  <div class="cv-title">UX Designer</div>
+                </div>
+              </div>
+              <p class="text-muted small mb-3">
+                Diseñadora UX/UI con enfoque en accesibilidad y design systems. Experiencia en productos SaaS.
+              </p>
+              <div class="mb-3">
+                <span class="badge-tech">Figma</span>
+                <span class="badge-tech">CSS</span>
+                <span class="badge-tech">Penpot</span>
+              </div>
+              <a href="detalle-cv.html" class="btn btn-outline-primary btn-sm w-100">
+                Ver perfil <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="col">
+          <div class="card card-cv h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-circle orange">JP</div>
+                <div>
+                  <div class="cv-name">Jorge Pérez</div>
+                  <div class="cv-title">DevOps Engineer</div>
+                </div>
+              </div>
+              <p class="text-muted small mb-3">
+                Ingeniero DevOps con experiencia en CI/CD, Kubernetes y Azure. Certificado en AZ-900 y AZ-104.
+              </p>
+              <div class="mb-3">
+                <span class="badge-tech">Azure</span>
+                <span class="badge-tech">Kubernetes</span>
+                <span class="badge-tech">Terraform</span>
+              </div>
+              <a href="detalle-cv.html" class="btn btn-outline-primary btn-sm w-100">
+                Ver perfil <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="col">
+          <div class="card card-cv h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-circle teal">SL</div>
+                <div>
+                  <div class="cv-name">Sofía López</div>
+                  <div class="cv-title">Data Scientist</div>
+                </div>
+              </div>
+              <p class="text-muted small mb-3">
+                Científica de datos especializada en machine learning y visualización. Proyectos en sector fintech.
+              </p>
+              <div class="mb-3">
+                <span class="badge-tech">Python</span>
+                <span class="badge-tech">TensorFlow</span>
+                <span class="badge-tech">SQL</span>
+              </div>
+              <a href="detalle-cv.html" class="btn btn-outline-primary btn-sm w-100">
+                Ver perfil <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="col">
+          <div class="card card-cv h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar-circle red">MT</div>
+                <div>
+                  <div class="cv-name">Miguel Torres</div>
+                  <div class="cv-title">Full Stack Developer</div>
+                </div>
+              </div>
+              <p class="text-muted small mb-3">
+                Desarrollador full stack con 7 años de experiencia. Enfocado en aplicaciones escalables con Angular y .NET.
+              </p>
+              <div class="mb-3">
+                <span class="badge-tech">Angular</span>
+                <span class="badge-tech">C#</span>
+                <span class="badge-tech">PostgreSQL</span>
+              </div>
+              <a href="detalle-cv.html" class="btn btn-outline-primary btn-sm w-100">
+                Ver perfil <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span>© 2026 PortalCV. All rights reserved.</span>
+      <div>
+        <a href="#">Privacidad</a>
+        <a href="#">Términos</a>
+        <a href="#">Contacto</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

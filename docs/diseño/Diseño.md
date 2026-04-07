@@ -6,15 +6,18 @@ Documento de arquitectura visual. Cada vista tiene su propio archivo detallado e
 
 ## Vistas del proyecto
 
-| Vista | Ruta | Layout | Archivo |
-|---|---|---|---|
-| Home | `/` | PublicLayout | [Home.md](./vistas/Home.md) |
-| Buscar CVs | `/cvs` | PublicLayout | [Buscar-CVs.md](./vistas/Buscar-CVs.md) |
-| Detalle CV | `/cv/:id` | PublicLayout | [Detalle-CV.md](./vistas/Detalle-CV.md) |
-| Login | `/auth/login` | AuthLayout | [Login.md](./vistas/Login.md) |
-| Register | `/auth/register` | AuthLayout | [Register.md](./vistas/Register.md) |
-| Dashboard | `/dashboard` | AdminLayout | [Dashboard.md](./vistas/Dashboard.md) |
-| Editor CV | `/editor` | AdminLayout | [Editor-CV.md](./vistas/Editor-CV.md) |
+| Vista | Ruta | Layout | Acceso | Archivo |
+|---|---|---|---|---|
+| Home | `/` | PublicLayout | Público | [Home.md](./vistas/Home.md) |
+| Buscar CVs | `/cvs` | PublicLayout | Público | [Buscar-CVs.md](./vistas/Buscar-CVs.md) |
+| Detalle CV | `/cv/:id` | PublicLayout | Público | [Detalle-CV.md](./vistas/Detalle-CV.md) |
+| Login | `/auth/login` | AuthLayout | Público | [Login.md](./vistas/Login.md) |
+| Register | `/auth/register` | AuthLayout | Público | [Register.md](./vistas/Register.md) |
+| Recuperar Contraseña | `/auth/forgot-password` | AuthLayout | Público | [Recuperar-Contrasena.md](./vistas/Recuperar-Contrasena.md) |
+| Dashboard | `/dashboard` | AdminLayout | `authGuard` | [Dashboard.md](./vistas/Dashboard.md) |
+| Editor CV | `/editor` | AdminLayout | `authGuard` | [Editor-CV.md](./vistas/Editor-CV.md) |
+| Alertas | `/dashboard/alertas` | AdminLayout | `authGuard` | [Alertas.md](./vistas/Alertas.md) |
+| Panel Admin | `/admin` | AdminLayout | `adminGuard` | [Admin-Panel.md](./vistas/Admin-Panel.md) |
 
 ---
 
@@ -42,10 +45,10 @@ AppComponent
        │    ├── <router-outlet>
        │    └── FooterPublicComponent
        │
-       ├── AuthLayoutComponent     (/auth/login  /auth/register)
+       ├── AuthLayoutComponent     (/auth/login  /auth/register  /auth/forgot-password)
        │    └── <router-outlet>
        │
-       └── AdminLayoutComponent    (/dashboard  /editor)
+       └── AdminLayoutComponent    (/dashboard  /editor  /dashboard/alertas  /admin)
             ├── TopbarComponent
             ├── SidebarComponent
             └── <router-outlet>
