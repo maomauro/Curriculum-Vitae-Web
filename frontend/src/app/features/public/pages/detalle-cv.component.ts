@@ -38,7 +38,7 @@ interface CvDetalle {
 }
 
 @Component({
-  selector: 'app-cv-detail',
+  selector: 'app-detalle-cv',
   standalone: false,
   template: `
     <div class="container py-4" *ngIf="cv; else notFound">
@@ -57,7 +57,8 @@ interface CvDetalle {
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-muted" style="border-radius:0;">
+          <a class="nav-link fw-semibold text-muted" style="border-radius:0;"
+             [routerLink]="['/cv', cv.id, 'dashboard']">
             <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
           </a>
         </li>
@@ -248,7 +249,7 @@ interface CvDetalle {
     </div>
   `
 })
-export class CvDetailComponent implements OnInit {
+export class DetalleCvComponent implements OnInit {
   cv: CvDetalle | null = null;
   contactoEnviado = false;
   contacto = { nombre: '', empresa: '', email: '', motivo: '', asunto: '', mensaje: '' };

@@ -6,13 +6,13 @@ import { RouterModule } from '@angular/router';
 import { AuthRoutingModule } from './auth-routing-module';
 import { LoginComponent } from './pages/login.component';
 import { RegisterComponent } from './pages/register.component';
-import { ForgotPasswordComponent } from './pages/forgot-password.component';
+import { RecuperarContrasenaComponent } from './pages/recuperar-contrasena.component';
 
 @NgModule({
   declarations: [
     LoginComponent,
     RegisterComponent,
-    ForgotPasswordComponent
+    RecuperarContrasenaComponent
   ],
   imports: [
     CommonModule,

@@ -10,7 +10,7 @@ interface CvCard {
 }
 
 @Component({
-  selector: 'app-cvs',
+  selector: 'app-buscar-cvs',
   standalone: false,
   template: `
     <!-- Barra de búsqueda y filtros -->
@@ -93,7 +93,7 @@ interface CvCard {
     </section>
   `
 })
-export class CvsComponent {
+export class BuscarCvsComponent {
   busqueda = '';
   ordenar = 'reciente';
 

@@ -1,13 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home.component';
-import { CvsComponent } from './pages/cvs.component';
-import { CvDetailComponent } from './pages/cv-detail.component';
+import { BuscarCvsComponent } from './pages/buscar-cvs.component';
+import { DetalleCvComponent } from './pages/detalle-cv.component';
+import { DashboardCandidatoComponent } from './pages/dashboard-candidato.component';
 
 const routes: Routes = [
-  { path: '',        component: HomeComponent },
-  { path: 'cvs',    component: CvsComponent },
-  { path: 'cv/:id', component: CvDetailComponent }
+  { path: '',                    component: HomeComponent },
+  { path: 'cvs',                 component: BuscarCvsComponent },
+  { path: 'cv/:id',              component: DetalleCvComponent },
+  { path: 'cv/:id/dashboard',    component: DashboardCandidatoComponent },
 ];
 
 @NgModule({

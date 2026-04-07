@@ -10,10 +10,24 @@ export interface UserInfo {
   curriculumId: number;
 }
 
-interface LoginResponse {
+/** Respuesta exacta del endpoint POST /api/auth/login */
+interface LoginApiResponse {
   token: string;
-  user: UserInfo;
+  email: string;
+  nombreCompleto: string;
+  roles: string[];
+  expiracion: string;
 }
+
+/** Respuesta exacta del endpoint POST /api/auth/register */
+interface RegisterApiResponse {
+  usuarioId: number;
+  email: string;
+  nombreCompleto: string;
+}
+
+// Claim name que usa ClaimTypes.Role en .NET
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -23,37 +37,32 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
+  get currentUser(): UserInfo | null {
+    return this.currentUserSubject.value;
+  }
+
   constructor(private http: HttpClient) {
     const token = this.getToken();
     if (token) {
-      const payload = this.parseJwt(token);
-      if (payload) {
-        this.currentUserSubject.next({
-          id: Number(payload['sub']),
-          nombre: payload['nombre'] ?? '',
-          email: payload['email'] ?? '',
-          rol: payload['role'] ?? '',
-          curriculumId: Number(payload['curriculum_id'] ?? 0)
-        });
-      }
+      const user = this.buildUserFromToken(token);
+      if (user) this.currentUserSubject.next(user);
     }
   }
 
-  login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API_URL}/login`, { email, password }).pipe(
+  login(email: string, password: string): Observable<LoginApiResponse> {
+    return this.http.post<LoginApiResponse>(`${this.API_URL}/login`, { email, password }).pipe(
       tap(res => {
         localStorage.setItem(this.TOKEN_KEY, res.token);
-        this.currentUserSubject.next(res.user);
+        const user = this.buildUserFromToken(res.token, res.nombreCompleto);
+        this.currentUserSubject.next(user);
       })
     );
   }
 
-  register(nombre: string, email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API_URL}/register`, { nombre, email, password }).pipe(
-      tap(res => {
-        localStorage.setItem(this.TOKEN_KEY, res.token);
-        this.currentUserSubject.next(res.user);
-      })
+  register(nombreCompleto: string, email: string, password: string): Observable<RegisterApiResponse> {
+    return this.http.post<RegisterApiResponse>(
+      `${this.API_URL}/register`,
+      { nombreCompleto, email, password }
     );
   }
 
@@ -66,10 +75,34 @@ export class AuthService {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  private parseJwt(token: string): Record<string, string> | null {
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
+  private buildUserFromToken(token: string, nombreCompleto?: string): UserInfo | null {
+    const payload = this.parseJwt(token);
+    if (!payload) return null;
+
+    const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+    const roles: string[] = [];
+    const roleRaw = payload[ROLE_CLAIM] ?? payload['role'];
+    if (Array.isArray(roleRaw)) roles.push(...roleRaw.map(str));
+    else if (roleRaw) roles.push(str(roleRaw));
+
+    return {
+      id:           Number(payload['sub'] ?? 0),
+      nombre:       nombreCompleto ?? str(payload['nombre']) ?? str(payload['email']),
+      email:        str(payload['email']),
+      rol:          roles[0] ?? '',
+      curriculumId: Number(payload['curriculum_id'] ?? 0),
+    };
+  }
+
+  private parseJwt(token: string): Record<string, unknown> | null {
     try {
       const payload = token.split('.')[1];
-      return JSON.parse(atob(payload));
+      return JSON.parse(atob(payload)) as Record<string, unknown>;
     } catch {
       return null;
     }

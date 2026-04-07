@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-forgot-password',
+  selector: 'app-recuperar-contrasena',
   standalone: false,
   template: `
     <div class="login-box">
@@ -45,7 +45,7 @@ import { Component } from '@angular/core';
     </div>
   `
 })
-export class ForgotPasswordComponent {
+export class RecuperarContrasenaComponent {
   email = '';
   loading = false;
   sent = false;
