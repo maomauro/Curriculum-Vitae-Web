@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle CV — PortalCV</title>
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <!-- Source Sans 3 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    body { font-family: 'Source Sans 3', sans-serif; background: #F8F9FA; }
+
+    /* Navbar */
+    .navbar-brand { color: #2C7BE5 !important; font-weight: 700; font-size: 1.3rem; }
+
+    /* Avatar */
+    .avatar-circle {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; font-weight: 700;
+      border: 4px solid #fff; box-shadow: 0 2px 12px rgba(44,123,229,.25);
+    }
+
+    /* Columna izquierda */
+    .sidebar-cv {
+      background: #fff; border-radius: 12px;
+      padding: 28px 24px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    }
+    .sidebar-cv .section-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: #6C757D;
+      border-bottom: 1px solid #DEE2E6; padding-bottom: 6px; margin-bottom: 12px;
+    }
+    .contact-item { font-size: .9rem; color: #495057; margin-bottom: 8px; }
+    .contact-item i { color: #2C7BE5; width: 20px; }
+
+    /* Barras de habilidades */
+    .skill-label { font-size: .85rem; color: #343A40; margin-bottom: 2px; }
+    .progress { height: 7px; border-radius: 4px; margin-bottom: 10px; }
+    .progress-bar { background: #2C7BE5; }
+
+    /* Columna derecha */
+    .content-cv {
+      background: #fff; border-radius: 12px;
+      padding: 32px 36px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    }
+    .content-cv .section-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: #6C757D;
+      border-bottom: 1px solid #DEE2E6; padding-bottom: 6px; margin-bottom: 20px;
+    }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 6px; top: 6px;
+      bottom: 0; width: 2px; background: #DEE2E6;
+    }
+    .timeline-item { position: relative; margin-bottom: 28px; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -21px; top: 6px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #2C7BE5; border: 2px solid #fff;
+      box-shadow: 0 0 0 2px #2C7BE5;
+    }
+    .timeline-date { font-size: .78rem; color: #6C757D; margin-bottom: 2px; }
+    .timeline-company { font-weight: 700; color: #212529; font-size: 1rem; }
+    .timeline-role { color: #2C7BE5; font-size: .9rem; margin-bottom: 6px; }
+    .timeline-desc { font-size: .88rem; color: #6C757D; line-height: 1.6; }
+
+    /* Badge idioma */
+    .badge-idioma {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 20px; font-size: .8rem;
+      background: #EEF3FB; color: #2C7BE5; margin-right: 6px;
+    }
+
+    /* Footer */
+    footer { background: #343A40; color: #ADB5BD; font-size: .85rem; }
+    footer a { color: #ADB5BD; text-decoration: none; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#">PortalCV</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="#">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Buscar CVs</a></li>
+        </ul>
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-primary btn-sm" href="#">Iniciar sesión</a>
+          <a class="btn btn-primary btn-sm" href="#">Registrarse</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="container py-4">
+
+    <!-- Botón volver -->
+    <a href="#" class="btn btn-sm btn-outline-secondary mb-4">
+      <i class="bi bi-arrow-left me-1"></i> Volver al listado
+    </a>
+
+    <div class="row g-4">
+
+      <!-- COLUMNA IZQUIERDA -->
+      <div class="col-md-4">
+        <div class="sidebar-cv text-center">
+
+          <!-- Avatar -->
+          <div class="d-flex justify-content-center mb-3">
+            <div class="avatar-circle">AG</div>
+          </div>
+          <h4 class="fw-bold mb-1">Ana García</h4>
+          <p class="text-muted mb-3">Frontend Developer</p>
+
+          <!-- Contacto -->
+          <div class="text-start mb-4">
+            <div class="section-title">Contacto</div>
+            <div class="contact-item"><i class="bi bi-envelope-fill"></i> ana.garcia@email.com</div>
+            <div class="contact-item"><i class="bi bi-geo-alt-fill"></i> Madrid, España</div>
+            <div class="contact-item"><i class="bi bi-linkedin"></i> linkedin.com/in/anagarcia</div>
+            <div class="contact-item"><i class="bi bi-github"></i> github.com/anagarcia</div>
+          </div>
+
+          <!-- Habilidades -->
+          <div class="text-start mb-4">
+            <div class="section-title">Habilidades</div>
+            <div class="skill-label d-flex justify-content-between"><span>Angular</span><small class="text-muted">90%</small></div>
+            <div class="progress"><div class="progress-bar" style="width:90%"></div></div>
+            <div class="skill-label d-flex justify-content-between"><span>TypeScript</span><small class="text-muted">85%</small></div>
+            <div class="progress"><div class="progress-bar" style="width:85%"></div></div>
+            <div class="skill-label d-flex justify-content-between"><span>Node.js</span><small class="text-muted">70%</small></div>
+            <div class="progress"><div class="progress-bar" style="width:70%"></div></div>
+            <div class="skill-label d-flex justify-content-between"><span>Docker</span><small class="text-muted">60%</small></div>
+            <div class="progress"><div class="progress-bar" style="width:60%"></div></div>
+            <div class="skill-label d-flex justify-content-between"><span>CSS / SCSS</span><small class="text-muted">95%</small></div>
+            <div class="progress"><div class="progress-bar" style="width:95%"></div></div>
+          </div>
+
+          <!-- Idiomas -->
+          <div class="text-start mb-4">
+            <div class="section-title">Idiomas</div>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge-idioma">Español — Nativo</span>
+              <span class="badge-idioma">Inglés — B2</span>
+              <span class="badge-idioma">Francés — A2</span>
+            </div>
+          </div>
+
+          <!-- Botón contactar -->
+          <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#modalContacto">
+            <i class="bi bi-envelope-fill me-2"></i>Contactar a Ana
+          </button>
+
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA -->
+      <div class="col-md-8">
+        <div class="content-cv">
+
+          <!-- Resumen -->
+          <div class="mb-4">
+            <div class="section-title">Resumen profesional</div>
+            <p class="text-secondary" style="line-height:1.75">
+              Desarrolladora Frontend con más de 6 años de experiencia construyendo aplicaciones web
+              modernas con Angular, React y Vue.js. Apasionada por el diseño de interfaces accesibles
+              y el rendimiento front-end. Experiencia trabajando en equipos ágiles (Scrum/Kanban) y
+              en proyectos de alta escala para el sector financiero y e-commerce.
+            </p>
+          </div>
+
+          <!-- Experiencia -->
+          <div class="mb-4">
+            <div class="section-title">Experiencia laboral</div>
+            <div class="timeline">
+
+              <div class="timeline-item">
+                <div class="timeline-date">Enero 2022 — Actualidad</div>
+                <div class="timeline-company">Accenture España</div>
+                <div class="timeline-role">Senior Frontend Developer</div>
+                <div class="timeline-desc">
+                  Desarrollo de aplicaciones SPA con Angular 16+ para clientes del sector bancario.
+                  Implementación de design systems con Storybook. Mentoría a desarrolladores junior.
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-date">Marzo 2019 — Diciembre 2021</div>
+                <div class="timeline-company">Indra Sistemas</div>
+                <div class="timeline-role">Frontend Developer</div>
+                <div class="timeline-desc">
+                  Migración de aplicaciones legacy a Angular. Integración con APIs REST y GraphQL.
+                  Optimización de rendimiento reduciendo tiempos de carga en un 40%.
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-date">Junio 2017 — Febrero 2019</div>
+                <div class="timeline-company">StartupHub Madrid</div>
+                <div class="timeline-role">Frontend Developer Junior</div>
+                <div class="timeline-desc">
+                  Desarrollo de landing pages y dashboards con React y Bootstrap.
+                  Colaboración con equipo de diseño UX en implementación de prototipos Figma.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Educación -->
+          <div>
+            <div class="section-title">Educación</div>
+            <div class="timeline">
+
+              <div class="timeline-item">
+                <div class="timeline-date">2013 — 2017</div>
+                <div class="timeline-company">Universidad Complutense de Madrid</div>
+                <div class="timeline-role">Ingeniería Informática</div>
+                <div class="timeline-desc">
+                  Especialización en Ingeniería del Software. Proyecto fin de carrera:
+                  plataforma colaborativa de gestión de proyectos con Angular y Node.js.
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-date">2022</div>
+                <div class="timeline-company">Google — Coursera</div>
+                <div class="timeline-role">Certificación UX Design Professional</div>
+                <div class="timeline-desc">
+                  Programa de 6 meses en diseño de experiencia de usuario, investigación,
+                  wireframing y prototipado con Figma.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-5 py-3">
+    <div class="container d-flex justify-content-between align-items-center">
+      <span>© 2026 PortalCV. All rights reserved.</span>
+      <div class="d-flex gap-3">
+        <a href="#">Privacidad</a>
+        <a href="#">Términos</a>
+        <a href="#">Contacto</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL: Formulario de contacto -->
+  <div class="modal fade" id="modalContacto" tabindex="-1" aria-labelledby="modalContactoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 8px 40px rgba(0,0,0,.15);">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalContactoLabel">
+            <i class="bi bi-envelope-fill me-2 text-primary"></i>Contactar a Ana García
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-2">
+          <p class="text-muted small mb-4">
+            Completa el formulario y Ana recibirá tu mensaje directamente en su correo.
+          </p>
+
+          <!-- Alerta de éxito (visible tras envío) -->
+          <div class="alert alert-success d-flex align-items-center gap-2 mb-3" role="alert" id="alertEnviado" style="display:none!important;">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>¡Mensaje enviado correctamente! Ana te responderá pronto.</div>
+          </div>
+
+          <form id="formContacto">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Tu nombre</label>
+                <input type="text" class="form-control" placeholder="Juan Pérez" value="Juan Pérez - Tech Recruiter">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Tu empresa</label>
+                <input type="text" class="form-control" placeholder="Empresa SA" value="Consulting Partners SL">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Tu correo electrónico</label>
+                <input type="email" class="form-control" placeholder="tu@empresa.com" value="juan.perez@consulting.com">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Motivo de contacto</label>
+                <select class="form-select">
+                  <option value="">— Selecciona un motivo —</option>
+                  <option value="oferta_laboral" selected>Oferta laboral</option>
+                  <option value="proyecto_freelance">Proyecto freelance</option>
+                  <option value="consulta">Consulta</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Asunto</label>
+                <input type="text" class="form-control" value="Oportunidad laboral — Frontend Developer Senior">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Mensaje</label>
+                <textarea class="form-control" rows="4" placeholder="Escribe tu mensaje aquí...">Hola Ana, hemos revisado tu perfil y creemos que encajas perfectamente en una posición que tenemos disponible. Nos gustaría conocerte mejor. ¿Tienes disponibilidad para una llamada esta semana?</textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary px-4" onclick="enviarContacto()">
+            <i class="bi bi-send-fill me-2"></i>Enviar mensaje
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function enviarContacto() {
+      document.getElementById('formContacto').style.display = 'none';
+      document.getElementById('alertEnviado').style.display = 'flex !important';
+      document.getElementById('alertEnviado').removeAttribute('style');
+      setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('modalContacto')).hide();
+        document.getElementById('formContacto').style.display = '';
+        document.getElementById('alertEnviado').style.display = 'none';
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

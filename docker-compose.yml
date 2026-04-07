@@ -62,7 +62,7 @@ services:
       - portalcv-network
     restart: "no"                    # Solo corre una vez, no reinicia
 
-  # ── 3. BACKEND (.NET 8 API) ────────────────────────────────────────────────
+  # ── 3. BACKEND (.NET 10 API) ───────────────────────────────────────────────
   # Construye la imagen desde el Dockerfile en la carpeta backend/.
   # Solo arranca cuando la inicialización de BD completó exitosamente.
   backend:
@@ -75,6 +75,11 @@ services:
       ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${DB_NAME};User Id=${APP_DB_USER};Password=${APP_DB_PASSWORD};TrustServerCertificate=True;"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:8080"
+      Jwt__Issuer: ${Jwt__Issuer}
+      Jwt__Audience: ${Jwt__Audience}
+      Jwt__Key: ${Jwt__Key}
+      Auth__DemoUser__Email: ${Auth__DemoUser__Email}
+      Auth__DemoUser__Password: ${Auth__DemoUser__Password}
     ports:
       - "${PORT_BACKEND}:8080"
     depends_on:
