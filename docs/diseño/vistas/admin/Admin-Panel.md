@@ -21,11 +21,8 @@
 |  Carlos Admin    |   │ 🛡 Panel de Administración         │      |
 |  Administrador   |   └───────────────────────────────────┘      |
 |  ─────────────   |                                               |
-|  General         |   +------+ +--------+ +--------+ +--------+  |
-|  ▣ Dashboard     |   | 142  | |  118   | |   17   | |    7   |  |
-|  ▣ Buscar CVs    |   |Total | |Activos | |Inactiv.| |Bloq.   |  |
 |  Administración  |   +------+ +--------+ +--------+ +--------+  |
-|  ▣ Usuarios  ◄   |                                               |
+|  ▣ Usuarios  ◄   |   | 142  | |  118   | |   17   | |    7   |  |                                               |
 |  ▣ Roles         |   [ Usuarios ] [ Roles ] [ Auditoría ]  ←tabs|
 |  ▣ Auditoría     |                                               |
 |                  |   TAB USUARIOS:                               |
@@ -85,7 +82,7 @@ Muestra en panel lateral o modal:
 ```
 Board (1440×1024)
 ├── Topbar  (badge ADMIN en rojo junto al logo)
-├── Sidebar  (sección "Administración" con 3 items: Usuarios activo, Roles, Auditoría)
+├── Sidebar  (solo sección "Administración": Usuarios activo, Roles, Auditoría)
 └── Main-content
     ├── page-header
     ├── cards-metricas (4 cards: Total, Activos, Inactivos, Bloqueados)

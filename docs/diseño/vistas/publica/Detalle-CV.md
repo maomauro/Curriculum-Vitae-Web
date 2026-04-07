@@ -15,6 +15,8 @@
 |                                                              |
 |  [ ← Volver al listado ]                                     |
 |                                                              |
+|  [ Hoja de vida ◄ ]  [ Dashboard analítico → ]              |
+|                                                              |
 |  +--------------------+  +-------------------------------+   |
 |  |  COLUMNA IZQ       |  |  COLUMNA DERECHA              |   |
 |  |  w: ~30%           |  |  w: ~70%                      |   |
@@ -46,6 +48,15 @@
 
 ---
 
+## Tabs de la vista
+
+| Tab | Ruta | Descripción |
+|---|---|---|
+| Hoja de vida | `/cv/:id` | Columna izquierda (contacto, habilidades, idiomas) + columna derecha (resumen, experiencia, educación) |
+| Dashboard analítico | `/cv/:id/dashboard` | Métricas y gráficas de actividad del candidato (6 cards + 4 charts) |
+
+---
+
 ## Estructura de capas (Penpot)
 
 ```
@@ -53,6 +64,9 @@ Board (1440×1024)
 ├── Navbar
 ├── contenido-principal
 │   ├── btn-volver
+│   ├── tabs-vista            ← nuevo
+│   │   ├── tab-HojaDeVida (activo)
+│   │   └── tab-DashboardAnalitico
 │   ├── columna-izquierda
 │   │   ├── avatar
 │   │   ├── nombre

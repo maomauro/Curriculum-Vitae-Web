@@ -1,6 +1,6 @@
 # Guía de Buenas Prácticas de Git
 
-Ramas, commits y flujo de trabajo para el proyecto. Alineada con el [Backlog](Backlog.md) (HS-04) y el flujo CI/CD del [Despliegue](Despliegue.md) (feature → develop → main).
+Ramas, commits y flujo de trabajo para el proyecto. Alineada con el [Backlog](../arquitectura/Backlog.md) (HS-04) y el flujo CI/CD del [Despliegue](../devops/Despliegue.md) (feature → develop → main).
 
 ---
 
@@ -246,9 +246,9 @@ git restore <archivo>                      # descartar cambios no staged de un a
 
 | Documento | Relación con esta guía |
 |-----------|------------------------|
-| [Backlog.md](Backlog.md) | HS-04: configuración de repositorio, ramas, protección de ramas, PR/MR |
-| [Despliegue.md](Despliegue.md) | Flujo CI/CD: push a feature dispara CI; merge a main despliega a producción |
-| [DevOps.md](DevOps.md) | Stack tecnológico, convenciones de commits, pipeline detallado |
+| [Backlog.md](../arquitectura/Backlog.md) | HS-04: configuración de repositorio, ramas, protección de ramas, PR/MR |
+| [Despliegue.md](../devops/Despliegue.md) | Flujo CI/CD: push a feature dispara CI; merge a main despliega a producción |
+| [DevOps.md](../devops/DevOps.md) | Stack tecnológico, convenciones de commits, pipeline detallado |
 
 ---
 
