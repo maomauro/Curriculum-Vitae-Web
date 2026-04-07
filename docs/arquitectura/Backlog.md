@@ -293,7 +293,8 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | ID | Tipo | Título | Descripción | Depende de | Story Points |
 |----|------|--------|-------------|------------|--------------|
 | **HS-42** | Historia Usuario | Editor de datos personales | Como publicador quiero editar mis datos personales para que mi CV refleje mi información actual | HS-33 | 8 |
-| **HS-43** | Historia Usuario | Editor de perfil profesional | Como publicador quiero gestionar uno o más perfiles profesionales (nombre, descripción, aspiración salarial) | HS-34 | 5 |
+| **HS-43** | Historia Usuario | Editor de perfil profesional | Como publicador quiero gestionar varios perfiles profesionales (nombre, descripción, aspiración salarial) y activar solo uno según la postulación | HS-34 | 5 |
+| **HS-43b** | Historia Técnica | Soporte multi-perfil activo en BD | ⚠️ GAP detectado: tabla `Perfil` no tiene campo `EstaActivo boolean` — añadirlo al DBML, DDL y API para soportar que solo un perfil esté activo a la vez | HS-01 | 2 |
 | **HS-44** | Historia Usuario | Editor de experiencia laboral | Como publicador quiero añadir, editar y eliminar experiencias laborales (empresa, cargo, fechas, funciones, referencia laboral opcional) | HS-35 | 8 |
 | **HS-45** | Historia Usuario | Editor de formación académica | Como publicador quiero gestionar mi formación (título, institución, fechas, tipo, descripción) | HS-36 | 5 |
 | **HS-46** | Historia Usuario | Editor de habilidades | Como publicador quiero listar habilidades con tipo (técnica, blanda, idioma) y nivel | HS-37 | 5 |

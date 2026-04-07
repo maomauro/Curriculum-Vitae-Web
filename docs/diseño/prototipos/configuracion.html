@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Source Sans 3', sans-serif; background: #F4F6F9; margin: 0; }
+    .topbar { background: #343A40; height: 56px; display: flex; align-items: center; padding: 0 20px; gap: 12px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
+    .topbar .btn-hamburger { background: none; border: none; color: #ADB5BD; font-size: 1.2rem; cursor: pointer; padding: 6px 8px; border-radius: 6px; }
+    .topbar .btn-hamburger:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .topbar .brand { color: #fff; font-size: 1.15rem; font-weight: 700; text-decoration: none; letter-spacing: -.2px; margin-right: auto; }
+    .topbar .brand span { color: #2C7BE5; }
+    .topbar .user-menu { display: flex; align-items: center; gap: 8px; color: #fff; font-size: .875rem; cursor: pointer; }
+    .topbar .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #2C7BE5; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; }
+    .sidebar { background: #2D3748; width: 220px; min-height: calc(100vh - 56px); position: fixed; top: 56px; left: 0; padding: 20px 0; transition: width .25s; overflow: hidden; }
+    .sidebar.collapsed { width: 60px; }
+    .sidebar-user { padding: 0 16px 20px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; }
+    .sidebar-avatar { width: 72px; height: 72px; border-radius: 50%; background: #2C7BE5; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+    .sidebar-username { color: #fff; font-weight: 700; font-size: .95rem; text-align: center; white-space: nowrap; }
+    .sidebar-role { color: #A0AEC0; font-size: .78rem; text-align: center; white-space: nowrap; }
+    .nav-item-sidebar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #A0AEC0; text-decoration: none; font-size: .875rem; white-space: nowrap; transition: background .2s, color .2s; }
+    .nav-item-sidebar:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-item-sidebar.active { background: rgba(44,123,229,.2); color: #fff; border-left: 3px solid #2C7BE5; }
+    .nav-item-sidebar i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge { background: #E63946; color: #fff; font-size: .65rem; font-weight: 700; border-radius: 10px; padding: 1px 6px; margin-left: auto; }
+    .main-content { margin-left: 220px; margin-top: 56px; padding: 28px; transition: margin-left .25s; }
+    .page-header { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .page-header h4 { font-weight: 700; color: #212529; margin-bottom: 2px; }
+    .page-header p { color: #6C757D; font-size: .9rem; margin: 0; }
+    .seccion-card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 20px; }
+    .seccion-titulo { font-weight: 700; font-size: .95rem; color: #212529; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .seccion-titulo i { color: #2C7BE5; }
+    .seccion-subtitulo { font-size: .82rem; color: #6C757D; margin-bottom: 16px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px; }
+
+    /* VISIBILIDAD ROWS */
+    .vis-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F8F8F8; }
+    .vis-row:last-child { border-bottom: none; }
+    .vis-info { display: flex; align-items: center; gap: 12px; }
+    .vis-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .9rem; flex-shrink: 0; }
+    .vis-name { font-weight: 600; font-size: .9rem; color: #212529; }
+    .vis-desc { font-size: .78rem; color: #6C757D; }
+
+    /* CV LINK BOX */
+    .link-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+    .link-box input { flex: 1; background: transparent; border: none; color: #2C7BE5; font-size: .88rem; font-weight: 600; outline: none; }
+    .link-box .btn-copy { background: #2C7BE5; color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: .8rem; cursor: pointer; }
+    .link-box .btn-copy:hover { background: #1A5FC8; }
+
+    /* DANGER ZONE */
+    .danger-zone { border: 1.5px solid #FCA5A5; border-radius: 10px; padding: 20px 22px; background: #FFF5F5; }
+    .danger-zone .danger-title { font-weight: 700; color: #DC2626; font-size: .93rem; margin-bottom: 6px; }
+    .danger-zone .danger-desc { font-size: .83rem; color: #6C757D; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="btn-hamburger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <a href="#" class="brand"><span>Portal</span>CV</a>
+    <div class="user-menu ms-auto">
+      <div class="user-avatar">AG</div>
+      <span class="d-none d-md-inline">Ana García</span>
+      <i class="bi bi-chevron-down small"></i>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">AG</div>
+      <div class="sidebar-username">Ana García</div>
+      <div class="sidebar-role">Frontend Developer</div>
+    </div>
+    <nav>
+      <a href="dashboard.html" class="nav-item-sidebar"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="alertas.html" class="nav-item-sidebar"><i class="bi bi-bell-fill"></i><span>Alertas</span><span class="nav-badge">5</span></a>
+      <a href="mi-cv.html" class="nav-item-sidebar"><i class="bi bi-file-earmark-person-fill"></i><span>Mi CV</span></a>
+      <a href="datos-personales.html" class="nav-item-sidebar"><i class="bi bi-person-lines-fill"></i><span>Datos Personales</span></a>
+      <a href="perfil.html" class="nav-item-sidebar"><i class="bi bi-person-badge-fill"></i><span>Perfil</span></a>
+      <a href="experiencia.html" class="nav-item-sidebar"><i class="bi bi-briefcase-fill"></i><span>Experiencia</span></a>
+      <a href="educacion.html" class="nav-item-sidebar"><i class="bi bi-mortarboard-fill"></i><span>Educación</span></a>
+      <a href="habilidades.html" class="nav-item-sidebar"><i class="bi bi-stars"></i><span>Habilidades</span></a>
+      <a href="proyectos.html" class="nav-item-sidebar"><i class="bi bi-kanban-fill"></i><span>Proyectos</span></a>
+      <a href="configuracion.html" class="nav-item-sidebar active"><i class="bi bi-gear-fill"></i><span>Configuración</span></a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+
+    <div class="page-header">
+      <h4><i class="bi bi-gear-fill me-2 text-primary"></i>Configuración</h4>
+      <p>Controla la visibilidad de cada sección de tu CV y gestiona tu cuenta</p>
+    </div>
+
+    <!-- VISIBILIDAD DEL CV -->
+    <div class="seccion-card">
+      <div class="seccion-titulo"><i class="bi bi-eye-fill"></i>Visibilidad del CV</div>
+      <div class="seccion-subtitulo">Elige qué secciones son visibles para los empleadores en tu CV público</div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#DBEAFE; color:#1D4ED8;"><i class="bi bi-person-badge-fill"></i></div>
+          <div>
+            <div class="vis-name">Perfil Profesional</div>
+            <div class="vis-desc">Nombre, cargo objetivo y resumen. Siempre visible.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked disabled title="Esta sección siempre es visible">
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#D1FAE5; color:#047857;"><i class="bi bi-telephone-fill"></i></div>
+          <div>
+            <div class="vis-name">Información de Contacto</div>
+            <div class="vis-desc">Celular, teléfono y email según las opciones de privacidad abajo.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#FEF3C7; color:#B45309;"><i class="bi bi-briefcase-fill"></i></div>
+          <div>
+            <div class="vis-name">Experiencia Laboral</div>
+            <div class="vis-desc">Empleos anteriores y actuales.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#EDE9FE; color:#7C3AED;"><i class="bi bi-mortarboard-fill"></i></div>
+          <div>
+            <div class="vis-name">Formación Académica</div>
+            <div class="vis-desc">Estudios, posgrados y certificaciones.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#F0FDF4; color:#166534;"><i class="bi bi-stars"></i></div>
+          <div>
+            <div class="vis-name">Habilidades</div>
+            <div class="vis-desc">Técnicas, blandas, idiomas y otras.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#F1F5F9; color:#475569;"><i class="bi bi-kanban-fill"></i></div>
+          <div>
+            <div class="vis-name">Proyectos</div>
+            <div class="vis-desc">Proyectos profesionales y personales.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#FFF7ED; color:#C2410C;"><i class="bi bi-person-check-fill"></i></div>
+          <div>
+            <div class="vis-name">Referencias Laborales</div>
+            <div class="vis-desc">Contactos de referencia por empleo.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox">
+        </div>
+      </div>
+
+      <div class="vis-row">
+        <div class="vis-info">
+          <div class="vis-icon" style="background:#F0F9FF; color:#0369A1;"><i class="bi bi-share-fill"></i></div>
+          <div>
+            <div class="vis-name">Redes Sociales</div>
+            <div class="vis-desc">LinkedIn, GitHub, portafolio y otras.</div>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" checked>
+        </div>
+      </div>
+
+      <div class="text-end mt-3 pt-3" style="border-top:1px solid #F0F0F0;">
+        <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar visibilidad</button>
+      </div>
+    </div>
+
+    <!-- PRIVACIDAD DE CONTACTO -->
+    <div class="seccion-card">
+      <div class="seccion-titulo"><i class="bi bi-shield-lock-fill"></i>Privacidad de Contacto</div>
+      <div class="seccion-subtitulo">Define cómo los empleadores pueden ver o usar tu información de contacto</div>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Correo electrónico</label>
+          <div class="d-flex flex-column gap-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="emailPrivacy" id="emailPublico" checked>
+              <label class="form-check-label" for="emailPublico">
+                <span class="fw-semibold">Mostrar directo</span>
+                <div class="text-muted" style="font-size:.8rem;">Los empleadores ven tu email completo en el CV.</div>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="emailPrivacy" id="emailFormulario">
+              <label class="form-check-label" for="emailFormulario">
+                <span class="fw-semibold">Solo por formulario</span>
+                <div class="text-muted" style="font-size:.8rem;">Reciben mensajes a través de la plataforma, sin ver tu email.</div>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="emailPrivacy" id="emailOculto">
+              <label class="form-check-label" for="emailOculto">
+                <span class="fw-semibold">Ocultar</span>
+                <div class="text-muted" style="font-size:.8rem;">No se muestra ningún medio de contacto por email.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Número de celular / teléfono</label>
+          <div class="d-flex flex-column gap-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="phonePrivacy" id="phonePublico" checked>
+              <label class="form-check-label" for="phonePublico">
+                <span class="fw-semibold">Mostrar directo</span>
+                <div class="text-muted" style="font-size:.8rem;">Los empleadores ven tu número completo.</div>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="phonePrivacy" id="phoneParcial">
+              <label class="form-check-label" for="phoneParcial">
+                <span class="fw-semibold">Mostrar parcialmente</span>
+                <div class="text-muted" style="font-size:.8rem;">Solo se muestran los 4 últimos dígitos. Ej: +57 *** ***6789.</div>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="phonePrivacy" id="phoneOculto">
+              <label class="form-check-label" for="phoneOculto">
+                <span class="fw-semibold">Ocultar</span>
+                <div class="text-muted" style="font-size:.8rem;">No se muestra el número de teléfono.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 text-end">
+          <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar privacidad</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINK PÚBLICO DEL CV -->
+    <div class="seccion-card">
+      <div class="seccion-titulo"><i class="bi bi-link-45deg"></i>Link público de tu CV</div>
+      <div class="seccion-subtitulo">Comparte este enlace con empleadores. Cualquier persona con el link puede ver las secciones marcadas como visibles.</div>
+
+      <div class="link-box mb-3">
+        <i class="bi bi-globe text-primary" style="font-size:1.1rem;"></i>
+        <input type="text" readonly value="https://portalcv.co/cv/ana-garcia-dev">
+        <button class="btn-copy" onclick="navigator.clipboard.writeText('https://portalcv.co/cv/ana-garcia-dev')">
+          <i class="bi bi-clipboard me-1"></i>Copiar
+        </button>
+      </div>
+
+      <div class="row g-3 align-items-center">
+        <div class="col-md-4">
+          <label class="form-label">URL personalizada</label>
+          <div class="input-group">
+            <span class="input-group-text" style="font-size:.82rem;">portalcv.co/cv/</span>
+            <input type="text" class="form-control" value="ana-garcia-dev">
+          </div>
+          <div class="form-text">Solo letras minúsculas, números y guiones.</div>
+        </div>
+        <div class="col-md-3 d-flex align-items-end pb-1">
+          <button class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-repeat me-1"></i>Actualizar URL</button>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Estado del CV público</label>
+          <div class="d-flex align-items-center gap-3 mt-1">
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" id="cvPublico" checked>
+              <label class="form-check-label fw-semibold" for="cvPublico">CV publicado</label>
+            </div>
+            <span class="badge bg-success-subtle text-success" id="estadoBadge">Activo</span>
+          </div>
+          <div class="form-text">Si desactivas, tu CV dejará de ser accesible por el link.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMBIAR CONTRASEÑA -->
+    <div class="seccion-card">
+      <div class="seccion-titulo"><i class="bi bi-key-fill"></i>Cambiar Contraseña</div>
+      <div class="seccion-subtitulo">Actualiza tu contraseña de acceso a la plataforma</div>
+      <div class="row g-3" style="max-width: 480px;">
+        <div class="col-12">
+          <label class="form-label">Contraseña actual</label>
+          <input type="password" class="form-control" placeholder="••••••••">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Nueva contraseña</label>
+          <input type="password" class="form-control" placeholder="••••••••">
+          <div class="form-text">Mínimo 8 caracteres. Usa letras, números y símbolos.</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Confirmar nueva contraseña</label>
+          <input type="password" class="form-control" placeholder="••••••••">
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary"><i class="bi bi-floppy-fill me-2"></i>Cambiar contraseña</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONA DE PELIGRO -->
+    <div class="danger-zone">
+      <div class="danger-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Zona de peligro</div>
+      <div class="danger-desc">Estas acciones son irreversibles. Asegúrate de entender sus consecuencias antes de proceder.</div>
+      <div class="d-flex flex-wrap gap-3">
+        <button class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash3 me-2"></i>Eliminar cuenta y todos mis datos
+        </button>
+        <button class="btn btn-outline-warning btn-sm">
+          <i class="bi bi-eraser-fill me-2"></i>Limpiar todos los datos del CV (mantener cuenta)
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      sidebar.classList.toggle('collapsed');
+      main.style.marginLeft = sidebar.classList.contains('collapsed') ? '60px' : '220px';
+    }
+    document.getElementById('cvPublico').addEventListener('change', function () {
+      const badge = document.getElementById('estadoBadge');
+      badge.textContent = this.checked ? 'Activo' : 'Inactivo';
+      badge.className = this.checked ? 'badge bg-success-subtle text-success' : 'badge bg-secondary-subtle text-secondary';
+    });
+  </script>
+</body>
+</html>
