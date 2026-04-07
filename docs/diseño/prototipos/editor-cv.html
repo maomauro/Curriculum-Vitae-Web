@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor CV — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    /* AdminLTE 4 — AdminLayout (mismo que dashboard) */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      background: #F4F6F9;
+      margin: 0;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background: #343A40;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+    }
+    .topbar .btn-hamburger {
+      background: none; border: none; color: #ADB5BD;
+      font-size: 1.2rem; cursor: pointer; padding: 6px 8px;
+      border-radius: 6px;
+    }
+    .topbar .btn-hamburger:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .topbar .brand {
+      color: #fff; font-size: 1.15rem; font-weight: 700;
+      text-decoration: none; margin-right: auto;
+    }
+    .topbar .brand span { color: #2C7BE5; }
+    .topbar .nav-center {
+      color: #CED4DA; font-size: .85rem; display: flex; align-items: center; gap: 6px;
+    }
+    .topbar .user-menu {
+      display: flex; align-items: center; gap: 8px;
+      color: #fff; font-size: .875rem; cursor: pointer;
+    }
+    .topbar .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: #2D3748;
+      width: 220px;
+      min-height: calc(100vh - 56px);
+      position: fixed;
+      top: 56px; left: 0;
+      padding: 20px 0;
+      overflow: hidden;
+      transition: width .25s;
+    }
+    .sidebar.collapsed { width: 60px; }
+
+    .sidebar-user {
+      padding: 0 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 8px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .sidebar-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;
+    }
+    .sidebar-username { color: #fff; font-weight: 700; font-size: .95rem; white-space: nowrap; }
+    .sidebar-role     { color: #A0AEC0; font-size: .78rem; white-space: nowrap; }
+
+    .nav-item-sidebar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px;
+      color: #A0AEC0; text-decoration: none;
+      font-size: .875rem; white-space: nowrap;
+      transition: background .2s, color .2s;
+    }
+    .nav-item-sidebar:hover  { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-item-sidebar.active {
+      background: rgba(44,123,229,.2); color: #fff;
+      border-left: 3px solid #2C7BE5;
+    }
+    .nav-item-sidebar i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+    /* MAIN */
+    .main-content {
+      margin-left: 220px;
+      margin-top: 56px;
+      padding: 28px;
+      transition: margin-left .25s;
+    }
+
+    /* PAGE HEADER */
+    .page-header {
+      background: #fff; border-radius: 10px;
+      padding: 20px 24px; margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .page-header h4 { font-weight: 700; color: #212529; margin: 0; }
+
+    /* TABS */
+    .nav-tabs .nav-link {
+      color: #6C757D; font-weight: 500;
+      border: none; border-bottom: 2px solid transparent;
+      padding: 10px 20px;
+    }
+    .nav-tabs .nav-link:hover { color: #2C7BE5; border-color: transparent; }
+    .nav-tabs .nav-link.active {
+      color: #2C7BE5; font-weight: 700;
+      border-bottom: 2px solid #2C7BE5;
+      background: none;
+    }
+    .nav-tabs { border-bottom: 1px solid #DEE2E6; margin-bottom: 0; }
+
+    /* FORM CARD */
+    .form-card {
+      background: #fff; border-radius: 0 0 10px 10px;
+      padding: 28px 32px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .form-label { font-weight: 600; font-size: .875rem; color: #343A40; }
+    .form-control { border-color: #DEE2E6; font-size: .9rem; }
+    .form-control:focus { border-color: #2C7BE5; box-shadow: none; }
+
+    /* Item de lista (experiencia/educación/habilidades) */
+    .list-item {
+      border: 1px solid #E9ECEF; border-radius: 8px;
+      padding: 16px 20px; margin-bottom: 12px; background: #FAFAFA;
+    }
+    .list-item .item-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
+    }
+    .list-item .item-title { font-weight: 700; color: #343A40; font-size: .9rem; }
+    .list-item .item-subtitle { color: #6C757D; font-size: .8rem; }
+
+    .btn-delete-item {
+      background: none; border: none; color: #DC3545;
+      font-size: .85rem; cursor: pointer; padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .btn-delete-item:hover { background: #FFF0F0; }
+
+    /* Skill bar */
+    .skill-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .skill-name { width: 140px; font-size: .875rem; font-weight: 600; color: #343A40; }
+    .skill-progress { flex: 1; height: 8px; background: #E9ECEF; border-radius: 4px; }
+    .skill-fill { height: 8px; background: #2C7BE5; border-radius: 4px; }
+    .skill-level { width: 30px; font-size: .8rem; color: #6C757D; text-align: right; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="btn-hamburger" onclick="toggleSidebar()">
+      <i class="bi bi-list"></i>
+    </button>
+    <a href="#" class="brand"><span>Portal</span>CV</a>
+    <div class="nav-center d-none d-md-flex">
+      <i class="bi bi-person-circle"></i>
+      <span>Ana García — Frontend Developer</span>
+    </div>
+    <div class="user-menu ms-3">
+      <div class="user-avatar">AG</div>
+      <span class="d-none d-md-inline">Ana García</span>
+      <i class="bi bi-chevron-down small"></i>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">AG</div>
+      <div class="sidebar-username">Ana García</div>
+      <div class="sidebar-role">Frontend Developer</div>
+    </div>
+    <nav>
+      <a href="dashboard.html" class="nav-item-sidebar">
+        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item-sidebar">
+        <i class="bi bi-file-earmark-person"></i><span>Mis CVs</span>
+      </a>
+      <a href="editor-cv.html" class="nav-item-sidebar active">
+        <i class="bi bi-pencil-square"></i><span>Editor CV</span>
+      </a>
+      <a href="#" class="nav-item-sidebar">
+        <i class="bi bi-briefcase"></i><span>Experiencia</span>
+      </a>
+      <a href="#" class="nav-item-sidebar">
+        <i class="bi bi-mortarboard"></i><span>Educación</span>
+      </a>
+      <a href="#" class="nav-item-sidebar">
+        <i class="bi bi-stars"></i><span>Habilidades</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h4><i class="bi bi-pencil-square me-2 text-primary"></i>Editor de Curriculum Vitae</h4>
+      <a href="detalle-cv.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-eye me-1"></i>Vista previa
+      </a>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-tabs px-2 bg-white rounded-top border-start border-end border-top" style="border-color:#DEE2E6;">
+      <li class="nav-item">
+        <a class="nav-link active" href="#datos" data-bs-toggle="tab">
+          <i class="bi bi-person-fill me-1"></i>Datos Personales
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#experiencia" data-bs-toggle="tab">
+          <i class="bi bi-briefcase-fill me-1"></i>Experiencia
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#educacion" data-bs-toggle="tab">
+          <i class="bi bi-mortarboard-fill me-1"></i>Educación
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#habilidades" data-bs-toggle="tab">
+          <i class="bi bi-stars me-1"></i>Habilidades
+        </a>
+      </li>
+    </ul>
+
+    <!-- TAB CONTENT -->
+    <div class="tab-content">
+
+      <!-- TAB: Datos Personales -->
+      <div class="tab-pane fade show active" id="datos">
+        <div class="form-card">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" value="Ana">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Apellidos</label>
+              <input type="text" class="form-control" value="García López">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cargo / Título profesional</label>
+              <input type="text" class="form-control" value="Frontend Developer">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" value="ana.garcia@email.com">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input type="tel" class="form-control" value="+34 612 345 678">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ciudad</label>
+              <input type="text" class="form-control" value="Madrid, España">
+            </div>
+            <div class="col-12">
+              <label class="form-label">LinkedIn</label>
+              <input type="url" class="form-control" value="https://linkedin.com/in/ana-garcia-dev">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Resumen profesional</label>
+              <textarea class="form-control" rows="4">Desarrolladora frontend con 5 años de experiencia construyendo interfaces modernas y responsivas. Apasionada por la accesibilidad web y el rendimiento. Experiencia con Angular, React y Vue.js en proyectos de escala empresarial.</textarea>
+            </div>
+            <div class="col-12 text-end">
+              <button class="btn btn-primary px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Experiencia -->
+      <div class="tab-pane fade" id="experiencia">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Frontend Developer Senior</div>
+                <div class="item-subtitle">Tech Solutions SL · Feb 2022 – Presente · Madrid</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Empresa</label>
+                <input type="text" class="form-control form-control-sm" value="Tech Solutions SL">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cargo</label>
+                <input type="text" class="form-control form-control-sm" value="Frontend Developer Senior">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2022-02">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="text" class="form-control form-control-sm" value="Presente" placeholder="Presente">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control form-control-sm" rows="2">Lideré el desarrollo del módulo de reportes en Angular 16. Reduje el tiempo de carga en un 40% mediante lazy loading y optimización de bundles.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Frontend Developer</div>
+                <div class="item-subtitle">Startup Digital SA · Mar 2020 – Ene 2022 · Barcelona</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Empresa</label>
+                <input type="text" class="form-control form-control-sm" value="Startup Digital SA">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cargo</label>
+                <input type="text" class="form-control form-control-sm" value="Frontend Developer">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2020-03">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="month" class="form-control form-control-sm" value="2022-01">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control form-control-sm" rows="2">Desarrollo de landing pages y e-commerce con React y TypeScript. Integración con APIs REST y pasarelas de pago.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar experiencia
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Educación -->
+      <div class="tab-pane fade" id="educacion">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Ingeniería Informática</div>
+                <div class="item-subtitle">Universidad Complutense de Madrid · 2015 – 2019</div>
+              </div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Institución</label>
+                <input type="text" class="form-control form-control-sm" value="Universidad Complutense de Madrid">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Título</label>
+                <input type="text" class="form-control form-control-sm" value="Grado en Ingeniería Informática">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha inicio</label>
+                <input type="month" class="form-control form-control-sm" value="2015-09">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Fecha fin</label>
+                <input type="month" class="form-control form-control-sm" value="2019-06">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar educación
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Habilidades -->
+      <div class="tab-pane fade" id="habilidades">
+        <div class="form-card">
+
+          <div class="list-item">
+            <div class="item-header">
+              <div class="item-title">Habilidades técnicas</div>
+              <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+            </div>
+
+            <div class="skill-row">
+              <span class="skill-name">Angular</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:90%;"></div>
+              </div>
+              <span class="skill-level">5/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">TypeScript</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:85%;"></div>
+              </div>
+              <span class="skill-level">4/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">React</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:70%;"></div>
+              </div>
+              <span class="skill-level">3/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">CSS / SCSS</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:80%;"></div>
+              </div>
+              <span class="skill-level">4/5</span>
+            </div>
+            <div class="skill-row">
+              <span class="skill-name">Node.js</span>
+              <div class="skill-progress">
+                <div class="skill-fill" style="width:55%;"></div>
+              </div>
+              <span class="skill-level">3/5</span>
+            </div>
+
+            <!-- Nuevo ítem -->
+            <div class="row g-2 mt-2 pt-2 border-top">
+              <div class="col-md-6">
+                <label class="form-label">Nueva habilidad</label>
+                <input type="text" class="form-control form-control-sm" placeholder="Ej: Docker">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Nivel (1–5)</label>
+                <select class="form-select form-select-sm">
+                  <option>1 – Básico</option>
+                  <option>2 – Elemental</option>
+                  <option selected>3 – Intermedio</option>
+                  <option>4 – Avanzado</option>
+                  <option>5 – Experto</option>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-outline-primary btn-sm w-100">
+                  <i class="bi bi-plus"></i> Añadir
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="text-end mt-3">
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      sidebar.classList.toggle('collapsed');
+      main.style.marginLeft = sidebar.classList.contains('collapsed') ? '60px' : '220px';
+    }
+  </script>
+</body>
+</html>
