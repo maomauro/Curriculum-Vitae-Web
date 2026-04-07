@@ -44,20 +44,19 @@
 
 ---
 
-## Tabs del editor
+## Secciones del CV
 
-| Tab | Tabla BD | Campos |
+Cada sección del CV es una **página independiente** accesible desde el botón "Editar →" en la vista previa o directamente desde el sidebar de navegación.
+
+| Sección | Ruta | Archivo vistas |
 |---|---|---|
-| Datos Personales | `Personales` | Nombre, Apellidos, Cargo/Título, Email, Teléfono, Ciudad, LinkedIn, Resumen profesional |
-| Perfil Profesional | `Perfil` | NombrePerfil, DescripcionPerfil, AspiracionSalarialPesos, AspiracionSalarialDolares |
-| Experiencia | `Experiencia` | Lista de empleos: Empresa, Cargo, Fecha inicio/fin, Descripción. Botón `+ Agregar` |
-| Educación | `Formacion` | Lista: Institución, Título, Fecha inicio/fin. Botón `+ Agregar` |
-| Habilidades | `Habilidad` | Lista: Nombre de habilidad, Nivel (1-5). Botón `+ Agregar` |
-| Proyectos | `Proyecto` | Lista: Nombre, URL, Descripción, Tecnologías usadas. Botón `+ Agregar` |
-| Referencias | `Referencia` | Lista: Nombre, Cargo, Empresa, Email, Relación. Botón `+ Agregar` |
-| Redes Sociales | `RedSocial` | LinkedIn, GitHub, Portfolio/web, Twitter/X, Stack Overflow (campos de URL) |
-| Familiares | `FamiliarContacto` | Lista: Parentesco, Nombres, Apellidos, Email, Teléfono, EsContactoPrincipal (switch). No visible en CV público. Botón `+ Agregar` |
-| Visibilidad | `VisibilidadSeccion` | Toggles por sección (Experiencia, Educación, Habilidades, Proyectos, Referencias, Redes Sociales, Contacto); privacidad de email (público / solo reclutadores / oculto) |
+| Datos Personales | `/datos-personales` | [Datos-Personales.md](./Datos-Personales.md) |
+| Perfil Profesional | `/perfil` | [Perfil.md](./Perfil.md) |
+| Experiencia | `/experiencia` | [Experiencia.md](./Experiencia.md) |
+| Educación | `/educacion` | [Educacion.md](./Educacion.md) |
+| Habilidades | `/habilidades` | [Habilidades.md](./Habilidades.md) |
+| Proyectos | `/proyectos` | [Proyectos.md](./Proyectos.md) |
+| Configuración / Visibilidad | `/configuracion` | [Configuracion.md](./Configuracion.md) |
 
 ---
 
@@ -69,27 +68,16 @@ Board (1440×1024)
 ├── Sidebar
 └── Main-content
     ├── page-header
-    │   └── titulo-pagina
-    ├── tabs-navegacion
-    │   ├── tab-DatosPersonales  (activo)
-    │   ├── tab-PerfilProfesional
-    │   ├── tab-Experiencia
-    │   ├── tab-Educacion
-    │   ├── tab-Habilidades
-    │   ├── tab-Proyectos
-    │   ├── tab-Referencias
-    │   ├── tab-RedesSociales
-    │   ├── tab-Familiares
-    │   └── tab-Visibilidad
-    └── formulario-activo
-        ├── campo-nombre
-        ├── campo-apellidos
-        ├── campo-cargo
-        ├── campo-email
-        ├── campo-ciudad
-        ├── campo-linkedin
-        ├── campo-resumen
-        └── btn-guardar
+    │   └── titulo-pagina  "Mi Curriculum Vitae"
+    ├── preview-card
+    │   ├── header-cv  (nombre, cargo, resumen)
+    │   ├── seccion-experiencia  [→ btn-editar]
+    │   ├── seccion-educacion    [→ btn-editar]
+    │   ├── seccion-habilidades  [→ btn-editar]
+    │   └── seccion-proyectos    [→ btn-editar]
+    └── actions-bar
+        ├── btn-ver-perfil-publico
+        └── btn-exportar-pdf
 ```
 
 ---
@@ -98,25 +86,19 @@ Board (1440×1024)
 
 | Elemento | Clase | Detalle |
 |---|---|---|
-| Contenedor tabs | `nav nav-tabs` | Bootstrap tabs |
-| Tab activo | `nav-link active` | border-bottom `#2C7BE5` |
-| Tab inactivo | `nav-link` | `#6C757D` |
-| Panel formulario | `tab-content card card-body` | padding: 24px, sombra leve |
-| Label campos | `form-label fw-semibold` | `#343A40`, 14px |
-| Inputs | `form-control` | Border `#DEE2E6` |
-| Textarea resumen | `form-control` | rows: 4 |
-| Botón guardar | `btn btn-primary px-4` | Azul `#2C7BE5`, alineado derecha |
-| Btn agregar ítem | `btn btn-outline-secondary btn-sm` | `+ Agregar experiencia` |
+| Vista previa CV | `card card-body` | padding: 24px, sombra leve |
+| Encabezados de sección | `fw-semibold border-bottom pb-1` | `#343A40`, 14px |
+| Botón editar | `btn btn-outline-primary btn-sm` | alineado a la derecha del encabezado |
+| Botón ver público | `btn btn-outline-secondary` | `#6C757D` |
+| Botón exportar PDF | `btn btn-primary` | Azul `#2C7BE5` |
 
 ---
 
 ## Comportamientos
 
-- Los tabs usan el sistema de tabs de Bootstrap 5 (`data-bs-toggle="tab"`)
-- Los datos se guardan en `[(ngModel)]` en el componente
-- El botón `Guardar cambios` llama a `cvService.save(cvData)` (pendiente integración API)
-- En Experiencia/Educación/Habilidades: botón `+ Agregar` inserta un nuevo ítem en la lista
-- Cada ítem de lista tiene botón `✕ Eliminar`
+- Cada botón "Editar →" navega a la página independiente de la sección correspondiente
+- "Ver perfil público" abre `/cv/:id` en nueva pestaña
+- "Exportar PDF" dispara la generación y descarga del CV en formato PDF (pendiente integración API)
 
 ---
 
