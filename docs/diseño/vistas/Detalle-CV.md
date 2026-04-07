@@ -63,13 +63,22 @@ Board (1440×1024)
 │   │   │   └── linkedin
 │   │   ├── seccion-habilidades
 │   │   │   └── skill-bar (×N)
-│   │   └── seccion-idiomas
+│   │   ├── seccion-idiomas
+│   │   └── btn-contactar  (abre modal #modalContacto)
 │   └── columna-derecha
 │       ├── seccion-resumen
 │       ├── seccion-experiencia
 │       │   └── item-experiencia (×N)
 │       └── seccion-educacion
 │           └── item-educacion (×N)
+├── modal-contacto (#modalContacto)
+│   ├── campo-nombre
+│   ├── campo-empresa
+│   ├── campo-email
+│   ├── campo-motivo-contacto  (select: Oferta laboral / Proyecto freelance / Consulta / Otro → `VisitanteContacto.MotivoContacto`)
+│   ├── campo-asunto
+│   ├── campo-mensaje (textarea)
+│   └── btn-enviar
 └── Footer
 ```
 
@@ -100,3 +109,7 @@ Board (1440×1024)
 - Si no existe el CV, redirige a `/cvs`
 - Botón `← Volver al listado` navega a `/cvs`
 - Las barras de habilidades tienen animación de entrada (CSS transition)
+- Botón `Contactar` en columna izquierda abre el modal `#modalContacto`
+- Al enviar el formulario de contacto se muestra alerta de éxito y se cierra el modal a los 2.5 s
+- El campo email del formulario de contacto es validado con formato RFC
+- El campo `MotivoContacto` es un `<select>` con opciones: Oferta laboral, Proyecto freelance, Consulta, Otro — se persiste en `VisitanteContacto.MotivoContacto`

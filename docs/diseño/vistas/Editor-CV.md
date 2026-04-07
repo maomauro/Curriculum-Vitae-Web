@@ -46,12 +46,18 @@
 
 ## Tabs del editor
 
-| Tab | Campos |
-|---|---|
-| Datos Personales | Nombre, Apellidos, Cargo/Título, Email, Teléfono, Ciudad, LinkedIn, Resumen profesional |
-| Experiencia | Lista de empleos: Empresa, Cargo, Fecha inicio/fin, Descripción. Botón `+ Agregar` |
-| Educación | Lista: Institución, Título, Fecha inicio/fin. Botón `+ Agregar` |
-| Habilidades | Lista: Nombre de habilidad, Nivel (1-5). Botón `+ Agregar` |
+| Tab | Tabla BD | Campos |
+|---|---|---|
+| Datos Personales | `Personales` | Nombre, Apellidos, Cargo/Título, Email, Teléfono, Ciudad, LinkedIn, Resumen profesional |
+| Perfil Profesional | `Perfil` | NombrePerfil, DescripcionPerfil, AspiracionSalarialPesos, AspiracionSalarialDolares |
+| Experiencia | `Experiencia` | Lista de empleos: Empresa, Cargo, Fecha inicio/fin, Descripción. Botón `+ Agregar` |
+| Educación | `Formacion` | Lista: Institución, Título, Fecha inicio/fin. Botón `+ Agregar` |
+| Habilidades | `Habilidad` | Lista: Nombre de habilidad, Nivel (1-5). Botón `+ Agregar` |
+| Proyectos | `Proyecto` | Lista: Nombre, URL, Descripción, Tecnologías usadas. Botón `+ Agregar` |
+| Referencias | `Referencia` | Lista: Nombre, Cargo, Empresa, Email, Relación. Botón `+ Agregar` |
+| Redes Sociales | `RedSocial` | LinkedIn, GitHub, Portfolio/web, Twitter/X, Stack Overflow (campos de URL) |
+| Familiares | `FamiliarContacto` | Lista: Parentesco, Nombres, Apellidos, Email, Teléfono, EsContactoPrincipal (switch). No visible en CV público. Botón `+ Agregar` |
+| Visibilidad | `VisibilidadSeccion` | Toggles por sección (Experiencia, Educación, Habilidades, Proyectos, Referencias, Redes Sociales, Contacto); privacidad de email (público / solo reclutadores / oculto) |
 
 ---
 
@@ -66,9 +72,15 @@ Board (1440×1024)
     │   └── titulo-pagina
     ├── tabs-navegacion
     │   ├── tab-DatosPersonales  (activo)
+    │   ├── tab-PerfilProfesional
     │   ├── tab-Experiencia
     │   ├── tab-Educacion
-    │   └── tab-Habilidades
+    │   ├── tab-Habilidades
+    │   ├── tab-Proyectos
+    │   ├── tab-Referencias
+    │   ├── tab-RedesSociales
+    │   ├── tab-Familiares
+    │   └── tab-Visibilidad
     └── formulario-activo
         ├── campo-nombre
         ├── campo-apellidos

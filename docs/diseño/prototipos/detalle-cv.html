@@ -150,7 +150,7 @@
           </div>
 
           <!-- Idiomas -->
-          <div class="text-start">
+          <div class="text-start mb-4">
             <div class="section-title">Idiomas</div>
             <div class="d-flex flex-wrap gap-2">
               <span class="badge-idioma">Español — Nativo</span>
@@ -158,6 +158,11 @@
               <span class="badge-idioma">Francés — A2</span>
             </div>
           </div>
+
+          <!-- Botón contactar -->
+          <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#modalContacto">
+            <i class="bi bi-envelope-fill me-2"></i>Contactar a Ana
+          </button>
 
         </div>
       </div>
@@ -261,6 +266,84 @@
     </div>
   </footer>
 
+  <!-- MODAL: Formulario de contacto -->
+  <div class="modal fade" id="modalContacto" tabindex="-1" aria-labelledby="modalContactoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 8px 40px rgba(0,0,0,.15);">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalContactoLabel">
+            <i class="bi bi-envelope-fill me-2 text-primary"></i>Contactar a Ana García
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body pt-2">
+          <p class="text-muted small mb-4">
+            Completa el formulario y Ana recibirá tu mensaje directamente en su correo.
+          </p>
+
+          <!-- Alerta de éxito (visible tras envío) -->
+          <div class="alert alert-success d-flex align-items-center gap-2 mb-3" role="alert" id="alertEnviado" style="display:none!important;">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>¡Mensaje enviado correctamente! Ana te responderá pronto.</div>
+          </div>
+
+          <form id="formContacto">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Tu nombre</label>
+                <input type="text" class="form-control" placeholder="Juan Pérez" value="Juan Pérez - Tech Recruiter">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Tu empresa</label>
+                <input type="text" class="form-control" placeholder="Empresa SA" value="Consulting Partners SL">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Tu correo electrónico</label>
+                <input type="email" class="form-control" placeholder="tu@empresa.com" value="juan.perez@consulting.com">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Motivo de contacto</label>
+                <select class="form-select">
+                  <option value="">— Selecciona un motivo —</option>
+                  <option value="oferta_laboral" selected>Oferta laboral</option>
+                  <option value="proyecto_freelance">Proyecto freelance</option>
+                  <option value="consulta">Consulta</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Asunto</label>
+                <input type="text" class="form-control" value="Oportunidad laboral — Frontend Developer Senior">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Mensaje</label>
+                <textarea class="form-control" rows="4" placeholder="Escribe tu mensaje aquí...">Hola Ana, hemos revisado tu perfil y creemos que encajas perfectamente en una posición que tenemos disponible. Nos gustaría conocerte mejor. ¿Tienes disponibilidad para una llamada esta semana?</textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary px-4" onclick="enviarContacto()">
+            <i class="bi bi-send-fill me-2"></i>Enviar mensaje
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function enviarContacto() {
+      document.getElementById('formContacto').style.display = 'none';
+      document.getElementById('alertEnviado').style.display = 'flex !important';
+      document.getElementById('alertEnviado').removeAttribute('style');
+      setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('modalContacto')).hide();
+        document.getElementById('formContacto').style.display = '';
+        document.getElementById('alertEnviado').style.display = 'none';
+      }, 2500);
+    }
+  </script>
 </body>
 </html>
