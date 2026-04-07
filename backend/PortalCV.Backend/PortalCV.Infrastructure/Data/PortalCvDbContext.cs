@@ -14,6 +14,19 @@ public class PortalCvDbContext : DbContext
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<UsuarioRol> UsuarioRoles => Set<UsuarioRol>();
     public DbSet<Curriculum> Curriculums => Set<Curriculum>();
+    public DbSet<Personales> Personales => Set<Personales>();
+    public DbSet<Perfil> Perfiles => Set<Perfil>();
+    public DbSet<Experiencia> Experiencias => Set<Experiencia>();
+    public DbSet<Formacion> Formaciones => Set<Formacion>();
+    public DbSet<Habilidad> Habilidades => Set<Habilidad>();
+    public DbSet<Proyecto> Proyectos => Set<Proyecto>();
+    public DbSet<Referencia> Referencias => Set<Referencia>();
+    public DbSet<FamiliarContacto> FamiliarsContacto => Set<FamiliarContacto>();
+    public DbSet<RedSocial> RedesSociales => Set<RedSocial>();
+    public DbSet<VisitanteContacto> VisitantesContacto => Set<VisitanteContacto>();
+    public DbSet<AlertaVisita> AlertasVisita => Set<AlertaVisita>();
+    public DbSet<VisibilidadSeccion> VisibilidadesSeccion => Set<VisibilidadSeccion>();
+    public DbSet<EstadisticasPublicas> EstadisticasPublicas => Set<EstadisticasPublicas>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,6 +34,19 @@ public class PortalCvDbContext : DbContext
         modelBuilder.ApplyConfiguration(new RolConfiguration());
         modelBuilder.ApplyConfiguration(new UsuarioRolConfiguration());
         modelBuilder.ApplyConfiguration(new CurriculumConfiguration());
+        modelBuilder.ApplyConfiguration(new PersonalesConfiguration());
+        modelBuilder.ApplyConfiguration(new PerfilConfiguration());
+        modelBuilder.ApplyConfiguration(new ExperienciaConfiguration());
+        modelBuilder.ApplyConfiguration(new FormacionConfiguration());
+        modelBuilder.ApplyConfiguration(new HabilidadConfiguration());
+        modelBuilder.ApplyConfiguration(new ProyectoConfiguration());
+        modelBuilder.ApplyConfiguration(new ReferenciaConfiguration());
+        modelBuilder.ApplyConfiguration(new FamiliarContactoConfiguration());
+        modelBuilder.ApplyConfiguration(new RedSocialConfiguration());
+        modelBuilder.ApplyConfiguration(new VisitanteContactoConfiguration());
+        modelBuilder.ApplyConfiguration(new AlertaVisitaConfiguration());
+        modelBuilder.ApplyConfiguration(new VisibilidadSeccionConfiguration());
+        modelBuilder.ApplyConfiguration(new EstadisticasPublicasConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }
