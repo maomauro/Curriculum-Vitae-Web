@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { AdminRoutingModule } from './admin-routing.module';
-import { AdminPanelComponent } from './pages/admin-panel/admin-panel.component';
+import { AdminPanelComponent } from './pages/admin-panel.component';
 
 @NgModule({
   declarations: [

@@ -5,17 +5,17 @@ import { RouterModule } from '@angular/router';
 
 import { PrivateRoutingModule } from './private-routing.module';
 
-import { DashboardComponent }       from './pages/dashboard/dashboard.component';
-import { AlertasComponent }         from './pages/alertas/alertas.component';
-import { MiCvComponent }            from './pages/mi-cv/mi-cv.component';
-import { DatosPersonalesComponent } from './pages/datos-personales/datos-personales.component';
-import { PerfilComponent }          from './pages/perfil/perfil.component';
-import { ExperienciaComponent }     from './pages/experiencia/experiencia.component';
-import { EducacionComponent }       from './pages/educacion/educacion.component';
-import { HabilidadesComponent }     from './pages/habilidades/habilidades.component';
-import { ProyectosComponent }       from './pages/proyectos/proyectos.component';
-import { ConfiguracionComponent }   from './pages/configuracion/configuracion.component';
-import { EditorCvComponent }        from './pages/editor-cv/editor-cv.component';
+import { DashboardComponent }       from './pages/dashboard.component';
+import { AlertasComponent }         from './pages/alertas.component';
+import { MiCvComponent }            from './pages/mi-cv.component';
+import { DatosPersonalesComponent } from './pages/datos-personales.component';
+import { PerfilComponent }          from './pages/perfil.component';
+import { ExperienciaComponent }     from './pages/experiencia.component';
+import { EducacionComponent }       from './pages/educacion.component';
+import { HabilidadesComponent }     from './pages/habilidades.component';
+import { ProyectosComponent }       from './pages/proyectos.component';
+import { ConfiguracionComponent }   from './pages/configuracion.component';
+import { EditorCvComponent }        from './pages/editor-cv.component';
 
 @NgModule({
   declarations: [
