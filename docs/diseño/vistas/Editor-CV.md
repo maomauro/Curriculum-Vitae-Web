@@ -52,6 +52,10 @@
 | Experiencia | Lista de empleos: Empresa, Cargo, Fecha inicio/fin, Descripción. Botón `+ Agregar` |
 | Educación | Lista: Institución, Título, Fecha inicio/fin. Botón `+ Agregar` |
 | Habilidades | Lista: Nombre de habilidad, Nivel (1-5). Botón `+ Agregar` |
+| Proyectos | Lista: Nombre, URL, Descripción, Tecnologías usadas. Botón `+ Agregar` |
+| Referencias | Lista: Nombre, Cargo, Empresa, Email, Relación. Botón `+ Agregar` |
+| Redes Sociales | LinkedIn, GitHub, Portfolio/web, Twitter/X, Stack Overflow (campos de URL) |
+| Visibilidad | Toggles por sección (Experiencia, Educación, Habilidades, Proyectos, Referencias, Redes Sociales, Contacto); privacidad de email (público / solo reclutadores / oculto) |
 
 ---
 
@@ -68,7 +72,11 @@ Board (1440×1024)
     │   ├── tab-DatosPersonales  (activo)
     │   ├── tab-Experiencia
     │   ├── tab-Educacion
-    │   └── tab-Habilidades
+    │   ├── tab-Habilidades
+    │   ├── tab-Proyectos
+    │   ├── tab-Referencias
+    │   ├── tab-RedesSociales
+    │   └── tab-Visibilidad
     └── formulario-activo
         ├── campo-nombre
         ├── campo-apellidos
