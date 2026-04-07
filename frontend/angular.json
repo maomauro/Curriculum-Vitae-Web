@@ -41,21 +41,11 @@
               }
             ],
             "styles": [
-              "node_modules/admin-lte/dist/css/adminlte.min.css",
               "src/styles.scss"
-            ],
-            "scripts": [
-              "node_modules/admin-lte/dist/js/adminlte.js"
             ]
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.ts"
-                }
-              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -71,12 +61,6 @@
               "outputHashing": "all"
             },
             "development": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.development.ts"
-                }
-              ],
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
@@ -115,7 +99,6 @@
               }
             ],
             "styles": [
-              "node_modules/admin-lte/dist/css/adminlte.min.css",
               "src/styles.scss"
             ]
           }
