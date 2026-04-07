@@ -36,11 +36,18 @@ Scripts y modelo de base de datos del portal. El modelo está alineado con `docs
 
 - La tabla **Referencia** agrupa referencias laborales y personales (`TipoReferencia`: `Laboral` | `Personal`). Si es laboral, `ExperienciaId` puede apuntar a la experiencia que avala.
 - **EstadisticasPublicas** es una tabla de resumen; puede mantenerse sincronizada con `Curriculum` (ContadorVisitas, ContadorContactos) mediante trigger o job.
-- Para **Docker** (SQL Server en contenedor), usa la misma cadena de conexión que en `docs/Despliegue.md`.
+- **Personales** incluye `FotoUrl` para la foto de perfil y campos de privacidad de contacto: `PrivacidadEmail` (`Publico` | `SoloFormulario` | `Oculto`) y `PrivacidadTelefono` (`Publico` | `Parcial` | `Oculto`).
+- **Perfil** tiene `EsActivo` para habilitar/deshabilitar cada perfil profesional de forma individual.
+- **Experiencia** tiene `EsActual` (checkbox «trabajo actual», deshabilita `FechaFin`) y `AdjuntoSoporte` para adjuntar soportes laborales.
+- **Formacion** tiene `FechaVigencia` (expiración de certificados, distinto de `FechaFin`) y `DuracionHoras` (para cursos con `TipoFormacion='Curso'`).
+- **Habilidad** incluye cuatro columnas CEFR cuando `Tipo='Idioma'`: `NivelLectura`, `NivelEscritura`, `NivelEscucha`, `NivelHabla` (valores `A1`–`C2` o `NULL`).
+- **VisitanteContacto** tiene `Asunto` para el asunto del formulario de contacto público.
+- **AlertaVisita** tiene `TipoVisita` con cuatro valores (`Vista` | `Contacto` | `Descarga` | `Sistema`), campos `EsLeida`, `Titulo`, `Descripcion`, `Ciudad` y `Pais`.
+- Para **Docker** (SQL Server en contenedor), usa la misma cadena de conexión que en `docs/devops/Despliegue.md`.
 
 ## Ver también
 
 - [docs/arquitectura/Documentacion.md](../docs/arquitectura/Documentacion.md) — visión del producto y modelo de datos
 - [docs/arquitectura/Modelo.md](../docs/arquitectura/Modelo.md) — detalle de tablas y relaciones
 - [docs/arquitectura/Backlog.md](../docs/arquitectura/Backlog.md) — épica 0 y tarea HS-02 (crear SQL DDL)
-- [docs/arquitectura/Despliegue.md](../docs/arquitectura/Despliegue.md) — docker-compose y conexión a SQL Server
+- [docs/devops/Despliegue.md](../docs/devops/Despliegue.md) — docker-compose y conexión a SQL Server
