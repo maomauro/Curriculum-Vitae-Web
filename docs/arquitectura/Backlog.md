@@ -157,7 +157,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones)<br>[ ] Eliminar scaffold WeatherForecast (WeatherForecast.cs + WeatherForecastController.cs) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
 | **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |
-| **HS-61** | Historia Técnica | Arquitectura de layouts + AdminLTE 4 | [ ] Instalar `admin-lte@4` y configurar `angular.json`<br>[ ] Crear `PublicLayoutComponent` (sección pública, sin sidebar)<br>[ ] Crear `AuthLayoutComponent` (página centrada, patrón AdminLTE login)<br>[ ] Crear `AdminLayoutComponent` (sidebar + topbar AdminLTE)<br>[ ] Refactorizar `app-routing-module.ts` → 3 shells de layout<br>[ ] Añadir `authGuard` en rutas privadas (editor, dashboard)<br>[ ] Eliminar `MainLayoutComponent` actual | Frontend | 8 |
+| **HS-61** | Historia Técnica | Arquitectura de layouts + AdminLTE 4 | [ ] Instalar `admin-lte@4` y configurar `angular.json`<br>[ ] Crear `PublicLayoutComponent` (sección pública, sin sidebar)<br>[ ] Crear `AuthLayoutComponent` (página centrada, patrón AdminLTE login)<br>[ ] Crear `AdminLayoutComponent` (sidebar + topbar AdminLTE)<br>[ ] Refactorizar `app-routing-module.ts` → 3 shells de layout<br>[ ] Añadir `authGuard` en rutas privadas (`/dashboard`, `/alertas`, `/mi-cv`, `/datos-personales`, `/perfil`, `/experiencia`, `/educacion`, `/habilidades`, `/proyectos`, `/configuracion`, `/admin`)<br>[ ] Eliminar `MainLayoutComponent` actual | Frontend | 8 |
 
 ---
 
@@ -286,9 +286,9 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 ---
 
-#### FEATURE 3.2: FRONTEND - Editor de CV
+#### FEATURE 3.2: FRONTEND - Secciones del CV (páginas separadas)
 
-**Descripción:** Formularios y pantallas para que el publicador edite cada bloque de su CV (personales, perfil, experiencia, formación, habilidades, proyectos, referencias, redes, familiares), con vista previa y barra de progreso de completitud.
+**Descripción:** Cada sección del CV es una **página independiente** accesible desde el sidebar o desde los botones "Editar →" en la vista previa Mi CV. El publicador edita datos personales, perfil, experiencia, educación, habilidades, proyectos y configuración en formularios dedicados por ruta. Incluye barra de progreso de completitud accesible desde el Dashboard.
 
 | ID | Tipo | Título | Descripción | Depende de | Story Points |
 |----|------|--------|-------------|------------|--------------|
@@ -302,7 +302,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | **HS-48** | Historia Usuario | Editor de referencias | Como publicador quiero gestionar referencias personales y laborales (tipo, datos de contacto, parentesco/cargo según tipo) | HS-39 | 3 |
 | **HS-49** | Historia Usuario | Editor de redes sociales | Como publicador quiero añadir enlaces a redes (LinkedIn, GitHub, etc.) | HS-40 | 3 |
 | **HS-49b** | Historia Usuario | Editor de contactos familiares | Como publicador quiero gestionar contactos de emergencia (parentesco, nombre, teléfono, email) | HS-40b | 2 |
-| **HS-50** | Historia Usuario | Vista previa del CV | Como publicador quiero ver una vista previa de cómo se verá mi CV en público antes de publicar | HS-11 | 5 |
+| **HS-50** | Historia Usuario | Mi CV — vista previa e inicio de edición | Como publicador quiero ver una vista previa de mi CV con botones "Editar →" para acceder a cada sección desde un punto central | HS-11 | 5 |
 | **HS-51** | Historia Usuario | Barra de progreso | Como publicador quiero ver el grado de completitud de mi CV para saber qué secciones completar | - | 2 |
 
 **Criterios de aceptación (resumen):** Cada editor permite crear, editar y eliminar ítems de su sección; los datos se persisten vía API; validaciones en frontend y mensajes de error claros; vista previa (HS-50) refleja visibilidad configurada; barra de progreso (HS-51) se actualiza según secciones completadas.

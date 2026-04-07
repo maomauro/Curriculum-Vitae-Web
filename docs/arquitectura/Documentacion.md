@@ -119,36 +119,27 @@ PORTAL DE CURRÍCULUM VITAE
 │   ├── Dashboard Público
 │   └── Contacto Rápido
 │
-├── 🔐 MÓDULO DE AUTENTICACIÓN (Para publicadores)
-│   ├── Registro
-│   ├── Login
-│   └── Recuperación de Contraseña
+├── 🔐 MÓDULO DE AUTENTICACIÓN
+│   ├── Registro                   (/auth/register)
+│   ├── Login                      (/auth/login)
+│   └── Recuperación de Contraseña (/auth/forgot-password)
 │
-├── 📋 MÓDULO DE GESTIÓN DE CV (Privado - Publicadores)
-│   ├── Editor de CV
-│   │   ├── Datos Personales
-│   │   ├── Perfil Profesional
-│   │   ├── Experiencia Laboral
-│   │   ├── Formación Académica
-│   │   ├── Habilidades
-│   │   ├── Proyectos
-│   │   ├── Referencias
-│   │   └── Redes Sociales
-│   └── Previsualización
+├── 📋 MÓDULO PRIVADO — PUBLICADOR (authGuard)
+│   ├── Dashboard                  (/dashboard)
+│   ├── Alertas                    (/alertas)
+│   ├── Mi CV (vista previa)       (/mi-cv)
+│   ├── Datos Personales           (/datos-personales)
+│   ├── Perfil Profesional         (/perfil)
+│   ├── Experiencia Laboral        (/experiencia)
+│   ├── Educación                  (/educacion)
+│   ├── Habilidades                (/habilidades)
+│   ├── Proyectos                  (/proyectos)
+│   └── Configuración              (/configuracion)
 │
-├── ⚙️ MÓDULO DE CONFIGURACIÓN (Privado - Publicadores)
-│   ├── Visibilidad de Secciones
-│   └── Preferencias de Cuenta
-│
-├── 📊 MÓDULO DE SEGUIMIENTO (Privado - Publicadores)
-│   ├── Dashboard Personal
-│   ├── Alertas de Contacto
-│   └── Estadísticas Detalladas
-│
-└── 👑 MÓDULO DE ADMINISTRACIÓN (Privado - Admin)
-    ├── Gestión de Roles
-    ├── Gestión de Usuarios
-    └── Auditoría del Sistema
+└── 👑 MÓDULO DE ADMINISTRACIÓN (adminGuard)
+    ├── Gestión de Usuarios        (/admin → tab Usuarios)
+    ├── Gestión de Roles           (/admin → tab Roles)
+    └── Auditoría del Sistema      (/admin → tab Auditoría)
 ```
 
 ---
@@ -406,12 +397,12 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 │  │                   Angular SPA                        │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │  │
 │  │  │  Módulo     │  │  Módulo     │  │  Módulo     │   │  │
-│  │  │  Público    │  │  Autentic.  │  │  Editor CV  │   │  │
+│  │  │  Público    │  │  Autentic.  │  │  Privado    │   │  │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘   │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │  │
-│  │  │  Módulo     │  │  Módulo     │  │  Módulo     │   │  │
-│  │  │  Seguimiento│  │  Config.    │  │  Admin      │   │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘   │  │
+│  │  ┌─────────────┐  ┌─────────────┐                     │  │
+│  │  │  Módulo     │  │  Módulo     │                     │  │
+│  │  │  Dashboard  │  │  Admin      │                     │  │
+│  │  └─────────────┘  └─────────────┘                     │  │
 │  └──────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────┘
                               │
@@ -523,8 +514,8 @@ PORTAL DE CURRÍCULUM VITAE
 │   │   ├── Ordenar por: Relevancia, Fecha, Visitas
 │   │   └── Vista de tarjetas / Vista de lista
 │   │
-│   ├── 👤 Detalle de CV
-│   │   ├── Información personal (ocultando datos sensibles)
+│   ├── 👤 Detalle de CV  (/cv/:id)  —  tab: Hoja de vida
+│   │   ├── Información personal (datos sensibles parcialmente ocultos)
 │   │   ├── Perfil profesional
 │   │   ├── Experiencia laboral
 │   │   ├── Formación académica
@@ -533,11 +524,13 @@ PORTAL DE CURRÍCULUM VITAE
 │   │   ├── Referencias (si aplica)
 │   │   └── Botón "Contactar profesional"
 │   │
-│   ├── 📊 Dashboard Público
-│   │   ├── Métricas generales (visitas, contactos)
-│   │   ├── Gráfico de visitas por período
-│   │   ├── Distribución de contactos
-│   │   └── Timeline de actividad
+│   ├── 📊 Dashboard Analítico  (/cv/:id/dashboard)  —  tab: Dashboard analítico
+│   │   ├── 6 cards de métricas (Vistas, Visitantes, Contactos, Descargas,
+│   │   │   Tiempo de lectura, Tasa de contacto)
+│   │   ├── Habilidades más buscadas (barras horizontal)
+│   │   ├── Evolución de vistas por mes (barras agrupadas)
+│   │   ├── Distribución por origen de visita (dona)
+│   │   └── Perfil de buscadores (radar)
 │   │
 │   └── 📝 Formulario de Contacto
 │       ├── Nombre del reclutador
@@ -566,72 +559,55 @@ PORTAL DE CURRÍCULUM VITAE
 │       ├── Verificar código
 │       └── Nueva contraseña
 │
-├── 📋 SECCIÓN PRIVADA - PUBLICADOR
+├── 📋 SECCIÓN PRIVADA — PUBLICADOR (authGuard)
 │   │
-│   ├── 🏢 Mi CV
-│   │   ├── 👤 Datos Personales
-│   │   │   ├── Información de identificación
-│   │   │   ├── Datos básicos
-│   │   │   ├── Contacto
-│   │   │   └── Residencia
-│   │   │
-│   │   ├── 🎯 Perfil Profesional
-│   │   │   ├── Nombre del perfil
-│   │   │   ├── Descripción
-│   │   │   └── Aspiración salarial
-│   │   │
-│   │   ├── 💼 Experiencia Laboral
-│   │   │   ├── Listado de experiencias
-│   │   │   ├── Agregar/Editar experiencia
-│   │   │   └── Referencia laboral asociada
-│   │   │
-│   │   ├── 🎓 Formación Académica
-│   │   │   ├── Listado de formaciones
-│   │   │   └── Agregar/Editar formación
-│   │   │
-│   │   ├── ⭐ Habilidades
-│   │   │   ├── Técnicas
-│   │   │   ├── Blandas
-│   │   │   └── Idiomas
-│   │   │
-│   │   ├── 🚀 Proyectos
-│   │   │   ├── Listado de proyectos
-│   │   │   └── Agregar/Editar proyecto
-│   │   │
-│   │   ├── 👥 Referencias
-│   │   │   ├── Personales
-│   │   │   └── Laborales
-│   │   │
-│   │   ├── 🔗 Redes Sociales
-│   │   │   └── LinkedIn, GitHub, etc.
-│   │   │
-│   │   └── 👪 Contactos Familiares
-│   │       └── Contactos de emergencia
+│   ├── 📈 Dashboard  (/dashboard)
+│   │   ├── Cards de métricas: Total CVs, Vistas, Visitantes
+│   │   ├── Gráficas de actividad del mes
+│   │   └── Tabla de alertas recientes
 │   │
-│   ├── ⚙️ Configuración
-│   │   ├── 👁️ Visibilidad de Secciones
-│   │   │   ├── Activar/Desactivar secciones
-│   │   │   └── Vista previa de cambios
-│   │   └── 🧑 Preferencias de Cuenta
-│   │       ├── Cambiar email
-│   │       ├── Cambiar contraseña
-│   │       └── Cerrar cuenta
+│   ├── 🔔 Alertas  (/alertas)
+│   │   ├── Cards de resumen (no leídas, contactos, vistas, descargas)
+│   │   ├── Lista de alertas con filtros
+│   │   └── Marcar como leída
 │   │
-│   └── 📊 Seguimiento
-│       ├── 📈 Dashboard Personal
-│       │   ├── Visitas (detallado)
-│       │   ├── Contactos (detallado)
-│       │   └── Comparativas
-│       │
-│       ├── 🔔 Alertas
-│       │   ├── Nuevos contactos
-│       │   ├── Nuevas visitas
-│       │   └── Historial
-│       │
-│       └── 📋 Contactos Recibidos
-│           ├── Lista de mensajes
-│           ├── Ver detalle
-│           └── Marcar como leído
+│   ├── 🖥️ Mi CV  (/mi-cv)
+│   │   ├── Vista previa del CV completo
+│   │   ├── Botones "Editar →" por cada sección
+│   │   ├── Ver perfil público
+│   │   └── Exportar PDF
+│   │
+│   ├── 👤 Datos Personales  (/datos-personales)
+│   │   └── 8 acordeones: Identificación, Datos básicos, Contacto,
+│   │       Residencia, Seguridad Social, Familiar, Redes, Referencias
+│   │
+│   ├── 🎯 Perfil Profesional  (/perfil)
+│   │   └── Cards de perfiles con toggle activo/inactivo (solo uno activo)
+│   │
+│   ├── 💼 Experiencia Laboral  (/experiencia)
+│   │   ├── Acordeón por empleo (empresa, cargo, fechas, descripción)
+│   │   ├── Adjunto certificación laboral por empleo
+│   │   └── Tabla de referencias laborales
+│   │
+│   ├── 🎓 Educación  (/educacion)
+│   │   ├── Tabs por TipoFormacion (Posgrado, Pregrado, Tecnólogo,
+│   │   │   Diplomados, Certificaciones)
+│   │   └── Formulario inline para agregar nueva formación
+│   │
+│   ├── ⭐ Habilidades  (/habilidades)
+│   │   ├── Técnicas (barra de nivel %)
+│   │   ├── Blandas (tags)
+│   │   ├── Idiomas (nivel A1–C2 / Nativo)
+│   │   └── Cursos y certificados (tabla con adjunto)
+│   │
+│   ├── 🚀 Proyectos  (/proyectos)
+│   │   └── Acordeón con tags de stack dinámicos (Enter para agregar)
+│   │
+│   └── ⚙️ Configuración  (/configuracion)
+│       ├── Visibilidad de datos personales (público / solo reclutadores / oculto)
+│       ├── Visibilidad de secciones del CV (toggles ON/OFF)
+│       ├── Link público del CV + toggle indexable por buscadores
+│       └── Cambio de contraseña
 │
 └── 👑 SECCIÓN PRIVADA - ADMIN
     │
@@ -679,8 +655,8 @@ PORTAL DE CURRÍCULUM VITAE
                 ┌─────────────────────────────┼───────────────────┐
                 ▼                             ▼                   ▼
     ┌─────────────────────┐      ┌─────────────────────┐    ┌─────────────┐
-    │   EDITOR CV         │      │   CONFIGURACIÓN     │    │SEGUIMIENTO  │
-    │ (CRUD completo)     │      │ (Visibilidad + Pref)│    │(Alertas)    │
+    │   MI CV + SECCIONES │      │   CONFIGURACIÓN     │    │  ALERTAS    │
+    │ (vista previa + ed.)│      │ (Visibilidad + Seg.)│    │ (privadas)  │
     └─────────────────────┘      └─────────────────────┘    └─────────────┘
 ```
 
