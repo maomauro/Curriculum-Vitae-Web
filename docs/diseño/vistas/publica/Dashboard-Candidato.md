@@ -4,7 +4,7 @@
 **Módulo:** `PublicModule`  
 **Componente:** `CvDashboardComponent`  
 **Acceso:** Público (sin autenticación)  
-**Prototipo:** [dashboard-candidato.html](../../frontend/prototipos/publica/dashboard-candidato.html)
+**Prototipo:** [dashboard-candidato.html](../../../frontend/prototipos/publica/dashboard-candidato.html)
 
 ---
 

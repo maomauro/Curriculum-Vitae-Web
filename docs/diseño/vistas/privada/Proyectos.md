@@ -5,7 +5,7 @@
 **Componente:** `ProyectosComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [proyectos.html](../../frontend/prototipos/privada/proyectos.html)
+**Prototipo:** [proyectos.html](../../../frontend/prototipos/privada/proyectos.html)
 
 ---
 

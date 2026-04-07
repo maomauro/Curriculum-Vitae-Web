@@ -5,7 +5,7 @@
 **Componente:** `HabilidadesComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [habilidades.html](../../frontend/prototipos/privada/habilidades.html)
+**Prototipo:** [habilidades.html](../../../frontend/prototipos/privada/habilidades.html)
 
 ---
 

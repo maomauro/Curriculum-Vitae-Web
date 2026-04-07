@@ -10,40 +10,40 @@ Documento de arquitectura visual. Cada vista tiene su propio archivo detallado e
 
 | Vista | Ruta | Layout | Acceso | Prototipo | Archivo |
 |---|---|---|---|---|---|
-| Home | `/` | PublicLayout | Público | [home.html](../prototipos/publica/home.html) | [Home.md](./vistas/Home.md) |
-| Buscar CVs | `/cvs` | PublicLayout | Público | [buscar-cvs.html](../prototipos/publica/buscar-cvs.html) | [Buscar-CVs.md](./vistas/Buscar-CVs.md) |
-| Detalle CV | `/cv/:id` | PublicLayout | Público | [detalle-cv.html](../prototipos/publica/detalle-cv.html) | [Detalle-CV.md](./vistas/Detalle-CV.md) |
-| Dashboard Candidato | `/cv/:id/dashboard` | PublicLayout | Público | [dashboard-candidato.html](../prototipos/publica/dashboard-candidato.html) | [Dashboard-Candidato.md](./vistas/Dashboard-Candidato.md) |
+| Home | `/` | PublicLayout | Público | [home.html](../prototipos/publica/home.html) | [Home.md](./vistas/publica/Home.md) |
+| Buscar CVs | `/cvs` | PublicLayout | Público | [buscar-cvs.html](../prototipos/publica/buscar-cvs.html) | [Buscar-CVs.md](./vistas/publica/Buscar-CVs.md) |
+| Detalle CV | `/cv/:id` | PublicLayout | Público | [detalle-cv.html](../prototipos/publica/detalle-cv.html) | [Detalle-CV.md](./vistas/publica/Detalle-CV.md) |
+| Dashboard Candidato | `/cv/:id/dashboard` | PublicLayout | Público | [dashboard-candidato.html](../prototipos/publica/dashboard-candidato.html) | [Dashboard-Candidato.md](./vistas/publica/Dashboard-Candidato.md) |
 
 ### 🔐 Módulo de Autenticación
 
 | Vista | Ruta | Layout | Acceso | Prototipo | Archivo |
 |---|---|---|---|---|---|
-| Login | `/auth/login` | AuthLayout | Público | [login.html](../prototipos/auth/login.html) | [Login.md](./vistas/Login.md) |
-| Registro | `/auth/register` | AuthLayout | Público | [register.html](../prototipos/auth/register.html) | [Register.md](./vistas/Register.md) |
-| Recuperar Contraseña | `/auth/forgot-password` | AuthLayout | Público | [recuperar-contrasena.html](../prototipos/auth/recuperar-contrasena.html) | [Recuperar-Contrasena.md](./vistas/Recuperar-Contrasena.md) |
+| Login | `/auth/login` | AuthLayout | Público | [login.html](../prototipos/auth/login.html) | [Login.md](./vistas/auth/Login.md) |
+| Registro | `/auth/register` | AuthLayout | Público | [register.html](../prototipos/auth/register.html) | [Register.md](./vistas/auth/Register.md) |
+| Recuperar Contraseña | `/auth/forgot-password` | AuthLayout | Público | [recuperar-contrasena.html](../prototipos/auth/recuperar-contrasena.html) | [Recuperar-Contrasena.md](./vistas/auth/Recuperar-Contrasena.md) |
 
 ### 📋 Módulo Privado — Publicador (`authGuard`)
 
 | Vista | Ruta | Layout | Prototipo | Archivo |
 |---|---|---|---|---|
-| Dashboard | `/dashboard` | AdminLayout | [dashboard.html](../prototipos/privada/dashboard.html) | [Dashboard.md](./vistas/Dashboard.md) |
-| Alertas | `/alertas` | AdminLayout | [alertas.html](../prototipos/privada/alertas.html) | [Alertas.md](./vistas/Alertas.md) |
-| Mi CV | `/mi-cv` | AdminLayout | [mi-cv.html](../prototipos/privada/mi-cv.html) | [Mi-CV.md](./vistas/Mi-CV.md) |
-| Datos Personales | `/datos-personales` | AdminLayout | [datos-personales.html](../prototipos/privada/datos-personales.html) | [Datos-Personales.md](./vistas/Datos-Personales.md) |
-| Perfil | `/perfil` | AdminLayout | [perfil.html](../prototipos/privada/perfil.html) | [Perfil.md](./vistas/Perfil.md) |
-| Experiencia | `/experiencia` | AdminLayout | [experiencia.html](../prototipos/privada/experiencia.html) | [Experiencia.md](./vistas/Experiencia.md) |
-| Educación | `/educacion` | AdminLayout | [educacion.html](../prototipos/privada/educacion.html) | [Educacion.md](./vistas/Educacion.md) |
-| Habilidades | `/habilidades` | AdminLayout | [habilidades.html](../prototipos/privada/habilidades.html) | [Habilidades.md](./vistas/Habilidades.md) |
-| Proyectos | `/proyectos` | AdminLayout | [proyectos.html](../prototipos/privada/proyectos.html) | [Proyectos.md](./vistas/Proyectos.md) |
-| Configuración | `/configuracion` | AdminLayout | [configuracion.html](../prototipos/privada/configuracion.html) | [Configuracion.md](./vistas/Configuracion.md) |
-| Editor CV | `/editor` | AdminLayout | [editor-cv.html](../prototipos/privada/editor-cv.html) | [Editor-CV.md](./vistas/Editor-CV.md) |
+| Dashboard | `/dashboard` | AdminLayout | [dashboard.html](../prototipos/privada/dashboard.html) | [Dashboard.md](./vistas/privada/Dashboard.md) |
+| Alertas | `/alertas` | AdminLayout | [alertas.html](../prototipos/privada/alertas.html) | [Alertas.md](./vistas/privada/Alertas.md) |
+| Mi CV | `/mi-cv` | AdminLayout | [mi-cv.html](../prototipos/privada/mi-cv.html) | [Mi-CV.md](./vistas/privada/Mi-CV.md) |
+| Datos Personales | `/datos-personales` | AdminLayout | [datos-personales.html](../prototipos/privada/datos-personales.html) | [Datos-Personales.md](./vistas/privada/Datos-Personales.md) |
+| Perfil | `/perfil` | AdminLayout | [perfil.html](../prototipos/privada/perfil.html) | [Perfil.md](./vistas/privada/Perfil.md) |
+| Experiencia | `/experiencia` | AdminLayout | [experiencia.html](../prototipos/privada/experiencia.html) | [Experiencia.md](./vistas/privada/Experiencia.md) |
+| Educación | `/educacion` | AdminLayout | [educacion.html](../prototipos/privada/educacion.html) | [Educacion.md](./vistas/privada/Educacion.md) |
+| Habilidades | `/habilidades` | AdminLayout | [habilidades.html](../prototipos/privada/habilidades.html) | [Habilidades.md](./vistas/privada/Habilidades.md) |
+| Proyectos | `/proyectos` | AdminLayout | [proyectos.html](../prototipos/privada/proyectos.html) | [Proyectos.md](./vistas/privada/Proyectos.md) |
+| Configuración | `/configuracion` | AdminLayout | [configuracion.html](../prototipos/privada/configuracion.html) | [Configuracion.md](./vistas/privada/Configuracion.md) |
+| Editor CV | `/editor` | AdminLayout | [editor-cv.html](../prototipos/privada/editor-cv.html) | [Editor-CV.md](./vistas/privada/Editor-CV.md) |
 
 ### 👑 Módulo de Administración (`adminGuard`)
 
 | Vista | Ruta | Layout | Prototipo | Archivo |
 |---|---|---|---|---|
-| Panel Admin | `/admin` | AdminLayout | [admin-panel.html](../prototipos/admin/admin-panel.html) | [Admin-Panel.md](./vistas/Admin-Panel.md) |
+| Panel Admin | `/admin` | AdminLayout | [admin-panel.html](../prototipos/admin/admin-panel.html) | [Admin-Panel.md](./vistas/admin/Admin-Panel.md) |
 
 ---
 

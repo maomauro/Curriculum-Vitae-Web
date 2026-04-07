@@ -5,7 +5,7 @@
 **Componente:** `EducacionComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [educacion.html](../../frontend/prototipos/privada/educacion.html)
+**Prototipo:** [educacion.html](../../../frontend/prototipos/privada/educacion.html)
 
 ---
 

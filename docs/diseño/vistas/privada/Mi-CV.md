@@ -5,7 +5,7 @@
 **Componente:** `MiCvComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [mi-cv.html](../../frontend/prototipos/privada/mi-cv.html)
+**Prototipo:** [mi-cv.html](../../../frontend/prototipos/privada/mi-cv.html)
 
 ---
 

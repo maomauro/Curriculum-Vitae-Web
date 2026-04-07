@@ -5,7 +5,7 @@
 **Componente:** `PerfilComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [perfil.html](../../frontend/prototipos/privada/perfil.html)
+**Prototipo:** [perfil.html](../../../frontend/prototipos/privada/perfil.html)
 
 ---
 

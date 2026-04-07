@@ -5,7 +5,7 @@
 **Componente:** `ExperienciaComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [experiencia.html](../../frontend/prototipos/privada/experiencia.html)
+**Prototipo:** [experiencia.html](../../../frontend/prototipos/privada/experiencia.html)
 
 ---
 
