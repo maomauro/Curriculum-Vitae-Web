@@ -38,12 +38,17 @@
     .seccion-subtitulo { font-size: .82rem; color: #6C757D; margin-bottom: 16px; border-bottom: 1px solid #F0F0F0; padding-bottom: 10px; }
 
     /* VISIBILIDAD ROWS */
-    .vis-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F8F8F8; }
+    .vis-group { margin-bottom: 4px; }
+    .vis-group-label { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .7px; color: #94A3B8; padding: 14px 0 8px; display: flex; align-items: center; gap: 8px; }
+    .vis-group-label::after { content: ''; flex: 1; height: 1px; background: #F0F0F0; }
+    .vis-group-personal .vis-group-label { color: #0369A1; }
+    .vis-group-profesional .vis-group-label { color: #6D28D9; }
+    .vis-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0 10px 12px; border-bottom: 1px solid #F8F8F8; }
     .vis-row:last-child { border-bottom: none; }
     .vis-info { display: flex; align-items: center; gap: 12px; }
-    .vis-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .9rem; flex-shrink: 0; }
-    .vis-name { font-weight: 600; font-size: .9rem; color: #212529; }
-    .vis-desc { font-size: .78rem; color: #6C757D; }
+    .vis-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; }
+    .vis-name { font-weight: 600; font-size: .88rem; color: #212529; }
+    .vis-desc { font-size: .76rem; color: #6C757D; }
 
     /* CV LINK BOX */
     .link-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
@@ -104,107 +109,182 @@
       <div class="seccion-titulo"><i class="bi bi-eye-fill"></i>Visibilidad del CV</div>
       <div class="seccion-subtitulo">Elige qué secciones son visibles para los empleadores en tu CV público</div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#DBEAFE; color:#1D4ED8;"><i class="bi bi-person-badge-fill"></i></div>
-          <div>
-            <div class="vis-name">Perfil Profesional</div>
-            <div class="vis-desc">Nombre, cargo objetivo y resumen. Siempre visible.</div>
+      <!-- GRUPO: INFORMACIÓN PERSONAL -->
+      <div class="vis-group vis-group-personal">
+        <div class="vis-group-label"><i class="bi bi-person-fill"></i>Información Personal</div>
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#E0F2FE; color:#0369A1;"><i class="bi bi-person-vcard-fill"></i></div>
+            <div>
+              <div class="vis-name">Datos Básicos</div>
+              <div class="vis-desc">Nombre completo, fecha de nacimiento, género, nacionalidad.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked disabled title="Esta sección siempre es visible">
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#D1FAE5; color:#047857;"><i class="bi bi-telephone-fill"></i></div>
+            <div>
+              <div class="vis-name">Información de Contacto</div>
+              <div class="vis-desc">Celular, teléfono y email según opciones de privacidad.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#FEF9C3; color:#A16207;"><i class="bi bi-house-fill"></i></div>
+            <div>
+              <div class="vis-name">Información de Residencia</div>
+              <div class="vis-desc">País, ciudad, dirección y tipo de residencia.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#F0FDF4; color:#166534;"><i class="bi bi-shield-check-fill"></i></div>
+            <div>
+              <div class="vis-name">Seguridad Social</div>
+              <div class="vis-desc">EPS, fondo de pensiones y cesantías.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#FCE7F3; color:#BE185D;"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <div class="vis-name">Información Familiar</div>
+              <div class="vis-desc">Contactos de emergencia y familiares registrados.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox">
+          </div>
+        </div>
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#F0F9FF; color:#0369A1;"><i class="bi bi-share-fill"></i></div>
+            <div>
+              <div class="vis-name">Redes Sociales</div>
+              <div class="vis-desc">LinkedIn, GitHub, portafolio y otras.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#FFF7ED; color:#C2410C;"><i class="bi bi-person-heart-fill"></i></div>
+            <div>
+              <div class="vis-name">Referencias Personales</div>
+              <div class="vis-desc">Personas que avalan tu carácter personal.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox">
+          </div>
         </div>
       </div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#D1FAE5; color:#047857;"><i class="bi bi-telephone-fill"></i></div>
-          <div>
-            <div class="vis-name">Información de Contacto</div>
-            <div class="vis-desc">Celular, teléfono y email según las opciones de privacidad abajo.</div>
-          </div>
-        </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
+      <!-- GRUPO: INFORMACIÓN PROFESIONAL -->
+      <div class="vis-group vis-group-profesional">
+        <div class="vis-group-label"><i class="bi bi-briefcase-fill"></i>Información Profesional</div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#FEF3C7; color:#B45309;"><i class="bi bi-briefcase-fill"></i></div>
-          <div>
-            <div class="vis-name">Experiencia Laboral</div>
-            <div class="vis-desc">Empleos anteriores y actuales.</div>
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#DBEAFE; color:#1D4ED8;"><i class="bi bi-person-badge-fill"></i></div>
+            <div>
+              <div class="vis-name">Perfil Profesional</div>
+              <div class="vis-desc">Cargo objetivo y resumen profesional. <span class="badge bg-secondary-subtle text-secondary" style="font-size:.65rem;">Siempre visible</span></div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked disabled title="Esta sección siempre es visible">
           </div>
         </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#EDE9FE; color:#7C3AED;"><i class="bi bi-mortarboard-fill"></i></div>
-          <div>
-            <div class="vis-name">Formación Académica</div>
-            <div class="vis-desc">Estudios, posgrados y certificaciones.</div>
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#FEF3C7; color:#B45309;"><i class="bi bi-briefcase-fill"></i></div>
+            <div>
+              <div class="vis-name">Experiencia Laboral</div>
+              <div class="vis-desc">Empleos anteriores y actuales.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#F0FDF4; color:#166534;"><i class="bi bi-stars"></i></div>
-          <div>
-            <div class="vis-name">Habilidades</div>
-            <div class="vis-desc">Técnicas, blandas, idiomas y otras.</div>
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#EDE9FE; color:#7C3AED;"><i class="bi bi-mortarboard-fill"></i></div>
+            <div>
+              <div class="vis-name">Formación Académica</div>
+              <div class="vis-desc">Estudios, posgrados, cursos y certificaciones.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#F1F5F9; color:#475569;"><i class="bi bi-kanban-fill"></i></div>
-          <div>
-            <div class="vis-name">Proyectos</div>
-            <div class="vis-desc">Proyectos profesionales y personales.</div>
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#F0FDF4; color:#166534;"><i class="bi bi-stars"></i></div>
+            <div>
+              <div class="vis-name">Habilidades</div>
+              <div class="vis-desc">Técnicas, blandas, idiomas y cursos no formales.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked>
-        </div>
-      </div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#FFF7ED; color:#C2410C;"><i class="bi bi-person-check-fill"></i></div>
-          <div>
-            <div class="vis-name">Referencias Laborales</div>
-            <div class="vis-desc">Contactos de referencia por empleo.</div>
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#F1F5F9; color:#475569;"><i class="bi bi-kanban-fill"></i></div>
+            <div>
+              <div class="vis-name">Proyectos</div>
+              <div class="vis-desc">Proyectos profesionales y personales.</div>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox">
-        </div>
-      </div>
 
-      <div class="vis-row">
-        <div class="vis-info">
-          <div class="vis-icon" style="background:#F0F9FF; color:#0369A1;"><i class="bi bi-share-fill"></i></div>
-          <div>
-            <div class="vis-name">Redes Sociales</div>
-            <div class="vis-desc">LinkedIn, GitHub, portafolio y otras.</div>
+        <div class="vis-row">
+          <div class="vis-info">
+            <div class="vis-icon" style="background:#FFF7ED; color:#C2410C;"><i class="bi bi-person-check-fill"></i></div>
+            <div>
+              <div class="vis-name">Referencias Laborales</div>
+              <div class="vis-desc">Contactos de referencia por empleo.</div>
+            </div>
           </div>
-        </div>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" checked>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox">
+          </div>
         </div>
       </div>
 

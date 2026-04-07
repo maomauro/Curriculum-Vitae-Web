@@ -103,7 +103,7 @@
 
     <div class="page-header">
       <h4><i class="bi bi-stars me-2 text-primary"></i>Habilidades</h4>
-      <p>Registra tus conocimientos técnicos, habilidades blandas, idiomas y otras competencias</p>
+      <p>Registra tus conocimientos técnicos, habilidades blandas, idiomas y cursos no formales</p>
     </div>
 
     <!-- 1. HABILIDADES TÉCNICAS -->
@@ -282,34 +282,76 @@
       </div>
     </div>
 
-    <!-- 4. OTRAS HABILIDADES -->
+    <!-- 4. CURSOS -->
     <div class="seccion-card">
-      <div class="seccion-titulo"><i class="bi bi-lightbulb-fill"></i>Otras Habilidades</div>
-      <div class="seccion-subtitulo">Competencias que no encajan en las categorías anteriores</div>
+      <div class="seccion-titulo"><i class="bi bi-play-circle-fill"></i>Cursos</div>
+      <div class="seccion-subtitulo">Cursos cortos no formales: Udemy, Coursera, Platzi, YouTube, etc.</div>
 
+      <!-- Header tabla -->
+      <div class="skill-row" style="border-bottom: 2px solid #F0F0F0; padding-bottom: 6px; margin-bottom: 4px;">
+        <div style="flex: 2 1 200px;"><small class="text-muted fw-bold">Nombre del curso</small></div>
+        <div style="flex: 1 1 140px;"><small class="text-muted fw-bold">Plataforma</small></div>
+        <div style="flex: 0 0 80px;"><small class="text-muted fw-bold">Horas</small></div>
+        <div style="flex: 0 0 120px;"><small class="text-muted fw-bold">Fecha</small></div>
+        <div style="flex: 0 0 90px;"><small class="text-muted fw-bold">Certificado</small></div>
+        <div class="skill-actions"></div>
+      </div>
+
+      <!-- Curso 1 -->
       <div class="skill-row">
-        <div class="skill-name"><input type="text" class="form-control form-control-sm" value="Diseño UX/UI (Figma)"></div>
-        <div class="skill-level">
-          <select class="form-select form-select-sm">
-            <option>Básico</option><option selected>Intermedio</option><option>Avanzado</option><option>Experto</option>
-          </select>
+        <div style="flex: 2 1 200px;"><input type="text" class="form-control form-control-sm" value="React - The Complete Guide (incl. Next.js)"></div>
+        <div style="flex: 1 1 140px;"><input type="text" class="form-control form-control-sm" value="Udemy"></div>
+        <div style="flex: 0 0 80px;"><input type="number" class="form-control form-control-sm" value="68" min="1"></div>
+        <div style="flex: 0 0 120px;"><input type="month" class="form-control form-control-sm" value="2023-02"></div>
+        <div style="flex: 0 0 90px; display:flex; align-items:center; gap:6px;">
+          <div class="form-check mb-0"><input class="form-check-input" type="checkbox" checked></div>
+          <span class="badge bg-success-subtle text-success" style="font-size:.65rem;">Sí</span>
         </div>
-        <div class="skill-desc"><input type="text" class="form-control form-control-sm" value="Wireframes, prototipos, design tokens"></div>
         <div class="skill-actions"><button class="btn-del"><i class="bi bi-trash3"></i></button></div>
       </div>
 
-      <div class="skill-row" id="newOtra" style="display:none;">
-        <div class="skill-name"><input type="text" class="form-control form-control-sm" placeholder="Nombre de la habilidad"></div>
-        <div class="skill-level">
-          <select class="form-select form-select-sm"><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Experto</option></select>
+      <!-- Curso 2 -->
+      <div class="skill-row">
+        <div style="flex: 2 1 200px;"><input type="text" class="form-control form-control-sm" value="TypeScript: Handbook & Advanced Types"></div>
+        <div style="flex: 1 1 140px;"><input type="text" class="form-control form-control-sm" value="Frontend Masters"></div>
+        <div style="flex: 0 0 80px;"><input type="number" class="form-control form-control-sm" value="12" min="1"></div>
+        <div style="flex: 0 0 120px;"><input type="month" class="form-control form-control-sm" value="2022-11"></div>
+        <div style="flex: 0 0 90px; display:flex; align-items:center; gap:6px;">
+          <div class="form-check mb-0"><input class="form-check-input" type="checkbox" checked></div>
+          <span class="badge bg-success-subtle text-success" style="font-size:.65rem;">Sí</span>
         </div>
-        <div class="skill-desc"><input type="text" class="form-control form-control-sm" placeholder="Descripción opcional"></div>
-        <div class="skill-actions"><button class="btn-del" onclick="document.getElementById('newOtra').style.display='none'"><i class="bi bi-x-lg"></i></button></div>
+        <div class="skill-actions"><button class="btn-del"><i class="bi bi-trash3"></i></button></div>
+      </div>
+
+      <!-- Curso 3 -->
+      <div class="skill-row">
+        <div style="flex: 2 1 200px;"><input type="text" class="form-control form-control-sm" value="Introducción a la IA generativa"></div>
+        <div style="flex: 1 1 140px;"><input type="text" class="form-control form-control-sm" value="Google / Coursera"></div>
+        <div style="flex: 0 0 80px;"><input type="number" class="form-control form-control-sm" value="5" min="1"></div>
+        <div style="flex: 0 0 120px;"><input type="month" class="form-control form-control-sm" value="2024-03"></div>
+        <div style="flex: 0 0 90px; display:flex; align-items:center; gap:6px;">
+          <div class="form-check mb-0"><input class="form-check-input" type="checkbox"></div>
+          <span class="badge bg-secondary-subtle text-secondary" style="font-size:.65rem;">No</span>
+        </div>
+        <div class="skill-actions"><button class="btn-del"><i class="bi bi-trash3"></i></button></div>
+      </div>
+
+      <!-- Fila nueva (oculta) -->
+      <div class="skill-row" id="newCurso" style="display:none;">
+        <div style="flex: 2 1 200px;"><input type="text" class="form-control form-control-sm" placeholder="Nombre del curso"></div>
+        <div style="flex: 1 1 140px;"><input type="text" class="form-control form-control-sm" placeholder="Ej: Udemy, Platzi..."></div>
+        <div style="flex: 0 0 80px;"><input type="number" class="form-control form-control-sm" placeholder="h" min="1"></div>
+        <div style="flex: 0 0 120px;"><input type="month" class="form-control form-control-sm"></div>
+        <div style="flex: 0 0 90px; display:flex; align-items:center; gap:6px;">
+          <div class="form-check mb-0"><input class="form-check-input" type="checkbox"></div>
+          <small class="text-muted">Cert.</small>
+        </div>
+        <div class="skill-actions"><button class="btn-del" onclick="document.getElementById('newCurso').style.display='none'"><i class="bi bi-x-lg"></i></button></div>
       </div>
 
       <div class="d-flex justify-content-between mt-3">
-        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('newOtra').style.display='flex'">
-          <i class="bi bi-plus-circle me-1"></i>Agregar otra habilidad
+        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('newCurso').style.display='flex'">
+          <i class="bi bi-plus-circle me-1"></i>Agregar curso
         </button>
         <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar</button>
       </div>
