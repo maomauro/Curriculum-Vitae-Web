@@ -262,6 +262,7 @@ DECLARE @Nombre NVARCHAR(100) = N'Nuevo Contacto';
 DECLARE @Correo NVARCHAR(100) = N'contacto@example.com';
 DECLARE @Empresa NVARCHAR(150) = N'Empresa XYZ';
 DECLARE @Motivo NVARCHAR(255) = N'Interés en colaboración profesional';
+DECLARE @Asunto NVARCHAR(255) = N'Oportunidad de trabajo';
 DECLARE @ComoMeEncontraste NVARCHAR(255) = N'LinkedIn';
 DECLARE @Mensaje NVARCHAR(MAX) = N'Hola, quiero hablar sobre una oportunidad de trabajo.';
 
@@ -271,6 +272,7 @@ INSERT INTO dbo.VisitanteContacto (
     Correo,
     Empresa,
     MotivoContacto,
+    Asunto,
     ComoMeEncontraste,
     Mensaje
 )
@@ -280,6 +282,7 @@ VALUES (
     @Correo,
     @Empresa,
     @Motivo,
+    @Asunto,
     @ComoMeEncontraste,
     @Mensaje
 );
@@ -288,13 +291,17 @@ INSERT INTO dbo.AlertaVisita (
     CurriculumId,
     FechaVisita,
     Origen,
-    TipoVisita
+    TipoVisita,
+    Titulo,
+    Descripcion
 )
 VALUES (
     @CvId,
     SYSDATETIME(),
     N'Formulario público',
-    N'ConContacto'
+    N'Contacto',
+    N'Nuevo mensaje de contacto recibido',
+    @Nombre + N' (' + @Correo + N') te envió un mensaje.'
 );
 GO
 
