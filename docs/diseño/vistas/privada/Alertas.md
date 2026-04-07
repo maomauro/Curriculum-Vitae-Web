@@ -1,4 +1,4 @@
-# Vista: Alertas (`/dashboard/alertas`)
+# Vista: Alertas (`/alertas`)
 
 **Layout:** `AdminLayoutComponent`  
 **Módulo:** `DashboardModule`  
@@ -21,11 +21,11 @@
 |  [ foto 80px ]   |   │  Notificaciones de actividad ─ solo tú│   |
 |  Nombre usuario  |   └───────────────────────────────────────┘   |
 |  Cargo/título    |                                               |
-|  ─────────────   |   +-------+ +----------+ +-------+ +-------+ |
+|  ─────────────── |   +-------+ +----------+ +-------+ +-------+ |
 |  ▣ Dashboard     |   |   5   | |    3     | |   8   | |   2   | |
-|  ▣ Mis CVs       |   |No lei.| |Contactos | |Vistas | |Descarg| |
-|  ▣ Editor CV     |   +-------+ +----------+ +-------+ +-------+ |
-|  ▣ Alertas  ◄    |                                               |
+|  ▣ Alertas    ◄  |   |No lei.| |Contactos | |Vistas | |Descarg| |
+|  ▣ Mi CV         |   +-------+ +----------+ +-------+ +-------+ |
+|  ▣ Dat.Personales|                                               |
 |  —————————       |   FILTROS: [Todas(12)] [Sin leer(5)] [Tipo▾] |
 |                  |                                               |
 |                  |   ┌──────────────────────────────────────┐   |

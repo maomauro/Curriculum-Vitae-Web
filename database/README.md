@@ -1,6 +1,6 @@
 # Base de datos - Portal de Currículum Vitae
 
-Scripts y modelo de base de datos del portal. El modelo está alineado con `docs/Documentacion.md` y `docs/Modelo.md`.
+Scripts y modelo de base de datos del portal. El modelo está alineado con `docs/arquitectura/Documentacion.md` y `docs/arquitectura/Modelo.md`.
 
 ## Archivos
 
@@ -10,14 +10,15 @@ Scripts y modelo de base de datos del portal. El modelo está alineado con `docs
 | `DiccionarioDeDatos.md` | Diccionario de datos con descripción y reglas de cada columna. |
 | `Diagrama ER.jpeg` | Diagrama entidad-relación exportado. |
 
-> ⚠️ **El script DDL ejecutable (`01_CreateSchema.sql`) está pendiente de generación** — corresponde a la historia técnica **HS-02** del Backlog.
-> Hasta entonces, usa el DBML como referencia de la estructura.
+> Los scripts DDL ejecutables están en la carpeta [`scripts/`](../scripts/) del repositorio:
+> `01_CreateSchema.sql`, `02_InsertTestData.sql`, `05_AzureSQL_CreateSchema.sql`, `06_AzureSQL_SeedRoles.sql`.
 
-## Cómo generar el SQL desde el DBML
+## Cómo visualizar el modelo DBML
 
 1. Ve a [dbdiagram.io](https://dbdiagram.io) e importa `01_CreateSchema.dbml`.
-2. Usa la opción **Export → SQL Server** para obtener el DDL ejecutable.
-3. Guarda el resultado como `01_CreateSchema.sql` en esta carpeta.
+2. Usa la opción **Export → SQL Server** si necesitas regenerar el DDL desde el modelo.
+
+> Los scripts ejecutables en [`scripts/`](../scripts/) son la fuente de verdad para la BD.
 
 ## Contenido del modelo (`01_CreateSchema.dbml`)
 

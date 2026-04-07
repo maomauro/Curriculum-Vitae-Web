@@ -22,17 +22,17 @@
 |  [ foto 80px ]   |   │  Visualiza y analiza tu información  │    |
 |  Nombre usuario  |   └─────────────────────────────────────┘    |
 |  Cargo/título    |                                               |
-|  ─────────────   |   +----------+ +----------+ +----------+     |
-|  ▣ Dashboard  ◄  |   | Total CVs| | Vistas   | |Visitantes|     |
-|  ▣ Mis CVs       |   |    3     | |   124    | |    89    |     |
-|  ▣ Crear CV      |   | #28A745  | | #007BFF  | | #6F42C1  |     |
-|  ▣ Datos Pers.   |   +----------+ +----------+ +----------+     |
-|  ▣ Perfil        |                                               |
-|  ▣ Experiencia   |   +------------------+ +------------------+  |
-|  ▣ Educación     |   | Vistas por mes   | | Completitud      |  |
-|  ▣ Habilidades   |   | [gráfica barras] | | perfil: 75%      |  |
-|                  |   |                  | | [progress bar]   |  |
-|                  |   +------------------+ +------------------+  |
+|  ─────────────────  |   +----------+ +----------+ +----------+  |
+|  ▣ Dashboard    ◄   |   | Total CVs| | Vistas   | |Visitantes|  |
+|  ▣ Alertas   [5]    |   |    3     | |   124    | |    89    |  |
+|  ▣ Mi CV            |   | #28A745  | | #007BFF  | | #6F42C1  |  |
+|  ▣ Datos Personales |   +----------+ +----------+ +----------+  |
+|  ▣ Perfil           |                                            |
+|  ▣ Experiencia      |   +------------------+ +------------------+|
+|  ▣ Educación        |   | Vistas por mes   | | Completitud      ||
+|  ▣ Habilidades      |   | [gráfica barras] | | perfil: 75%      ||
+|  ▣ Proyectos        |   |                  | | [progress bar]   ||
+|  ▣ Configuración    |   +------------------+ +------------------+|
 |                  |                                               |
 |                  |   ALERTAS RECIENTES                           |
 |                  |   ┌─────────────────────────────────────┐    |
@@ -51,7 +51,8 @@
 Estado EXPANDIDO (default)          Estado COMPACTO (clic en ≡)
 +------------------+                +------+
 |  ▣ Dashboard     |                | ▣    |
-|  ▣ Mis CVs       |  ──────────►   | ▣    |
+|  ▣ Alertas  [5]  |  ──────────►   | ▣    |
+|  ▣ Mi CV         |                | ▣    |
 |  ▣ Experiencia   |                | ▣    |
 |  w: 220px        |                | w:60 |
 |  texto + icono   |                | solo iconos + tooltip
@@ -80,13 +81,15 @@ Board
 │   ├── user-cargo
 │   └── nav-menu
 │       ├── item-Dashboard (activo)
-│       ├── item-MisCVs
-│       ├── item-CrearCV
+│       ├── item-Alertas  (badge: 5)
+│       ├── item-MiCV
 │       ├── item-DatosPersonales
 │       ├── item-Perfil
 │       ├── item-Experiencia
 │       ├── item-Educacion
-│       └── item-Habilidades
+│       ├── item-Habilidades
+│       ├── item-Proyectos
+│       └── item-Configuracion
 └── Main-content
     ├── header-card
     ├── metrics-row
