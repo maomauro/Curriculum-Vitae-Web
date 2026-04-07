@@ -354,6 +354,71 @@
       </div>
     </div>
 
+    <!-- FORMULARIO NUEVA FORMACIÓN (oculto, se mueve a la sección activa) -->
+    <div class="edu-card" id="newEduForm" style="display:none; border: 2px dashed #2C7BE5;">
+      <div class="edu-card-header" style="cursor:default;">
+        <div class="edu-icon" style="background:#EEF3FB;color:#2C7BE5;"><i class="bi bi-plus"></i></div>
+        <div class="flex-grow-1">
+          <div class="edu-title">Nueva formación</div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="cancelarNuevo()">
+          <i class="bi bi-x me-1"></i>Cancelar
+        </button>
+      </div>
+      <div class="edu-card-body" style="display:block; padding-top:18px;">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Tipo de formación <span class="text-danger">*</span></label>
+            <select class="form-select" id="newEduTipo">
+              <option value="posgrado">Maestría</option>
+              <option value="posgrado">Especialización</option>
+              <option value="pregrado">Pregrado</option>
+              <option value="tecnologo">Tecnólogo</option>
+              <option value="tecnologo">Técnico</option>
+              <option value="diplomado">Diplomado</option>
+              <option value="certificacion">Certificación</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Título obtenido <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Ej: Ingeniería de Sistemas">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Institución <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Universidad, instituto, plataforma...">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Área de estudio</label>
+            <input type="text" class="form-control" placeholder="Ej: Ingeniería de Software">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Fecha inicio</label>
+            <input type="date" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Fecha fin</label>
+            <input type="date" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Soporte / Diploma <small class="text-muted fw-normal">PDF / JPG / PNG</small></label>
+            <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Descripción adicional</label>
+            <textarea class="form-control" rows="2" placeholder="Menciona énfasis, proyecto de grado, logros..."></textarea>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-outline-secondary btn-sm" onclick="cancelarNuevo()">
+            <i class="bi bi-x me-1"></i>Cancelar
+          </button>
+          <button class="btn btn-primary px-4">
+            <i class="bi bi-floppy-fill me-2"></i>Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -373,8 +438,33 @@
     function toggleEdu(id) {
       document.getElementById(id).classList.toggle('expanded');
     }
+    // Mapa: clave de sección → índice de option en #newEduTipo
+    const tipoOptionIndex = { posgrado: 0, pregrado: 2, tecnologo: 3, diplomado: 5, certificacion: 6 };
+
     function agregarNuevo() {
-      alert('[Prototipo] Aquí se abriría el formulario de nuevo registro para el tipo de formación seleccionado.');
+      const activeSection = document.querySelector('.edu-section.active');
+      if (!activeSection) return;
+      const key = activeSection.id.replace('sec-', '');
+
+      // Pre-seleccionar el tipo según la sección activa
+      const sel = document.getElementById('newEduTipo');
+      if (tipoOptionIndex[key] !== undefined) sel.selectedIndex = tipoOptionIndex[key];
+
+      // Mover el formulario al final de la sección activa y mostrarlo
+      const form = document.getElementById('newEduForm');
+      activeSection.appendChild(form);
+      form.style.display = 'block';
+
+      // Scroll suave al formulario
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelarNuevo() {
+      const form = document.getElementById('newEduForm');
+      form.style.display = 'none';
+      // Limpiar campos
+      form.querySelectorAll('input[type=text], input[type=date], textarea').forEach(el => el.value = '');
+      form.querySelector('input[type=file]').value = '';
     }
   </script>
 </body>
