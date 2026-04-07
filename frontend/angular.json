@@ -41,7 +41,12 @@
               }
             ],
             "styles": [
+              "node_modules/admin-lte/dist/css/adminlte.min.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
               "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/admin-lte/dist/js/adminlte.min.js"
             ]
           },
           "configurations": {
@@ -49,8 +54,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "800kB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -99,7 +104,12 @@
               }
             ],
             "styles": [
+              "node_modules/admin-lte/dist/css/adminlte.min.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
               "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/admin-lte/dist/js/adminlte.min.js"
             ]
           }
         }

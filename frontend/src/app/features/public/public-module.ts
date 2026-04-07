@@ -4,10 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { PublicRoutingModule } from './public-routing-module';
-
+import { HomeComponent } from './pages/home.component';
+import { CvsComponent } from './pages/cvs.component';
+import { CvDetailComponent } from './pages/cv-detail.component';
 
 @NgModule({
-  declarations: [],
+  declarations: [
+    HomeComponent,
+    CvsComponent,
+    CvDetailComponent
+  ],
   imports: [
     CommonModule,
     FormsModule,
