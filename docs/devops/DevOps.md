@@ -208,7 +208,7 @@ El modo CI usa `ChromeHeadlessCI` configurado en `karma.conf.js`.
 
 ## 9. Convenciones de commits
 
-Seguir Conventional Commits (ver [guia-git.md](guia-git.md)):
+Seguir Conventional Commits (ver [Guia-git.md](../guias/Guia-git.md)):
 
 | Tipo | Cuando usarlo |
 |------|--------------|
@@ -226,7 +226,7 @@ Seguir Conventional Commits (ver [guia-git.md](guia-git.md)):
 
 | Script | Entorno | Descripcion |
 |--------|---------|-------------|
-| `database/01_CreateSchema.sql` | Local | Esquema completo SQL Server |
+| `scripts/01_CreateSchema.sql` | Local | Esquema completo SQL Server |
 | `scripts/02_InsertTestData.sql` | Local | Datos de prueba |
 | `scripts/05_AzureSQL_CreateSchema.sql` | Azure SQL | DDL sin USE [DB] -- ejecutar 1 vez |
 | `scripts/06_AzureSQL_SeedRoles.sql` | Azure SQL | Roles base -- idempotente |
