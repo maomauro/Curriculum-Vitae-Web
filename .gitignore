@@ -13,6 +13,10 @@ backend/**/obj/
 backend/**/*.user
 **/.vs/
 
+# Configuración local con credenciales — nunca commitear
+**/appsettings.Development.json
+**/appsettings.Local.json
+
 # ── Node / Frontend ──────────────────────────────────────────────────────────
 frontend/node_modules/
 frontend/dist/
