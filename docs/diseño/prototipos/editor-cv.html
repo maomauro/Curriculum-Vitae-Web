@@ -230,6 +230,11 @@
         </a>
       </li>
       <li class="nav-item">
+        <a class="nav-link" href="#perfil" data-bs-toggle="tab">
+          <i class="bi bi-person-badge me-1"></i>Perfil Profesional
+        </a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link" href="#experiencia" data-bs-toggle="tab">
           <i class="bi bi-briefcase-fill me-1"></i>Experiencia
         </a>
@@ -257,6 +262,11 @@
       <li class="nav-item">
         <a class="nav-link" href="#redes" data-bs-toggle="tab">
           <i class="bi bi-share-fill me-1"></i>Redes Sociales
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#familiares" data-bs-toggle="tab">
+          <i class="bi bi-people-fill me-1"></i>Familiares
         </a>
       </li>
       <li class="nav-item">
@@ -304,6 +314,46 @@
             <div class="col-12">
               <label class="form-label">Resumen profesional</label>
               <textarea class="form-control" rows="4">Desarrolladora frontend con 5 años de experiencia construyendo interfaces modernas y responsivas. Apasionada por la accesibilidad web y el rendimiento. Experiencia con Angular, React y Vue.js en proyectos de escala empresarial.</textarea>
+            </div>
+            <div class="col-12 text-end">
+              <button class="btn btn-primary px-4">
+                <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Perfil Profesional → tabla Perfil -->
+      <div class="tab-pane fade" id="perfil">
+        <div class="form-card">
+          <p class="text-muted small mb-4">Define tu perfil profesional público: un titular, resumen y tus aspiraciones salariales. Esta información acompaña tu CV en el directorio.</p>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Nombre del perfil <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" value="Frontend Developer Senior" placeholder="Ej: Desarrollador Full Stack Senior">
+              <div class="form-text">El titular que verán los reclutadores al encontrar tu CV.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Descripción del perfil</label>
+              <textarea class="form-control" rows="4" placeholder="Breve descripción de tu perfil profesional...">Desarrolladora frontend con más de 5 años de experiencia construyendo interfaces modernas y accesibles. Especialista en Angular y TypeScript. Apasionada por el rendimiento y la experiencia de usuario.</textarea>
+              <div class="form-text">Máx. 500 caracteres. Aparece como resumen en los resultados de búsqueda.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Aspiración salarial (COP)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" value="6000000" placeholder="0">
+                <span class="input-group-text">/mes</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Aspiración salarial (USD)</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" value="2500" placeholder="0">
+                <span class="input-group-text">/mes</span>
+              </div>
             </div>
             <div class="col-12 text-end">
               <button class="btn btn-primary px-4">
@@ -749,6 +799,77 @@
                 <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Contactos Familiares → tabla FamiliarContacto -->
+      <div class="tab-pane fade" id="familiares">
+        <div class="form-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h6 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Contactos Familiares</h6>
+              <p class="text-muted small mb-0">Personas de contacto de emergencia. No se publican en tu CV.</p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar familiar
+            </button>
+          </div>
+
+          <div class="list-item">
+            <div class="item-header">
+              <div>
+                <div class="item-title">Carlos García Martínez</div>
+                <div class="item-subtitle">Hermano · carlos.garcia@email.com · +34 654 321 987</div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-star-fill me-1"></i>Contacto principal</span>
+                <button class="btn-delete-item"><i class="bi bi-trash3"></i> Eliminar</button>
+              </div>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label">Parentesco</label>
+                <select class="form-select form-select-sm">
+                  <option selected>Hermano/a</option>
+                  <option>Padre / Madre</option>
+                  <option>Cónyuge / Pareja</option>
+                  <option>Hijo/a</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Nombres</label>
+                <input type="text" class="form-control form-control-sm" value="Carlos">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Apellidos</label>
+                <input type="text" class="form-control form-control-sm" value="García Martínez">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control form-control-sm" value="carlos.garcia@email.com">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" class="form-control form-control-sm" value="+34 654 321 987">
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <div class="form-check form-switch mb-1">
+                  <input class="form-check-input" type="checkbox" id="principal1" checked>
+                  <label class="form-check-label small" for="principal1">Contacto principal</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-between mt-3">
+            <button class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i>Agregar familiar
+            </button>
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy-fill me-2"></i>Guardar cambios
+            </button>
           </div>
         </div>
       </div>

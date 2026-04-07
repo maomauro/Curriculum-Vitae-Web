@@ -75,6 +75,7 @@ Board (1440×1024)
 │   ├── campo-nombre
 │   ├── campo-empresa
 │   ├── campo-email
+│   ├── campo-motivo-contacto  (select: Oferta laboral / Proyecto freelance / Consulta / Otro → `VisitanteContacto.MotivoContacto`)
 │   ├── campo-asunto
 │   ├── campo-mensaje (textarea)
 │   └── btn-enviar
@@ -111,3 +112,4 @@ Board (1440×1024)
 - Botón `Contactar` en columna izquierda abre el modal `#modalContacto`
 - Al enviar el formulario de contacto se muestra alerta de éxito y se cierra el modal a los 2.5 s
 - El campo email del formulario de contacto es validado con formato RFC
+- El campo `MotivoContacto` es un `<select>` con opciones: Oferta laboral, Proyecto freelance, Consulta, Otro — se persiste en `VisitanteContacto.MotivoContacto`

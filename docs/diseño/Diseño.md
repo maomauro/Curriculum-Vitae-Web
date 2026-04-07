@@ -13,6 +13,7 @@ Documento de arquitectura visual. Cada vista tiene su propio archivo detallado e
 | Detalle CV | `/cv/:id` | PublicLayout | Público | [Detalle-CV.md](./vistas/Detalle-CV.md) |
 | Login | `/auth/login` | AuthLayout | Público | [Login.md](./vistas/Login.md) |
 | Register | `/auth/register` | AuthLayout | Público | [Register.md](./vistas/Register.md) |
+| Recuperar Contraseña | `/auth/forgot-password` | AuthLayout | Público | [Recuperar-Contrasena.md](./vistas/Recuperar-Contrasena.md) |
 | Dashboard | `/dashboard` | AdminLayout | `authGuard` | [Dashboard.md](./vistas/Dashboard.md) |
 | Editor CV | `/editor` | AdminLayout | `authGuard` | [Editor-CV.md](./vistas/Editor-CV.md) |
 | Alertas | `/dashboard/alertas` | AdminLayout | `authGuard` | [Alertas.md](./vistas/Alertas.md) |
@@ -44,7 +45,7 @@ AppComponent
        │    ├── <router-outlet>
        │    └── FooterPublicComponent
        │
-       ├── AuthLayoutComponent     (/auth/login  /auth/register)
+       ├── AuthLayoutComponent     (/auth/login  /auth/register  /auth/forgot-password)
        │    └── <router-outlet>
        │
        └── AdminLayoutComponent    (/dashboard  /editor  /dashboard/alertas  /admin)
