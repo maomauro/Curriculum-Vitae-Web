@@ -1,69 +1,94 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AuthService, UserInfo } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: false,
   template: `
-    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-      <div class="sidebar-brand">
-        <a routerLink="/dashboard" class="brand-link text-decoration-none">
-          <span class="brand-text fw-light">PortalCV</span>
+    <aside class="cv-sidebar" id="cvSidebar">
+
+      <!-- Usuario autenticado -->
+      <div class="sidebar-user" *ngIf="currentUser">
+        <div class="sidebar-avatar">{{ initials }}</div>
+        <div class="sidebar-username">{{ currentUser.nombre }}</div>
+        <div class="sidebar-role">{{ currentUser.rol }}</div>
+      </div>
+
+      <nav>
+        <!-- Dashboard -->
+        <a class="nav-item-sidebar" routerLink="/dashboard"
+           routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <i class="bi bi-speedometer2"></i><span>Dashboard</span>
         </a>
-      </div>
-      <div class="sidebar-wrapper">
-        <nav class="mt-2">
-          <ul class="nav sidebar-menu flex-column"
-              data-lte-toggle="treeview"
-              role="navigation"
-              aria-label="Main navigation"
-              data-accordion="false">
 
-            <!-- Mis CVs -->
-            <li class="nav-item">
-              <a routerLink="/cvs" routerLinkActive="active" class="nav-link">
-                <i class="nav-icon bi bi-people"></i>
-                <p>Mis CVs</p>
-              </a>
-            </li>
+        <!-- Alertas -->
+        <a class="nav-item-sidebar" routerLink="/alertas" routerLinkActive="active">
+          <i class="bi bi-bell-fill"></i><span>Alertas</span>
+          <span class="nav-badge">5</span>
+        </a>
 
-            <!-- Crear CV -->
-            <li class="nav-item">
-              <a routerLink="/editor" routerLinkActive="active" class="nav-link">
-                <i class="nav-icon bi bi-plus-circle"></i>
-                <p>Crear CV</p>
-              </a>
-            </li>
+        <!-- Mi CV -->
+        <a class="nav-item-sidebar" routerLink="/mi-cv" routerLinkActive="active">
+          <i class="bi bi-file-earmark-person-fill"></i><span>Mi CV</span>
+        </a>
 
-            <!-- Dashboard con submenu treeview -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon bi bi-speedometer2"></i>
-                <p>
-                  Dashboard
-                  <i class="nav-arrow bi bi-chevron-right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a routerLink="/dashboard" routerLinkActive="active"
-                     [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="nav-icon bi bi-bar-chart"></i>
-                    <p>Estadísticas</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a routerLink="/dashboard/alertas" routerLinkActive="active" class="nav-link">
-                    <i class="nav-icon bi bi-bell"></i>
-                    <p>Alertas</p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+        <!-- Datos Personales -->
+        <a class="nav-item-sidebar" routerLink="/datos-personales" routerLinkActive="active">
+          <i class="bi bi-person-lines-fill"></i><span>Datos Personales</span>
+        </a>
 
-          </ul>
-        </nav>
-      </div>
+        <!-- Perfil -->
+        <a class="nav-item-sidebar" routerLink="/perfil" routerLinkActive="active">
+          <i class="bi bi-person-badge-fill"></i><span>Perfil</span>
+        </a>
+
+        <!-- Experiencia -->
+        <a class="nav-item-sidebar" routerLink="/experiencia" routerLinkActive="active">
+          <i class="bi bi-briefcase-fill"></i><span>Experiencia</span>
+        </a>
+
+        <!-- Educación -->
+        <a class="nav-item-sidebar" routerLink="/educacion" routerLinkActive="active">
+          <i class="bi bi-mortarboard-fill"></i><span>Educación</span>
+        </a>
+
+        <!-- Habilidades -->
+        <a class="nav-item-sidebar" routerLink="/habilidades" routerLinkActive="active">
+          <i class="bi bi-stars"></i><span>Habilidades</span>
+        </a>
+
+        <!-- Proyectos -->
+        <a class="nav-item-sidebar" routerLink="/proyectos" routerLinkActive="active">
+          <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
+        </a>
+
+        <!-- Configuración -->
+        <a class="nav-item-sidebar" routerLink="/configuracion" routerLinkActive="active">
+          <i class="bi bi-gear-fill"></i><span>Configuración</span>
+        </a>
+      </nav>
+
     </aside>
   `
 })
-export class SidebarComponent { }
+export class SidebarComponent implements OnInit {
+  currentUser: UserInfo | null = null;
+
+  get initials(): string {
+    if (!this.currentUser?.nombre) return 'U';
+    return this.currentUser.nombre
+      .split(' ')
+      .slice(0, 2)
+      .map(p => p[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+  }
+}

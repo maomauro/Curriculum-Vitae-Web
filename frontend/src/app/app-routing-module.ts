@@ -39,14 +39,23 @@ const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
-        path: 'dashboard',
+        path: '',
         loadChildren: () =>
-          import('./features/dashboard/dashboard-module').then(m => m.DashboardModule)
-      },
+          import('./features/private/private.module').then(m => m.PrivateModule)
+      }
+    ]
+  },
+
+  // ── Panel de administración ─────────────────────────────────────────────────
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    canActivate: [authGuard],
+    children: [
       {
-        path: 'editor',
+        path: '',
         loadChildren: () =>
-          import('./features/editor/editor-module').then(m => m.EditorModule)
+          import('./features/admin/admin.module').then(m => m.AdminModule)
       }
     ]
   },

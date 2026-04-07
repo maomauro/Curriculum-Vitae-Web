@@ -6,65 +6,74 @@ interface CvCard {
   titulo: string;
   tecnologias: string[];
   iniciales: string;
+  colorClass: string;
 }
 
 @Component({
   selector: 'app-cvs',
   standalone: false,
   template: `
-    <!-- Cabecera de búsqueda -->
-    <section class="py-4 bg-light border-bottom">
+    <!-- Barra de búsqueda y filtros -->
+    <section class="py-4" style="background:#f4f6f9; border-bottom:1px solid #e9ecef;">
       <div class="container">
-        <div class="row align-items-center g-3">
-          <div class="col-12 col-md-8">
-            <div class="input-group shadow-sm">
-              <input type="text" class="form-control" placeholder="Buscar por nombre, cargo o tecnología..."
-                [(ngModel)]="busqueda" (keyup.enter)="filtrar()">
-              <button class="btn btn-primary px-4" type="button" (click)="filtrar()">
-                <i class="bi bi-search me-1"></i>Buscar
+        <div class="bg-white p-4 rounded-3 shadow-sm">
+          <div class="row align-items-center g-3">
+            <div class="col-12 col-md-6">
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                  <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" class="form-control border-start-0 ps-0"
+                  placeholder="Buscar por nombre, cargo o tecnología..."
+                  [(ngModel)]="busqueda" (keyup.enter)="filtrar()">
+              </div>
+            </div>
+            <div class="col-12 col-md-3">
+              <select class="form-select" [(ngModel)]="ordenar" (change)="filtrar()">
+                <option value="reciente">Más recientes</option>
+                <option value="nombre">Nombre A-Z</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-3">
+              <button class="btn btn-primary w-100" (click)="filtrar()">
+                <i class="bi bi-search me-2"></i>Buscar
               </button>
             </div>
           </div>
-          <div class="col-12 col-md-4">
-            <select class="form-select shadow-sm" [(ngModel)]="ordenar" (change)="filtrar()">
-              <option value="reciente">Más recientes</option>
-              <option value="nombre">Nombre A-Z</option>
-            </select>
+          <div class="mt-3 text-muted small">
+            {{ cvsFiltrados.length }} resultado(s) encontrado(s)
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Grid de tarjetas -->
-    <section class="py-5">
+    <!-- Grid de CVs -->
+    <section class="py-5" style="background:#f4f6f9;">
       <div class="container">
-        <div class="row g-4">
-          <div class="col-12 col-sm-6 col-lg-4" *ngFor="let cv of cvsFiltrados">
-            <div class="card h-100 shadow-sm border-0 cv-card">
-              <div class="card-body">
-                <!-- Avatar con iniciales -->
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+
+          <div class="col" *ngFor="let cv of cvsFiltrados">
+            <div class="card card-cv h-100">
+              <div class="card-body p-4">
+                <!-- Avatar + nombre + título -->
                 <div class="d-flex align-items-center gap-3 mb-3">
-                  <div class="avatar-circle bg-primary text-white fw-bold fs-5 rounded-circle
-                              d-flex align-items-center justify-content-center flex-shrink-0"
-                       style="width:52px;height:52px;">
+                  <div class="avatar-circle {{ cv.colorClass }}">
                     {{ cv.iniciales }}
                   </div>
                   <div>
-                    <h5 class="mb-0 fw-semibold">{{ cv.nombre }}</h5>
-                    <p class="text-muted small mb-0">{{ cv.titulo }}</p>
+                    <div class="cv-name fw-bold" style="color:#212529;">{{ cv.nombre }}</div>
+                    <div class="cv-title text-muted small">{{ cv.titulo }}</div>
                   </div>
                 </div>
                 <!-- Tecnologías -->
-                <div class="d-flex flex-wrap gap-1">
-                  <span class="badge bg-primary bg-opacity-10 text-primary"
-                        *ngFor="let tech of cv.tecnologias">
-                    {{ tech }}
-                  </span>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge-tech" *ngFor="let tech of cv.tecnologias">{{ tech }}</span>
                 </div>
               </div>
-              <div class="card-footer bg-transparent border-0 pt-0">
-                <a [routerLink]="['/cv', cv.id]" class="btn btn-outline-primary btn-sm w-100">
-                  <i class="bi bi-eye me-1"></i>Ver CV completo
+              <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+                <a [routerLink]="['/cv', cv.id]"
+                   class="btn btn-outline-primary btn-sm w-100">
+                  Ver perfil →
                 </a>
               </div>
             </div>
@@ -73,37 +82,30 @@ interface CvCard {
           <!-- Sin resultados -->
           <div class="col-12 text-center py-5" *ngIf="cvsFiltrados.length === 0">
             <i class="bi bi-search display-4 text-muted"></i>
-            <p class="text-muted mt-3">No se encontraron CVs con ese criterio.</p>
-            <button class="btn btn-outline-secondary" (click)="limpiarFiltro()">
+            <p class="text-muted mt-3 mb-3">No se encontraron CVs con ese criterio.</p>
+            <button class="btn btn-outline-secondary btn-sm" (click)="limpiarFiltro()">
               Ver todos los CVs
             </button>
           </div>
+
         </div>
       </div>
     </section>
-  `,
-  styles: [`
-    .cv-card {
-      transition: transform .15s, box-shadow .15s;
-    }
-    .cv-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important;
-    }
-  `]
+  `
 })
 export class CvsComponent {
   busqueda = '';
   ordenar = 'reciente';
 
-  // Datos de ejemplo hasta integrar con la API
+  private readonly colorClasses = ['blue', 'green', 'purple', 'orange', 'teal', 'red'];
+
   cvs: CvCard[] = [
-    { id: 1, nombre: 'Ana García',    titulo: 'Desarrolladora Full Stack',  tecnologias: ['Angular', 'TypeScript', 'Node.js'], iniciales: 'AG' },
-    { id: 2, nombre: 'Luis Martínez', titulo: 'Backend Developer',          tecnologias: ['C#', '.NET', 'SQL Server'],         iniciales: 'LM' },
-    { id: 3, nombre: 'María López',   titulo: 'UX/UI Designer',             tecnologias: ['Figma', 'Sketch', 'Bootstrap'],     iniciales: 'ML' },
-    { id: 4, nombre: 'Carlos Ruiz',   titulo: 'DevOps Engineer',            tecnologias: ['Docker', 'Kubernetes', 'CI/CD'],    iniciales: 'CR' },
-    { id: 5, nombre: 'Sara Pérez',    titulo: 'Data Scientist',             tecnologias: ['Python', 'ML', 'TensorFlow'],       iniciales: 'SP' },
-    { id: 6, nombre: 'Diego Torres',  titulo: 'Mobile Developer',           tecnologias: ['Flutter', 'Dart', 'Firebase'],     iniciales: 'DT' },
+    { id: 1, nombre: 'Ana García',    titulo: 'Frontend Developer',          tecnologias: ['React', 'Angular', 'TypeScript'], iniciales: 'AG', colorClass: 'blue' },
+    { id: 2, nombre: 'Carlos Ruiz',   titulo: 'Backend Developer',           tecnologias: ['Node.js', '.NET', 'Docker'],      iniciales: 'CR', colorClass: 'green' },
+    { id: 3, nombre: 'María López',   titulo: 'UX/UI Designer',              tecnologias: ['Figma', 'Sketch', 'Bootstrap'],   iniciales: 'ML', colorClass: 'purple' },
+    { id: 4, nombre: 'Luis Martínez', titulo: 'DevOps Engineer',             tecnologias: ['Docker', 'Kubernetes', 'CI/CD'],  iniciales: 'LM', colorClass: 'orange' },
+    { id: 5, nombre: 'Sara Pérez',    titulo: 'Data Scientist',              tecnologias: ['Python', 'ML', 'TensorFlow'],     iniciales: 'SP', colorClass: 'teal' },
+    { id: 6, nombre: 'Diego Torres',  titulo: 'Mobile Developer',            tecnologias: ['Flutter', 'Dart', 'Firebase'],    iniciales: 'DT', colorClass: 'red' },
   ];
 
   cvsFiltrados: CvCard[] = [...this.cvs];
