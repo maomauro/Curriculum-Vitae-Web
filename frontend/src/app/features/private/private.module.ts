@@ -14,9 +14,12 @@ import { ExperienciaComponent }     from './pages/experiencia.component';
 import { EducacionComponent }       from './pages/educacion.component';
 import { HabilidadesComponent }     from './pages/habilidades.component';
 import { ProyectosComponent }       from './pages/proyectos.component';
-import { ConfiguracionComponent }   from './pages/configuracion.component';import { ReferenciasComponent }      from './pages/referencias.component';
+import { ConfiguracionComponent }   from './pages/configuracion.component';
+import { ReferenciasComponent }      from './pages/referencias.component';
 import { RedesSocialesComponent }    from './pages/redes-sociales.component';
-import { FamiliaresComponent }       from './pages/familiares.component';import { EditorCvComponent }        from './pages/editor-cv.component';
+import { FamiliaresComponent }       from './pages/familiares.component';
+import { ContactosComponent }        from './pages/contactos.component';
+import { EditorCvComponent }         from './pages/editor-cv.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +35,7 @@ import { FamiliaresComponent }       from './pages/familiares.component';import 
     ReferenciasComponent,
     RedesSocialesComponent,
     FamiliaresComponent,
+    ContactosComponent,
     ConfiguracionComponent,
     EditorCvComponent,
   ],
