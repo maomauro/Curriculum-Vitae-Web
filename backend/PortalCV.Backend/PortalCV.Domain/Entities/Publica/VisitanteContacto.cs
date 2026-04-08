@@ -12,6 +12,7 @@ public class VisitanteContacto
     public string? ComoMeEncontraste { get; set; }
     public string? Mensaje { get; set; }
     public DateTime FechaContacto { get; set; }
+    public bool EsLeido { get; set; }
 
     public Curriculum Curriculum { get; set; } = null!;
 }

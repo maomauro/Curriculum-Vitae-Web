@@ -101,8 +101,12 @@ public class PublicCvService : IPublicCvService
         return new FiltrosPublicosDto(ciudades, habilidades);
     }
 
-    public async Task ContactarAsync(int curriculumId, ContactarCvRequest request, CancellationToken ct = default)
+    public async Task ContactarAsync(string urlPublica, ContactarCvRequest request, CancellationToken ct = default)
     {
+        var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct)
+            ?? throw new KeyNotFoundException($"CV '{urlPublica}' no encontrado.");
+        var curriculumId = cv.CurriculumId;
+
         var contacto = new VisitanteContacto
         {
             CurriculumId = curriculumId,
@@ -130,11 +134,11 @@ public class PublicCvService : IPublicCvService
         await _alertaRepo.AddAsync(alerta, ct);
 
         // Actualizar contador en Curriculum
-        var cv = await _context.Curriculums.FindAsync(new object[] { curriculumId }, ct);
-        if (cv is not null)
+        var curriculum = await _context.Curriculums.FindAsync(new object[] { curriculumId }, ct);
+        if (curriculum is not null)
         {
-            cv.ContadorContactos++;
-            cv.FechaActualizacion = DateTime.UtcNow;
+            curriculum.ContadorContactos++;
+            curriculum.FechaActualizacion = DateTime.UtcNow;
         }
 
         // Actualizar estadÃ­sticas

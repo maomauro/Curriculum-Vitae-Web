@@ -1,6 +1,6 @@
-﻿namespace PortalCV.Application.DTOs.Admin;
+namespace PortalCV.Application.DTOs.Admin;
 
-/// <summary>Datos de un usuario para el panel de administraciÃ³n (sin info sensible).</summary>
+/// <summary>Datos de un usuario para el panel de administración (sin info sensible).</summary>
 public class UsuarioAdminDto
 {
     public int UsuarioId       { get; set; }
@@ -10,7 +10,7 @@ public class UsuarioAdminDto
     public List<RolDto> Roles  { get; set; } = [];
 }
 
-/// <summary>Datos bÃ¡sicos de un rol del sistema.</summary>
+/// <summary>Datos básicos de un rol del sistema.</summary>
 public class RolDto
 {
     public int RolId           { get; set; }
