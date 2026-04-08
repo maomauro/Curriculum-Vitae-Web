@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService, HabilidadDto, UpsertHabilidadRequest } from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 interface HabilidadUI extends HabilidadDto {
   editando: boolean;
@@ -236,9 +238,9 @@ export class HabilidadesComponent implements OnInit {
           this.guardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.guardando = false;
-          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
         }
       });
     } else {
@@ -248,9 +250,9 @@ export class HabilidadesComponent implements OnInit {
           this.guardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.guardando = false;
-          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
         }
       });
     }

@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService } from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-configuracion',
@@ -138,7 +140,8 @@ export class ConfiguracionComponent implements OnInit {
   guardarVisibilidad(campo: { key: string; visible: boolean }): void {
     this.cvEditorService.updateVisibilidad([{ seccion: campo.key, visible: campo.visible }]).subscribe({
       next: () => this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess),
-      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 

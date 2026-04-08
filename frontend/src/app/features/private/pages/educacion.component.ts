@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService, FormacionDto, UpsertFormacionRequest } from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage, getTodayDateString, normalizeDateOrNull } from '../../../core/utils/form-validation.util';
 
 interface FormacionUI extends FormacionDto {
   expanded: boolean;
@@ -90,11 +93,11 @@ interface FormacionUI extends FormacionDto {
             </div>
             <div class="col-md-4">
               <label class="form-label">Fecha inicio</label>
-              <input type="date" class="form-control" [(ngModel)]="edu.form.fechaInicio">
+              <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaInicio">
             </div>
             <div class="col-md-4">
               <label class="form-label">Fecha fin / Graduación</label>
-              <input type="date" class="form-control" [(ngModel)]="edu.form.fechaFin">
+              <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaFin">
             </div>
             <div class="col-md-4">
               <label class="form-label">Vigencia del certificado</label>
@@ -123,6 +126,7 @@ export class EducacionComponent implements OnInit {
   formaciones: FormacionUI[] = [];
   loading = false;
   guardando = false;
+  todayDate = getTodayDateString();
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -166,29 +170,51 @@ export class EducacionComponent implements OnInit {
   }
 
   guardar(edu: FormacionUI): void {
+    const payload: UpsertFormacionRequest = {
+      ...edu.form,
+      fechaInicio: normalizeDateOrNull(edu.form.fechaInicio),
+      fechaFin: normalizeDateOrNull(edu.form.fechaFin),
+      fechaVigencia: normalizeDateOrNull(edu.form.fechaVigencia)
+    };
+
+    if (edu.form.fechaInicio && !payload.fechaInicio) {
+      this.notificationService.warning(FORM_MESSAGES.educacion.invalidDate);
+      return;
+    }
+
+    if (edu.form.fechaFin && !payload.fechaFin) {
+      this.notificationService.warning(FORM_MESSAGES.educacion.invalidDate);
+      return;
+    }
+
+    if (edu.form.fechaVigencia && !payload.fechaVigencia) {
+      this.notificationService.warning(FORM_MESSAGES.educacion.invalidDate);
+      return;
+    }
+
     this.guardando = true;
     if (edu.formacionId === 0) {
-      this.cvEditorService.createFormacion(edu.form).subscribe({
+      this.cvEditorService.createFormacion(payload).subscribe({
         next: creada => {
           Object.assign(edu, creada, { expanded: false, form: this.toForm(creada) });
           this.guardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.guardando = false;
-          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
         }
       });
     } else {
-      this.cvEditorService.updateFormacion(edu.formacionId, edu.form).subscribe({
+      this.cvEditorService.updateFormacion(edu.formacionId, payload).subscribe({
         next: actualizada => {
           Object.assign(edu, actualizada, { expanded: false, form: this.toForm(actualizada) });
           this.guardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.guardando = false;
-          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
         }
       });
     }

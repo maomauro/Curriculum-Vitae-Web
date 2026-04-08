@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-login',
@@ -85,8 +87,8 @@ export class LoginComponent {
         this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
         this.router.navigate(['/dashboard']);
       },
-      error: () => {
-        this.errorMsg = 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
+      error: (error: HttpErrorResponse) => {
+        this.errorMsg = extractApiErrorMessage(error) || 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
         this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
         this.loading = false;
       }

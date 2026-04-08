@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService, ReferenciaDto, UpsertReferenciaRequest } from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { FORM_MESSAGES } from '../../../core/constants/form-messages';
+import { extractApiErrorMessage, isValidEmail } from '../../../core/utils/form-validation.util';
 
 interface ReferenciaUI extends ReferenciaDto {
   expanded: boolean;
@@ -13,25 +16,31 @@ interface ReferenciaUI extends ReferenciaDto {
   standalone: false,
   template: `
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header" *ngIf="!embedded">
       <div>
         <h4><i class="bi bi-people-fill me-2 text-primary"></i>Referencias</h4>
         <span class="text-muted small">Personas que pueden dar referencias laborales o personales</span>
       </div>
-      <button class="btn btn-primary btn-sm" (click)="agregar()">
+      <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+        <i class="bi bi-plus-circle me-1"></i>Agregar referencia
+      </button>
+    </div>
+
+    <div class="d-flex justify-content-end mb-2" *ngIf="embedded">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregar()">
         <i class="bi bi-plus-circle me-1"></i>Agregar referencia
       </button>
     </div>
 
     <!-- Loading -->
-    <div *ngIf="loading" class="text-center py-5">
+    <div *ngIf="loading" class="text-center" [class.py-5]="!embedded" [class.py-3]="embedded">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando...</span>
       </div>
     </div>
 
     <!-- Sin datos -->
-    <div *ngIf="!loading && referencias.length === 0" class="text-center py-5 text-muted">
+    <div *ngIf="!loading && referencias.length === 0" class="text-center text-muted" [class.py-5]="!embedded" [class.py-3]="embedded">
       <i class="bi bi-people display-5"></i>
       <p class="mt-3">No tienes referencias registradas. Agrega la primera.</p>
     </div>
@@ -48,16 +57,16 @@ interface ReferenciaUI extends ReferenciaDto {
             <i class="bi bi-person-lines-fill"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ ref.nombre }} {{ ref.apellido }}</div>
+            <div class="fw-bold" style="font-size:.95rem;">{{ tituloCabecera(ref) }}</div>
             <div style="font-size:.85rem;color:#2c7be5;font-weight:600;">
-              {{ ref.cargo }}<ng-container *ngIf="ref.cargo && ref.empresa"> — </ng-container>{{ ref.empresa }}
+              {{ subtituloCabecera(ref) }}
             </div>
           </div>
           <span class="badge rounded-pill"
-                [style.background]="ref.tipoReferencia === 'Laboral' ? '#dbeafe' : '#fef9c3'"
-                [style.color]="ref.tipoReferencia === 'Laboral' ? '#1e40af' : '#854d0e'"
+                [style.background]="tipoRef(ref) === 'Laboral' ? '#dbeafe' : '#fef9c3'"
+                [style.color]="tipoRef(ref) === 'Laboral' ? '#1e40af' : '#854d0e'"
                 style="font-size:.7rem;padding:3px 10px;">
-            {{ ref.tipoReferencia }}
+            {{ tipoRef(ref) }}
           </span>
           <i class="bi ms-2" [class.bi-chevron-down]="!ref.expanded"
              [class.bi-chevron-up]="ref.expanded" style="color:#adb5bd;"></i>
@@ -72,12 +81,11 @@ interface ReferenciaUI extends ReferenciaDto {
               <select class="form-select" [(ngModel)]="ref.form.tipoReferencia">
                 <option value="Laboral">Laboral</option>
                 <option value="Personal">Personal</option>
-                <option value="Académica">Académica</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-control" [(ngModel)]="ref.form.nombre">
+              <label class="form-label">Nombre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="ref.form.nombre" autocomplete="name">
             </div>
             <div class="col-md-4">
               <label class="form-label">Apellido</label>
@@ -121,10 +129,15 @@ interface ReferenciaUI extends ReferenciaDto {
 
           <!-- Acciones -->
           <div class="d-flex gap-2 mt-3 justify-content-end">
-            <button class="btn btn-outline-danger btn-sm" (click)="eliminar(ref)">
+            <button *ngIf="ref.referenciaId === 0" type="button" class="btn btn-outline-secondary btn-sm"
+                    (click)="cancelar(ref)">
+              Cancelar
+            </button>
+            <button *ngIf="ref.referenciaId !== 0" type="button" class="btn btn-outline-danger btn-sm"
+                    (click)="eliminar(ref)">
               <i class="bi bi-trash me-1"></i>Eliminar
             </button>
-            <button class="btn btn-primary btn-sm" (click)="guardar(ref)" [disabled]="guardando">
+            <button type="button" class="btn btn-primary btn-sm" (click)="guardar(ref)" [disabled]="guardando">
               <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
               <i *ngIf="!guardando" class="bi bi-floppy me-1"></i>Guardar
             </button>
@@ -136,6 +149,8 @@ interface ReferenciaUI extends ReferenciaDto {
   `,
 })
 export class ReferenciasComponent implements OnInit {
+  @Input() embedded = false;
+
   referencias: ReferenciaUI[] = [];
   loading = false;
   guardando = false;
@@ -164,8 +179,20 @@ export class ReferenciasComponent implements OnInit {
   }
 
   private toForm(r: ReferenciaDto): UpsertReferenciaRequest {
-    const { referenciaId, fechaRegistro, ...rest } = r;
-    return rest;
+    return {
+      tipoReferencia: r.tipoReferencia,
+      experienciaId: r.experienciaId,
+      nombre: r.nombre,
+      apellido: r.apellido,
+      email: r.email,
+      telefono: r.telefono,
+      parentesco: r.parentesco,
+      cargo: r.cargo,
+      empresa: r.empresa,
+      relacion: r.relacion,
+      observaciones: r.observaciones,
+      adjuntoSoporte: r.adjuntoSoporte,
+    };
   }
 
   agregar(): void {
@@ -203,7 +230,53 @@ export class ReferenciasComponent implements OnInit {
     this.referencias.unshift(nueva);
   }
 
+  tituloCabecera(ref: ReferenciaUI): string {
+    const usarForm = ref.referenciaId === 0 || ref.expanded;
+    const nombre = (usarForm ? ref.form.nombre : ref.nombre) ?? '';
+    const apellido = (usarForm ? ref.form.apellido : ref.apellido) ?? '';
+    const linea = `${nombre} ${apellido}`.trim();
+    return linea || 'Nueva referencia';
+  }
+
+  subtituloCabecera(ref: ReferenciaUI): string {
+    const usarForm = ref.referenciaId === 0 || ref.expanded;
+    const cargo = usarForm ? ref.form.cargo : ref.cargo;
+    const empresa = usarForm ? ref.form.empresa : ref.empresa;
+    const c = (cargo ?? '').trim();
+    const e = (empresa ?? '').trim();
+    if (c && e) return `${c} — ${e}`;
+    return c || e || '—';
+  }
+
+  tipoRef(ref: ReferenciaUI): string {
+    return ref.referenciaId === 0 || ref.expanded ? ref.form.tipoReferencia : ref.tipoReferencia;
+  }
+
   guardar(ref: ReferenciaUI): void {
+    const nombre = (ref.form.nombre ?? '').trim();
+    if (!nombre) {
+      this.notificationService.warning(FORM_MESSAGES.referencias.requiredNombre);
+      return;
+    }
+    const emailRaw = (ref.form.email ?? '').trim();
+    if (emailRaw && !isValidEmail(emailRaw)) {
+      this.notificationService.warning(FORM_MESSAGES.referencias.invalidEmail);
+      return;
+    }
+
+    ref.form = {
+      ...ref.form,
+      nombre,
+      apellido: ref.form.apellido?.trim() || null,
+      email: emailRaw || null,
+      telefono: ref.form.telefono?.trim() || null,
+      parentesco: ref.form.parentesco?.trim() || null,
+      cargo: ref.form.cargo?.trim() || null,
+      empresa: ref.form.empresa?.trim() || null,
+      relacion: ref.form.relacion?.trim() || null,
+      observaciones: ref.form.observaciones?.trim() || null,
+    };
+
     this.guardando = true;
     const obs = ref.referenciaId === 0
       ? this.cvEditorService.createReferencia(ref.form)
@@ -215,18 +288,20 @@ export class ReferenciasComponent implements OnInit {
         this.guardando = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.guardando = false;
-        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
       }
     });
   }
 
+  cancelar(ref: ReferenciaUI): void {
+    if (ref.referenciaId !== 0) return;
+    this.referencias = this.referencias.filter(r => r !== ref);
+  }
+
   eliminar(ref: ReferenciaUI): void {
-    if (ref.referenciaId === 0) {
-      this.referencias = this.referencias.filter(r => r !== ref);
-      return;
-    }
+    if (ref.referenciaId === 0) return;
     if (!confirm('¿Eliminar esta referencia?')) return;
     this.cvEditorService.deleteReferencia(ref.referenciaId).subscribe({
       next: () => {

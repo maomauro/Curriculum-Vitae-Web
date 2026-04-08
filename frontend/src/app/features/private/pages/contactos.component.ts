@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DashboardService, ContactoDto } from '../../../core/services/private/dashboard.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-contactos',
@@ -151,7 +153,8 @@ export class ContactosComponent implements OnInit {
   marcarLeido(c: ContactoDto): void {
     this.dashboardService.marcarContactoLeido(c.visitanteContactoId).subscribe({
       next: () => { c.esLeido = true; },
-      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 

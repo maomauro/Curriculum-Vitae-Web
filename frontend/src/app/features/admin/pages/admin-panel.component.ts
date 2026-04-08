@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/admin/admin.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-admin-panel',
@@ -269,7 +271,8 @@ export class AdminPanelComponent implements OnInit {
         u.estado = res.estado;
         this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
       },
-      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 
@@ -293,8 +296,8 @@ export class AdminPanelComponent implements OnInit {
           this.rolesGuardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: (err) => {
-          this.rolesError = err?.error?.message ?? 'No se pudo quitar el rol.';
+        error: (error: HttpErrorResponse) => {
+          this.rolesError = extractApiErrorMessage(error) ?? 'No se pudo quitar el rol.';
           this.rolesGuardando = false;
         }
       });
@@ -305,8 +308,8 @@ export class AdminPanelComponent implements OnInit {
           this.rolesGuardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: (err) => {
-          this.rolesError = err?.error?.message ?? 'No se pudo asignar el rol.';
+        error: (error: HttpErrorResponse) => {
+          this.rolesError = extractApiErrorMessage(error) ?? 'No se pudo asignar el rol.';
           this.rolesGuardando = false;
         }
       });

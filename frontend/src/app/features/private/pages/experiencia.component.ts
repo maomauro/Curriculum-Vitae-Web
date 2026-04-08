@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService, ExperienciaDto, UpsertExperienciaRequest } from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage, getTodayDateString, normalizeDateOrNull } from '../../../core/utils/form-validation.util';
 
 interface ExperienciaUI extends ExperienciaDto {
   expanded: boolean;
@@ -97,11 +100,11 @@ interface ExperienciaUI extends ExperienciaDto {
             </div>
             <div class="col-md-3">
               <label class="form-label">Fecha inicio</label>
-              <input type="date" class="form-control" [(ngModel)]="exp.form.fechaInicio">
+              <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="exp.form.fechaInicio">
             </div>
             <div class="col-md-3">
               <label class="form-label">Fecha fin</label>
-              <input type="date" class="form-control" [(ngModel)]="exp.form.fechaFin"
+              <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="exp.form.fechaFin"
                      [disabled]="exp.form.esActual">
             </div>
             <div class="col-md-6">
@@ -132,6 +135,7 @@ export class ExperienciaComponent implements OnInit {
   experiencias: ExperienciaUI[] = [];
   loading = false;
   guardando = false;
+  todayDate = getTodayDateString();
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -174,29 +178,45 @@ export class ExperienciaComponent implements OnInit {
   }
 
   guardar(exp: ExperienciaUI): void {
+    const payload: UpsertExperienciaRequest = {
+      ...exp.form,
+      fechaInicio: normalizeDateOrNull(exp.form.fechaInicio),
+      fechaFin: normalizeDateOrNull(exp.form.fechaFin)
+    };
+
+    if (exp.form.fechaInicio && !payload.fechaInicio) {
+      this.notificationService.warning(FORM_MESSAGES.experiencia.invalidDate);
+      return;
+    }
+
+    if (!exp.form.esActual && exp.form.fechaFin && !payload.fechaFin) {
+      this.notificationService.warning(FORM_MESSAGES.experiencia.invalidDate);
+      return;
+    }
+
     this.guardando = true;
     if (exp.experienciaId === 0) {
-      this.cvEditorService.createExperiencia(exp.form).subscribe({
+      this.cvEditorService.createExperiencia(payload).subscribe({
         next: creada => {
           Object.assign(exp, creada, { expanded: false, form: this.toForm(creada) });
           this.guardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.guardando = false;
-          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
         }
       });
     } else {
-      this.cvEditorService.updateExperiencia(exp.experienciaId, exp.form).subscribe({
+      this.cvEditorService.updateExperiencia(exp.experienciaId, payload).subscribe({
         next: actualizada => {
           Object.assign(exp, actualizada, { expanded: false, form: this.toForm(actualizada) });
           this.guardando = false;
           this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: () => {
+        error: (error: HttpErrorResponse) => {
           this.guardando = false;
-          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
         }
       });
     }

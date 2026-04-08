@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-register',
@@ -91,11 +92,9 @@ export class RegisterComponent {
         });
       },
       error: (err: HttpErrorResponse) => {
-        const body = err.error as { message?: string } | null;
         this.errorMsg =
-          typeof body?.message === 'string'
-            ? body.message
-            : 'No se pudo crear la cuenta. Revisa la consola o que el API y la base de datos estén en marcha.';
+          extractApiErrorMessage(err) ||
+          'No se pudo crear la cuenta. Revisa la consola o que el API y la base de datos estén en marcha.';
         this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
         this.loading = false;
       }

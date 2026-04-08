@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-recuperar-contrasena',
@@ -72,9 +74,9 @@ export class RecuperarContrasenaComponent {
         this.loading = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.loading = false;
-        this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.operationError);
       }
     });
   }

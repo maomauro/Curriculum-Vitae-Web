@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -22,7 +22,19 @@ public class CvEditorService : ICvEditorService
         var e = await _context.Personales
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.CurriculumId == curriculumId, ct);
-        return e is null ? null : MapPersonales(e);
+        if (e is null)
+        {
+            var empty = new Personales
+            {
+                CurriculumId = curriculumId,
+                PrimerNombre = string.Empty,
+                PrimerApellido = string.Empty,
+                PrivacidadEmail = "Publico",
+                PrivacidadTelefono = "Publico"
+            };
+            return MapPersonales(empty);
+        }
+        return MapPersonales(e);
     }
 
     public async Task<PersonalesDto> UpsertPersonalesAsync(int curriculumId, UpsertPersonalesRequest r, CancellationToken ct = default)
@@ -47,9 +59,9 @@ public class CvEditorService : ICvEditorService
         existing.VisaNumero = r.VisaNumero;
         existing.VisaVigencia = r.VisaVigencia;
         existing.VisaClase = r.VisaClase;
-        existing.PrimerNombre = r.PrimerNombre;
+        existing.PrimerNombre = (r.PrimerNombre ?? string.Empty).Trim();
         existing.SegundoNombre = r.SegundoNombre;
-        existing.PrimerApellido = r.PrimerApellido;
+        existing.PrimerApellido = (r.PrimerApellido ?? string.Empty).Trim();
         existing.SegundoApellido = r.SegundoApellido;
         existing.FechaNacimiento = r.FechaNacimiento;
         existing.LugarNacimiento = r.LugarNacimiento;
@@ -70,8 +82,8 @@ public class CvEditorService : ICvEditorService
         existing.Direccion = r.Direccion;
         existing.TipoResidencia = r.TipoResidencia;
         existing.FotoUrl = r.FotoUrl;
-        existing.PrivacidadEmail = r.PrivacidadEmail;
-        existing.PrivacidadTelefono = r.PrivacidadTelefono;
+        existing.PrivacidadEmail = NormalizarPrivacidadEmail(r.PrivacidadEmail);
+        existing.PrivacidadTelefono = NormalizarPrivacidadTelefono(r.PrivacidadTelefono);
 
         await _context.SaveChangesAsync(ct);
         return MapPersonales(existing);
@@ -442,6 +454,32 @@ public class CvEditorService : ICvEditorService
             throw new UnauthorizedAccessException($"{typeof(T).Name} {id} no pertenece al curriculum {curriculumId}.");
 
         return entity;
+    }
+
+    private static string NormalizarPrivacidadEmail(string? valor)
+    {
+        return valor?.Trim() switch
+        {
+            "Publico" => "Publico",
+            "SoloFormulario" => "SoloFormulario",
+            "Oculto" => "Oculto",
+            // Compatibilidad hacia atrás con frontend previo
+            "Privado" => "Oculto",
+            _ => "Publico"
+        };
+    }
+
+    private static string NormalizarPrivacidadTelefono(string? valor)
+    {
+        return valor?.Trim() switch
+        {
+            "Publico" => "Publico",
+            "Parcial" => "Parcial",
+            "Oculto" => "Oculto",
+            // Compatibilidad hacia atrás con frontend previo
+            "Privado" => "Oculto",
+            _ => "Publico"
+        };
     }
 
     // â”€â”€ Mappers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

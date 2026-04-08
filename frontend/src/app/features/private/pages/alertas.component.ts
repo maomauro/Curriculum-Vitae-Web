@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertasService, AlertaVisitaDto } from '../../../core/services/private/alertas.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-alertas',
@@ -171,7 +173,8 @@ export class AlertasComponent implements OnInit {
     if (alerta.esLeida) return;
     this.alertasService.marcarLeida(alerta.alertaVisitaId).subscribe({
       next: () => { alerta.esLeida = true; this.aplicarFiltros(); },
-      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 
@@ -182,9 +185,8 @@ export class AlertasComponent implements OnInit {
         this.aplicarFiltros();
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
-      error: () => {
-        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
-      }
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 

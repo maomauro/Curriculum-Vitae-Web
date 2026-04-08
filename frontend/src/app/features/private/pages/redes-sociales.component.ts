@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService, RedSocialDto, UpsertRedSocialRequest } from '../../../core/services/private/cv-editor.service';
+import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 interface RedSocialUI extends RedSocialDto {
   editando: boolean;
@@ -24,92 +27,99 @@ const REDES_OPCIONES = [
   standalone: false,
   template: `
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header" *ngIf="!embedded">
       <div>
         <h4><i class="bi bi-share-fill me-2 text-primary"></i>Redes Sociales</h4>
         <span class="text-muted small">Perfil público, portafolio y redes profesionales</span>
       </div>
-      <button class="btn btn-primary btn-sm" (click)="agregar()">
+      <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+        <i class="bi bi-plus-circle me-1"></i>Agregar red
+      </button>
+    </div>
+
+    <div class="d-flex justify-content-end mb-2" *ngIf="embedded">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregar()">
         <i class="bi bi-plus-circle me-1"></i>Agregar red
       </button>
     </div>
 
     <!-- Loading -->
-    <div *ngIf="loading" class="text-center py-5">
+    <div *ngIf="loading" class="text-center" [class.py-5]="!embedded" [class.py-3]="embedded">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando...</span>
       </div>
     </div>
 
     <!-- Sin datos -->
-    <div *ngIf="!loading && redes.length === 0" class="text-center py-5 text-muted">
+    <div *ngIf="!loading && redes.length === 0" class="text-center text-muted" [class.py-5]="!embedded" [class.py-3]="embedded">
       <i class="bi bi-share display-5"></i>
       <p class="mt-3">No tienes redes sociales registradas. Agrega la primera.</p>
     </div>
 
-    <!-- Lista -->
-    <div class="row g-3">
-      <div class="col-md-6" *ngFor="let red of redes">
-        <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+    <!-- Lista (ancho completo como referencias / familiares) -->
+    <div *ngFor="let red of redes">
+      <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
 
-          <!-- Vista normal -->
-          <div *ngIf="!red.editando" class="d-flex align-items-center gap-3">
-            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#ebf2ff;font-size:1.3rem;"
-                 [style.color]="iconoColor(red.nombreRed)">
-              <i class="bi" [class]="iconoClase(red.nombreRed)"></i>
-            </div>
-            <div class="flex-grow-1 overflow-hidden">
-              <div class="fw-semibold">{{ red.nombreRed }}</div>
-              <div class="text-muted small text-truncate">
-                {{ red.linkPublico || red.usuarioContacto || '—' }}
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-secondary" (click)="red.editando = true; red.form = toForm(red)">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" (click)="eliminar(red)">
-                <i class="bi bi-trash"></i>
-              </button>
+        <!-- Vista normal -->
+        <div *ngIf="!red.editando" class="p-4 d-flex align-items-center gap-3">
+          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width:44px;height:44px;background:#ebf2ff;font-size:1.3rem;"
+               [style.color]="iconoColor(red.nombreRed)">
+            <i class="bi" [class]="iconoClase(red.nombreRed)"></i>
+          </div>
+          <div class="flex-grow-1 overflow-hidden">
+            <div class="fw-semibold">{{ red.nombreRed }}</div>
+            <div class="text-muted small text-truncate">
+              {{ red.linkPublico || red.usuarioContacto || '—' }}
             </div>
           </div>
-
-          <!-- Modo edición -->
-          <div *ngIf="red.editando">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label">Red social</label>
-                <select class="form-select" [(ngModel)]="red.form.nombreRed">
-                  <option *ngFor="let op of redesOpciones" [value]="op.nombre">{{ op.nombre }}</option>
-                </select>
-              </div>
-              <div class="col-12">
-                <label class="form-label">URL / Enlace público</label>
-                <input type="url" class="form-control" [(ngModel)]="red.form.linkPublico"
-                       placeholder="https://...">
-              </div>
-              <div class="col-12">
-                <label class="form-label">Usuario / Contacto</label>
-                <input type="text" class="form-control" [(ngModel)]="red.form.usuarioContacto"
-                       placeholder="@usuario">
-              </div>
-            </div>
-            <div class="d-flex gap-2 mt-3 justify-content-end">
-              <button class="btn btn-outline-secondary btn-sm" (click)="cancelar(red)">Cancelar</button>
-              <button class="btn btn-primary btn-sm" (click)="guardar(red)" [disabled]="guardando">
-                <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
-                <i *ngIf="!guardando" class="bi bi-floppy me-1"></i>Guardar
-              </button>
-            </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    (click)="red.editando = true; red.form = toForm(red)">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminar(red)">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
-
         </div>
+
+        <!-- Modo edición -->
+        <div *ngIf="red.editando" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <label class="form-label">Red social</label>
+              <select class="form-select" [(ngModel)]="red.form.nombreRed">
+                <option *ngFor="let op of redesOpciones" [value]="op.nombre">{{ op.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Usuario / Contacto</label>
+              <input type="text" class="form-control" [(ngModel)]="red.form.usuarioContacto"
+                     placeholder="@usuario">
+            </div>
+            <div class="col-12">
+              <label class="form-label">URL / Enlace público</label>
+              <input type="url" class="form-control" [(ngModel)]="red.form.linkPublico"
+                     placeholder="https://...">
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-3 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelar(red)">Cancelar</button>
+            <button type="button" class="btn btn-primary btn-sm" (click)="guardar(red)" [disabled]="guardando">
+              <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!guardando" class="bi bi-floppy me-1"></i>Guardar
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   `,
 })
 export class RedesSocialesComponent implements OnInit {
+  @Input() embedded = false;
+
   redes: RedSocialUI[] = [];
   redesOpciones = REDES_OPCIONES;
   loading = false;
@@ -154,6 +164,17 @@ export class RedesSocialesComponent implements OnInit {
   }
 
   guardar(red: RedSocialUI): void {
+    const nombreRed = (red.form.nombreRed ?? '').trim();
+    if (!nombreRed) {
+      this.notificationService.warning(FORM_MESSAGES.redes.requiredNombreRed);
+      return;
+    }
+    red.form = {
+      nombreRed,
+      linkPublico: red.form.linkPublico?.trim() || null,
+      usuarioContacto: red.form.usuarioContacto?.trim() || null,
+    };
+
     this.guardando = true;
     const obs = red.redSocialId === 0
       ? this.cvEditorService.createRedSocial(red.form)
@@ -165,9 +186,9 @@ export class RedesSocialesComponent implements OnInit {
         this.guardando = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.guardando = false;
-        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
       }
     });
   }
