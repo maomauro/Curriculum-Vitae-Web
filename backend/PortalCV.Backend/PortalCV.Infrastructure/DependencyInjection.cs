@@ -7,8 +7,6 @@ using PortalCV.Infrastructure.Data;
 using PortalCV.Infrastructure.Repositories;
 using PortalCV.Infrastructure.Services;
 
-using PortalCV.Infrastructure.Services.Dashboard;
-
 namespace PortalCV.Infrastructure;
 
 public static class DependencyInjection
