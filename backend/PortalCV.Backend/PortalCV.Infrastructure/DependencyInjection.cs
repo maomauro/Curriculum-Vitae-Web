@@ -7,6 +7,8 @@ using PortalCV.Infrastructure.Data;
 using PortalCV.Infrastructure.Repositories;
 using PortalCV.Infrastructure.Services;
 
+using PortalCV.Infrastructure.Services.Dashboard;
+
 namespace PortalCV.Infrastructure;
 
 public static class DependencyInjection
@@ -32,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IPublicCvService, PublicCvService>();
         services.AddScoped<ICvEditorService, CvEditorService>();
         services.AddScoped<IAlertaService, AlertaService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         return services;
     }
