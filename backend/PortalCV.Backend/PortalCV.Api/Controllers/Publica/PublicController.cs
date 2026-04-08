@@ -67,13 +67,13 @@ public class PublicController : ControllerBase
         => Ok(await _publicCvService.GetFiltrosAsync(ct));
 
     /// <summary>Formulario de contacto para el propietario de un CV.</summary>
-    [HttpPost("cvs/{curriculumId:int}/contactar")]
+    [HttpPost("cvs/{urlPublica}/contactar")]
     public async Task<IActionResult> Contactar(
-        int curriculumId,
+        string urlPublica,
         [FromBody] ContactarCvRequest request,
         CancellationToken ct = default)
     {
-        await _publicCvService.ContactarAsync(curriculumId, request, ct);
+        await _publicCvService.ContactarAsync(urlPublica, request, ct);
         return Ok(new { message = "Mensaje enviado correctamente." });
     }
 }

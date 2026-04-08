@@ -1,12 +1,300 @@
-// Variables de paleta — Portal CV
-// Se sobreescriben antes de que AdminLTE/Bootstrap carguen sus tokens
+// ── Paleta Portal CV ─────────────────────────────────────────────────────────
 :root {
-  --bs-primary:        #2c7be5;   // Azul corporativo
+  // Bootstrap overrides
+  --bs-primary:        #2c7be5;
   --bs-primary-rgb:    44, 123, 229;
   --bs-secondary:      #6c757d;
-  --bs-success:        #00b74a;
+  --bs-success:        #28a745;
   --bs-info:           #39c0ed;
-  --bs-warning:        #ffa900;
-  --bs-danger:         #f93154;
+  --bs-warning:        #fd7e14;
+  --bs-danger:         #dc3545;
+
+  // Portal CV design tokens
+  --cv-primary:        #2c7be5;
+  --cv-sidebar-bg:     #2d3748;
+  --cv-topbar-bg:      #343a40;
+  --cv-main-bg:        #f4f6f9;
+  --cv-card-shadow:    0 1px 6px rgba(0,0,0,.08);
+  --cv-card-radius:    12px;
+
+  // Avatar colors
+  --cv-avatar-blue:    #2c7be5;
+  --cv-avatar-green:   #28a745;
+  --cv-avatar-purple:  #6f42c1;
+  --cv-avatar-orange:  #fd7e14;
+  --cv-avatar-teal:    #20c997;
+  --cv-avatar-red:     #dc3545;
+
+  // Badge tech
+  --cv-badge-tech-bg:  #ebf3fb;
+  --cv-badge-tech-fg:  #2c7be5;
 }
-/* You can add global styles to this file, and also import other style files */
+
+// ── Layout base ───────────────────────────────────────────────────────────────
+body {
+  font-family: 'Source Sans 3', 'Source Sans Pro', sans-serif;
+  background: var(--cv-main-bg);
+}
+
+// ── Avatar circle ─────────────────────────────────────────────────────────────
+.avatar-circle {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.1rem; color: #fff;
+  flex-shrink: 0;
+
+  &.blue   { background: var(--cv-avatar-blue); }
+  &.green  { background: var(--cv-avatar-green); }
+  &.purple { background: var(--cv-avatar-purple); }
+  &.orange { background: var(--cv-avatar-orange); }
+  &.teal   { background: var(--cv-avatar-teal); }
+  &.red    { background: var(--cv-avatar-red); }
+}
+
+// ── Badge tech ────────────────────────────────────────────────────────────────
+.badge-tech {
+  background: var(--cv-badge-tech-bg);
+  color: var(--cv-badge-tech-fg);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: .78rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+// ── Card CV (pública) ─────────────────────────────────────────────────────────
+.card-cv {
+  border: none !important;
+  border-radius: var(--cv-card-radius) !important;
+  box-shadow: var(--cv-card-shadow) !important;
+  transition: box-shadow .2s, transform .2s;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(44,123,229,.15) !important;
+    transform: translateY(-2px);
+  }
+}
+
+// ── Sidebar (AdminLayout) ─────────────────────────────────────────────────────
+.cv-sidebar {
+  background: var(--cv-sidebar-bg);
+  width: 220px;
+  min-height: calc(100vh - 56px);
+  position: fixed; top: 56px; left: 0;
+  padding: 20px 0;
+
+  .sidebar-user {
+    padding: 0 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    margin-bottom: 8px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  .sidebar-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--cv-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;
+  }
+
+  .sidebar-username { color: #fff; font-weight: 700; font-size: .95rem; }
+  .sidebar-role     { color: #a0aec0; font-size: .78rem; }
+
+  .nav-item-sidebar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px; color: #a0aec0; text-decoration: none;
+    font-size: .875rem; white-space: nowrap;
+    transition: background .2s, color .2s;
+
+    i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+    &:hover { background: rgba(255,255,255,.07); color: #fff; }
+
+    &.active {
+      background: rgba(44,123,229,.2);
+      color: #fff;
+      border-left: 3px solid var(--cv-primary);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: #dc3545; color: #fff;
+      font-size: .7rem; font-weight: 700;
+      padding: 2px 7px; border-radius: 10px;
+    }
+  }
+}
+
+// ── Topbar (AdminLayout) ──────────────────────────────────────────────────────
+.cv-topbar {
+  background: var(--cv-topbar-bg);
+  height: 56px;
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 12px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+
+  .brand { color: #fff; font-size: 1.15rem; font-weight: 700; text-decoration: none; margin-right: auto; }
+  .brand span { color: var(--cv-primary); }
+
+  .user-menu { display: flex; align-items: center; gap: 8px; color: #fff; font-size: .875rem; cursor: pointer; }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--cv-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700;
+  }
+
+  .btn-icon {
+    background: none; border: none; color: #adb5bd;
+    font-size: 1.1rem; cursor: pointer; padding: 6px 8px;
+    border-radius: 6px; line-height: 1;
+
+    &:hover { background: rgba(255,255,255,.1); color: #fff; }
+  }
+
+  .notif-badge {
+    background: #dc3545; color: #fff;
+    font-size: .65rem; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 4px; right: 4px;
+  }
+}
+
+// ── Main content área (AdminLayout) ──────────────────────────────────────────
+.cv-main {
+  margin-left: 220px;
+  margin-top: 56px;
+  padding: 28px;
+}
+
+// ── Page header ───────────────────────────────────────────────────────────────
+.page-header {
+  background: #fff; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+
+  h4 { font-weight: 700; color: #212529; margin: 0; }
+}
+
+// ── Sección card (editor privado) ─────────────────────────────────────────────
+.seccion-card {
+  background: #fff; border-radius: 10px;
+  padding: 24px; margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.seccion-titulo {
+  font-weight: 700; font-size: 1rem; color: #212529;
+  margin-bottom: 4px;
+  i { margin-right: 8px; color: var(--cv-primary); }
+}
+
+.seccion-subtitulo {
+  font-size: .85rem; color: #6c757d; margin-bottom: 16px;
+}
+
+// ── List item (arrays en formularios) ─────────────────────────────────────────
+.list-item {
+  border: 1px solid #e9ecef; border-radius: 8px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  background: #fff;
+
+  .list-item-body { flex: 1; min-width: 0; }
+  .list-item-title { font-weight: 600; font-size: .9rem; color: #212529; }
+  .list-item-sub   { font-size: .8rem; color: #6c757d; }
+}
+
+// ── Detalle CV (pública) ──────────────────────────────────────────────────────
+.sidebar-cv {
+  background: #fff; border-radius: 12px;
+  box-shadow: var(--cv-card-shadow);
+  padding: 24px;
+}
+
+.content-cv {
+  background: #fff; border-radius: 12px;
+  box-shadow: var(--cv-card-shadow);
+  padding: 28px;
+}
+
+.section-title {
+  font-size: .7rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: #6c757d;
+  margin-bottom: 14px; padding-bottom: 6px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.badge-idioma {
+  background: #eef3fb; color: var(--cv-primary);
+  border-radius: 6px; padding: 4px 10px;
+  font-size: .8rem; font-weight: 600;
+}
+
+// ── Timeline (experiencia/educación) ──────────────────────────────────────────
+.timeline { position: relative; padding-left: 20px; }
+.timeline::before {
+  content: ''; position: absolute; left: 7px; top: 6px;
+  bottom: 6px; width: 2px; background: #e9ecef;
+}
+
+.timeline-item {
+  position: relative; margin-bottom: 20px;
+
+  &::before {
+    content: ''; position: absolute;
+    left: -16px; top: 6px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--cv-primary);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--cv-primary);
+  }
+}
+
+.timeline-period { font-size: .78rem; color: #6c757d; font-weight: 600; margin-bottom: 2px; }
+.timeline-company { font-weight: 700; font-size: .95rem; color: #212529; }
+.timeline-role    { font-size: .875rem; color: var(--cv-primary); margin-bottom: 4px; }
+.timeline-desc    { font-size: .85rem; color: #495057; }
+
+// ── Alert items (alertas privadas) ────────────────────────────────────────────
+.alert-item {
+  background: #fff; border-radius: 10px;
+  padding: 16px 20px; margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  display: flex; gap: 16px; align-items: flex-start;
+  border-left: 4px solid transparent;
+  transition: box-shadow .2s;
+
+  &:hover { box-shadow: 0 3px 12px rgba(0,0,0,.1); }
+  &.unread { background: #ebf3fb; border-left-color: var(--cv-primary); }
+  &.type-contact  { border-left-color: var(--cv-primary); }
+  &.type-view     { border-left-color: #28a745; }
+  &.type-download { border-left-color: #fd7e14; }
+  &.type-system   { border-left-color: #6c757d; }
+}
+
+.alert-icon {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+
+  &.contact  { background: #ebf3fb; color: var(--cv-primary); }
+  &.view     { background: #e6f9ee; color: #28a745; }
+  &.download { background: #fff3e0; color: #fd7e14; }
+  &.system   { background: #f1f3f5; color: #6c757d; }
+}
+
+.alert-body  { flex: 1; min-width: 0; }
+.alert-title { font-weight: 700; font-size: .9rem; color: #212529; margin-bottom: 3px; }
+.alert-desc  { font-size: .85rem; color: #495057; margin-bottom: 5px; }
+.alert-meta  { font-size: .78rem; color: #6c757d; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.unread-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--cv-primary); flex-shrink: 0; margin-top: 6px;
+}
+

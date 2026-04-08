@@ -8,6 +8,6 @@ public interface IPublicCvService
     Task<CvDetalleDto?> GetDetalleAsync(string urlPublica, CancellationToken ct = default);
     Task<CvEstadisticasDto?> GetEstadisticasAsync(string urlPublica, CancellationToken ct = default);
     Task<FiltrosPublicosDto> GetFiltrosAsync(CancellationToken ct = default);
-    Task ContactarAsync(int curriculumId, ContactarCvRequest request, CancellationToken ct = default);
+    Task ContactarAsync(string urlPublica, ContactarCvRequest request, CancellationToken ct = default);
 }
 

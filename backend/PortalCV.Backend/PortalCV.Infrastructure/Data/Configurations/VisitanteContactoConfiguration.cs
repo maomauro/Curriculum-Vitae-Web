@@ -20,6 +20,7 @@ public class VisitanteContactoConfiguration : IEntityTypeConfiguration<Visitante
         builder.Property(v => v.ComoMeEncontraste).HasMaxLength(100);
         builder.Property(v => v.Mensaje).HasColumnType("nvarchar(max)");
         builder.Property(v => v.FechaContacto).HasDefaultValueSql("GETDATE()");
+        builder.Property(v => v.EsLeido).HasDefaultValue(false);
 
         builder.HasOne(v => v.Curriculum)
             .WithMany(c => c.VisitantesContacto)
