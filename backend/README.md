@@ -30,25 +30,34 @@ Contiene las **entidades puras del negocio**, sin dependencias externas.
 
 ### Entidades (`Entities/`)
 
-| Archivo | Qué representa |
-|---------|----------------|
-| `Usuario.cs` | Cuenta de usuario: email, hash de contraseña, estado (Activo/Inactivo) |
-| `Rol.cs` | Roles del sistema (Visitante, Publicador, Admin) |
-| `UsuarioRol.cs` | Tabla pivot que relaciona usuarios con roles (M:N) |
-| `Curriculum.cs` | El CV en sí: URL pública, estado, contadores de visitas/contactos |
-| `Personales.cs` | Datos personales del profesional (nombre, doc., contacto, residencia) |
-| `Perfil.cs` | Descripciones del perfil profesional o aspiraciones salariales |
-| `Experiencia.cs` | Experiencia laboral (empresa, cargo, fechas, contrato) |
-| `Formacion.cs` | Estudios académicos y capacitaciones |
-| `Habilidad.cs` | Competencias técnicas/idiomas con nivel y categoría |
-| `Proyecto.cs` | Proyectos destacados con descripción y stack tecnológico |
-| `Referencia.cs` | Referencias personales o laborales |
-| `RedSocial.cs` | Perfiles en LinkedIn, GitHub, etc. |
-| `FamiliarContacto.cs` | Contactos de emergencia o familiares |
-| `VisibilidadSeccion.cs` | Controla qué secciones del CV son visibles públicamente |
-| `VisitanteContacto.cs` | Registro de cada mensaje enviado por un reclutador |
-| `AlertaVisita.cs` | Notificación generada al recibir una visita o contacto |
-| `EstadisticasPublicas.cs` | Totales acumulados de visitas/contactos por CV |
+Organizadas siguiendo la misma distribución de zonas funcionales que los prototipos (`docs/diseño/prototipos/`). Todas las entidades comparten el namespace plano `PortalCV.Domain.Entities`.
+
+```
+Entities/
+├── Auth/       ← identidad y control de acceso
+├── Privada/    ← CV y toda la información del publicador
+└── Publica/    ← entidades generadas desde la zona pública
+```
+
+| Subcarpeta | Archivo | Qué representa |
+|------------|---------|----------------|
+| `Auth/` | `Usuario.cs` | Cuenta de usuario: email, hash de contraseña, estado (Activo/Inactivo) |
+| `Auth/` | `Rol.cs` | Roles del sistema (Visitante, Publicador, Admin) |
+| `Auth/` | `UsuarioRol.cs` | Tabla pivot que relaciona usuarios con roles (M:N) |
+| `Privada/` | `Curriculum.cs` | El CV en sí: URL pública, estado, contadores de visitas/contactos |
+| `Privada/` | `Personales.cs` | Datos personales del profesional (nombre, doc., contacto, residencia) |
+| `Privada/` | `Perfil.cs` | Descripciones del perfil profesional o aspiraciones salariales |
+| `Privada/` | `Experiencia.cs` | Experiencia laboral (empresa, cargo, fechas, contrato) |
+| `Privada/` | `Formacion.cs` | Estudios académicos y capacitaciones |
+| `Privada/` | `Habilidad.cs` | Competencias técnicas/idiomas con nivel y categoría |
+| `Privada/` | `Proyecto.cs` | Proyectos destacados con descripción y stack tecnológico |
+| `Privada/` | `Referencia.cs` | Referencias personales o laborales |
+| `Privada/` | `RedSocial.cs` | Perfiles en LinkedIn, GitHub, etc. |
+| `Privada/` | `FamiliarContacto.cs` | Contactos de emergencia o familiares |
+| `Privada/` | `VisibilidadSeccion.cs` | Controla qué secciones del CV son visibles públicamente |
+| `Privada/` | `AlertaVisita.cs` | Notificación generada al recibir una visita o contacto |
+| `Privada/` | `EstadisticasPublicas.cs` | Totales acumulados de visitas/contactos por CV |
+| `Publica/` | `VisitanteContacto.cs` | Registro de cada mensaje enviado por un reclutador (origen: zona pública) |
 
 > `Enums/` y `Exceptions/` están reservados para uso futuro.
 
@@ -60,31 +69,47 @@ Define los **contratos** (interfaces y DTOs) que el resto de las capas deben res
 
 ### Interfaces (`Interfaces/`)
 
-Organizadas por dominio en subcarpetas que espejan los servicios de Infrastructure:
+Organizadas siguiendo la misma distribución de zonas funcionales que los prototipos (`docs/diseño/prototipos/`). Todos los archivos comparten el namespace plano `PortalCV.Application.Interfaces` independientemente de la subcarpeta física.
+
+```
+Interfaces/
+├── Auth/       ← contratos de autenticación
+├── Privada/    ← contratos del área privada (editor CV, repositorios, alertas, dashboard)
+└── Publica/    ← contratos del área pública
+```
 
 | Subcarpeta | Interfaz | Responsabilidad |
 |------------|----------|-----------------|
 | `Auth/` | `IAuthService` | Login y registro de usuarios |
-| `Public/` | `IPublicCvService` | Búsqueda pública de CVs, detalle, estadísticas, contacto |
-| `Cv/` | `ICvEditorService` | Edición del CV por el publicador (todas las secciones) |
-| `Cv/` | `ICurriculumRepository` | Queries especializadas: buscar por URL, por usuario, paginación con filtros |
-| `Cv/` | `IRepository<T>` | Repositorio genérico: GetById, GetAll, Find, Add, Update, Remove |
-| `Alertas/` | `IAlertaService` | Consultar y marcar alertas de visitas/contactos |
+| `Publica/` | `IPublicCvService` | Búsqueda pública de CVs, detalle, estadísticas, contacto |
+| `Privada/` | `ICvEditorService` | Edición del CV por el publicador (todas las secciones) |
+| `Privada/` | `ICurriculumRepository` | Queries especializadas: buscar por URL, por usuario, paginación con filtros |
+| `Privada/` | `IRepository<T>` | Repositorio genérico: GetById, GetAll, Find, Add, Update, Remove |
+| `Privada/` | `IAlertaService` | Consultar y marcar alertas de visitas/contactos |
+| `Privada/` | `IDashboardService` | Estadísticas del dashboard del publicador |
 
 ### DTOs (`DTOs/`)
 
-Objetos que viajan entre capas (requests y responses de la API). Cada dominio tiene su propia carpeta con un archivo por sección:
+Objetos que viajan entre capas (requests y responses de la API). Las carpetas siguen la misma distribución de zonas funcionales que los prototipos de diseño (`docs/diseño/prototipos/`):
+
+```
+DTOs/
+├── Admin/      ← panel de administración (usuarios, roles)
+├── Auth/       ← autenticación (login, registro, recuperar contraseña)
+├── Privada/    ← área privada del publicador (editor CV, dashboard, alertas, visibilidad)
+└── Publica/    ← área pública sin login (búsqueda, detalle, estadísticas, contacto)
+```
+
+**`Admin/AdminDtos.cs`**
+- `UsuarioAdminDto`, `RolDto`
 
 **`Auth/AuthDtos.cs`**
 - `LoginRequest`, `LoginResponse`, `RegisterRequest`, `RegisterResponse`
 
-**`Public/PublicDtos.cs`**
+**`Publica/PublicDtos.cs`**
 - `BuscarCvsQuery`, `CvListadoItemDto`, `CvListadoResponse`, `CvDetalleDto`, `CvEstadisticasDto`, `FiltrosPublicosDto`, `ContactarCvRequest`
 
-**`Alertas/AlertasDtos.cs`**
-- `AlertaVisitaDto`
-
-**`Curriculum/`** — un archivo por sección del CV:
+**`Privada/`** — un archivo por sección del área privada:
 
 | Archivo | DTOs que contiene |
 |---------|-------------------|
@@ -98,6 +123,8 @@ Objetos que viajan entre capas (requests y responses de la API). Cada dominio ti
 | `RedSocialDtos.cs` | `RedSocialDto`, `UpsertRedSocialRequest` |
 | `FamiliarContactoDtos.cs` | `FamiliarContactoDto`, `UpsertFamiliarContactoRequest` |
 | `VisibilidadDtos.cs` | `VisibilidadSeccionDto`, `UpdateVisibilidadRequest` |
+| `AlertasDtos.cs` | `AlertaVisitaDto` |
+| `DashboardDtos.cs` | `DashboardStatsDto`, `ContactoDto`, `NotificacionItemDto`, `NotificacionesResumenDto` |
 
 ---
 
@@ -123,14 +150,22 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 
 ### Servicios (`Services/`)
 
-Organizados en subcarpetas que espejan las interfaces de `Application/Interfaces/`:
+Organizados siguiendo la misma distribución de zonas funcionales que los prototipos (`docs/diseño/prototipos/`). Todos los archivos comparten el namespace plano `PortalCV.Infrastructure.Services`.
+
+```
+Services/
+├── Auth/     ← autenticación e identidad
+├── Privada/  ← CV, alertas y dashboard del publicador
+└── Publica/  ← CV público y contacto de visitantes
+```
 
 | Subcarpeta | Archivo | Función |
 |------------|---------|---------|
 | `Auth/` | `AuthService.cs` | Login (BCrypt + JWT) y registro (crear Usuario, asignar rol Publicador, generar Curriculum vacío con URL pública) |
-| `Public/` | `PublicCvService.cs` | Búsqueda paginada, detalle (+ registrar visita), estadísticas, filtros disponibles, formulario de contacto |
-| `Cv/` | `CvEditorService.cs` | CRUD completo de las 10 secciones del CV: Personales, Perfil, Experiencia, Formación, Habilidades, Proyectos, Referencias, Redes Sociales, Familiares, Visibilidad |
-| `Alertas/` | `AlertaService.cs` | Listar alertas (con opción de solo no leídas), marcar una leída, marcar todas leídas, contar no leídas |
+| `Privada/` | `CvEditorService.cs` | CRUD completo de las 10 secciones del CV: Personales, Perfil, Experiencia, Formación, Habilidades, Proyectos, Referencias, Redes Sociales, Familiares, Visibilidad |
+| `Privada/` | `AlertaService.cs` | Listar alertas (con opción de solo no leídas), marcar una leída, marcar todas leídas, contar no leídas |
+| `Privada/` | `DashboardService.cs` | Estadísticas agregadas del publicador: visitas, contactos y métricas del CV |
+| `Publica/` | `PublicCvService.cs` | Búsqueda paginada, detalle (+ registrar visita), estadísticas, filtros disponibles, formulario de contacto |
 
 ### Configuración de DI (`DependencyInjection.cs`)
 
@@ -144,23 +179,36 @@ Capa de entrada HTTP. Expone los endpoints REST y gestiona la configuración del
 
 ### Controladores (`Controllers/`)
 
+Organizados siguiendo la misma distribución de zonas funcionales que los prototipos (`docs/diseño/prototipos/`). Todos los archivos comparten el namespace plano `PortalCV.Api.Controllers`.
+
+```
+Controllers/
+├── Admin/      ← gestión del sistema (solo rol Admin)
+├── Auth/       ← autenticación y registro
+├── Privada/    ← área privada del publicador (CV, alertas, dashboard, contactos, notificaciones)
+└── Publica/    ← endpoints sin login
+```
+
 | Controlador | Ruta base | Acceso | Qué hace |
 |-------------|-----------|--------|----------|
-| `AuthController` | `/api/auth` | Público | Login, registro, me, recuperar contraseña |
-| `PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar |
-| `PersonalesController` | `/api/cv/personales` | Publicador/Admin | GET y PUT de datos personales |
-| `PerfilController` | `/api/cv/perfiles` | Publicador/Admin | CRUD de perfiles profesionales |
-| `ExperienciaController` | `/api/cv/experiencias` | Publicador/Admin | CRUD de experiencia laboral |
-| `FormacionController` | `/api/cv/formaciones` | Publicador/Admin | CRUD de formación académica |
-| `HabilidadController` | `/api/cv/habilidades` | Publicador/Admin | CRUD de habilidades |
-| `ProyectoController` | `/api/cv/proyectos` | Publicador/Admin | CRUD de proyectos |
-| `ReferenciaController` | `/api/cv/referencias` | Publicador/Admin | CRUD de referencias |
-| `RedSocialController` | `/api/cv/redes-sociales` | Publicador/Admin | CRUD de redes sociales |
-| `FamiliarContactoController` | `/api/cv/familiares` | Publicador/Admin | CRUD de contactos de emergencia |
-| `VisibilidadController` | `/api/cv/visibilidad` | Publicador/Admin | GET y PUT de visibilidad de secciones |
-| `AlertasController` | `/api/alertas` | Publicador/Admin | Consultar y marcar alertas |
-| `AdminController` | `/api/admin` | Solo Admin | Gestión de usuarios, roles y asignaciones |
-| `CvControllerBase` | *(base)* | — | Clase base: extrae `UsuarioId` y `CurriculumId` del JWT |
+| `Admin/AdminController` | `/api/admin` | Solo Admin | Gestión de usuarios, roles y asignaciones |
+| `Auth/AuthController` | `/api/auth` | Público | Login, registro, me, recuperar contraseña |
+| `Publica/PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar |
+| `Privada/CvControllerBase` | *(base)* | — | Clase base: extrae `UsuarioId` y `CurriculumId` del JWT |
+| `Privada/PersonalesController` | `/api/cv/personales` | Publicador/Admin | GET y PUT de datos personales |
+| `Privada/PerfilController` | `/api/cv/perfiles` | Publicador/Admin | CRUD de perfiles profesionales |
+| `Privada/ExperienciaController` | `/api/cv/experiencias` | Publicador/Admin | CRUD de experiencia laboral |
+| `Privada/FormacionController` | `/api/cv/formaciones` | Publicador/Admin | CRUD de formación académica |
+| `Privada/HabilidadController` | `/api/cv/habilidades` | Publicador/Admin | CRUD de habilidades |
+| `Privada/ProyectoController` | `/api/cv/proyectos` | Publicador/Admin | CRUD de proyectos |
+| `Privada/ReferenciaController` | `/api/cv/referencias` | Publicador/Admin | CRUD de referencias |
+| `Privada/RedSocialController` | `/api/cv/redes-sociales` | Publicador/Admin | CRUD de redes sociales |
+| `Privada/FamiliarContactoController` | `/api/cv/familiares` | Publicador/Admin | CRUD de contactos de emergencia |
+| `Privada/VisibilidadController` | `/api/cv/visibilidad` | Publicador/Admin | GET y PUT de visibilidad de secciones |
+| `Privada/AlertasController` | `/api/alertas` | Publicador/Admin | Consultar y marcar alertas |
+| `Privada/DashboardController` | `/api/dashboard` | Publicador/Admin | Estadísticas del dashboard |
+| `Privada/ContactosController` | `/api/contactos` | Publicador/Admin | Lista de contactos recibidos y marcar leído |
+| `Privada/NotificacionesController` | `/api/notificaciones` | Publicador/Admin | Notificaciones recientes |
 
 ### Contratos (`Contracts/Auth/`)
 
@@ -169,7 +217,9 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 | Archivo | Contenido |
 |---------|-----------|
 | `LoginRequest.cs` | Email + contraseña para el formulario de login |
-| `LoginResponse.cs` | Token JWT + datos básicos del usuario |
+| `LoginResponse.cs` | Token JWT + datos básicos del usuario autenticado |
+| `RegisterRequest.cs` | Datos necesarios para crear una cuenta nueva |
+| `ForgotPasswordRequest.cs` | Email para iniciar el flujo de recuperación de contraseña |
 | `RegisterRequest.cs` | Datos del formulario de registro |
 | `ForgotPasswordRequest.cs` | Email para recuperación de contraseña |
 
