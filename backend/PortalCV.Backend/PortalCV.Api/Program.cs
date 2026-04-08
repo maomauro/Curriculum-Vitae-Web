@@ -42,6 +42,9 @@ namespace PortalCV.Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
+                // Evita colisiones de nombres de esquema (varios DTOs con el mismo nombre corto).
+                options.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
+
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "PortalCV API",
@@ -119,13 +122,34 @@ namespace PortalCV.Api
 
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                // Swagger 2.0: máxima compatibilidad con Swagger UI (evita "valid version field" por caché o parsers viejos).
+                app.UseSwagger(options =>
+                {
+                    options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi2_0;
+                });
+                app.UseSwaggerUI(options =>
+                {
+                    // Query string para invalidar caché del swagger.json en el navegador.
+                    options.SwaggerEndpoint("v1/swagger.json?api=v2", "PortalCV API v1");
+                });
             }
 
-            app.UseHttpsRedirection();
+            // En desarrollo suele usarse el perfil "http" (solo :5005). UseHttpsRedirection()
+            // redirige a HTTPS y el navegador puede terminar en un puerto sin listener, o el
+            // usuario abre https:// en un puerto que solo sirve HTTP → "invalid response".
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
+
             app.UseAuthentication();
             app.UseAuthorization();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+            }
+
             app.MapControllers();
 
             app.Run();
