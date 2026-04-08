@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IPublicCvService, PublicCvService>();
         services.AddScoped<ICvEditorService, CvEditorService>();
         services.AddScoped<IAlertaService, AlertaService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         return services;
     }
