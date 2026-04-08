@@ -92,7 +92,9 @@ export class AuthService {
 
     return {
       id:           Number(payload['sub'] ?? 0),
-      nombre:       nombreCompleto ?? str(payload['nombre']) ?? str(payload['email']),
+      // En refresh no tenemos nombreCompleto del login; si el claim "nombre" no existe,
+      // usamos email para evitar que la UI muestre "Usuario".
+      nombre:       (nombreCompleto && nombreCompleto.trim()) || str(payload['nombre']) || str(payload['email']) || 'Usuario',
       email:        str(payload['email']),
       rol:          roles[0] ?? '',
       curriculumId: Number(payload['curriculum_id'] ?? 0),

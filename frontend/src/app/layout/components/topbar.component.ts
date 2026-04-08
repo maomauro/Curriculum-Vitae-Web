@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, UserInfo } from '../../core/services/auth.service';
 import { DashboardService, NotificacionItemDto } from '../../core/services/dashboard.service';
+import { CvEditorService } from '../../core/services/cv-editor.service';
 
 @Component({
   selector: 'app-topbar',
@@ -17,10 +18,12 @@ import { DashboardService, NotificacionItemDto } from '../../core/services/dashb
       <a routerLink="/dashboard" class="brand"><span>Portal</span>CV</a>
 
       <!-- Info usuario (centro) -->
-      <span class="d-none d-md-flex align-items-center gap-2"
-            style="color:#ced4da; font-size:.85rem; margin-right:auto;">
+      <span class="d-none d-md-flex align-items-center gap-2 text-truncate"
+            style="color:#ced4da; font-size:.85rem; margin-right:auto; max-width: 520px;">
         <i class="bi bi-person-circle"></i>
-        <span>{{ currentUser?.nombre }}</span>
+        <span class="text-truncate">
+          {{ (currentUser?.nombre || 'Usuario') + ' - ' + cargoActual }}
+        </span>
       </span>
 
       <!-- Campanita con dropdown de notificaciones -->
@@ -91,38 +94,18 @@ import { DashboardService, NotificacionItemDto } from '../../core/services/dashb
         </div>
       </div>
 
-      <!-- Menú usuario -->
-      <div class="user-menu dropdown">
-        <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown"
-             style="cursor:pointer;">
-          <div class="user-avatar">{{ initials }}</div>
-          <span class="d-none d-md-inline">{{ currentUser?.nombre }}</span>
-          <i class="bi bi-chevron-down" style="font-size:.75rem;"></i>
-        </div>
-        <ul class="dropdown-menu dropdown-menu-end mt-1">
-          <li>
-            <a class="dropdown-item" routerLink="/perfil">
-              <i class="bi bi-person me-2"></i>Mi perfil
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" routerLink="/privado/configuracion">
-              <i class="bi bi-gear me-2"></i>Configuración
-            </a>
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <a class="dropdown-item text-danger" role="button" (click)="logout()">
-              <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
-            </a>
-          </li>
-        </ul>
+      <!-- Usuario + logout directo -->
+      <div class="user-menu">
+        <button type="button" class="btn btn-sm btn-danger" (click)="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+        </button>
       </div>
     </header>
   `
 })
 export class TopbarComponent implements OnInit {
   currentUser: UserInfo | null = null;
+  cargoActual = 'Perfil profesional';
   conteoNoLeidas = 0;
   notificaciones: NotificacionItemDto[] = [];
   loadingNotif = false;
@@ -141,13 +124,19 @@ export class TopbarComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private cvEditorService: CvEditorService
   ) {}
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      if (user) this.cargarConteo();
+      if (user) {
+        this.cargarConteo();
+        this.cargarCargoActual();
+      } else {
+        this.cargoActual = 'Perfil profesional';
+      }
     });
   }
 
@@ -176,6 +165,21 @@ export class TopbarComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  private cargarCargoActual(): void {
+    this.cvEditorService.getPerfiles().subscribe({
+      next: perfiles => {
+        const activo = perfiles.find(p => p.esActivo && !!p.nombrePerfil?.trim());
+        const primero = perfiles.find(p => !!p.nombrePerfil?.trim());
+        this.cargoActual = activo?.nombrePerfil?.trim()
+          ?? primero?.nombrePerfil?.trim()
+          ?? 'Perfil profesional';
+      },
+      error: () => {
+        this.cargoActual = 'Perfil profesional';
+      }
+    });
   }
 
   tipoIcono(tipo: string | null): string {

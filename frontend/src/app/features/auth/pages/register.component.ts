@@ -45,6 +45,11 @@ import { AuthService } from '../../../core/services/auth.service';
           <p class="mt-3 mb-1 text-center">
             <a routerLink="/auth/login">¿Ya tienes cuenta? Inicia sesión</a>
           </p>
+          <div class="d-grid mt-3">
+            <a routerLink="/" class="btn btn-light border text-secondary">
+              <i class="bi bi-house-door me-1"></i>Volver al inicio
+            </a>
+          </div>
         </div>
       </div>
     </div>

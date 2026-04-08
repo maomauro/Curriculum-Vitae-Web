@@ -54,7 +54,7 @@ public class AuthService : IAuthService
         if (curriculum?.Personales is { PrimerNombre: var pn, PrimerApellido: var pa })
             nombreCompleto = $"{pn} {pa}".Trim();
 
-        var (token, expiracion) = BuildJwt(usuario, roles, curriculumId);
+        var (token, expiracion) = BuildJwt(usuario, roles, curriculumId, nombreCompleto);
 
         return new LoginResponse(token, usuario.Email, nombreCompleto, roles, expiracion);
     }
@@ -112,7 +112,7 @@ public class AuthService : IAuthService
     // ──────────────────────────────────────────────────────────────────────────
 
     private (string token, DateTime expiracion) BuildJwt(
-        Usuario usuario, IEnumerable<string> roles, int curriculumId)
+        Usuario usuario, IEnumerable<string> roles, int curriculumId, string nombreCompleto)
     {
         var issuer    = _configuration["Jwt:Issuer"]    ?? throw new InvalidOperationException("Jwt:Issuer no configurado.");
         var audience  = _configuration["Jwt:Audience"]  ?? throw new InvalidOperationException("Jwt:Audience no configurado.");
@@ -124,6 +124,7 @@ public class AuthService : IAuthService
         {
             new(JwtRegisteredClaimNames.Sub,   usuario.UsuarioId.ToString()),
             new(JwtRegisteredClaimNames.Email, usuario.Email),
+            new("nombre",                      string.IsNullOrWhiteSpace(nombreCompleto) ? usuario.Email : nombreCompleto),
             new("curriculum_id",               curriculumId.ToString())
         };
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));

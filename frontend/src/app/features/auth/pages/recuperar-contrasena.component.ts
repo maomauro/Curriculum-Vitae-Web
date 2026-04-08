@@ -36,9 +36,14 @@ import { Component } from '@angular/core';
             </div>
           </form>
 
-          <p class="mt-3 mb-0 text-center small text-muted">
+          <p class="mt-3 mb-1 text-center small text-muted">
             <a routerLink="/auth/login">Volver al inicio de sesión</a>
           </p>
+          <div class="d-grid mt-3">
+            <a routerLink="/" class="btn btn-light border text-secondary">
+              <i class="bi bi-house-door me-1"></i>Volver al inicio
+            </a>
+          </div>
 
         </div>
       </div>

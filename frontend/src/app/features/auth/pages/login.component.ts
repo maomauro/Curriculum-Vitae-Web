@@ -48,9 +48,14 @@ import { AuthService } from '../../../core/services/auth.service';
           <p class="mt-3 mb-1 text-center small">
             <a routerLink="/auth/recuperar-contrasena">¿Olvidaste tu contraseña?</a>
           </p>
-          <p class="mb-0 text-center small text-muted">
+          <p class="mb-1 text-center small text-muted">
             ¿No tienes cuenta? <a routerLink="/auth/register">Regístrate aquí</a>
           </p>
+          <div class="d-grid mt-3">
+            <a routerLink="/" class="btn btn-light border text-secondary">
+              <i class="bi bi-house-door me-1"></i>Volver al inicio
+            </a>
+          </div>
 
         </div>
       </div>
