@@ -18,8 +18,8 @@ interface ReferenciaUI extends ReferenciaDto {
     <!-- Page Header -->
     <div class="page-header" *ngIf="!embedded">
       <div>
-        <h4><i class="bi bi-people-fill me-2 text-primary"></i>Referencias</h4>
-        <span class="text-muted small">Personas que pueden dar referencias laborales o personales</span>
+        <h4><i class="bi bi-people-fill me-2 text-primary"></i>Referencias personales</h4>
+        <span class="text-muted small">Personas que pueden dar fe de tu trayectoria (solo referencias de tipo personal)</span>
       </div>
       <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
         <i class="bi bi-plus-circle me-1"></i>Agregar referencia
@@ -42,7 +42,7 @@ interface ReferenciaUI extends ReferenciaDto {
     <!-- Sin datos -->
     <div *ngIf="!loading && referencias.length === 0" class="text-center text-muted" [class.py-5]="!embedded" [class.py-3]="embedded">
       <i class="bi bi-people display-5"></i>
-      <p class="mt-3">No tienes referencias registradas. Agrega la primera.</p>
+      <p class="mt-3">No tienes referencias personales registradas. Agrega la primera.</p>
     </div>
 
     <!-- Lista -->
@@ -61,11 +61,7 @@ interface ReferenciaUI extends ReferenciaDto {
               {{ subtituloCabecera(ref) }}
             </div>
           </div>
-          <span class="badge rounded-pill badge-ref-type"
-                [class.badge-ref-type--laboral]="tipoRef(ref) === 'Laboral'"
-                [class.badge-ref-type--personal]="tipoRef(ref) !== 'Laboral'">
-            {{ tipoRef(ref) }}
-          </span>
+          <span class="badge rounded-pill badge-ref-type badge-ref-type--personal">Personal</span>
           <i class="bi ms-2 cv-chevron-muted" [class.bi-chevron-down]="!ref.expanded"
              [class.bi-chevron-up]="ref.expanded"></i>
         </div>
@@ -76,9 +72,8 @@ interface ReferenciaUI extends ReferenciaDto {
 
             <div class="col-md-4">
               <label class="form-label">Tipo de referencia</label>
-              <select class="form-select" [(ngModel)]="ref.form.tipoReferencia">
-                <option value="Laboral">Laboral</option>
-                <option value="Personal">Personal</option>
+              <select class="form-select" [disabled]="true">
+                <option>Personal</option>
               </select>
             </div>
             <div class="col-md-4">
@@ -149,6 +144,8 @@ interface ReferenciaUI extends ReferenciaDto {
 export class ReferenciasComponent implements OnInit {
   @Input() embedded = false;
 
+  private readonly tipoSoloPersonal = 'Personal';
+
   referencias: ReferenciaUI[] = [];
   loading = false;
   guardando = false;
@@ -166,7 +163,10 @@ export class ReferenciasComponent implements OnInit {
     this.loading = true;
     this.cvEditorService.getReferencias().subscribe({
       next: data => {
-        this.referencias = data.map(r => ({ ...r, expanded: false, form: this.toForm(r) }));
+        const soloPersonales = data.filter(
+          r => (r.tipoReferencia ?? '').trim() === this.tipoSoloPersonal
+        );
+        this.referencias = soloPersonales.map(r => ({ ...r, expanded: false, form: this.toForm(r) }));
         this.loading = false;
       },
       error: () => {
@@ -196,7 +196,7 @@ export class ReferenciasComponent implements OnInit {
   agregar(): void {
     const nueva: ReferenciaUI = {
       referenciaId: 0,
-      tipoReferencia: 'Laboral',
+      tipoReferencia: this.tipoSoloPersonal,
       experienciaId: null,
       nombre: '',
       apellido: null,
@@ -211,7 +211,7 @@ export class ReferenciasComponent implements OnInit {
       fechaRegistro: '',
       expanded: true,
       form: {
-        tipoReferencia: 'Laboral',
+        tipoReferencia: this.tipoSoloPersonal,
         experienciaId: null,
         nombre: '',
         apellido: null,
@@ -246,10 +246,6 @@ export class ReferenciasComponent implements OnInit {
     return c || e || '—';
   }
 
-  tipoRef(ref: ReferenciaUI): string {
-    return ref.referenciaId === 0 || ref.expanded ? ref.form.tipoReferencia : ref.tipoReferencia;
-  }
-
   guardar(ref: ReferenciaUI): void {
     const nombre = (ref.form.nombre ?? '').trim();
     if (!nombre) {
@@ -264,6 +260,8 @@ export class ReferenciasComponent implements OnInit {
 
     ref.form = {
       ...ref.form,
+      tipoReferencia: this.tipoSoloPersonal,
+      experienciaId: null,
       nombre,
       apellido: ref.form.apellido?.trim() || null,
       email: emailRaw || null,

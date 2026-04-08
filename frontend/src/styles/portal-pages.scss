@@ -646,6 +646,145 @@
   border-top: 1px solid #eef0f2;
 }
 
+// ── Experiencia laboral (prototipo job-card) ─────────────────────────────────
+.job-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.job-card--nuevo {
+  border: 2px dashed var(--cv-primary);
+  box-shadow: none;
+}
+.job-card-header {
+  padding: 18px 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  user-select: none;
+}
+.job-card:not(.job-card--nuevo) .job-card-header:hover {
+  background: #f8fafc;
+}
+.job-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #ebf2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cv-primary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.job-card--nuevo .job-icon {
+  background: #ebf2ff;
+}
+.job-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #212529;
+}
+.job-company {
+  font-size: 0.85rem;
+  color: var(--cv-primary);
+  font-weight: 600;
+}
+.job-dates {
+  font-size: 0.8rem;
+  color: #6c757d;
+  white-space: nowrap;
+}
+.job-badge-slot {
+  flex-shrink: 0;
+}
+.job-chevron {
+  margin-left: auto;
+  color: #adb5bd;
+  transition: transform 0.25s;
+}
+.job-card--expanded .job-chevron {
+  transform: rotate(180deg);
+}
+.job-body {
+  padding: 0 22px 22px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 20px;
+}
+// Núcleo empleo + pie Guardar (misma idea que datos-personales-nucleo / guardar-footer)
+.experiencia-empleo-nucleo {
+  padding: 0;
+  overflow: hidden;
+}
+.experiencia-empleo-nucleo-fields {
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid #eef0f2;
+}
+.experiencia-empleo-guardar-footer {
+  padding: 16px 20px;
+  background: #fafbfc;
+  border-top: none;
+}
+.exp-ref-subsection {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 0;
+}
+.exp-ref-subsection-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #495057;
+  margin-bottom: 12px;
+}
+.exp-ref-item {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #fff;
+  margin-bottom: 10px;
+}
+.exp-ref-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.exp-ref-item-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #212529;
+}
+.exp-ref-item-detail {
+  font-size: 0.78rem;
+  color: #6c757d;
+}
+.exp-ref-delete {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.exp-ref-delete:hover {
+  background: #fff5f5;
+}
+.job-action-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+
 // ── Editor CV ─────────────────────────────────────────────────────────────────
 .cv-editor-tile {
   cursor: pointer;

@@ -23,6 +23,13 @@ export const APP_MESSAGES = {
       },
       experiencia: {
         invalidDate: 'Revisa las fechas de experiencia. Usa formato AAAA-MM-DD.',
+        requiredEmpresa: 'Indica el nombre de la empresa.',
+        requiredCargo: 'Indica el cargo o puesto.',
+        refPendientesAlCrearEmpleo:
+          'Agrega referencias con el mismo formulario que en empleos guardados; pulsa Guardar en cada una y luego Crear empleo.',
+        refBorradorSinGuardar:
+          'Guarda o cancela cada referencia en borrador (sin Guardar) antes de crear el empleo.',
+        completeNuevoAntesDeOtro: 'Termina o cancela el empleo nuevo antes de agregar otro.',
       },
       educacion: {
         invalidDate: 'Revisa las fechas de educación. Usa formato AAAA-MM-DD.',
