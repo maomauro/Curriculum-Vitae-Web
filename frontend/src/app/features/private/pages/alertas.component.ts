@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AlertasService, AlertaVisitaDto } from '../../../core/services/alertas.service';
 
 @Component({
   selector: 'app-alertas',
@@ -11,11 +12,9 @@ import { Component } from '@angular/core';
         <span class="text-muted small">Notificaciones de actividad en tu CV — Solo tú puedes verlas</span>
       </div>
       <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary btn-sm">
+        <button class="btn btn-outline-secondary btn-sm"
+                (click)="marcarTodasLeidas()" [disabled]="noLeidasCount === 0">
           <i class="bi bi-check2-all me-1"></i>Marcar todas como leídas
-        </button>
-        <button class="btn btn-outline-danger btn-sm">
-          <i class="bi bi-trash3 me-1"></i>Limpiar leídas
         </button>
       </div>
     </div>
@@ -24,26 +23,26 @@ import { Component } from '@angular/core';
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-4 text-primary">5</div>
+          <div class="fw-bold fs-4 text-primary">{{ noLeidasCount }}</div>
           <div class="text-muted small">No leídas</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-4" style="color:#2c7be5;">3</div>
+          <div class="fw-bold fs-4" style="color:#2c7be5;">{{ conteoContactos }}</div>
           <div class="text-muted small">Contactos nuevos</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-4 text-success">8</div>
-          <div class="text-muted small">Vistas hoy</div>
+          <div class="fw-bold fs-4 text-success">{{ conteoVistas }}</div>
+          <div class="text-muted small">Vistas recientes</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-4 text-warning">2</div>
-          <div class="text-muted small">Descargas PDF</div>
+          <div class="fw-bold fs-4 text-warning">{{ conteoDescargas }}</div>
+          <div class="text-muted small">Descargas</div>
         </div>
       </div>
     </div>
@@ -52,96 +51,143 @@ import { Component } from '@angular/core';
     <div class="bg-white rounded-3 p-3 shadow-sm mb-4 d-flex flex-wrap gap-2 align-items-center">
       <span class="fw-semibold small text-muted">Filtrar por:</span>
       <div class="btn-group btn-group-sm">
-        <button class="btn btn-primary" [class.btn-primary]="filtro==='todas'"
-                [class.btn-outline-secondary]="filtro!=='todas'" (click)="filtro='todas'">
-          Todas (12)
+        <button class="btn" [class.btn-primary]="filtro==='todas'"
+                [class.btn-outline-secondary]="filtro!=='todas'" (click)="setFiltro('todas')">
+          Todas ({{ alertas.length }})
         </button>
         <button class="btn" [class.btn-primary]="filtro==='noleidas'"
-                [class.btn-outline-secondary]="filtro!=='noleidas'" (click)="filtro='noleidas'">
-          No leídas (5)
+                [class.btn-outline-secondary]="filtro!=='noleidas'" (click)="setFiltro('noleidas')">
+          No leídas ({{ noLeidasCount }})
         </button>
       </div>
-      <select class="form-select form-select-sm" style="width:auto;" [(ngModel)]="tipo">
+      <select class="form-select form-select-sm" style="width:auto;" [(ngModel)]="tipo" (change)="aplicarFiltros()">
         <option value="">Tipo: Todos</option>
-        <option value="contact">Contactos recibidos</option>
-        <option value="view">Vistas del CV</option>
-        <option value="download">Descargas</option>
-        <option value="system">Sistema</option>
+        <option value="Contacto">Contactos recibidos</option>
+        <option value="Vista">Vistas del CV</option>
+        <option value="Descarga">Descargas</option>
+        <option value="Sistema">Sistema</option>
       </select>
     </div>
 
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+
     <!-- Lista de alertas -->
-    <div class="alert-item unread type-contact">
-      <div class="alert-icon contact"><i class="bi bi-envelope-fill"></i></div>
-      <div class="alert-body">
-        <div class="alert-title">Nuevo mensaje de contacto recibido</div>
-        <div class="alert-desc">
-          <strong>Juan Pérez</strong> de <strong>Consulting Partners SL</strong> te envió un mensaje.
+    <ng-container *ngIf="!loading">
+      <div *ngIf="alertasFiltradas.length === 0" class="text-center py-5 text-muted">
+        <i class="bi bi-bell-slash display-5"></i>
+        <p class="mt-3">No hay alertas que mostrar.</p>
+      </div>
+
+      <div *ngFor="let alerta of alertasFiltradas"
+           class="alert-item" [class.unread]="!alerta.esLeida"
+           [ngClass]="'type-' + tipoClass(alerta.tipoVisita)"
+           style="cursor:pointer;" (click)="marcarLeida(alerta)">
+        <div class="alert-icon" [ngClass]="tipoClass(alerta.tipoVisita)">
+          <i class="bi" [ngClass]="tipoIcono(alerta.tipoVisita)"></i>
         </div>
-        <div class="alert-meta">
-          <span><i class="bi bi-clock me-1"></i>Hace 15 minutos</span>
-          <span><i class="bi bi-envelope me-1"></i>juan.perez@consulting.com</span>
-          <a href="#" class="text-primary fw-semibold">Ver mensaje →</a>
+        <div class="alert-body">
+          <div class="alert-title">{{ alerta.titulo }}</div>
+          <div class="alert-desc">{{ alerta.descripcion }}</div>
+          <div class="alert-meta">
+            <span><i class="bi bi-clock me-1"></i>{{ alerta.fechaVisita | date:'short' }}</span>
+            <span *ngIf="alerta.ciudad || alerta.pais">
+              <i class="bi bi-geo-alt me-1"></i>{{ alerta.ciudad }}<ng-container *ngIf="alerta.ciudad && alerta.pais">, </ng-container>{{ alerta.pais }}
+            </span>
+            <span *ngIf="alerta.origen">
+              <i class="bi bi-globe me-1"></i>{{ alerta.origen }}
+            </span>
+          </div>
         </div>
+        <div *ngIf="!alerta.esLeida" class="unread-dot"></div>
       </div>
-      <div class="unread-dot"></div>
-    </div>
-
-    <div class="alert-item unread type-download">
-      <div class="alert-icon download"><i class="bi bi-file-earmark-arrow-down-fill"></i></div>
-      <div class="alert-body">
-        <div class="alert-title">Tu CV fue descargado en PDF</div>
-        <div class="alert-desc">Alguien desde <strong>Madrid, España</strong> descargó tu CV "Frontend Developer — 2026".</div>
-        <div class="alert-meta">
-          <span><i class="bi bi-clock me-1"></i>Hace 1 hora</span>
-          <span><i class="bi bi-geo-alt me-1"></i>Madrid, España</span>
-        </div>
-      </div>
-      <div class="unread-dot"></div>
-    </div>
-
-    <div class="alert-item unread type-view">
-      <div class="alert-icon view"><i class="bi bi-eye-fill"></i></div>
-      <div class="alert-body">
-        <div class="alert-title">Tu CV fue visto 15+ veces hoy</div>
-        <div class="alert-desc">Tu CV "Frontend Developer — 2026" superó las 15 visualizaciones en las últimas 24 horas.</div>
-        <div class="alert-meta">
-          <span><i class="bi bi-clock me-1"></i>Hace 4 horas</span>
-          <span><i class="bi bi-graph-up me-1"></i>+120% vs. día anterior</span>
-        </div>
-      </div>
-      <div class="unread-dot"></div>
-    </div>
-
-    <!-- Separador leídas -->
-    <div class="d-flex align-items-center gap-3 my-4">
-      <hr class="flex-grow-1">
-      <span class="text-muted small fw-semibold">Alertas anteriores (leídas)</span>
-      <hr class="flex-grow-1">
-    </div>
-
-    <div class="alert-item type-view">
-      <div class="alert-icon view"><i class="bi bi-eye-fill"></i></div>
-      <div class="alert-body">
-        <div class="alert-title">CV visto desde Barcelona</div>
-        <div class="alert-desc">Alguien desde <strong>Barcelona, España</strong> visitó tu CV.</div>
-        <div class="alert-meta"><span><i class="bi bi-clock me-1"></i>Hace 2 días</span></div>
-      </div>
-      <div style="width:8px;"></div>
-    </div>
-
-    <div class="alert-item type-system">
-      <div class="alert-icon system"><i class="bi bi-gear-fill"></i></div>
-      <div class="alert-body">
-        <div class="alert-title">CV publicado exitosamente</div>
-        <div class="alert-desc">Tu CV "Fullstack Developer — 2026" ya es visible para todos los reclutadores.</div>
-        <div class="alert-meta"><span><i class="bi bi-clock me-1"></i>Hace 3 días</span></div>
-      </div>
-      <div style="width:8px;"></div>
-    </div>
+    </ng-container>
   `
 })
-export class AlertasComponent {
+export class AlertasComponent implements OnInit {
+  alertas: AlertaVisitaDto[] = [];
+  alertasFiltradas: AlertaVisitaDto[] = [];
+  loading = false;
   filtro = 'todas';
   tipo = '';
+
+  get noLeidasCount(): number {
+    return this.alertas.filter(a => !a.esLeida).length;
+  }
+  get conteoContactos(): number {
+    return this.alertas.filter(a => a.tipoVisita === 'Contacto').length;
+  }
+  get conteoVistas(): number {
+    return this.alertas.filter(a => a.tipoVisita === 'Vista').length;
+  }
+  get conteoDescargas(): number {
+    return this.alertas.filter(a => a.tipoVisita === 'Descarga').length;
+  }
+
+  constructor(private alertasService: AlertasService) {}
+
+  ngOnInit(): void {
+    this.cargarAlertas();
+  }
+
+  cargarAlertas(): void {
+    this.loading = true;
+    this.alertasService.getAlertas().subscribe({
+      next: data => {
+        this.alertas = data;
+        this.aplicarFiltros();
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
+  }
+
+  setFiltro(valor: string): void {
+    this.filtro = valor;
+    this.aplicarFiltros();
+  }
+
+  aplicarFiltros(): void {
+    this.alertasFiltradas = this.alertas.filter(a => {
+      const pasaFiltro = this.filtro === 'todas' || (this.filtro === 'noleidas' && !a.esLeida);
+      const pasaTipo   = !this.tipo || a.tipoVisita === this.tipo;
+      return pasaFiltro && pasaTipo;
+    });
+  }
+
+  marcarLeida(alerta: AlertaVisitaDto): void {
+    if (alerta.esLeida) return;
+    this.alertasService.marcarLeida(alerta.alertaVisitaId).subscribe({
+      next: () => { alerta.esLeida = true; this.aplicarFiltros(); }
+    });
+  }
+
+  marcarTodasLeidas(): void {
+    this.alertasService.marcarTodasLeidas().subscribe({
+      next: () => {
+        this.alertas.forEach(a => (a.esLeida = true));
+        this.aplicarFiltros();
+      }
+    });
+  }
+
+  tipoClass(tipo: string | null): string {
+    const map: Record<string, string> = {
+      'Contacto': 'contact', 'Vista': 'view',
+      'Descarga': 'download', 'Sistema': 'system'
+    };
+    return tipo ? (map[tipo] ?? 'system') : 'system';
+  }
+
+  tipoIcono(tipo: string | null): string {
+    const map: Record<string, string> = {
+      'Contacto': 'bi-envelope-fill', 'Vista': 'bi-eye-fill',
+      'Descarga': 'bi-file-earmark-arrow-down-fill', 'Sistema': 'bi-gear-fill'
+    };
+    return tipo ? (map[tipo] ?? 'bi-bell-fill') : 'bi-bell-fill';
+  }
 }

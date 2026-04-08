@@ -1,4 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CvEditorService, ProyectoDto, UpsertProyectoRequest } from '../../../core/services/cv-editor.service';
+
+interface ProyectoUI extends ProyectoDto {
+  expanded: boolean;
+  form: UpsertProyectoRequest & { stackTexto: string };
+}
 
 @Component({
   selector: 'app-proyectos',
@@ -15,6 +21,19 @@ import { Component } from '@angular/core';
       </button>
     </div>
 
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+
+    <!-- Sin datos -->
+    <div *ngIf="!loading && proyectos.length === 0" class="text-center py-5 text-muted">
+      <i class="bi bi-kanban display-5"></i>
+      <p class="mt-3">No tienes proyectos registrados. Agrega el primero.</p>
+    </div>
+
     <!-- Lista de proyectos -->
     <div *ngFor="let p of proyectos; let i = index">
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
@@ -26,19 +45,14 @@ import { Component } from '@angular/core';
             <i class="bi bi-kanban-fill"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ p.nombre }}</div>
+            <div class="fw-bold" style="font-size:.95rem;">{{ p.nombreProyecto }}</div>
             <div class="d-flex flex-wrap gap-1 mt-1">
-              <span *ngFor="let tag of p.stack"
+              <span *ngFor="let tag of stackArray(p.stackTecnologico)"
                     style="background:#ebf2ff;color:#2c7be5;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px;">
                 {{ tag }}
               </span>
             </div>
           </div>
-          <span class="badge" [style.background]="p.destacado ? '#ebf3fb' : '#f1f5f9'"
-                [style.color]="p.destacado ? '#2c7be5' : '#6c757d'"
-                style="font-size:.7rem;border-radius:12px;padding:3px 10px;">
-            {{ p.destacado ? '⭐ Destacado' : 'Normal' }}
-          </span>
           <i class="bi ms-2" [class.bi-chevron-down]="!p.expanded"
              [class.bi-chevron-up]="p.expanded" style="color:#adb5bd;"></i>
         </div>
@@ -48,38 +62,44 @@ import { Component } from '@angular/core';
           <div class="row g-3 mt-1">
             <div class="col-md-8">
               <label class="form-label">Nombre del proyecto</label>
-              <input type="text" class="form-control" [value]="p.nombre">
+              <input type="text" class="form-control" [(ngModel)]="p.form.nombreProyecto">
             </div>
-            <div class="col-md-4 d-flex align-items-end">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" [(ngModel)]="p.destacado"
-                       [id]="'dest_'+i">
-                <label class="form-check-label" [for]="'dest_'+i">Marcar como destacado</label>
-              </div>
+            <div class="col-md-2">
+              <label class="form-label">Equipo (personas)</label>
+              <input type="number" class="form-control" min="1" [(ngModel)]="p.form.equipoTamano">
             </div>
-            <div class="col-12">
-              <label class="form-label">Descripción</label>
-              <textarea class="form-control" rows="3" [value]="p.descripcion"></textarea>
+            <div class="col-md-2">
+              <label class="form-label">Duración (meses)</label>
+              <input type="number" class="form-control" min="1" [(ngModel)]="p.form.duracionMeses">
             </div>
             <div class="col-md-6">
-              <label class="form-label">URL del proyecto</label>
-              <input type="url" class="form-control" [value]="p.url" placeholder="https://...">
+              <label class="form-label">Rol en el proyecto</label>
+              <input type="text" class="form-control" [(ngModel)]="p.form.rol">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Repositorio (GitHub / GitLab)</label>
-              <input type="url" class="form-control" [value]="p.repo" placeholder="https://github.com/...">
-            </div>
-            <div class="col-12">
               <label class="form-label">Stack tecnológico
                 <span class="text-muted small">(separar por coma)</span></label>
-              <input type="text" class="form-control" [value]="p.stack.join(', ')">
+              <input type="text" class="form-control" [(ngModel)]="p.form.stackTexto"
+                     placeholder="Angular, .NET, Docker">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Aporte / descripción</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="p.form.aporte"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Logro destacado</label>
+              <input type="text" class="form-control" [(ngModel)]="p.form.logro">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Principal desafío</label>
+              <input type="text" class="form-control" [(ngModel)]="p.form.desafio">
             </div>
             <div class="col-12 d-flex justify-content-end gap-2 pt-2"
                  style="border-top:1px solid #f0f0f0;">
-              <button class="btn btn-outline-danger btn-sm">
+              <button class="btn btn-outline-danger btn-sm" (click)="eliminar(p)">
                 <i class="bi bi-trash me-1"></i>Eliminar
               </button>
-              <button class="btn btn-primary btn-sm">
+              <button class="btn btn-primary btn-sm" (click)="guardar(p)" [disabled]="guardando">
                 <i class="bi bi-floppy-fill me-1"></i>Guardar
               </button>
             </div>
@@ -89,13 +109,70 @@ import { Component } from '@angular/core';
     </div>
   `
 })
-export class ProyectosComponent {
-  proyectos = [
-    { nombre: 'Portal de Empleo Angular', descripcion: 'Plataforma SPA con Angular y .NET para gestión de ofertas laborales y CVs.', stack: ['Angular', 'TypeScript', '.NET', 'PostgreSQL'], url: 'https://portal.example.com', repo: 'https://github.com/user/portal', destacado: true, expanded: false },
-    { nombre: 'API REST de Inventario', descripcion: 'API REST con Node.js y Express para gestión de inventarios en tiempo real.', stack: ['Node.js', 'Express', 'MongoDB'], url: '', repo: 'https://github.com/user/api-inventario', destacado: false, expanded: false },
-  ];
+export class ProyectosComponent implements OnInit {
+  proyectos: ProyectoUI[] = [];
+  loading = false;
+  guardando = false;
+
+  constructor(private cvEditorService: CvEditorService) {}
+
+  ngOnInit(): void {
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.loading = true;
+    this.cvEditorService.getProyectos().subscribe({
+      next: data => {
+        this.proyectos = data.map(p => ({ ...p, expanded: false, form: this.toForm(p) }));
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
+  }
+
+  private toForm(p: ProyectoDto): ProyectoUI['form'] {
+    const { proyectoId, ...rest } = p;
+    return { ...rest, stackTexto: p.stackTecnologico ?? '' };
+  }
+
+  stackArray(stack: string | null): string[] {
+    return stack ? stack.split(',').map(s => s.trim()).filter(Boolean) : [];
+  }
 
   agregar(): void {
-    this.proyectos.push({ nombre: '', descripcion: '', stack: [], url: '', repo: '', destacado: false, expanded: true });
+    const nuevo: ProyectoUI = {
+      proyectoId: 0, nombreProyecto: null, rol: null, equipoTamano: null,
+      duracionMeses: null, stackTecnologico: null, aporte: null, logro: null, desafio: null,
+      expanded: true,
+      form: { nombreProyecto: null, rol: null, equipoTamano: null, duracionMeses: null,
+              stackTecnologico: null, aporte: null, logro: null, desafio: null, stackTexto: '' }
+    };
+    this.proyectos.unshift(nuevo);
+  }
+
+  guardar(p: ProyectoUI): void {
+    p.form.stackTecnologico = p.form.stackTexto;
+    const { stackTexto, ...dto } = p.form;
+    this.guardando = true;
+    if (p.proyectoId === 0) {
+      this.cvEditorService.createProyecto(dto).subscribe({
+        next: creado => { Object.assign(p, creado, { expanded: false, form: this.toForm(creado) }); this.guardando = false; },
+        error: () => { this.guardando = false; }
+      });
+    } else {
+      this.cvEditorService.updateProyecto(p.proyectoId, dto).subscribe({
+        next: actualizado => { Object.assign(p, actualizado, { expanded: false, form: this.toForm(actualizado) }); this.guardando = false; },
+        error: () => { this.guardando = false; }
+      });
+    }
+  }
+
+  eliminar(p: ProyectoUI): void {
+    if (p.proyectoId === 0) { this.proyectos = this.proyectos.filter(x => x !== p); return; }
+    if (!confirm('¿Eliminar este proyecto?')) return;
+    this.cvEditorService.deleteProyecto(p.proyectoId).subscribe({
+      next: () => { this.proyectos = this.proyectos.filter(x => x !== p); }
+    });
   }
 }

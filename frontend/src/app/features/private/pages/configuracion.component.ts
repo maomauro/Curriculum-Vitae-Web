@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CvEditorService } from '../../../core/services/cv-editor.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -27,6 +28,7 @@ import { Component } from '@angular/core';
           <div class="form-check form-switch mb-0">
             <input class="form-check-input" type="checkbox" role="switch"
                    [(ngModel)]="campo.visible" [id]="'vis_'+campo.key"
+                   (change)="guardarVisibilidad(campo)"
                    style="cursor:pointer;">
           </div>
         </div>
@@ -99,20 +101,37 @@ import { Component } from '@angular/core';
     </div>
   `
 })
-export class ConfiguracionComponent {
-  urlCv = 'https://portalcv.app/cv/ana-garcia-martinez';
+export class ConfiguracionComponent implements OnInit {
+  urlCv = 'https://portalcv.app/cv/mi-perfil';
   copiado = false;
 
   camposVisibilidad = [
-    { key: 'email', label: 'Correo electrónico', icono: 'bi-envelope-fill', visible: false },
-    { key: 'telefono', label: 'Teléfono', icono: 'bi-phone-fill', visible: false },
-    { key: 'ubicacion', label: 'Ciudad / Ubicación', icono: 'bi-geo-alt-fill', visible: true },
-    { key: 'salario', label: 'Pretensión salarial', icono: 'bi-cash-stack', visible: false },
-    { key: 'experiencia', label: 'Experiencia laboral', icono: 'bi-briefcase-fill', visible: true },
-    { key: 'educacion', label: 'Educación', icono: 'bi-mortarboard-fill', visible: true },
-    { key: 'habilidades', label: 'Habilidades', icono: 'bi-stars', visible: true },
-    { key: 'proyectos', label: 'Proyectos', icono: 'bi-kanban-fill', visible: true },
+    { key: 'email',       label: 'Correo electrónico',  icono: 'bi-envelope-fill',   visible: false },
+    { key: 'telefono',    label: 'Teléfono',             icono: 'bi-phone-fill',      visible: false },
+    { key: 'ubicacion',   label: 'Ciudad / Ubicación',   icono: 'bi-geo-alt-fill',    visible: true  },
+    { key: 'salario',     label: 'Pretensión salarial',  icono: 'bi-cash-stack',      visible: false },
+    { key: 'experiencia', label: 'Experiencia laboral',  icono: 'bi-briefcase-fill',  visible: true  },
+    { key: 'educacion',   label: 'Educación',            icono: 'bi-mortarboard-fill',visible: true  },
+    { key: 'habilidades', label: 'Habilidades',          icono: 'bi-stars',           visible: true  },
+    { key: 'proyectos',   label: 'Proyectos',            icono: 'bi-kanban-fill',     visible: true  },
   ];
+
+  constructor(private cvEditorService: CvEditorService) {}
+
+  ngOnInit(): void {
+    this.cvEditorService.getVisibilidad().subscribe({
+      next: data => {
+        data.forEach(item => {
+          const campo = this.camposVisibilidad.find(c => c.key === item.seccion);
+          if (campo) campo.visible = item.visible;
+        });
+      }
+    });
+  }
+
+  guardarVisibilidad(campo: { key: string; visible: boolean }): void {
+    this.cvEditorService.updateVisibilidad([{ seccion: campo.key, visible: campo.visible }]).subscribe();
+  }
 
   copiarUrl(): void {
     navigator.clipboard.writeText(this.urlCv);

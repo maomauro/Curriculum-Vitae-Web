@@ -1,41 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
-interface Habilidad {
-  nombre: string;
-  nivel: number;
-}
-
-interface Experiencia {
-  empresa: string;
-  cargo: string;
-  periodo: string;
-  descripcion: string;
-}
-
-interface Educacion {
-  institucion: string;
-  titulo: string;
-  periodo: string;
-  descripcion: string;
-}
-
-interface CvDetalle {
-  id: number;
-  nombre: string;
-  titulo: string;
-  iniciales: string;
-  colorClass: string;
-  email: string;
-  ciudad: string;
-  linkedin: string;
-  github: string;
-  resumen: string;
-  habilidades: Habilidad[];
-  idiomas: string[];
-  experiencia: Experiencia[];
-  educacion: Educacion[];
-}
+import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public.service';
 
 @Component({
   selector: 'app-detalle-cv',
@@ -58,7 +23,7 @@ interface CvDetalle {
         </li>
         <li class="nav-item">
           <a class="nav-link fw-semibold text-muted" style="border-radius:0;"
-             [routerLink]="['/cv', cv.id, 'dashboard']">
+             [routerLink]="['/cv', cv.urlPublica, 'dashboard']">
             <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
           </a>
         </li>
@@ -72,54 +37,56 @@ interface CvDetalle {
 
             <!-- Avatar 120px -->
             <div class="d-flex justify-content-center mb-3">
-              <div class="avatar-circle {{ cv.colorClass }}" style="width:120px;height:120px;font-size:2.5rem;
+              <div class="avatar-circle {{ colorClass(cv.curriculumId) }}" style="width:120px;height:120px;font-size:2.5rem;
                            border:4px solid #fff; box-shadow:0 2px 12px rgba(44,123,229,.25);">
-                {{ cv.iniciales }}
+                {{ iniciales(cv.personales?.nombreCompleto) }}
               </div>
             </div>
-            <h4 class="fw-bold mb-1">{{ cv.nombre }}</h4>
-            <p class="text-muted mb-3">{{ cv.titulo }}</p>
+            <h4 class="fw-bold mb-1">{{ cv.personales?.nombreCompleto }}</h4>
+            <p class="text-muted mb-3">{{ cv.perfiles?.[0]?.nombrePerfil }}</p>
 
             <!-- Contacto -->
             <div class="text-start mb-4">
               <div class="section-title">Contacto</div>
-              <div class="contact-item"><i class="bi bi-envelope-fill me-2 text-primary"></i>{{ cv.email }}</div>
-              <div class="contact-item"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>{{ cv.ciudad }}</div>
-              <div class="contact-item" *ngIf="cv.linkedin">
-                <i class="bi bi-linkedin me-2 text-primary"></i>{{ cv.linkedin }}
-              </div>
-              <div class="contact-item" *ngIf="cv.github">
-                <i class="bi bi-github me-2 text-primary"></i>{{ cv.github }}
+              <div class="contact-item" *ngIf="cv.personales?.email"><i class="bi bi-envelope-fill me-2 text-primary"></i>{{ cv.personales?.email }}</div>
+            <div class="contact-item" *ngIf="cv.personales?.ciudad || cv.personales?.pais">
+              <i class="bi bi-geo-alt-fill me-2 text-primary"></i>{{ cv.personales?.ciudad }}<ng-container *ngIf="cv.personales?.ciudad && cv.personales?.pais">, </ng-container>{{ cv.personales?.pais }}
+            </div>
+            <div class="contact-item" *ngIf="redesSocialesMap['LinkedIn']">
+              <i class="bi bi-linkedin me-2 text-primary"></i>{{ redesSocialesMap['LinkedIn'] }}
+            </div>
+            <div class="contact-item" *ngIf="redesSocialesMap['GitHub']">
+              <i class="bi bi-github me-2 text-primary"></i>{{ redesSocialesMap['GitHub'] }}
               </div>
             </div>
 
-            <!-- Habilidades con barras -->
-            <div class="text-start mb-4">
+            <!-- Habilidades -->
+            <div class="text-start mb-4" *ngIf="cv.habilidades?.length">
               <div class="section-title">Habilidades</div>
               <div *ngFor="let h of cv.habilidades">
                 <div class="d-flex justify-content-between mb-1">
                   <span style="font-size:.85rem; color:#343a40;">{{ h.nombre }}</span>
-                  <small class="text-muted">{{ h.nivel }}%</small>
+                  <small class="text-muted">{{ h.nivel }}</small>
                 </div>
                 <div class="progress mb-2" style="height:7px; border-radius:4px;">
                   <div class="progress-bar" role="progressbar"
-                       [style.width.%]="h.nivel" style="background:#2c7be5;"></div>
+                       style="background:#2c7be5;width:60%"></div>
                 </div>
               </div>
             </div>
 
             <!-- Idiomas -->
-            <div class="text-start mb-4">
+            <div class="text-start mb-4" *ngIf="idiomasPublicos.length">
               <div class="section-title">Idiomas</div>
               <div class="d-flex flex-wrap gap-2">
-                <span class="badge-idioma" *ngFor="let idioma of cv.idiomas">{{ idioma }}</span>
+                <span class="badge-idioma" *ngFor="let idioma of idiomasPublicos">{{ idioma.nombre }}</span>
               </div>
             </div>
 
             <!-- Botón contactar -->
             <button class="btn btn-primary w-100"
                     data-bs-toggle="modal" data-bs-target="#modalContacto">
-              <i class="bi bi-envelope-fill me-2"></i>Contactar a {{ cv.nombre.split(' ')[0] }}
+              <i class="bi bi-envelope-fill me-2"></i>Contactar a {{ primerNombre(cv.personales?.nombreCompleto) }}
             </button>
 
           </div>
@@ -130,33 +97,35 @@ interface CvDetalle {
           <div class="content-cv">
 
             <!-- Resumen -->
-            <div class="mb-4">
+            <div class="mb-4" *ngIf="cv.perfiles?.length">
               <div class="section-title">Resumen profesional</div>
-              <p class="text-secondary" style="line-height:1.75;">{{ cv.resumen }}</p>
+              <p class="text-secondary" style="line-height:1.75;">{{ cv.perfiles[0].descripcionPerfil }}</p>
             </div>
 
             <!-- Experiencia -->
-            <div class="mb-4">
+            <div class="mb-4" *ngIf="cv.experiencias?.length">
               <div class="section-title">Experiencia laboral</div>
               <div class="timeline">
-                <div class="timeline-item" *ngFor="let exp of cv.experiencia">
-                  <div class="timeline-period">{{ exp.periodo }}</div>
+                <div class="timeline-item" *ngFor="let exp of cv.experiencias">
+                  <div class="timeline-period">
+                    {{ exp.fechaInicio | date:'MMM yyyy' }} —
+                    {{ exp.esActual ? 'Actualidad' : (exp.fechaFin | date:'MMM yyyy') }}
+                  </div>
                   <div class="timeline-company">{{ exp.empresa }}</div>
                   <div class="timeline-role">{{ exp.cargo }}</div>
-                  <div class="timeline-desc">{{ exp.descripcion }}</div>
+                  <div class="timeline-desc">{{ exp.funciones }}</div>
                 </div>
               </div>
             </div>
 
             <!-- Educación -->
-            <div>
+            <div *ngIf="cv.formaciones?.length">
               <div class="section-title">Educación</div>
               <div class="timeline">
-                <div class="timeline-item" *ngFor="let edu of cv.educacion">
-                  <div class="timeline-period">{{ edu.periodo }}</div>
+                <div class="timeline-item" *ngFor="let edu of cv.formaciones">
+                  <div class="timeline-period">{{ edu.fechaFin | date:'yyyy' }}</div>
                   <div class="timeline-company">{{ edu.institucion }}</div>
                   <div class="timeline-role">{{ edu.titulo }}</div>
-                  <div class="timeline-desc">{{ edu.descripcion }}</div>
                 </div>
               </div>
             </div>
@@ -184,13 +153,13 @@ interface CvDetalle {
           <div class="modal-header border-0 pb-0">
             <h5 class="modal-title fw-bold" id="modalContactoLabel">
               <i class="bi bi-envelope-fill me-2 text-primary"></i>
-              Contactar a {{ cv.nombre }}
+              Contactar a {{ cv.personales?.nombreCompleto }}
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body pt-2">
             <p class="text-muted small mb-4">
-              Completa el formulario y {{ cv.nombre.split(' ')[0] }} recibirá tu mensaje directamente.
+              Completa el formulario y {{ primerNombre(cv.personales?.nombreCompleto) }} recibirá tu mensaje directamente.
             </p>
             <div *ngIf="contactoEnviado" class="alert alert-success d-flex align-items-center gap-2 mb-3">
               <i class="bi bi-check-circle-fill"></i>
@@ -215,7 +184,7 @@ interface CvDetalle {
                 </div>
                 <div class="col-12">
                   <label class="form-label fw-semibold small">Motivo de contacto</label>
-                  <select class="form-select" [(ngModel)]="contacto.motivo" name="ctcMotivo">
+                  <select class="form-select" [(ngModel)]="contacto.motivoContacto" name="ctcMotivo">
                     <option value="">— Selecciona un motivo —</option>
                     <option value="oferta_laboral">Oferta laboral</option>
                     <option value="freelance">Proyecto freelance</option>
@@ -250,56 +219,62 @@ interface CvDetalle {
   `
 })
 export class DetalleCvComponent implements OnInit {
-  cv: CvDetalle | null = null;
+  cv: CvDetalleDto | null = null;
   contactoEnviado = false;
-  contacto = { nombre: '', empresa: '', email: '', motivo: '', asunto: '', mensaje: '' };
+  enviandoContacto = false;
+  loading = false;
+  contacto: ContactarDto = { nombre: '', empresa: null, email: '', motivoContacto: null, asunto: null, mensaje: '' };
 
-  private readonly mockCvs: CvDetalle[] = [
-    {
-      id: 1,
-      nombre: 'Ana García', titulo: 'Frontend Developer',
-      iniciales: 'AG', colorClass: 'blue',
-      email: 'ana.garcia@email.com', ciudad: 'Madrid, España',
-      linkedin: 'linkedin.com/in/anagarcia', github: 'github.com/anagarcia',
-      resumen: 'Desarrolladora Frontend con más de 6 años de experiencia construyendo aplicaciones web modernas con Angular, React y Vue.js. Apasionada por el diseño de interfaces accesibles y el rendimiento front-end.',
-      habilidades: [
-        { nombre: 'Angular',    nivel: 90 },
-        { nombre: 'TypeScript', nivel: 85 },
-        { nombre: 'Node.js',    nivel: 70 },
-        { nombre: 'Docker',     nivel: 60 },
-        { nombre: 'CSS / SCSS', nivel: 95 }
-      ],
-      idiomas: ['Español — Nativo', 'Inglés — B2', 'Francés — A2'],
-      experiencia: [
-        { empresa: 'Accenture España', cargo: 'Senior Frontend Developer',
-          periodo: 'Enero 2022 — Actualidad',
-          descripcion: 'Desarrollo de aplicaciones SPA con Angular 16+ para clientes del sector bancario. Implementación de design systems con Storybook.' },
-        { empresa: 'Indra Sistemas', cargo: 'Frontend Developer',
-          periodo: 'Marzo 2019 — Diciembre 2021',
-          descripcion: 'Migración de aplicaciones legacy a Angular. Integración con APIs REST y GraphQL.' },
-        { empresa: 'StartupHub Madrid', cargo: 'Frontend Developer Junior',
-          periodo: 'Junio 2017 — Febrero 2019',
-          descripcion: 'Desarrollo de landing pages y dashboards con React y Bootstrap.' }
-      ],
-      educacion: [
-        { institucion: 'Universidad Complutense de Madrid', titulo: 'Ingeniería Informática',
-          periodo: '2013 — 2017',
-          descripcion: 'Especialización en Ingeniería del Software.' },
-        { institucion: 'Google — Coursera', titulo: 'Certificación UX Design Professional',
-          periodo: '2022',
-          descripcion: 'Programa de 6 meses en diseño de experiencia de usuario con Figma.' }
-      ]
-    }
-  ];
+  get redesSocialesMap(): Record<string, string> {
+    const map: Record<string, string> = {};
+    (this.cv?.redesSociales ?? []).forEach((r: any) => {
+      if (r.tipo && r.url) map[r.tipo] = r.url;
+    });
+    return map;
+  }
 
-  constructor(private route: ActivatedRoute) {}
+  get idiomasPublicos() {
+    return (this.cv?.habilidades ?? []).filter((h: any) => h.tipo === 'Idioma');
+  }
+
+  constructor(
+    private route: ActivatedRoute,
+    private publicService: PublicService
+  ) {}
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.cv = this.mockCvs.find(c => c.id === id) ?? null;
+    const urlPublica = this.route.snapshot.paramMap.get('urlPublica') ?? '';
+    if (!urlPublica) return;
+    this.loading = true;
+    this.publicService.getDetalle(urlPublica).subscribe({
+      next: data => { this.cv = data; this.loading = false; },
+      error: () => { this.cv = null; this.loading = false; }
+    });
+  }
+
+  iniciales(nombre: string | null | undefined): string {
+    if (!nombre) return '?';
+    return nombre.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  colorClass(id: number | null | undefined): string {
+    const classes = ['bg-primary', 'bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'bg-secondary'];
+    return classes[(id ?? 0) % classes.length];
+  }
+
+  primerNombre(nombreCompleto: string | null | undefined): string {
+    return nombreCompleto ? nombreCompleto.split(' ')[0] : '';
   }
 
   enviarContacto(): void {
-    this.contactoEnviado = true;
+    if (!this.cv) return;
+    this.enviandoContacto = true;
+    this.publicService.contactar(this.cv.urlPublica, this.contacto).subscribe({
+      next: () => {
+        this.contactoEnviado = true;
+        this.enviandoContacto = false;
+      },
+      error: () => { this.enviandoContacto = false; }
+    });
   }
 }

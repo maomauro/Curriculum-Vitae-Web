@@ -115,6 +115,7 @@ export interface ContactarDto {
   nombre: string;
   empresa: string | null;
   email: string;
+  motivoContacto: string | null;
   asunto: string | null;
   mensaje: string;
 }

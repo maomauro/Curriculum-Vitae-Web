@@ -1,4 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CvEditorService, FormacionDto, UpsertFormacionRequest } from '../../../core/services/cv-editor.service';
+
+interface FormacionUI extends FormacionDto {
+  expanded: boolean;
+  form: UpsertFormacionRequest;
+}
 
 @Component({
   selector: 'app-educacion',
@@ -15,25 +21,38 @@ import { Component } from '@angular/core';
       </button>
     </div>
 
-    <!-- Lista de estudios -->
-    <div *ngFor="let edu of estudios; let i = index">
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+
+    <!-- Sin datos -->
+    <div *ngIf="!loading && formaciones.length === 0" class="text-center py-5 text-muted">
+      <i class="bi bi-mortarboard display-5"></i>
+      <p class="mt-3">No tienes formaciones registradas. Agrega la primera.</p>
+    </div>
+
+    <!-- Lista de formaciones -->
+    <div *ngFor="let edu of formaciones; let i = index">
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
         <div class="p-4 d-flex align-items-center gap-3" style="cursor:pointer;"
              (click)="edu.expanded = !edu.expanded">
           <!-- Ícono por tipo -->
           <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
                style="width:44px;height:44px;font-size:1.1rem;"
-               [style.background]="iconoBg(edu.tipo)"
-               [style.color]="iconoColor(edu.tipo)">
-            <i class="bi" [ngClass]="icono(edu.tipo)"></i>
+               [style.background]="iconoBg(edu.tipoFormacion)"
+               [style.color]="iconoColor(edu.tipoFormacion)">
+            <i class="bi" [ngClass]="icono(edu.tipoFormacion)"></i>
           </div>
           <div class="flex-grow-1">
             <div class="fw-bold" style="font-size:.95rem;">{{ edu.titulo }}</div>
             <div style="font-size:.85rem;color:#6c757d;">{{ edu.institucion }}</div>
           </div>
-          <span class="text-muted small me-3">{{ edu.anio }}</span>
+          <span class="text-muted small me-3">{{ edu.fechaFin | date:'yyyy' }}</span>
           <span class="badge" style="background:#f1f5f9;color:#6c757d;font-size:.7rem;border-radius:12px;padding:3px 10px;">
-            {{ labelTipo(edu.tipo) }}
+            {{ labelTipo(edu.tipoFormacion) }}
           </span>
           <i class="bi ms-2" [class.bi-chevron-down]="!edu.expanded"
              [class.bi-chevron-up]="edu.expanded" style="color:#adb5bd;"></i>
@@ -43,39 +62,52 @@ import { Component } from '@angular/core';
           <div class="row g-3 mt-1">
             <div class="col-md-6">
               <label class="form-label">Título / Certificación</label>
-              <input type="text" class="form-control" [value]="edu.titulo">
+              <input type="text" class="form-control" [(ngModel)]="edu.form.titulo">
             </div>
             <div class="col-md-6">
               <label class="form-label">Institución</label>
-              <input type="text" class="form-control" [value]="edu.institucion">
+              <input type="text" class="form-control" [(ngModel)]="edu.form.institucion">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Área de estudio</label>
+              <input type="text" class="form-control" [(ngModel)]="edu.form.area">
             </div>
             <div class="col-md-4">
               <label class="form-label">Tipo</label>
-              <select class="form-select" [(ngModel)]="edu.tipo">
-                <option value="posgrado">Posgrado / Máster</option>
-                <option value="pregrado">Pregrado / Grado</option>
-                <option value="tecnico">Técnico / FP</option>
-                <option value="certificacion">Certificación</option>
+              <select class="form-select" [(ngModel)]="edu.form.tipoFormacion">
+                <option value="Posgrado">Posgrado / Máster</option>
+                <option value="Pregrado">Pregrado / Grado</option>
+                <option value="Tecnico">Técnico / FP</option>
+                <option value="Certificacion">Certificación</option>
+                <option value="Curso">Curso</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Año de graduación</label>
-              <input type="number" class="form-control" [value]="edu.anio" min="1980" max="2099">
+              <label class="form-label">Duración (horas)</label>
+              <input type="number" class="form-control" min="0" [(ngModel)]="edu.form.duracionHoras">
             </div>
             <div class="col-md-4">
-              <label class="form-label">Modalidad</label>
-              <select class="form-select">
-                <option>Presencial</option>
-                <option>Online</option>
-                <option>Semipresencial</option>
-              </select>
+              <label class="form-label">Fecha inicio</label>
+              <input type="date" class="form-control" [(ngModel)]="edu.form.fechaInicio">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fecha fin / Graduación</label>
+              <input type="date" class="form-control" [(ngModel)]="edu.form.fechaFin">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Vigencia del certificado</label>
+              <input type="date" class="form-control" [(ngModel)]="edu.form.fechaVigencia">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="edu.form.descripcion"></textarea>
             </div>
             <div class="col-12 d-flex justify-content-end gap-2 pt-2"
                  style="border-top:1px solid #f0f0f0;">
-              <button class="btn btn-outline-danger btn-sm">
+              <button class="btn btn-outline-danger btn-sm" (click)="eliminar(edu)">
                 <i class="bi bi-trash me-1"></i>Eliminar
               </button>
-              <button class="btn btn-primary btn-sm">
+              <button class="btn btn-primary btn-sm" (click)="guardar(edu)" [disabled]="guardando">
                 <i class="bi bi-floppy-fill me-1"></i>Guardar
               </button>
             </div>
@@ -85,49 +117,104 @@ import { Component } from '@angular/core';
     </div>
   `
 })
-export class EducacionComponent {
-  estudios = [
-    { titulo: 'Máster en Ingeniería del Software', institucion: 'Universidad Politécnica de Madrid',
-      tipo: 'posgrado', anio: 2019, expanded: false },
-    { titulo: 'Grado en Ingeniería Informática', institucion: 'Universidad de Madrid',
-      tipo: 'pregrado', anio: 2017, expanded: false },
-    { titulo: 'AWS Solutions Architect Associate', institucion: 'Amazon Web Services',
-      tipo: 'certificacion', anio: 2023, expanded: false },
-  ];
+export class EducacionComponent implements OnInit {
+  formaciones: FormacionUI[] = [];
+  loading = false;
+  guardando = false;
 
-  icono(tipo: string): string {
-    const map: Record<string, string> = {
-      posgrado: 'bi-award-fill', pregrado: 'bi-book-fill',
-      tecnico: 'bi-tools', certificacion: 'bi-patch-check-fill'
-    };
-    return map[tipo] ?? 'bi-mortarboard-fill';
+  constructor(private cvEditorService: CvEditorService) {}
+
+  ngOnInit(): void {
+    this.cargar();
   }
 
-  iconoBg(tipo: string): string {
-    const map: Record<string, string> = {
-      posgrado: '#f3e8ff', pregrado: '#ebf2ff',
-      tecnico: '#d1fae5', certificacion: '#fef9c3'
-    };
-    return map[tipo] ?? '#f1f5f9';
+  cargar(): void {
+    this.loading = true;
+    this.cvEditorService.getFormaciones().subscribe({
+      next: data => {
+        this.formaciones = data.map(f => ({ ...f, expanded: false, form: this.toForm(f) }));
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
   }
 
-  iconoColor(tipo: string): string {
-    const map: Record<string, string> = {
-      posgrado: '#7c3aed', pregrado: '#2c7be5',
-      tecnico: '#065f46', certificacion: '#92400e'
-    };
-    return map[tipo] ?? '#6c757d';
-  }
-
-  labelTipo(tipo: string): string {
-    const map: Record<string, string> = {
-      posgrado: 'Posgrado', pregrado: 'Pregrado',
-      tecnico: 'Técnico', certificacion: 'Certificación'
-    };
-    return map[tipo] ?? tipo;
+  private toForm(f: FormacionDto): UpsertFormacionRequest {
+    const { formacionId, ...rest } = f;
+    return { ...rest };
   }
 
   agregar(): void {
-    this.estudios.push({ titulo: '', institucion: '', tipo: 'pregrado', anio: new Date().getFullYear(), expanded: true });
+    const nueva: FormacionUI = {
+      formacionId: 0, titulo: null, institucion: null, area: null,
+      fechaInicio: null, fechaFin: null, tipoFormacion: 'Pregrado',
+      descripcion: null, adjuntoSoporte: null, fechaVigencia: null, duracionHoras: null,
+      expanded: true,
+      form: { titulo: null, institucion: null, area: null, fechaInicio: null, fechaFin: null,
+              tipoFormacion: 'Pregrado', descripcion: null, adjuntoSoporte: null,
+              fechaVigencia: null, duracionHoras: null }
+    };
+    this.formaciones.unshift(nueva);
+  }
+
+  guardar(edu: FormacionUI): void {
+    this.guardando = true;
+    if (edu.formacionId === 0) {
+      this.cvEditorService.createFormacion(edu.form).subscribe({
+        next: creada => {
+          Object.assign(edu, creada, { expanded: false, form: this.toForm(creada) });
+          this.guardando = false;
+        },
+        error: () => { this.guardando = false; }
+      });
+    } else {
+      this.cvEditorService.updateFormacion(edu.formacionId, edu.form).subscribe({
+        next: actualizada => {
+          Object.assign(edu, actualizada, { expanded: false, form: this.toForm(actualizada) });
+          this.guardando = false;
+        },
+        error: () => { this.guardando = false; }
+      });
+    }
+  }
+
+  eliminar(edu: FormacionUI): void {
+    if (edu.formacionId === 0) { this.formaciones = this.formaciones.filter(f => f !== edu); return; }
+    if (!confirm('¿Eliminar esta formación?')) return;
+    this.cvEditorService.deleteFormacion(edu.formacionId).subscribe({
+      next: () => { this.formaciones = this.formaciones.filter(f => f !== edu); }
+    });
+  }
+
+  icono(tipo: string | null): string {
+    const map: Record<string, string> = {
+      'Posgrado': 'bi-award-fill', 'Pregrado': 'bi-book-fill',
+      'Tecnico': 'bi-tools', 'Certificacion': 'bi-patch-check-fill', 'Curso': 'bi-play-circle-fill'
+    };
+    return tipo ? (map[tipo] ?? 'bi-mortarboard-fill') : 'bi-mortarboard-fill';
+  }
+
+  iconoBg(tipo: string | null): string {
+    const map: Record<string, string> = {
+      'Posgrado': '#f3e8ff', 'Pregrado': '#ebf2ff',
+      'Tecnico': '#d1fae5', 'Certificacion': '#fef9c3', 'Curso': '#fff3e0'
+    };
+    return tipo ? (map[tipo] ?? '#f1f5f9') : '#f1f5f9';
+  }
+
+  iconoColor(tipo: string | null): string {
+    const map: Record<string, string> = {
+      'Posgrado': '#7c3aed', 'Pregrado': '#2c7be5',
+      'Tecnico': '#065f46', 'Certificacion': '#92400e', 'Curso': '#e65100'
+    };
+    return tipo ? (map[tipo] ?? '#6c757d') : '#6c757d';
+  }
+
+  labelTipo(tipo: string | null): string {
+    const map: Record<string, string> = {
+      'Posgrado': 'Posgrado', 'Pregrado': 'Pregrado',
+      'Tecnico': 'Técnico', 'Certificacion': 'Certificación', 'Curso': 'Curso'
+    };
+    return tipo ? (map[tipo] ?? tipo) : '—';
   }
 }

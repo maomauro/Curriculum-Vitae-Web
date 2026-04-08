@@ -8,8 +8,8 @@ import { DashboardCandidatoComponent } from './pages/dashboard-candidato.compone
 const routes: Routes = [
   { path: '',                    component: HomeComponent },
   { path: 'cvs',                 component: BuscarCvsComponent },
-  { path: 'cv/:id',              component: DetalleCvComponent },
-  { path: 'cv/:id/dashboard',    component: DashboardCandidatoComponent },
+  { path: 'cv/:urlPublica',              component: DetalleCvComponent },
+  { path: 'cv/:urlPublica/dashboard',    component: DashboardCandidatoComponent },
 ];
 
 @NgModule({
