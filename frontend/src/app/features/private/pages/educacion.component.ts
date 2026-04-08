@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, FormacionDto, UpsertFormacionRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, FormacionDto, UpsertFormacionRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface FormacionUI extends FormacionDto {
   expanded: boolean;
@@ -122,7 +124,10 @@ export class EducacionComponent implements OnInit {
   loading = false;
   guardando = false;
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -135,7 +140,10 @@ export class EducacionComponent implements OnInit {
         this.formaciones = data.map(f => ({ ...f, expanded: false, form: this.toForm(f) }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -164,16 +172,24 @@ export class EducacionComponent implements OnInit {
         next: creada => {
           Object.assign(edu, creada, { expanded: false, form: this.toForm(creada) });
           this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
         },
-        error: () => { this.guardando = false; }
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     } else {
       this.cvEditorService.updateFormacion(edu.formacionId, edu.form).subscribe({
         next: actualizada => {
           Object.assign(edu, actualizada, { expanded: false, form: this.toForm(actualizada) });
           this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: () => { this.guardando = false; }
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     }
   }
@@ -182,7 +198,11 @@ export class EducacionComponent implements OnInit {
     if (edu.formacionId === 0) { this.formaciones = this.formaciones.filter(f => f !== edu); return; }
     if (!confirm('¿Eliminar esta formación?')) return;
     this.cvEditorService.deleteFormacion(edu.formacionId).subscribe({
-      next: () => { this.formaciones = this.formaciones.filter(f => f !== edu); }
+      next: () => {
+        this.formaciones = this.formaciones.filter(f => f !== edu);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 

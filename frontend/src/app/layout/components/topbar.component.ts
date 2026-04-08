@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService, UserInfo } from '../../core/services/auth.service';
-import { DashboardService, NotificacionItemDto } from '../../core/services/dashboard.service';
-import { CvEditorService } from '../../core/services/cv-editor.service';
+import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
+import { DashboardService, NotificacionItemDto } from '../../core/services/private/dashboard.service';
+import { CvEditorService } from '../../core/services/private/cv-editor.service';
 
 @Component({
   selector: 'app-topbar',

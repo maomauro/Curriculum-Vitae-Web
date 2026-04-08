@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { AlertasService, AlertaVisitaDto } from '../../../core/services/alertas.service';
+import { AlertasService, AlertaVisitaDto } from '../../../core/services/private/alertas.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-alertas',
@@ -128,7 +130,10 @@ export class AlertasComponent implements OnInit {
     return this.alertas.filter(a => a.tipoVisita === 'Descarga').length;
   }
 
-  constructor(private alertasService: AlertasService) {}
+  constructor(
+    private alertasService: AlertasService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargarAlertas();
@@ -142,7 +147,10 @@ export class AlertasComponent implements OnInit {
         this.aplicarFiltros();
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -162,7 +170,8 @@ export class AlertasComponent implements OnInit {
   marcarLeida(alerta: AlertaVisitaDto): void {
     if (alerta.esLeida) return;
     this.alertasService.marcarLeida(alerta.alertaVisitaId).subscribe({
-      next: () => { alerta.esLeida = true; this.aplicarFiltros(); }
+      next: () => { alerta.esLeida = true; this.aplicarFiltros(); },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
     });
   }
 
@@ -171,6 +180,10 @@ export class AlertasComponent implements OnInit {
       next: () => {
         this.alertas.forEach(a => (a.esLeida = true));
         this.aplicarFiltros();
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: () => {
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
       }
     });
   }

@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, ProyectoDto, UpsertProyectoRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, ProyectoDto, UpsertProyectoRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface ProyectoUI extends ProyectoDto {
   expanded: boolean;
@@ -114,7 +116,10 @@ export class ProyectosComponent implements OnInit {
   loading = false;
   guardando = false;
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -127,7 +132,10 @@ export class ProyectosComponent implements OnInit {
         this.proyectos = data.map(p => ({ ...p, expanded: false, form: this.toForm(p) }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -157,13 +165,27 @@ export class ProyectosComponent implements OnInit {
     this.guardando = true;
     if (p.proyectoId === 0) {
       this.cvEditorService.createProyecto(dto).subscribe({
-        next: creado => { Object.assign(p, creado, { expanded: false, form: this.toForm(creado) }); this.guardando = false; },
-        error: () => { this.guardando = false; }
+        next: creado => {
+          Object.assign(p, creado, { expanded: false, form: this.toForm(creado) });
+          this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
+        },
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     } else {
       this.cvEditorService.updateProyecto(p.proyectoId, dto).subscribe({
-        next: actualizado => { Object.assign(p, actualizado, { expanded: false, form: this.toForm(actualizado) }); this.guardando = false; },
-        error: () => { this.guardando = false; }
+        next: actualizado => {
+          Object.assign(p, actualizado, { expanded: false, form: this.toForm(actualizado) });
+          this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        },
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     }
   }
@@ -172,7 +194,11 @@ export class ProyectosComponent implements OnInit {
     if (p.proyectoId === 0) { this.proyectos = this.proyectos.filter(x => x !== p); return; }
     if (!confirm('¿Eliminar este proyecto?')) return;
     this.cvEditorService.deleteProyecto(p.proyectoId).subscribe({
-      next: () => { this.proyectos = this.proyectos.filter(x => x !== p); }
+      next: () => {
+        this.proyectos = this.proyectos.filter(x => x !== p);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 }

@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, PersonalesDto, UpsertPersonalesRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, PersonalesDto, UpsertPersonalesRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-datos-personales',
@@ -223,7 +225,10 @@ export class DatosPersonalesComponent implements OnInit {
     privacidadEmail: 'Privado', privacidadTelefono: 'Privado'
   };
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.loading = true;
@@ -246,9 +251,13 @@ export class DatosPersonalesComponent implements OnInit {
         this.p = rest;
         this.guardando = false;
         this.guardadoOk = true;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
         setTimeout(() => (this.guardadoOk = false), 3000);
       },
-      error: () => { this.guardando = false; }
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      }
     });
   }
 }

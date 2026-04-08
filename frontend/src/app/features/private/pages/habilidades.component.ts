@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, HabilidadDto, UpsertHabilidadRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, HabilidadDto, UpsertHabilidadRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface HabilidadUI extends HabilidadDto {
   editando: boolean;
@@ -184,7 +186,10 @@ export class HabilidadesComponent implements OnInit {
   get blandas():  HabilidadUI[] { return this.habilidades.filter(h => h.tipo === 'Blanda');  }
   get idiomas():  HabilidadUI[] { return this.habilidades.filter(h => h.tipo === 'Idioma');  }
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -197,7 +202,10 @@ export class HabilidadesComponent implements OnInit {
         this.habilidades = data.map(h => ({ ...h, editando: false }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -223,13 +231,27 @@ export class HabilidadesComponent implements OnInit {
     };
     if (skill.habilidadId === 0) {
       this.cvEditorService.createHabilidad(form).subscribe({
-        next: creada => { Object.assign(skill, creada, { editando: false }); this.guardando = false; },
-        error: () => { this.guardando = false; }
+        next: creada => {
+          Object.assign(skill, creada, { editando: false });
+          this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
+        },
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     } else {
       this.cvEditorService.updateHabilidad(skill.habilidadId, form).subscribe({
-        next: actualizada => { Object.assign(skill, actualizada, { editando: false }); this.guardando = false; },
-        error: () => { this.guardando = false; }
+        next: actualizada => {
+          Object.assign(skill, actualizada, { editando: false });
+          this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        },
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     }
   }
@@ -238,7 +260,11 @@ export class HabilidadesComponent implements OnInit {
     if (skill.habilidadId === 0) { this.habilidades = this.habilidades.filter(h => h !== skill); return; }
     if (!confirm('¿Eliminar esta habilidad?')) return;
     this.cvEditorService.deleteHabilidad(skill.habilidadId).subscribe({
-      next: () => { this.habilidades = this.habilidades.filter(h => h !== skill); }
+      next: () => {
+        this.habilidades = this.habilidades.filter(h => h !== skill);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 

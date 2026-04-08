@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, ExperienciaDto, UpsertExperienciaRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, ExperienciaDto, UpsertExperienciaRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface ExperienciaUI extends ExperienciaDto {
   expanded: boolean;
@@ -131,7 +133,10 @@ export class ExperienciaComponent implements OnInit {
   loading = false;
   guardando = false;
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -144,7 +149,10 @@ export class ExperienciaComponent implements OnInit {
         this.experiencias = data.map(e => ({ ...e, expanded: false, form: this.toForm(e) }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -172,16 +180,24 @@ export class ExperienciaComponent implements OnInit {
         next: creada => {
           Object.assign(exp, creada, { expanded: false, form: this.toForm(creada) });
           this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
         },
-        error: () => { this.guardando = false; }
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     } else {
       this.cvEditorService.updateExperiencia(exp.experienciaId, exp.form).subscribe({
         next: actualizada => {
           Object.assign(exp, actualizada, { expanded: false, form: this.toForm(actualizada) });
           this.guardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: () => { this.guardando = false; }
+        error: () => {
+          this.guardando = false;
+          this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+        }
       });
     }
   }
@@ -193,7 +209,11 @@ export class ExperienciaComponent implements OnInit {
     }
     if (!confirm('¿Eliminar esta experiencia?')) return;
     this.cvEditorService.deleteExperiencia(exp.experienciaId).subscribe({
-      next: () => { this.experiencias = this.experiencias.filter(e => e !== exp); }
+      next: () => {
+        this.experiencias = this.experiencias.filter(e => e !== exp);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 }

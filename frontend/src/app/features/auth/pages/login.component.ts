@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -68,16 +70,24 @@ export class LoginComponent {
   loading = false;
   errorMsg = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private notificationService: NotificationService
+  ) {}
 
   onLogin(): void {
     if (!this.email || !this.password) return;
     this.loading = true;
     this.errorMsg = '';
     this.authService.login(this.email, this.password).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => {
+        this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
+        this.router.navigate(['/dashboard']);
+      },
       error: () => {
         this.errorMsg = 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
+        this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
         this.loading = false;
       }
     });

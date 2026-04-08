@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, RedSocialDto, UpsertRedSocialRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, RedSocialDto, UpsertRedSocialRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface RedSocialUI extends RedSocialDto {
   editando: boolean;
@@ -113,7 +115,10 @@ export class RedesSocialesComponent implements OnInit {
   loading = false;
   guardando = false;
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -126,7 +131,10 @@ export class RedesSocialesComponent implements OnInit {
         this.redes = data.map(r => ({ ...r, editando: false, form: this.toForm(r) }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -155,8 +163,12 @@ export class RedesSocialesComponent implements OnInit {
       next: data => {
         Object.assign(red, data, { editando: false, form: this.toForm(data) });
         this.guardando = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
-      error: () => { this.guardando = false; }
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      }
     });
   }
 
@@ -175,7 +187,11 @@ export class RedesSocialesComponent implements OnInit {
     }
     if (!confirm('¿Eliminar esta red social?')) return;
     this.cvEditorService.deleteRedSocial(red.redSocialId).subscribe({
-      next: () => { this.redes = this.redes.filter(r => r !== red); }
+      next: () => {
+        this.redes = this.redes.filter(r => r !== red);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 

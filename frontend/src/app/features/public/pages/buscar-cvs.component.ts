@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PublicService, CvListadoItemDto } from '../../../core/services/public.service';
+import { PublicService, CvListadoItemDto } from '../../../core/services/public/public.service';
 
 @Component({
   selector: 'app-buscar-cvs',

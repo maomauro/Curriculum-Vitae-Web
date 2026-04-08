@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, ReferenciaDto, UpsertReferenciaRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, ReferenciaDto, UpsertReferenciaRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface ReferenciaUI extends ReferenciaDto {
   expanded: boolean;
@@ -138,7 +140,10 @@ export class ReferenciasComponent implements OnInit {
   loading = false;
   guardando = false;
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -151,7 +156,10 @@ export class ReferenciasComponent implements OnInit {
         this.referencias = data.map(r => ({ ...r, expanded: false, form: this.toForm(r) }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -205,8 +213,12 @@ export class ReferenciasComponent implements OnInit {
       next: data => {
         Object.assign(ref, data, { expanded: false, form: this.toForm(data) });
         this.guardando = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
-      error: () => { this.guardando = false; }
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      }
     });
   }
 
@@ -217,7 +229,11 @@ export class ReferenciasComponent implements OnInit {
     }
     if (!confirm('¿Eliminar esta referencia?')) return;
     this.cvEditorService.deleteReferencia(ref.referenciaId).subscribe({
-      next: () => { this.referencias = this.referencias.filter(r => r !== ref); }
+      next: () => {
+        this.referencias = this.referencias.filter(r => r !== ref);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 }

@@ -26,6 +26,10 @@ interface RegisterApiResponse {
   nombreCompleto: string;
 }
 
+interface ForgotPasswordApiResponse {
+  message: string;
+}
+
 // Claim name que usa ClaimTypes.Role en .NET
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
@@ -64,6 +68,10 @@ export class AuthService {
       `${this.API_URL}/register`,
       { nombreCompleto, email, password }
     );
+  }
+
+  forgotPassword(email: string): Observable<ForgotPasswordApiResponse> {
+    return this.http.post<ForgotPasswordApiResponse>(`${this.API_URL}/forgot-password`, { email });
   }
 
   logout(): void {

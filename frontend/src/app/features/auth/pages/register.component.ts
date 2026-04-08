@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-register',
@@ -62,7 +64,11 @@ export class RegisterComponent {
   loading = false;
   errorMsg = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private notificationService: NotificationService
+  ) {}
 
   onRegister(): void {
     if (!this.name || !this.email || !this.password) return;
@@ -72,9 +78,13 @@ export class RegisterComponent {
       next: () => {
         // El API no devuelve JWT en register; iniciamos sesión con las mismas credenciales.
         this.authService.login(this.email, this.password).subscribe({
-          next: () => this.router.navigate(['/dashboard']),
+          next: () => {
+            this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
+            this.router.navigate(['/dashboard']);
+          },
           error: () => {
             this.errorMsg = 'Cuenta creada. Inicia sesión con tu correo y contraseña.';
+            this.notificationService.warning(NOTIFICATION_MESSAGES.operationPartial);
             this.loading = false;
             void this.router.navigate(['/auth/login']);
           }
@@ -86,6 +96,7 @@ export class RegisterComponent {
           typeof body?.message === 'string'
             ? body.message
             : 'No se pudo crear la cuenta. Revisa la consola o que el API y la base de datos estén en marcha.';
+        this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
         this.loading = false;
       }
     });

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService, UserInfo } from '../../../core/services/auth.service';
-import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../../core/services/dashboard.service';
+import { AuthService, UserInfo } from '../../../core/services/auth/auth.service';
+import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../../core/services/private/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',

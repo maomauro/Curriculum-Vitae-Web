@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public.service';
+import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
 
 @Component({
   selector: 'app-detalle-cv',
@@ -43,7 +43,7 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
               </div>
             </div>
             <h4 class="fw-bold mb-1">{{ cv.personales?.nombreCompleto }}</h4>
-            <p class="text-muted mb-3">{{ cv.perfiles?.[0]?.nombrePerfil }}</p>
+            <p class="text-muted mb-3">{{ cv.perfiles[0]?.nombrePerfil }}</p>
 
             <!-- Contacto -->
             <div class="text-start mb-4">

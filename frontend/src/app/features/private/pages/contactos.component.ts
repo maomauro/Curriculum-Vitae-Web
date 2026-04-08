@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { DashboardService, ContactoDto } from '../../../core/services/dashboard.service';
+import { DashboardService, ContactoDto } from '../../../core/services/private/dashboard.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-contactos',
@@ -126,7 +128,10 @@ export class ContactosComponent implements OnInit {
       : this.contactos;
   }
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -136,13 +141,17 @@ export class ContactosComponent implements OnInit {
     this.loading = true;
     this.dashboardService.getContactos().subscribe({
       next: data => { this.contactos = data; this.loading = false; },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
   marcarLeido(c: ContactoDto): void {
     this.dashboardService.marcarContactoLeido(c.visitanteContactoId).subscribe({
-      next: () => { c.esLeido = true; }
+      next: () => { c.esLeido = true; },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
     });
   }
 

@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, PerfilDto, UpsertPerfilRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, PerfilDto, UpsertPerfilRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface PerfilUI extends PerfilDto {
   editando: boolean;
@@ -173,7 +175,10 @@ export class PerfilComponent implements OnInit {
     aspiracionSalarialPesos: null, aspiracionSalarialDolares: null, esActivo: true
   };
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -186,7 +191,10 @@ export class PerfilComponent implements OnInit {
         this.perfiles = data.map(p => ({ ...p, editando: false, form: { ...p } }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -208,8 +216,12 @@ export class PerfilComponent implements OnInit {
         this.perfiles.push({ ...nuevo, editando: false, form: { ...nuevo } });
         this.mostrarFormNuevo = false;
         this.guardando = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
       },
-      error: () => { this.guardando = false; }
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      }
     });
   }
 
@@ -227,15 +239,23 @@ export class PerfilComponent implements OnInit {
       next: actualizado => {
         Object.assign(p, actualizado, { editando: false, form: { ...actualizado } });
         this.guardando = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
       },
-      error: () => { this.guardando = false; }
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      }
     });
   }
 
   eliminar(p: PerfilUI): void {
     if (!confirm('¿Eliminar este perfil?')) return;
     this.cvEditorService.deletePerfil(p.perfilId).subscribe({
-      next: () => { this.perfiles = this.perfiles.filter(x => x.perfilId !== p.perfilId); }
+      next: () => {
+        this.perfiles = this.perfiles.filter(x => x.perfilId !== p.perfilId);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 }

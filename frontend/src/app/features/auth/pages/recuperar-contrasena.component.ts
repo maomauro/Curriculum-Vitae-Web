@@ -1,4 +1,7 @@
 import { Component } from '@angular/core';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-recuperar-contrasena',
@@ -55,13 +58,24 @@ export class RecuperarContrasenaComponent {
   loading = false;
   sent = false;
 
+  constructor(
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) {}
+
   onSubmit(): void {
     if (!this.email) return;
     this.loading = true;
-    // TODO: conectar con API cuando esté disponible
-    setTimeout(() => {
-      this.sent = true;
-      this.loading = false;
-    }, 800);
+    this.authService.forgotPassword(this.email).subscribe({
+      next: () => {
+        this.sent = true;
+        this.loading = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
+      },
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
+      }
+    });
   }
 }

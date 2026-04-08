@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService, FamiliarContactoDto, UpsertFamiliarContactoRequest } from '../../../core/services/cv-editor.service';
+import { CvEditorService, FamiliarContactoDto, UpsertFamiliarContactoRequest } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 interface FamiliarUI extends FamiliarContactoDto {
   editando: boolean;
@@ -128,7 +130,10 @@ export class FamiliaresComponent implements OnInit {
   loading = false;
   guardando = false;
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargar();
@@ -141,7 +146,10 @@ export class FamiliaresComponent implements OnInit {
         this.familiares = data.map(f => ({ ...f, editando: false, form: this.toForm(f) }));
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -174,8 +182,12 @@ export class FamiliaresComponent implements OnInit {
       next: data => {
         Object.assign(fam, data, { editando: false, form: this.toForm(data) });
         this.guardando = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
-      error: () => { this.guardando = false; }
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      }
     });
   }
 
@@ -186,7 +198,11 @@ export class FamiliaresComponent implements OnInit {
     }
     if (!confirm('¿Eliminar este contacto?')) return;
     this.cvEditorService.deleteFamiliar(fam.familiarId).subscribe({
-      next: () => { this.familiares = this.familiares.filter(f => f !== fam); }
+      next: () => {
+        this.familiares = this.familiares.filter(f => f !== fam);
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
     });
   }
 }

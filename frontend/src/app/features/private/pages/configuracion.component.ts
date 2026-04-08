@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CvEditorService } from '../../../core/services/cv-editor.service';
+import { CvEditorService } from '../../../core/services/private/cv-editor.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -116,7 +118,10 @@ export class ConfiguracionComponent implements OnInit {
     { key: 'proyectos',   label: 'Proyectos',            icono: 'bi-kanban-fill',     visible: true  },
   ];
 
-  constructor(private cvEditorService: CvEditorService) {}
+  constructor(
+    private cvEditorService: CvEditorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cvEditorService.getVisibilidad().subscribe({
@@ -125,12 +130,16 @@ export class ConfiguracionComponent implements OnInit {
           const campo = this.camposVisibilidad.find(c => c.key === item.seccion);
           if (campo) campo.visible = item.visible;
         });
-      }
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError)
     });
   }
 
   guardarVisibilidad(campo: { key: string; visible: boolean }): void {
-    this.cvEditorService.updateVisibilidad([{ seccion: campo.key, visible: campo.visible }]).subscribe();
+    this.cvEditorService.updateVisibilidad([{ seccion: campo.key, visible: campo.visible }]).subscribe({
+      next: () => this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess),
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
+    });
   }
 
   copiarUrl(): void {

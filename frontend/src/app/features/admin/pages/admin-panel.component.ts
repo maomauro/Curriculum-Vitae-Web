@@ -1,5 +1,7 @@
-﻿import { Component, OnInit } from '@angular/core';
-import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/admin.service';
+import { Component, OnInit } from '@angular/core';
+import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/admin/admin.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
 
 @Component({
   selector: 'app-admin-panel',
@@ -216,7 +218,10 @@ export class AdminPanelComponent implements OnInit {
   rolesGuardando = false;
   rolesError: string | null = null;
 
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.adminService.getUsuarios().subscribe({
@@ -224,10 +229,14 @@ export class AdminPanelComponent implements OnInit {
         this.usuarios = data;
         this.loading  = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
     this.adminService.getRoles().subscribe({
-      next: roles => { this.todoRoles = roles; }
+      next: roles => { this.todoRoles = roles; },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError)
     });
   }
 
@@ -256,7 +265,11 @@ export class AdminPanelComponent implements OnInit {
   toggleEstado(u: UsuarioAdminDto): void {
     const nuevoActivo = u.estado !== 'Activo';
     this.adminService.setEstado(u.usuarioId, nuevoActivo).subscribe({
-      next: res => { u.estado = res.estado; }
+      next: res => {
+        u.estado = res.estado;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.saveError)
     });
   }
 
@@ -278,6 +291,7 @@ export class AdminPanelComponent implements OnInit {
         next: () => {
           u.roles = u.roles.filter(r => r.rolId !== rol.rolId);
           this.rolesGuardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
         error: (err) => {
           this.rolesError = err?.error?.message ?? 'No se pudo quitar el rol.';
@@ -289,6 +303,7 @@ export class AdminPanelComponent implements OnInit {
         next: () => {
           u.roles = [...u.roles, rol];
           this.rolesGuardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
         error: (err) => {
           this.rolesError = err?.error?.message ?? 'No se pudo asignar el rol.';
