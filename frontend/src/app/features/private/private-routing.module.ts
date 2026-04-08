@@ -10,8 +10,9 @@ import { ExperienciaComponent }    from './pages/experiencia.component';
 import { EducacionComponent }      from './pages/educacion.component';
 import { HabilidadesComponent }    from './pages/habilidades.component';
 import { ProyectosComponent }      from './pages/proyectos.component';
-import { ConfiguracionComponent }  from './pages/configuracion.component';
-import { EditorCvComponent }       from './pages/editor-cv.component';
+import { ConfiguracionComponent }  from './pages/configuracion.component';import { ReferenciasComponent }     from './pages/referencias.component';
+import { RedesSocialesComponent }   from './pages/redes-sociales.component';
+import { FamiliaresComponent }      from './pages/familiares.component';import { EditorCvComponent }       from './pages/editor-cv.component';
 
 const routes: Routes = [
   { path: 'dashboard',        component: DashboardComponent },
@@ -22,8 +23,11 @@ const routes: Routes = [
   { path: 'experiencia',      component: ExperienciaComponent },
   { path: 'educacion',        component: EducacionComponent },
   { path: 'habilidades',      component: HabilidadesComponent },
-  { path: 'proyectos',        component: ProyectosComponent },
-  { path: 'configuracion',    component: ConfiguracionComponent },
+  { path: 'proyectos',      component: ProyectosComponent },
+  { path: 'referencias',    component: ReferenciasComponent },
+  { path: 'redes-sociales', component: RedesSocialesComponent },
+  { path: 'familiares',     component: FamiliaresComponent },
+  { path: 'configuracion',  component: ConfiguracionComponent },
   { path: 'editor',           component: EditorCvComponent },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
