@@ -42,8 +42,12 @@ type SeccionDatosPersonales =
 
     <ng-container *ngIf="!loading">
 
+    <!-- Grupo: identificación, básicos, contacto, residencia, seguridad + guardar -->
+    <section class="seccion-card datos-personales-nucleo mb-4"
+             aria-label="Identificación, datos básicos, contacto, residencia y seguridad social">
+
     <!-- 1. Información de Identificación -->
-    <div class="seccion-card">
+    <div class="datos-personales-acordeon-bloque">
       <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
               (click)="toggleSection('identificacion')"
               [attr.aria-expanded]="isSectionOpen('identificacion')">
@@ -118,7 +122,7 @@ type SeccionDatosPersonales =
     </div>
 
     <!-- 2. Datos Básicos -->
-    <div class="seccion-card">
+    <div class="datos-personales-acordeon-bloque">
       <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
               (click)="toggleSection('basicos')"
               [attr.aria-expanded]="isSectionOpen('basicos')">
@@ -189,7 +193,7 @@ type SeccionDatosPersonales =
     </div>
 
     <!-- 3. Información de Contacto -->
-    <div class="seccion-card">
+    <div class="datos-personales-acordeon-bloque">
       <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
               (click)="toggleSection('contacto')"
               [attr.aria-expanded]="isSectionOpen('contacto')">
@@ -234,7 +238,7 @@ type SeccionDatosPersonales =
     </div>
 
     <!-- 4. Información de Residencia -->
-    <div class="seccion-card">
+    <div class="datos-personales-acordeon-bloque">
       <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
               (click)="toggleSection('residencia')">
         <div class="d-flex justify-content-between align-items-center">
@@ -284,7 +288,7 @@ type SeccionDatosPersonales =
     </div>
 
     <!-- 5. Seguridad Social -->
-    <div class="seccion-card">
+    <div class="datos-personales-acordeon-bloque">
       <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
               (click)="toggleSection('seguridad')"
               [attr.aria-expanded]="isSectionOpen('seguridad')">
@@ -314,18 +318,24 @@ type SeccionDatosPersonales =
       </div>
     </div>
 
-    <div class="seccion-card">
-      <div class="seccion-subtitulo border-0 pt-0">Resumen de identificación, datos básicos, contacto, residencia y seguridad social</div>
-      <div class="text-end">
-        <span *ngIf="guardando" class="text-muted small me-3">Guardando…</span>
-        <span *ngIf="guardadoOk" class="text-success small me-3">
-          <i class="bi bi-check-circle-fill me-1"></i>Guardado
-        </span>
-        <button type="button" class="btn btn-primary px-4" (click)="guardar()" [disabled]="guardando">
-          <i class="bi bi-floppy-fill me-2"></i>Guardar datos personales
-        </button>
+    <div class="datos-personales-guardar-footer">
+      <div class="d-flex flex-column flex-md-row flex-md-wrap align-items-md-center justify-content-md-between gap-3">
+        <div class="seccion-subtitulo border-0 pt-0 mb-0 text-muted small">
+          Resumen de identificación, datos básicos, contacto, residencia y seguridad social
+        </div>
+        <div class="text-md-end flex-shrink-0">
+          <span *ngIf="guardando" class="text-muted small me-3">Guardando…</span>
+          <span *ngIf="guardadoOk" class="text-success small me-3">
+            <i class="bi bi-check-circle-fill me-1"></i>Guardado
+          </span>
+          <button type="button" class="btn btn-primary px-4" (click)="guardar()" [disabled]="guardando">
+            <i class="bi bi-floppy-fill me-2"></i>Guardar datos personales
+          </button>
+        </div>
       </div>
     </div>
+
+    </section>
 
     <!-- Bloque semántico: familiares, redes y referencias (entidades aparte de Personales) -->
     <section id="bloque-familiares-redes-referencias" class="datos-personales-relaciones" aria-labelledby="titulo-relaciones-fyr">

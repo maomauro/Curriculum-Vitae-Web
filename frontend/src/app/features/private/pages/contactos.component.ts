@@ -50,38 +50,36 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
 
     <!-- Lista de contactos -->
     <div *ngFor="let c of contactosFiltrados"
-         class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden"
-         [style.border-left]="c.esLeido ? '4px solid #e9ecef' : '4px solid #2c7be5'">
+         class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden cv-contact-card"
+         [class.cv-contact-unread]="!c.esLeido">
 
       <div class="p-4">
         <!-- Fila superior: avatar + nombre + fecha + badge -->
         <div class="d-flex align-items-start gap-3">
           <!-- Avatar inicial -->
-          <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold"
-               style="width:44px;height:44px;background:#ebf2ff;color:#2c7be5;font-size:1rem;">
+          <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold cv-contact-icon">
             {{ inicial(c.nombre) }}
           </div>
 
           <div class="flex-grow-1">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
               <div>
-                <span class="fw-bold" style="font-size:.95rem;">{{ c.nombre || 'Anónimo' }}</span>
-                <span *ngIf="c.empresa" class="text-muted ms-2" style="font-size:.85rem;">
+                <span class="fw-bold cv-contact-name">{{ c.nombre || 'Anónimo' }}</span>
+                <span *ngIf="c.empresa" class="text-muted ms-2 cv-contact-company">
                   · {{ c.empresa }}
                 </span>
               </div>
               <div class="d-flex align-items-center gap-2">
-                <span class="text-muted" style="font-size:.78rem;">
+                <span class="text-muted cv-contact-date">
                   <i class="bi bi-clock me-1"></i>{{ c.fechaContacto | date:'dd/MM/yyyy HH:mm' }}
                 </span>
                 <span *ngIf="!c.esLeido"
-                      class="badge rounded-pill bg-primary"
-                      style="font-size:.68rem;">Nuevo</span>
+                      class="badge rounded-pill bg-primary cv-badge-nuevo">Nuevo</span>
               </div>
             </div>
 
             <!-- Email + motivo -->
-            <div class="mt-1" style="font-size:.82rem;color:#6c757d;">
+            <div class="mt-1 cv-contact-snippet">
               <i class="bi bi-envelope me-1"></i>{{ c.correo }}
               <ng-container *ngIf="c.motivoContacto">
                 <span class="mx-2">·</span>
@@ -90,12 +88,12 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
             </div>
 
             <!-- Asunto -->
-            <div *ngIf="c.asunto" class="mt-2 fw-semibold" style="font-size:.88rem;">
+            <div *ngIf="c.asunto" class="mt-2 fw-semibold cv-contact-asunto">
               {{ c.asunto }}
             </div>
 
             <!-- Mensaje -->
-            <div *ngIf="c.mensaje" class="mt-1" style="font-size:.85rem;color:#495057;line-height:1.5;">
+            <div *ngIf="c.mensaje" class="mt-1 cv-contact-mensaje">
               {{ c.mensaje }}
             </div>
           </div>

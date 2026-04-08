@@ -1,0 +1,791 @@
+// ── Página pública: home ──────────────────────────────────────────────────────
+.hero-section {
+  background: #f8f9fa;
+  padding: 96px 0 80px;
+  text-align: center;
+}
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--cv-primary);
+  margin-bottom: 16px;
+}
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: #6c757d;
+  max-width: 560px;
+  margin: 0 auto 36px;
+}
+.hero-search {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.cta-section {
+  background: #fff;
+  padding: 80px 0;
+}
+.cta-section h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 12px;
+}
+
+// ── Perfil profesional (editor) ───────────────────────────────────────────────
+.profile-card {
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fff;
+}
+.profile-card.is-active {
+  border-color: var(--cv-primary);
+  box-shadow: 0 0 0 4px rgba(44, 123, 229, 0.1);
+}
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.profile-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.badge-active {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-inactive {
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.profile-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.profile-toggle-label {
+  font-size: 0.82rem;
+  color: #6c757d;
+}
+.perfil-action-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+.perfil-gap-notice {
+  background: #fff8e1;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.83rem;
+  color: #856404;
+  margin-bottom: 20px;
+}
+.perfil-nuevo-card {
+  border: 2px dashed var(--cv-primary);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+
+// ── Habilidades: niveles ───────────────────────────────────────────────────────
+.nivel-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.nivel-pill.basico {
+  background: #fef9c3;
+  color: #92400e;
+}
+.nivel-pill.intermedio {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.nivel-pill.avanzado {
+  background: #d1fae5;
+  color: #065f46;
+}
+.nivel-pill.experto {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.cv-surface-soft {
+  background: #f8faff;
+  border: 1px solid #e4effd;
+}
+.cv-text-90 {
+  font-size: 0.9rem;
+}
+.cv-input-narrow {
+  max-width: 140px;
+}
+.cv-badge-soft-click {
+  background: #ebf3fb;
+  color: var(--cv-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+// ── Admin panel ───────────────────────────────────────────────────────────────
+.admin-icon-danger {
+  color: #dc3545;
+}
+.admin-spinner-lg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.admin-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+.admin-stat-icon--blue {
+  background: #ebf2ff;
+  color: var(--cv-primary);
+}
+.admin-stat-icon--green {
+  background: #d1fae5;
+  color: #065f46;
+}
+.admin-stat-icon--red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.admin-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.admin-stat-label {
+  font-size: 0.8rem;
+}
+.admin-table-head {
+  background: #f8faff;
+}
+.admin-th {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 600;
+}
+.admin-td-muted {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+.admin-email {
+  font-size: 0.9rem;
+}
+.admin-search-icon {
+  font-size: 2rem;
+}
+.admin-filter-select {
+  width: auto;
+}
+.admin-search-input {
+  min-width: 200px;
+}
+.badge-role-admin {
+  background: #ede9fe;
+  color: #5b21b6;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+.badge-role-user {
+  background: #ebf2ff;
+  color: var(--cv-primary);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+.badge-user-activo {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+.badge-user-inactivo {
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+.admin-roles-row {
+  background: #f8faff;
+}
+.admin-rol-name {
+  font-size: 0.9rem;
+}
+.admin-rol-desc {
+  font-size: 0.75rem;
+}
+.badge-asignado {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.72rem;
+}
+.sin-roles {
+  font-size: 0.8rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+// ── Listas acordeón (experiencia, educación, proyectos, etc.) ─────────────────
+.cv-cursor-pointer {
+  cursor: pointer;
+}
+.cv-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.1rem;
+}
+.cv-icon-box--primary {
+  background: #ebf2ff;
+  color: var(--cv-primary);
+}
+.cv-icon-box--edu {
+  background: #ebf2ff;
+  color: var(--cv-primary);
+  font-size: 1.1rem;
+}
+.cv-icon-box--warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+.cv-icon-box--social {
+  width: 44px;
+  height: 44px;
+  background: #ebf2ff;
+  font-size: 1.3rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cv-accordion-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.cv-accordion-sub-primary {
+  font-size: 0.85rem;
+  color: var(--cv-primary);
+  font-weight: 600;
+}
+.cv-accordion-sub-muted {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+.cv-chevron-muted {
+  color: #adb5bd;
+}
+.cv-border-t-soft {
+  border-top: 1px solid #f0f0f0;
+}
+.cv-actions-row-soft {
+  border-top: 1px solid #f0f0f0;
+}
+.cv-badge-pill {
+  font-size: 0.7rem;
+  border-radius: 12px;
+  padding: 3px 10px;
+}
+.cv-badge-actual {
+  background: #d1fae5;
+  color: #065f46;
+}
+.cv-badge-pasado {
+  background: #f1f5f9;
+  color: #6c757d;
+}
+.cv-stack-tag {
+  background: #ebf2ff;
+  color: var(--cv-primary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.badge-ref-type {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+}
+.badge-ref-type--laboral {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badge-ref-type--personal {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.cv-badge-neutral {
+  background: #f1f5f9;
+  color: #6c757d;
+  font-size: 0.7rem;
+  border-radius: 12px;
+  padding: 3px 10px;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+.stat-text-warning {
+  color: #fd7e14;
+}
+.stat-text-danger {
+  color: #dc3545;
+}
+.stat-text-teal {
+  color: #20c997;
+}
+.cv-progress-dashboard {
+  height: 10px;
+  border-radius: 6px;
+}
+
+// ── Configuración ─────────────────────────────────────────────────────────────
+.cv-icon-primary-sm {
+  color: var(--cv-primary);
+  font-size: 1rem;
+}
+.cv-label-medium {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.cv-switch-cursor {
+  cursor: pointer;
+}
+.cv-danger-zone {
+  border-color: #fecaca !important;
+}
+.cv-danger-zone .seccion-titulo {
+  color: #dc3545;
+}
+
+// ── Notificaciones toast ─────────────────────────────────────────────────────
+.cv-toast-stack {
+  z-index: 1200;
+}
+
+// ── Búsqueda CVs ──────────────────────────────────────────────────────────────
+.cv-section-toolbar {
+  background: var(--cv-main-bg);
+  border-bottom: 1px solid #e9ecef;
+}
+.cv-section-list {
+  background: var(--cv-main-bg);
+}
+.cv-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+.cv-name-strong {
+  color: #212529;
+}
+
+// ── Detalle CV público ───────────────────────────────────────────────────────
+.cv-tabs-nav {
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 0;
+}
+.cv-nav-link-active {
+  color: var(--cv-primary);
+  border-bottom: 2px solid var(--cv-primary);
+  border-radius: 0;
+  margin-bottom: -2px;
+}
+.cv-nav-link-passive {
+  border-radius: 0;
+}
+.avatar-circle.avatar-xl {
+  width: 120px;
+  height: 120px;
+  font-size: 2.5rem;
+  border: 4px solid #fff;
+  box-shadow: 0 2px 12px rgba(44, 123, 229, 0.25);
+}
+.cv-skill-row-text {
+  font-size: 0.85rem;
+  color: #343a40;
+}
+.cv-progress-xs {
+  height: 7px;
+  border-radius: 4px;
+}
+.cv-progress-bar-primary {
+  background: var(--cv-primary);
+  width: 60%;
+}
+.cv-prose {
+  line-height: 1.75;
+}
+.cv-modal-soft {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+
+// ── Mi CV (preview) ───────────────────────────────────────────────────────────
+.cv-preview-header {
+  background: linear-gradient(135deg, #2c7be5 0%, #1a5fb4 100%);
+}
+.cv-preview-avatar {
+  width: 96px;
+  height: 96px;
+  font-size: 2.2rem;
+  border: 3px solid rgba(255, 255, 255, 0.5);
+}
+.cv-preview-name {
+  font-size: 1.8rem;
+}
+.cv-preview-sub {
+  opacity: 0.9;
+}
+.cv-preview-meta {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.cv-preview-sidebar {
+  background: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+}
+.section-title.section-title-accent {
+  color: var(--cv-primary);
+  border-bottom-color: var(--cv-primary);
+}
+.cv-skill-line {
+  font-size: 0.82rem;
+  color: #343a40;
+}
+.cv-progress-preview {
+  height: 6px;
+  border-radius: 3px;
+}
+.cv-progress-bar-fill {
+  background: var(--cv-primary);
+}
+.cv-summary-text {
+  font-size: 0.88rem;
+  color: #495057;
+  line-height: 1.7;
+}
+
+// ── Dashboard candidato (público / analítico) ─────────────────────────────────
+.cv-dash-avatar-lg {
+  width: 68px;
+  height: 68px;
+  font-size: 1.45rem;
+}
+.cv-nav-tab-passive {
+  border-radius: 0;
+}
+.cv-nav-tab-active-analytics {
+  color: var(--cv-primary);
+  border-bottom: 2px solid var(--cv-primary);
+  border-radius: 0;
+  margin-bottom: -1px;
+}
+.cv-dash-page-icon {
+  width: 50px;
+  height: 50px;
+  background: #eef3fb;
+  color: var(--cv-primary);
+  font-size: 1.55rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cv-analytics-lead {
+  font-size: 0.9rem;
+}
+.cv-metric-card-shadow {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.13);
+}
+.cv-metric-label {
+  font-size: 0.75rem;
+  opacity: 0.88;
+  font-weight: 600;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.cv-metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.cv-metric-sub {
+  font-size: 0.72rem;
+  opacity: 0.78;
+  line-height: 1.35;
+}
+.cv-metric-icon-watermark {
+  font-size: 2.6rem;
+  opacity: 0.2;
+}
+.cv-analytics-card-title {
+  font-size: 0.95rem;
+}
+.cv-analytics-card-desc {
+  font-size: 0.8rem;
+}
+.cv-analytics-row-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.cv-analytics-row-meta {
+  font-size: 0.8rem;
+}
+.cv-progress-analytics {
+  height: 10px;
+  border-radius: 6px;
+}
+.cv-progress-analytics-fill {
+  background: var(--cv-primary);
+  border-radius: 6px;
+}
+.cv-timeline-year {
+  width: 40px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.cv-timeline-dot {
+  width: 8px;
+  height: 8px;
+}
+.cv-timeline-desc {
+  font-size: 0.85rem;
+}
+.cv-progress-hab {
+  height: 8px;
+  border-radius: 6px;
+}
+.badge-hab-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.cv-progress-hab-fill {
+  border-radius: 6px;
+}
+.cv-progress-nivel-fill {
+  background: #22c55e;
+  border-radius: 6px;
+}
+
+// ── Datos personales: ficha única (acordeones + guardar) ───────────────────────
+.datos-personales-nucleo {
+  padding: 0;
+  overflow: hidden;
+}
+.datos-personales-acordeon-bloque {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eef0f2;
+  margin-bottom: 0 !important;
+}
+.datos-personales-acordeon-bloque:has(+ .datos-personales-guardar-footer) {
+  border-bottom: none;
+}
+.datos-personales-guardar-footer {
+  padding: 20px 24px;
+  background: #fafbfc;
+  border-top: 1px solid #eef0f2;
+}
+
+// ── Editor CV ─────────────────────────────────────────────────────────────────
+.cv-editor-tile {
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.cv-editor-tile-preview {
+  height: 120px;
+}
+.cv-editor-icon-doc {
+  font-size: 2.5rem;
+  color: #fff;
+  opacity: 0.8;
+}
+.cv-editor-tile-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.cv-editor-activa-label {
+  font-size: 0.7rem;
+  color: var(--cv-primary);
+}
+.cv-preview-placeholder {
+  height: 400px;
+  background: #f4f6f9;
+  border: 2px dashed #c9d6e3;
+}
+.cv-preview-pdf-icon {
+  font-size: 3rem;
+  opacity: 0.4;
+}
+.cv-preview-hint {
+  font-size: 0.9rem;
+}
+
+// ── Topbar / notificaciones dropdown ─────────────────────────────────────────
+.cv-topbar-user-hint {
+  color: #ced4da;
+  font-size: 0.85rem;
+  margin-right: auto;
+  max-width: 520px;
+}
+.cv-notif-dropdown {
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  border-radius: 12px;
+}
+.cv-notif-header {
+  border-bottom: 1px solid #f0f0f0;
+}
+.cv-notif-title {
+  font-size: 0.9rem;
+}
+.cv-notif-badge-sm {
+  font-size: 0.7rem;
+}
+.cv-notif-empty {
+  font-size: 0.85rem;
+}
+.cv-notif-row {
+  border-bottom: 1px solid #f9f9f9;
+}
+.cv-notif-icon-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+}
+.cv-notif-body {
+  min-width: 0;
+}
+.cv-notif-line1 {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cv-notif-line2 {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+.cv-notif-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+}
+.cv-notif-footer {
+  border-top: 1px solid #f0f0f0;
+}
+.cv-notif-link {
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+// ── Sidebar ─────────────────────────────────────────────────────────────────
+.cv-sidebar-hr {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.cv-contact-card {
+  border-left: 4px solid #e9ecef;
+}
+.cv-contact-unread {
+  border-left-color: var(--cv-primary);
+}
+
+// ── Contactos list ────────────────────────────────────────────────────────────
+.cv-contact-icon {
+  width: 44px;
+  height: 44px;
+  background: #ebf2ff;
+  color: var(--cv-primary);
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cv-contact-name {
+  font-size: 0.95rem;
+}
+.cv-contact-company {
+  font-size: 0.85rem;
+}
+.cv-contact-date {
+  font-size: 0.78rem;
+}
+.cv-badge-nuevo {
+  font-size: 0.68rem;
+}
+.cv-contact-snippet {
+  font-size: 0.82rem;
+  color: #6c757d;
+}
+.cv-contact-asunto {
+  font-size: 0.88rem;
+}
+.cv-contact-mensaje {
+  font-size: 0.85rem;
+  color: #495057;
+  line-height: 1.5;
+}

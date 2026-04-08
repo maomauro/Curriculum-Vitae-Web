@@ -32,7 +32,7 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
           <i class="bi bi-file-earmark-person-fill"></i><span>Mi CV</span>
         </a>
 
-        <hr class="my-1" style="border-color: rgba(255,255,255,.15);">
+        <hr class="my-1 cv-sidebar-hr">
 
         <!-- Datos Personales -->
         <a class="nav-item-sidebar" routerLink="/datos-personales" routerLinkActive="active">
@@ -64,7 +64,7 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
           <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
         </a>
 
-        <hr class="my-1" style="border-color: rgba(255,255,255,.15);">
+        <hr class="my-1 cv-sidebar-hr">
 
         <!-- Configuración -->
         <a class="nav-item-sidebar" routerLink="/configuracion" routerLinkActive="active">

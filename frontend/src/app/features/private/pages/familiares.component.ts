@@ -50,27 +50,25 @@ interface FamiliarUI extends FamiliarContactoDto {
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
 
         <!-- Cabecera -->
-        <div class="p-4 d-flex align-items-center gap-3" style="cursor:pointer;"
+        <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
              (click)="toggleEditarFamiliar(fam)">
-          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:44px;height:44px;background:#fef3c7;color:#d97706;font-size:1.1rem;">
+          <div class="rounded-3 cv-icon-box cv-icon-box--warning">
             <i class="bi bi-person-heart"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ tituloCabecera(fam) }}</div>
-            <div style="font-size:.85rem;color:#6c757d;">{{ subtituloCabecera(fam) }}</div>
+            <div class="fw-bold cv-accordion-title">{{ tituloCabecera(fam) }}</div>
+            <div class="cv-accordion-sub-muted">{{ subtituloCabecera(fam) }}</div>
           </div>
           <span *ngIf="esPrincipalCabecera(fam)"
-                class="badge rounded-pill"
-                style="background:#d1fae5;color:#065f46;font-size:.7rem;padding:3px 10px;">
+                class="badge rounded-pill cv-badge-pill cv-badge-actual">
             Principal
           </span>
-          <i class="bi ms-2" [class.bi-chevron-down]="!fam.editando"
-             [class.bi-chevron-up]="fam.editando" style="color:#adb5bd;" aria-hidden="true"></i>
+          <i class="bi ms-2 cv-chevron-muted" [class.bi-chevron-down]="!fam.editando"
+             [class.bi-chevron-up]="fam.editando" aria-hidden="true"></i>
         </div>
 
         <!-- Cuerpo expandible -->
-        <div *ngIf="fam.editando" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+        <div *ngIf="fam.editando" class="px-4 pb-4 cv-border-t-soft">
           <div class="row g-3 mt-1">
 
             <div class="col-md-4">

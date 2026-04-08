@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin, Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { CvEditorService, PerfilDto, UpsertPerfilRequest } from '../../../core/services/private/cv-editor.service';
+import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 interface PerfilUI extends PerfilDto {
-  editando: boolean;
   form: UpsertPerfilRequest;
 }
 
@@ -14,157 +16,153 @@ interface PerfilUI extends PerfilDto {
   selector: 'app-perfil',
   standalone: false,
   template: `
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
       <div>
         <h4><i class="bi bi-person-badge-fill me-2 text-primary"></i>Perfil Profesional</h4>
-        <span class="text-muted small">Define los perfiles laborales que buscas y tu disponibilidad</span>
+        <p class="text-muted small mb-0">
+          Define el cargo y descripción con que te presentas ante empleadores. Solo un perfil puede estar activo a la vez.
+        </p>
       </div>
-      <button class="btn btn-primary btn-sm" (click)="abrirNuevo()">
+      <button type="button" class="btn btn-primary btn-sm" (click)="abrirNuevo()">
         <i class="bi bi-plus-circle me-1"></i>Agregar perfil
       </button>
     </div>
 
-    <!-- Loading -->
+    <div class="perfil-gap-notice">
+      <i class="bi bi-info-circle-fill me-1"></i>
+      El perfil <strong>activo</strong> es el que se prioriza en búsquedas y vistas públicas. Al activar uno, los demás se desactivan automáticamente al guardar el cambio de estado.
+    </div>
+
     <div *ngIf="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando...</span>
       </div>
     </div>
 
-    <!-- Formulario nuevo perfil -->
-    <div *ngIf="!loading && mostrarFormNuevo" class="seccion-card mb-4"
-         style="border-color:#2c7be5;box-shadow:0 0 0 4px rgba(44,123,229,.08);">
-      <div class="seccion-titulo"><i class="bi bi-plus-circle-fill"></i>Nuevo perfil</div>
+    <!-- Nuevo perfil -->
+    <div *ngIf="!loading && mostrarFormNuevo" class="perfil-nuevo-card">
+      <div class="profile-card-header">
+        <div class="profile-name">
+          <i class="bi bi-plus-circle text-primary" aria-hidden="true"></i>
+          Nuevo perfil
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarNuevo()">
+          <i class="bi bi-x-lg me-1"></i>Cancelar
+        </button>
+      </div>
       <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Nombre del perfil <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" placeholder="Ej: Frontend Developer"
+        <div class="col-md-5">
+          <label class="form-label">Nombre del perfil / Cargo objetivo <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" placeholder="Ej: Scrum Master, Data Analyst…"
                  [(ngModel)]="formNuevo.nombrePerfil">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">Sueldo mínimo (COP)</label>
-          <input type="number" class="form-control" min="0"
-                 [(ngModel)]="formNuevo.aspiracionSalarialPesos">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Sueldo mínimo (USD)</label>
-          <input type="number" class="form-control" min="0"
-                 [(ngModel)]="formNuevo.aspiracionSalarialDolares">
-        </div>
-        <div class="col-12">
+        <div class="col-md-7">
           <label class="form-label">Descripción / Resumen profesional</label>
           <textarea class="form-control" rows="3"
-                    placeholder="Describe brevemente tu perfil..."
+                    placeholder="Escribe un resumen corto de este perfil profesional…"
                     [(ngModel)]="formNuevo.descripcionPerfil"></textarea>
         </div>
-        <div class="col-12 d-flex align-items-center justify-content-between">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="esActivoNuevo"
-                   [(ngModel)]="formNuevo.esActivo">
-            <label class="form-check-label" for="esActivoNuevo">Marcar como perfil activo</label>
+        <div class="col-md-3">
+          <label class="form-label">Aspiración salarial (COP)</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control" min="0" placeholder="0"
+                   [(ngModel)]="formNuevo.aspiracionSalarialPesos">
           </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary btn-sm" (click)="cancelarNuevo()">Cancelar</button>
-            <button class="btn btn-primary btn-sm" (click)="crear()" [disabled]="guardando">
-              <i class="bi bi-floppy-fill me-1"></i>Guardar
-            </button>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Aspiración salarial (USD)</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control" min="0" placeholder="0"
+                   [(ngModel)]="formNuevo.aspiracionSalarialDolares">
           </div>
+        </div>
+        <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="activoNuevo"
+                   [(ngModel)]="formNuevo.esActivo" [disabled]="guardando">
+            <label class="form-check-label" for="activoNuevo">Activar este perfil al crearlo</label>
+          </div>
+          <button type="button" class="btn btn-primary px-4" (click)="crear()" [disabled]="guardando">
+            <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!guardando" class="bi bi-floppy-fill me-2"></i>Crear perfil
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Lista de perfiles -->
     <ng-container *ngIf="!loading">
       <div *ngIf="perfiles.length === 0 && !mostrarFormNuevo" class="text-center py-5 text-muted">
         <i class="bi bi-person-badge display-5"></i>
         <p class="mt-3">Aún no tienes perfiles laborales. Agrega uno.</p>
       </div>
 
-      <div *ngFor="let p of perfiles"
-           class="seccion-card mb-4"
-           [style.border-color]="p.esActivo ? '#2c7be5' : '#e9ecef'"
-           [style.box-shadow]="p.esActivo ? '0 0 0 4px rgba(44,123,229,.08)' : ''">
+      <div *ngFor="let p of perfiles; trackBy: trackByPerfil"
+           class="profile-card"
+           [class.is-active]="p.form.esActivo">
 
-        <!-- Vista -->
-        <ng-container *ngIf="!p.editando">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-              <span class="fw-bold">{{ p.nombrePerfil }}</span>
-              <span *ngIf="p.esActivo" class="ms-2 badge"
-                    style="background:#d1fae5;color:#065f46;font-size:.7rem;border-radius:20px;padding:3px 10px;">
-                <i class="bi bi-check-circle-fill me-1"></i>Activo
-              </span>
-              <span *ngIf="!p.esActivo" class="ms-2 badge"
-                    style="background:#f1f5f9;color:#94a3b8;font-size:.7rem;border-radius:20px;padding:3px 10px;">
-                Inactivo
-              </span>
-            </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-outline-secondary btn-sm" (click)="abrirEdicion(p)">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-outline-danger btn-sm" (click)="eliminar(p)">
-                <i class="bi bi-trash"></i>
-              </button>
+        <div class="profile-card-header">
+          <div class="profile-name">
+            {{ p.form.nombrePerfil || 'Sin nombre' }}
+            <span *ngIf="p.form.esActivo" class="badge-active">
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>Activo
+            </span>
+            <span *ngIf="!p.form.esActivo" class="badge-inactive">Inactivo</span>
+          </div>
+          <div class="profile-toggle-row">
+            <span class="profile-toggle-label">Activar este perfil</span>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch"
+                     [id]="'toggle-perfil-' + p.perfilId"
+                     [ngModel]="p.form.esActivo"
+                     (ngModelChange)="onActivoChange(p, $event)"
+                     [disabled]="guardando">
             </div>
           </div>
-          <p *ngIf="p.descripcionPerfil" class="text-muted small mb-2">{{ p.descripcionPerfil }}</p>
-          <div class="row g-2">
-            <div *ngIf="p.aspiracionSalarialPesos" class="col-md-6">
-              <small class="text-muted d-block">Salario mínimo (COP)</small>
-              <strong>$ {{ p.aspiracionSalarialPesos | number }} COP</strong>
-            </div>
-            <div *ngIf="p.aspiracionSalarialDolares" class="col-md-6">
-              <small class="text-muted d-block">Salario mínimo (USD)</small>
-              <strong>$ {{ p.aspiracionSalarialDolares | number }} USD</strong>
-            </div>
-          </div>
-        </ng-container>
+        </div>
 
-        <!-- Edición inline -->
-        <ng-container *ngIf="p.editando">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Nombre del perfil <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" [(ngModel)]="p.form.nombrePerfil">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Sueldo mínimo (COP)</label>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label" [attr.for]="'nombre-' + p.perfilId">Nombre del perfil / Cargo objetivo <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [id]="'nombre-' + p.perfilId"
+                   [(ngModel)]="p.form.nombrePerfil">
+          </div>
+          <div class="col-md-7">
+            <label class="form-label" [attr.for]="'desc-' + p.perfilId">Descripción / Resumen profesional</label>
+            <textarea class="form-control" rows="3" [id]="'desc-' + p.perfilId"
+                      [(ngModel)]="p.form.descripcionPerfil"></textarea>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Aspiración salarial (COP)</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
               <input type="number" class="form-control" min="0"
                      [(ngModel)]="p.form.aspiracionSalarialPesos">
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Sueldo mínimo (USD)</label>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Aspiración salarial (USD)</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
               <input type="number" class="form-control" min="0"
                      [(ngModel)]="p.form.aspiracionSalarialDolares">
             </div>
-            <div class="col-12">
-              <label class="form-label">Descripción / Resumen profesional</label>
-              <textarea class="form-control" rows="3" [(ngModel)]="p.form.descripcionPerfil"></textarea>
-            </div>
-            <div class="col-12 d-flex align-items-center justify-content-between">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" [id]="'esActivo_'+p.perfilId"
-                       [(ngModel)]="p.form.esActivo">
-                <label class="form-check-label" [for]="'esActivo_'+p.perfilId">Perfil activo</label>
-              </div>
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary btn-sm" (click)="p.editando=false">Cancelar</button>
-                <button class="btn btn-outline-danger btn-sm" (click)="eliminar(p)">
-                  <i class="bi bi-trash me-1"></i>Eliminar
-                </button>
-                <button class="btn btn-primary btn-sm" (click)="actualizar(p)" [disabled]="guardando">
-                  <i class="bi bi-floppy-fill me-1"></i>Guardar
-                </button>
-              </div>
-            </div>
           </div>
-        </ng-container>
+        </div>
 
+        <div class="perfil-action-row">
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminar(p)" [disabled]="guardando">
+            <i class="bi bi-trash3 me-1"></i>Eliminar
+          </button>
+          <button type="button" class="btn btn-primary px-4" (click)="guardar(p)" [disabled]="guardando">
+            <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!guardando" class="bi bi-floppy-fill me-2"></i>Guardar
+          </button>
+        </div>
       </div>
     </ng-container>
-  `
+  `,
 })
 export class PerfilComponent implements OnInit {
   perfiles: PerfilUI[] = [];
@@ -173,8 +171,11 @@ export class PerfilComponent implements OnInit {
   mostrarFormNuevo = false;
 
   formNuevo: UpsertPerfilRequest = {
-    nombrePerfil: null, descripcionPerfil: null,
-    aspiracionSalarialPesos: null, aspiracionSalarialDolares: null, esActivo: true
+    nombrePerfil: null,
+    descripcionPerfil: null,
+    aspiracionSalarialPesos: null,
+    aspiracionSalarialDolares: null,
+    esActivo: true,
   };
 
   constructor(
@@ -186,23 +187,55 @@ export class PerfilComponent implements OnInit {
     this.cargar();
   }
 
+  trackByPerfil(_index: number, p: PerfilUI): number {
+    return p.perfilId;
+  }
+
+  private toForm(p: PerfilDto): UpsertPerfilRequest {
+    return {
+      nombrePerfil: p.nombrePerfil,
+      descripcionPerfil: p.descripcionPerfil,
+      aspiracionSalarialPesos: p.aspiracionSalarialPesos,
+      aspiracionSalarialDolares: p.aspiracionSalarialDolares,
+      esActivo: p.esActivo,
+    };
+  }
+
+  private buildRequest(ui: PerfilUI): UpsertPerfilRequest {
+    const f = ui.form;
+    return {
+      nombrePerfil: f.nombrePerfil?.trim() || null,
+      descripcionPerfil: f.descripcionPerfil?.trim() || null,
+      aspiracionSalarialPesos: f.aspiracionSalarialPesos ?? null,
+      aspiracionSalarialDolares: f.aspiracionSalarialDolares ?? null,
+      esActivo: f.esActivo,
+    };
+  }
+
   cargar(): void {
     this.loading = true;
     this.cvEditorService.getPerfiles().subscribe({
       next: data => {
-        this.perfiles = data.map(p => ({ ...p, editando: false, form: { ...p } }));
+        this.perfiles = data.map(p => ({ ...p, form: this.toForm(p) }));
         this.loading = false;
+        this.guardando = false;
       },
       error: () => {
         this.loading = false;
+        this.guardando = false;
         this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
-      }
+      },
     });
   }
 
   abrirNuevo(): void {
-    this.formNuevo = { nombrePerfil: null, descripcionPerfil: null,
-                       aspiracionSalarialPesos: null, aspiracionSalarialDolares: null, esActivo: true };
+    this.formNuevo = {
+      nombrePerfil: null,
+      descripcionPerfil: null,
+      aspiracionSalarialPesos: null,
+      aspiracionSalarialDolares: null,
+      esActivo: true,
+    };
     this.mostrarFormNuevo = true;
   }
 
@@ -210,54 +243,169 @@ export class PerfilComponent implements OnInit {
     this.mostrarFormNuevo = false;
   }
 
+  /** Al activar un perfil, se desactivan el resto en servidor y se refresca la lista. */
+  onActivoChange(p: PerfilUI, checked: boolean): void {
+    if (checked) {
+      this.perfiles.forEach(x => {
+        if (x.perfilId !== p.perfilId) {
+          x.form.esActivo = false;
+        }
+      });
+      p.form.esActivo = true;
+      this.persistirActivacionUnica(p);
+    } else {
+      p.form.esActivo = false;
+    }
+  }
+
+  private persistirActivacionUnica(p: PerfilUI): void {
+    const otros = this.perfiles.filter(x => x.perfilId !== p.perfilId);
+    const desactivar$: Observable<PerfilDto[] | null> =
+      otros.length > 0
+        ? forkJoin(
+            otros.map(o =>
+              this.cvEditorService.updatePerfil(o.perfilId, {
+                ...this.buildRequest(o),
+                esActivo: false,
+              })
+            )
+          )
+        : of(null);
+
+    this.guardando = true;
+    desactivar$
+      .pipe(
+        switchMap(() =>
+          this.cvEditorService.updatePerfil(p.perfilId, {
+            ...this.buildRequest(p),
+            esActivo: true,
+          })
+        )
+      )
+      .subscribe({
+        next: () => {
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+          this.cargar();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardando = false;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+          this.cargar();
+        },
+      });
+  }
+
   crear(): void {
-    if (!this.formNuevo.nombrePerfil?.trim()) return;
+    const nombre = (this.formNuevo.nombrePerfil ?? '').trim();
+    if (!nombre) {
+      this.notificationService.warning(FORM_MESSAGES.perfil.requiredNombre);
+      return;
+    }
+
+    const payload: UpsertPerfilRequest = {
+      nombrePerfil: nombre,
+      descripcionPerfil: this.formNuevo.descripcionPerfil?.trim() || null,
+      aspiracionSalarialPesos: this.formNuevo.aspiracionSalarialPesos ?? null,
+      aspiracionSalarialDolares: this.formNuevo.aspiracionSalarialDolares ?? null,
+      esActivo: this.formNuevo.esActivo,
+    };
+
     this.guardando = true;
-    this.cvEditorService.createPerfil(this.formNuevo).subscribe({
-      next: nuevo => {
-        this.perfiles.push({ ...nuevo, editando: false, form: { ...nuevo } });
-        this.mostrarFormNuevo = false;
-        this.guardando = false;
-        this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.guardando = false;
-        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
-      }
-    });
+
+    const desactivarExistentes$: Observable<PerfilDto[] | null> =
+      payload.esActivo && this.perfiles.length > 0
+        ? forkJoin(
+            this.perfiles.map(o =>
+              this.cvEditorService.updatePerfil(o.perfilId, {
+                ...this.buildRequest(o),
+                esActivo: false,
+              })
+            )
+          )
+        : of(null);
+
+    desactivarExistentes$
+      .pipe(switchMap(() => this.cvEditorService.createPerfil(payload)))
+      .subscribe({
+        next: () => {
+          this.mostrarFormNuevo = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.createSuccess);
+          this.cargar();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardando = false;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+        },
+      });
   }
 
-  abrirEdicion(p: PerfilUI): void {
-    p.form = { nombrePerfil: p.nombrePerfil, descripcionPerfil: p.descripcionPerfil,
-               aspiracionSalarialPesos: p.aspiracionSalarialPesos,
-               aspiracionSalarialDolares: p.aspiracionSalarialDolares, esActivo: p.esActivo };
-    p.editando = true;
-  }
+  guardar(p: PerfilUI): void {
+    const nombre = (p.form.nombrePerfil ?? '').trim();
+    if (!nombre) {
+      this.notificationService.warning(FORM_MESSAGES.perfil.requiredNombre);
+      return;
+    }
+    p.form.nombrePerfil = nombre;
+    const payload = this.buildRequest(p);
 
-  actualizar(p: PerfilUI): void {
-    if (!p.form.nombrePerfil?.trim()) return;
     this.guardando = true;
-    this.cvEditorService.updatePerfil(p.perfilId, p.form).subscribe({
-      next: actualizado => {
-        Object.assign(p, actualizado, { editando: false, form: { ...actualizado } });
-        this.guardando = false;
-        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.guardando = false;
-        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
-      }
-    });
+
+    if (payload.esActivo) {
+      const otros = this.perfiles.filter(x => x.perfilId !== p.perfilId);
+      const desactivar$: Observable<PerfilDto[] | null> =
+        otros.length > 0
+          ? forkJoin(
+              otros.map(o =>
+                this.cvEditorService.updatePerfil(o.perfilId, {
+                  ...this.buildRequest(o),
+                  esActivo: false,
+                })
+              )
+            )
+          : of(null);
+
+      desactivar$
+        .pipe(switchMap(() => this.cvEditorService.updatePerfil(p.perfilId, { ...payload, esActivo: true })))
+        .subscribe({
+          next: () => {
+            this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+            this.cargar();
+          },
+          error: (error: HttpErrorResponse) => {
+            this.guardando = false;
+            this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+            this.cargar();
+          },
+        });
+    } else {
+      this.cvEditorService.updatePerfil(p.perfilId, payload).subscribe({
+        next: () => {
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+          this.cargar();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardando = false;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+          this.cargar();
+        },
+      });
+    }
   }
 
   eliminar(p: PerfilUI): void {
-    if (!confirm('¿Eliminar este perfil?')) return;
+    if (!confirm('¿Eliminar este perfil?')) {
+      return;
+    }
+    this.guardando = true;
     this.cvEditorService.deletePerfil(p.perfilId).subscribe({
       next: () => {
-        this.perfiles = this.perfiles.filter(x => x.perfilId !== p.perfilId);
         this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+        this.cargar();
       },
-      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.deleteError)
+      error: () => {
+        this.guardando = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.deleteError);
+      },
     });
   }
 }

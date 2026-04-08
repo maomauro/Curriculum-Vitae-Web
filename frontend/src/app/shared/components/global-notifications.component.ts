@@ -5,7 +5,7 @@ import { NotificationService } from '../../core/services/shared/notification.ser
   selector: 'app-global-notifications',
   standalone: false,
   template: `
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1200;">
+    <div class="toast-container position-fixed top-0 end-0 p-3 cv-toast-stack">
       <div *ngFor="let n of notifications$ | async"
            class="alert shadow-sm mb-2 d-flex align-items-center justify-content-between gap-2"
            [ngClass]="{

@@ -23,17 +23,15 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
       <p class="text-muted small mb-3">Controla qué información es visible públicamente en tu perfil.</p>
       <div class="d-flex flex-column gap-2">
         <div *ngFor="let campo of camposVisibilidad"
-             class="d-flex align-items-center justify-content-between p-3 rounded-3"
-             style="background:#f8faff;border:1px solid #e4effd;">
+             class="d-flex align-items-center justify-content-between p-3 rounded-3 cv-surface-soft">
           <div class="d-flex align-items-center gap-2">
-            <i class="bi" [ngClass]="campo.icono" style="color:#2c7be5;font-size:1rem;"></i>
-            <span style="font-size:.9rem;font-weight:500;">{{ campo.label }}</span>
+            <i class="bi cv-icon-primary-sm" [ngClass]="campo.icono"></i>
+            <span class="cv-label-medium">{{ campo.label }}</span>
           </div>
           <div class="form-check form-switch mb-0">
-            <input class="form-check-input" type="checkbox" role="switch"
+            <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
                    [(ngModel)]="campo.visible" [id]="'vis_'+campo.key"
-                   (change)="guardarVisibilidad(campo)"
-                   style="cursor:pointer;">
+                   (change)="guardarVisibilidad(campo)">
           </div>
         </div>
       </div>
@@ -87,8 +85,8 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
     </div>
 
     <!-- Zona peligrosa -->
-    <div class="seccion-card" style="border-color:#fecaca;">
-      <div class="seccion-titulo" style="color:#dc3545;">
+    <div class="seccion-card cv-danger-zone">
+      <div class="seccion-titulo">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>Zona de peligro
       </div>
       <p class="text-muted small mb-3">

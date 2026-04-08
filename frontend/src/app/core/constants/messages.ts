@@ -38,6 +38,9 @@ export const APP_MESSAGES = {
       redes: {
         requiredNombreRed: 'Indica el nombre de la red social.',
       },
+      perfil: {
+        requiredNombre: 'Indica el nombre del perfil o cargo objetivo.',
+      },
     },
   },
 } as const;

@@ -44,15 +44,14 @@ interface HabilidadUI extends HabilidadDto {
       <div *ngIf="tecnicas.length === 0" class="text-muted small">Sin habilidades técnicas registradas.</div>
       <div class="row g-3">
         <div class="col-md-6 col-lg-4" *ngFor="let skill of tecnicas">
-          <div class="d-flex flex-column gap-1 p-3 rounded-3"
-               style="background:#f8faff;border:1px solid #e4effd;">
+          <div class="d-flex flex-column gap-1 p-3 rounded-3 cv-surface-soft">
             <div class="d-flex align-items-center justify-content-between">
               <ng-container *ngIf="!skill.editando">
-                <span class="fw-semibold" style="font-size:.9rem;">{{ skill.nombre }}</span>
+                <span class="fw-semibold cv-text-90">{{ skill.nombre }}</span>
                 <span class="nivel-pill" [ngClass]="nivelClass(skill.nivel)">{{ skill.nivel }}</span>
               </ng-container>
-              <input *ngIf="skill.editando" type="text" class="form-control form-control-sm"
-                     [(ngModel)]="skill.nombre" style="max-width:140px;">
+              <input *ngIf="skill.editando" type="text" class="form-control form-control-sm cv-input-narrow"
+                     [(ngModel)]="skill.nombre">
             </div>
             <select *ngIf="skill.editando" class="form-select form-select-sm mt-1" [(ngModel)]="skill.nivel">
               <option *ngFor="let n of niveles">{{ n }}</option>
@@ -87,15 +86,13 @@ interface HabilidadUI extends HabilidadDto {
       <div class="d-flex flex-wrap gap-2">
         <ng-container *ngFor="let skill of blandas">
           <span *ngIf="!skill.editando"
-                class="badge rounded-pill px-3 py-2"
-                style="background:#ebf3fb;color:#2c7be5;font-size:.8rem;font-weight:500;cursor:pointer;"
+                class="badge rounded-pill px-3 py-2 cv-badge-soft-click"
                 (click)="skill.editando=true">
             {{ skill.nombre }}
             <i class="bi bi-x ms-1" (click)="$event.stopPropagation(); eliminar(skill)"></i>
           </span>
           <div *ngIf="skill.editando" class="d-flex gap-1 align-items-center">
-            <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.nombre"
-                   style="max-width:140px;">
+            <input type="text" class="form-control form-control-sm cv-input-narrow" [(ngModel)]="skill.nombre">
             <button class="btn btn-outline-secondary btn-sm py-0 px-2"
                     (click)="skill.editando=false">✕</button>
             <button class="btn btn-primary btn-sm py-0 px-2"
@@ -116,7 +113,7 @@ interface HabilidadUI extends HabilidadDto {
       <div *ngIf="idiomas.length === 0" class="text-muted small">Sin idiomas registrados.</div>
       <div class="row g-3">
         <div class="col-md-4" *ngFor="let idioma of idiomas">
-          <div class="p-3 rounded-3" style="background:#f8faff;border:1px solid #e4effd;">
+          <div class="p-3 rounded-3 cv-surface-soft">
             <ng-container *ngIf="!idioma.editando">
               <div class="d-flex align-items-center gap-2 mb-1">
                 <i class="bi bi-translate text-primary"></i>
@@ -161,20 +158,7 @@ interface HabilidadUI extends HabilidadDto {
     </div>
 
     </ng-container>
-  `,
-  styles: [`
-    .nivel-pill {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: .72rem;
-      font-weight: 600;
-    }
-    .nivel-pill.basico    { background:#fef9c3;color:#92400e; }
-    .nivel-pill.intermedio{ background:#dbeafe;color:#1e40af; }
-    .nivel-pill.avanzado  { background:#d1fae5;color:#065f46; }
-    .nivel-pill.experto   { background:#ede9fe;color:#5b21b6; }
-  `]
+  `
 })
 export class HabilidadesComponent implements OnInit {
   habilidades: HabilidadUI[] = [];

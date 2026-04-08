@@ -14,15 +14,14 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
       </a>
 
       <!-- Tabs -->
-      <ul class="nav gap-1 mb-4" style="border-bottom:2px solid #dee2e6; padding-bottom:0;">
+      <ul class="nav gap-1 mb-4 cv-tabs-nav">
         <li class="nav-item">
-          <a class="nav-link fw-semibold"
-             style="color:#2c7be5; border-bottom:2px solid #2c7be5; border-radius:0; margin-bottom:-2px;">
+          <a class="nav-link fw-semibold cv-nav-link-active">
             <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-muted" style="border-radius:0;"
+          <a class="nav-link fw-semibold text-muted cv-nav-link-passive"
              [routerLink]="['/cv', cv.urlPublica, 'dashboard']">
             <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
           </a>
@@ -37,8 +36,7 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
 
             <!-- Avatar 120px -->
             <div class="d-flex justify-content-center mb-3">
-              <div class="avatar-circle {{ colorClass(cv.curriculumId) }}" style="width:120px;height:120px;font-size:2.5rem;
-                           border:4px solid #fff; box-shadow:0 2px 12px rgba(44,123,229,.25);">
+              <div class="avatar-circle avatar-xl {{ colorClass(cv.curriculumId) }}">
                 {{ iniciales(cv.personales?.nombreCompleto) }}
               </div>
             </div>
@@ -65,12 +63,11 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
               <div class="section-title">Habilidades</div>
               <div *ngFor="let h of cv.habilidades">
                 <div class="d-flex justify-content-between mb-1">
-                  <span style="font-size:.85rem; color:#343a40;">{{ h.nombre }}</span>
+                  <span class="cv-skill-row-text">{{ h.nombre }}</span>
                   <small class="text-muted">{{ h.nivel }}</small>
                 </div>
-                <div class="progress mb-2" style="height:7px; border-radius:4px;">
-                  <div class="progress-bar" role="progressbar"
-                       style="background:#2c7be5;width:60%"></div>
+                <div class="progress mb-2 cv-progress-xs">
+                  <div class="progress-bar cv-progress-bar-primary" role="progressbar"></div>
                 </div>
               </div>
             </div>
@@ -99,7 +96,7 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
             <!-- Resumen -->
             <div class="mb-4" *ngIf="cv.perfiles?.length">
               <div class="section-title">Resumen profesional</div>
-              <p class="text-secondary" style="line-height:1.75;">{{ cv.perfiles[0].descripcionPerfil }}</p>
+              <p class="text-secondary cv-prose">{{ cv.perfiles[0].descripcionPerfil }}</p>
             </div>
 
             <!-- Experiencia -->
@@ -149,7 +146,7 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
     <div class="modal fade" id="modalContacto" tabindex="-1"
          aria-labelledby="modalContactoLabel" aria-hidden="true" *ngIf="cv">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:12px; border:none; box-shadow:0 8px 40px rgba(0,0,0,.15);">
+        <div class="modal-content cv-modal-soft">
           <div class="modal-header border-0 pb-0">
             <h5 class="modal-title fw-bold" id="modalContactoLabel">
               <i class="bi bi-envelope-fill me-2 text-primary"></i>

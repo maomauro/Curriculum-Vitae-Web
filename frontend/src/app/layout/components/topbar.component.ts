@@ -18,8 +18,7 @@ import { CvEditorService } from '../../core/services/private/cv-editor.service';
       <a routerLink="/dashboard" class="brand"><span>Portal</span>CV</a>
 
       <!-- Info usuario (centro) -->
-      <span class="d-none d-md-flex align-items-center gap-2 text-truncate"
-            style="color:#ced4da; font-size:.85rem; margin-right:auto; max-width: 520px;">
+      <span class="d-none d-md-flex align-items-center gap-2 text-truncate cv-topbar-user-hint">
         <i class="bi bi-person-circle"></i>
         <span class="text-truncate">
           {{ (currentUser?.nombre || 'Usuario') + ' - ' + cargoActual }}
@@ -36,14 +35,12 @@ import { CvEditorService } from '../../core/services/private/cv-editor.service';
         <span class="notif-badge" *ngIf="conteoNoLeidas > 0">{{ conteoNoLeidas }}</span>
 
         <!-- Dropdown panel -->
-        <div class="dropdown-menu dropdown-menu-end p-0"
-             style="width:340px;max-height:420px;overflow-y:auto;border-radius:12px;">
+        <div class="dropdown-menu dropdown-menu-end p-0 cv-notif-dropdown">
           <!-- Cabecera -->
-          <div class="d-flex justify-content-between align-items-center px-3 py-2"
-               style="border-bottom:1px solid #f0f0f0;">
-            <span class="fw-semibold" style="font-size:.9rem;">Notificaciones</span>
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 cv-notif-header">
+            <span class="fw-semibold cv-notif-title">Notificaciones</span>
             <span *ngIf="conteoNoLeidas > 0"
-                  class="badge rounded-pill bg-primary" style="font-size:.7rem;">
+                  class="badge rounded-pill bg-primary cv-notif-badge-sm">
               {{ conteoNoLeidas }} nuevas
             </span>
           </div>
@@ -55,39 +52,35 @@ import { CvEditorService } from '../../core/services/private/cv-editor.service';
 
           <!-- Sin notificaciones -->
           <div *ngIf="!loadingNotif && notificaciones.length === 0"
-               class="text-center text-muted py-4" style="font-size:.85rem;">
+               class="text-center text-muted py-4 cv-notif-empty">
             <i class="bi bi-bell-slash d-block fs-3 mb-2"></i>
             No hay notificaciones
           </div>
 
           <!-- Lista -->
           <div *ngFor="let n of notificaciones"
-               class="d-flex align-items-start gap-2 px-3 py-2"
-               style="border-bottom:1px solid #f9f9f9;"
+               class="d-flex align-items-start gap-2 px-3 py-2 cv-notif-row"
                [style.background]="n.esLeida ? '#fff' : '#f0f7ff'">
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:32px;height:32px;font-size:.85rem;"
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 cv-notif-icon-sm"
                  [style.background]="tipoIconBg(n.tipoVisita)"
                  [style.color]="tipoIconColor(n.tipoVisita)">
               <i class="bi" [ngClass]="tipoIcono(n.tipoVisita)"></i>
             </div>
-            <div class="flex-grow-1" style="min-width:0;">
-              <div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div class="flex-grow-1 cv-notif-body">
+              <div class="cv-notif-line1">
                 {{ n.titulo }}
               </div>
-              <div style="font-size:.75rem;color:#6c757d;">
+              <div class="cv-notif-line2">
                 {{ n.fechaVisita | date:'dd/MM/yyyy HH:mm' }}
               </div>
             </div>
             <div *ngIf="!n.esLeida"
-                 class="rounded-circle bg-primary flex-shrink-0"
-                 style="width:8px;height:8px;margin-top:6px;"></div>
+                 class="rounded-circle bg-primary flex-shrink-0 cv-notif-dot"></div>
           </div>
 
           <!-- Pie -->
-          <div class="text-center py-2" style="border-top:1px solid #f0f0f0;">
-            <a routerLink="/privado/alertas" class="text-primary"
-               style="font-size:.8rem;text-decoration:none;">
+          <div class="text-center py-2 cv-notif-footer">
+            <a routerLink="/alertas" class="text-primary cv-notif-link">
               Ver todas las alertas →
             </a>
           </div>

@@ -42,27 +42,25 @@ interface ProyectoUI extends ProyectoDto {
     <div *ngFor="let p of proyectos; let i = index">
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
         <!-- Cabecera -->
-        <div class="p-4 d-flex align-items-center gap-3" style="cursor:pointer;"
+        <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
              (click)="p.expanded = !p.expanded">
-          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:44px;height:44px;background:#ebf2ff;color:#2c7be5;font-size:1.1rem;">
+          <div class="rounded-3 cv-icon-box cv-icon-box--primary">
             <i class="bi bi-kanban-fill"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ p.nombreProyecto }}</div>
+            <div class="fw-bold cv-accordion-title">{{ p.nombreProyecto }}</div>
             <div class="d-flex flex-wrap gap-1 mt-1">
-              <span *ngFor="let tag of stackArray(p.stackTecnologico)"
-                    style="background:#ebf2ff;color:#2c7be5;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px;">
+              <span *ngFor="let tag of stackArray(p.stackTecnologico)" class="cv-stack-tag">
                 {{ tag }}
               </span>
             </div>
           </div>
-          <i class="bi ms-2" [class.bi-chevron-down]="!p.expanded"
-             [class.bi-chevron-up]="p.expanded" style="color:#adb5bd;"></i>
+          <i class="bi ms-2 cv-chevron-muted" [class.bi-chevron-down]="!p.expanded"
+             [class.bi-chevron-up]="p.expanded"></i>
         </div>
 
         <!-- Cuerpo expandible -->
-        <div *ngIf="p.expanded" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+        <div *ngIf="p.expanded" class="px-4 pb-4 cv-border-t-soft">
           <div class="row g-3 mt-1">
             <div class="col-md-8">
               <label class="form-label">Nombre del proyecto</label>
@@ -98,8 +96,7 @@ interface ProyectoUI extends ProyectoDto {
               <label class="form-label">Principal desafío</label>
               <input type="text" class="form-control" [(ngModel)]="p.form.desafio">
             </div>
-            <div class="col-12 d-flex justify-content-end gap-2 pt-2"
-                 style="border-top:1px solid #f0f0f0;">
+            <div class="col-12 d-flex justify-content-end gap-2 pt-2 cv-actions-row-soft">
               <button class="btn btn-outline-danger btn-sm" (click)="eliminar(p)">
                 <i class="bi bi-trash me-1"></i>Eliminar
               </button>

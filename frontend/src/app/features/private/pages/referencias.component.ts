@@ -50,30 +50,28 @@ interface ReferenciaUI extends ReferenciaDto {
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
 
         <!-- Cabecera -->
-        <div class="p-4 d-flex align-items-center gap-3" style="cursor:pointer;"
+        <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
              (click)="ref.expanded = !ref.expanded">
-          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:44px;height:44px;background:#ebf2ff;color:#2c7be5;font-size:1.1rem;">
+          <div class="rounded-3 cv-icon-box cv-icon-box--primary">
             <i class="bi bi-person-lines-fill"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ tituloCabecera(ref) }}</div>
-            <div style="font-size:.85rem;color:#2c7be5;font-weight:600;">
+            <div class="fw-bold cv-accordion-title">{{ tituloCabecera(ref) }}</div>
+            <div class="cv-accordion-sub-primary">
               {{ subtituloCabecera(ref) }}
             </div>
           </div>
-          <span class="badge rounded-pill"
-                [style.background]="tipoRef(ref) === 'Laboral' ? '#dbeafe' : '#fef9c3'"
-                [style.color]="tipoRef(ref) === 'Laboral' ? '#1e40af' : '#854d0e'"
-                style="font-size:.7rem;padding:3px 10px;">
+          <span class="badge rounded-pill badge-ref-type"
+                [class.badge-ref-type--laboral]="tipoRef(ref) === 'Laboral'"
+                [class.badge-ref-type--personal]="tipoRef(ref) !== 'Laboral'">
             {{ tipoRef(ref) }}
           </span>
-          <i class="bi ms-2" [class.bi-chevron-down]="!ref.expanded"
-             [class.bi-chevron-up]="ref.expanded" style="color:#adb5bd;"></i>
+          <i class="bi ms-2 cv-chevron-muted" [class.bi-chevron-down]="!ref.expanded"
+             [class.bi-chevron-up]="ref.expanded"></i>
         </div>
 
         <!-- Cuerpo expandible -->
-        <div *ngIf="ref.expanded" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+        <div *ngIf="ref.expanded" class="px-4 pb-4 cv-border-t-soft">
           <div class="row g-3 mt-1">
 
             <div class="col-md-4">

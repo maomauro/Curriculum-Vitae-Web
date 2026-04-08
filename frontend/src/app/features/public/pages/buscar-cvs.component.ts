@@ -7,7 +7,7 @@ import { PublicService, CvListadoItemDto } from '../../../core/services/public/p
   standalone: false,
   template: `
     <!-- Barra de búsqueda y filtros -->
-    <section class="py-4" style="background:#f4f6f9; border-bottom:1px solid #e9ecef;">
+    <section class="py-4 cv-section-toolbar">
       <div class="container">
         <div class="bg-white p-4 rounded-3 shadow-sm">
           <div class="row align-items-center g-3">
@@ -44,7 +44,7 @@ import { PublicService, CvListadoItemDto } from '../../../core/services/public/p
     </section>
 
     <!-- Grid de CVs -->
-    <section class="py-5" style="background:#f4f6f9;">
+    <section class="py-5 cv-section-list">
       <div class="container">
 
         <!-- Loading -->
@@ -62,14 +62,13 @@ import { PublicService, CvListadoItemDto } from '../../../core/services/public/p
                 <!-- Avatar + nombre + título -->
                 <div class="d-flex align-items-center gap-3 mb-3">
                   <div *ngIf="cv.fotoUrl" class="flex-shrink-0">
-                    <img [src]="cv.fotoUrl" class="rounded-circle"
-                         style="width:48px;height:48px;object-fit:cover;" alt="">
+                    <img [src]="cv.fotoUrl" class="rounded-circle cv-thumb" alt="">
                   </div>
                   <div *ngIf="!cv.fotoUrl" class="avatar-circle {{ colorClass(cv.curriculumId) }} flex-shrink-0">
                     {{ iniciales(cv.nombreCompleto) }}
                   </div>
                   <div>
-                    <div class="cv-name fw-bold" style="color:#212529;">{{ cv.nombreCompleto }}</div>
+                    <div class="cv-name fw-bold cv-name-strong">{{ cv.nombreCompleto }}</div>
                     <div class="cv-title text-muted small">{{ cv.nombrePerfil }}</div>
                     <div *ngIf="cv.ciudad || cv.pais" class="text-muted small">
                       <i class="bi bi-geo-alt-fill me-1"></i>{{ cv.ciudad }}<ng-container *ngIf="cv.ciudad && cv.pais">, </ng-container>{{ cv.pais }}

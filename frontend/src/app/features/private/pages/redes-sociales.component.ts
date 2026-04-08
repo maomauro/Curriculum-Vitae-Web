@@ -62,8 +62,7 @@ const REDES_OPCIONES = [
 
         <!-- Vista normal -->
         <div *ngIf="!red.editando" class="p-4 d-flex align-items-center gap-3">
-          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:44px;height:44px;background:#ebf2ff;font-size:1.3rem;"
+          <div class="cv-icon-box--social"
                [style.color]="iconoColor(red.nombreRed)">
             <i class="bi" [class]="iconoClase(red.nombreRed)"></i>
           </div>
@@ -85,7 +84,7 @@ const REDES_OPCIONES = [
         </div>
 
         <!-- Modo edición -->
-        <div *ngIf="red.editando" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+        <div *ngIf="red.editando" class="px-4 pb-4 cv-border-t-soft">
           <div class="row g-3 mt-1">
             <div class="col-md-6">
               <label class="form-label">Red social</label>

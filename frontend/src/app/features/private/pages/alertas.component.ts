@@ -33,7 +33,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-4" style="color:#2c7be5;">{{ conteoContactos }}</div>
+          <div class="fw-bold fs-4 text-primary">{{ conteoContactos }}</div>
           <div class="text-muted small">Contactos nuevos</div>
         </div>
       </div>
@@ -64,7 +64,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
           No leídas ({{ noLeidasCount }})
         </button>
       </div>
-      <select class="form-select form-select-sm" style="width:auto;" [(ngModel)]="tipo" (change)="aplicarFiltros()">
+      <select class="form-select form-select-sm admin-filter-select" [(ngModel)]="tipo" (change)="aplicarFiltros()">
         <option value="">Tipo: Todos</option>
         <option value="Contacto">Contactos recibidos</option>
         <option value="Vista">Vistas del CV</option>
@@ -88,9 +88,9 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
       </div>
 
       <div *ngFor="let alerta of alertasFiltradas"
-           class="alert-item" [class.unread]="!alerta.esLeida"
+           class="alert-item cv-cursor-pointer" [class.unread]="!alerta.esLeida"
            [ngClass]="'type-' + tipoClass(alerta.tipoVisita)"
-           style="cursor:pointer;" (click)="marcarLeida(alerta)">
+           (click)="marcarLeida(alerta)">
         <div class="alert-icon" [ngClass]="tipoClass(alerta.tipoVisita)">
           <i class="bi" [ngClass]="tipoIcono(alerta.tipoVisita)"></i>
         </div>

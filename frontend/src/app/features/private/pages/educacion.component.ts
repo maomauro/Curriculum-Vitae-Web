@@ -42,28 +42,27 @@ interface FormacionUI extends FormacionDto {
     <!-- Lista de formaciones -->
     <div *ngFor="let edu of formaciones; let i = index">
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
-        <div class="p-4 d-flex align-items-center gap-3" style="cursor:pointer;"
+        <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
              (click)="edu.expanded = !edu.expanded">
           <!-- Ícono por tipo -->
-          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:44px;height:44px;font-size:1.1rem;"
+          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 cv-icon-box"
                [style.background]="iconoBg(edu.tipoFormacion)"
                [style.color]="iconoColor(edu.tipoFormacion)">
             <i class="bi" [ngClass]="icono(edu.tipoFormacion)"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ edu.titulo }}</div>
-            <div style="font-size:.85rem;color:#6c757d;">{{ edu.institucion }}</div>
+            <div class="fw-bold cv-accordion-title">{{ edu.titulo }}</div>
+            <div class="cv-accordion-sub-muted">{{ edu.institucion }}</div>
           </div>
           <span class="text-muted small me-3">{{ edu.fechaFin | date:'yyyy' }}</span>
-          <span class="badge" style="background:#f1f5f9;color:#6c757d;font-size:.7rem;border-radius:12px;padding:3px 10px;">
+          <span class="badge cv-badge-neutral">
             {{ labelTipo(edu.tipoFormacion) }}
           </span>
-          <i class="bi ms-2" [class.bi-chevron-down]="!edu.expanded"
-             [class.bi-chevron-up]="edu.expanded" style="color:#adb5bd;"></i>
+          <i class="bi ms-2 cv-chevron-muted" [class.bi-chevron-down]="!edu.expanded"
+             [class.bi-chevron-up]="edu.expanded"></i>
         </div>
 
-        <div *ngIf="edu.expanded" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+        <div *ngIf="edu.expanded" class="px-4 pb-4 cv-border-t-soft">
           <div class="row g-3 mt-1">
             <div class="col-md-6">
               <label class="form-label">Título / Certificación</label>
@@ -107,8 +106,7 @@ interface FormacionUI extends FormacionDto {
               <label class="form-label">Descripción</label>
               <textarea class="form-control" rows="2" [(ngModel)]="edu.form.descripcion"></textarea>
             </div>
-            <div class="col-12 d-flex justify-content-end gap-2 pt-2"
-                 style="border-top:1px solid #f0f0f0;">
+            <div class="col-12 d-flex justify-content-end gap-2 pt-2 cv-actions-row-soft">
               <button class="btn btn-outline-danger btn-sm" (click)="eliminar(edu)">
                 <i class="bi bi-trash me-1"></i>Eliminar
               </button>

@@ -41,7 +41,7 @@ interface HabilidadTipo {
     <!-- Cabecera candidato + tabs -->
     <div class="bg-white rounded-3 shadow-sm p-4 mb-4">
       <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-        <div class="avatar-circle blue" style="width:68px;height:68px;font-size:1.45rem;">
+        <div class="avatar-circle blue cv-dash-avatar-lg">
           {{ iniciales }}
         </div>
         <div>
@@ -62,14 +62,13 @@ interface HabilidadTipo {
       <!-- Tabs -->
       <ul class="nav gap-1 border-0 mb-0">
         <li class="nav-item">
-          <a class="nav-link fw-semibold text-muted" style="border-radius:0;"
+          <a class="nav-link fw-semibold text-muted cv-nav-tab-passive"
              [routerLink]="['/cv', cvId]">
             <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link fw-semibold"
-             style="color:#2c7be5;border-bottom:2px solid #2c7be5;border-radius:0;margin-bottom:-1px;">
+          <a class="nav-link fw-semibold cv-nav-tab-active-analytics">
             <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
           </a>
         </li>
@@ -78,13 +77,12 @@ interface HabilidadTipo {
 
     <!-- Page header -->
     <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3 mb-4">
-      <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-           style="width:50px;height:50px;background:#eef3fb;color:#2c7be5;font-size:1.55rem;">
+      <div class="rounded-3 cv-dash-page-icon">
         <i class="bi bi-bar-chart-steps"></i>
       </div>
       <div>
         <h5 class="fw-bold mb-0">Dashboard de Hoja de Vida</h5>
-        <p class="text-muted mb-0" style="font-size:.9rem;">
+        <p class="text-muted mb-0 cv-analytics-lead">
           Visualiza y analiza la información personal, profesional y académica.
         </p>
       </div>
@@ -93,19 +91,17 @@ interface HabilidadTipo {
     <!-- ── 6 métricas ── -->
     <div class="row g-3 mb-4">
       <div class="col-6 col-md-4 col-xl-2" *ngFor="let m of metricas">
-        <div class="rounded-3 p-4 text-white h-100"
-             [style.background]="m.gradiente"
-             style="box-shadow:0 2px 10px rgba(0,0,0,.13);">
+        <div class="rounded-3 p-4 text-white h-100 cv-metric-card-shadow"
+             [style.background]="m.gradiente">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div style="font-size:.75rem;opacity:.88;font-weight:600;margin-bottom:6px;line-height:1.3;">
+              <div class="cv-metric-label">
                 {{ m.label }}
               </div>
-              <div style="font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px;">{{ m.valor }}</div>
-              <div style="font-size:.72rem;opacity:.78;line-height:1.35;">{{ m.sub }}</div>
+              <div class="cv-metric-value">{{ m.valor }}</div>
+              <div class="cv-metric-sub">{{ m.sub }}</div>
             </div>
-            <i class="bi" [ngClass]="m.icono"
-               style="font-size:2.6rem;opacity:.20;"></i>
+            <i class="bi cv-metric-icon-watermark" [ngClass]="m.icono"></i>
           </div>
         </div>
       </div>
@@ -117,17 +113,16 @@ interface HabilidadTipo {
       <!-- Experiencia por empresa -->
       <div class="col-lg-6">
         <div class="bg-white rounded-3 shadow-sm p-4 h-100">
-          <div class="fw-bold" style="font-size:.95rem;">Experiencia laboral por empresa</div>
-          <div class="text-muted mb-3" style="font-size:.8rem;">Duración aproximada en meses por empleador.</div>
+          <div class="fw-bold cv-analytics-card-title">Experiencia laboral por empresa</div>
+          <div class="text-muted mb-3 cv-analytics-card-desc">Duración aproximada en meses por empleador.</div>
           <div *ngFor="let e of expEmpresas" class="mb-3">
             <div class="d-flex justify-content-between mb-1">
-              <span style="font-size:.85rem;font-weight:600;">{{ e.empresa }}</span>
-              <span class="text-muted" style="font-size:.8rem;">{{ e.meses }} meses</span>
+              <span class="cv-analytics-row-label">{{ e.empresa }}</span>
+              <span class="text-muted cv-analytics-row-meta">{{ e.meses }} meses</span>
             </div>
-            <div class="progress" style="height:10px;border-radius:6px;">
-              <div class="progress-bar" role="progressbar"
-                   [style.width.%]="e.porcentaje"
-                   style="background:#2c7be5;border-radius:6px;"></div>
+            <div class="progress cv-progress-analytics">
+              <div class="progress-bar cv-progress-analytics-fill" role="progressbar"
+                   [style.width.%]="e.porcentaje"></div>
             </div>
           </div>
         </div>
@@ -136,18 +131,17 @@ interface HabilidadTipo {
       <!-- Línea de tiempo educación + experiencia -->
       <div class="col-lg-6">
         <div class="bg-white rounded-3 shadow-sm p-4 h-100">
-          <div class="fw-bold" style="font-size:.95rem;">Línea de tiempo: Educación y experiencia</div>
-          <div class="text-muted mb-3" style="font-size:.8rem;">Eventos académicos y laborales por año.</div>
+          <div class="fw-bold cv-analytics-card-title">Línea de tiempo: Educación y experiencia</div>
+          <div class="text-muted mb-3 cv-analytics-card-desc">Eventos académicos y laborales por año.</div>
           <div class="d-flex flex-column gap-2">
             <div *ngFor="let ev of timeline" class="d-flex gap-3 align-items-start">
-              <div class="text-muted flex-shrink-0" style="width:40px;font-size:.8rem;font-weight:600;">
+              <div class="text-muted flex-shrink-0 cv-timeline-year">
                 {{ ev.anio }}
               </div>
               <div class="d-flex align-items-center gap-2 flex-grow-1">
-                <div class="rounded-circle flex-shrink-0"
-                     style="width:8px;height:8px;"
+                <div class="rounded-circle flex-shrink-0 cv-timeline-dot"
                      [style.background]="ev.tipo === 'edu' ? '#7c3aed' : '#2c7be5'"></div>
-                <span style="font-size:.85rem;">{{ ev.descripcion }}</span>
+                <span class="cv-timeline-desc">{{ ev.descripcion }}</span>
               </div>
             </div>
           </div>
@@ -162,21 +156,19 @@ interface HabilidadTipo {
       <!-- Habilidades por tipo (barras) -->
       <div class="col-lg-6">
         <div class="bg-white rounded-3 shadow-sm p-4 h-100">
-          <div class="fw-bold" style="font-size:.95rem;">Cantidad de habilidades por tipo</div>
-          <div class="text-muted mb-3" style="font-size:.8rem;">Cuántas habilidades tienes en cada categoría.</div>
+          <div class="fw-bold cv-analytics-card-title">Cantidad de habilidades por tipo</div>
+          <div class="text-muted mb-3 cv-analytics-card-desc">Cuántas habilidades tienes en cada categoría.</div>
           <div *ngFor="let h of habilidadesPorTipo" class="mb-3">
             <div class="d-flex justify-content-between mb-1">
-              <span style="font-size:.85rem;font-weight:600;">{{ h.tipo }}</span>
-              <span class="badge rounded-pill px-2"
+              <span class="cv-analytics-row-label">{{ h.tipo }}</span>
+              <span class="badge rounded-pill px-2 badge-hab-count"
                     [style.background]="h.color + '22'"
-                    [style.color]="h.color"
-                    style="font-size:.75rem;font-weight:600;">{{ h.cantidad }}</span>
+                    [style.color]="h.color">{{ h.cantidad }}</span>
             </div>
-            <div class="progress" style="height:8px;border-radius:6px;">
-              <div class="progress-bar" role="progressbar"
+            <div class="progress cv-progress-hab">
+              <div class="progress-bar cv-progress-hab-fill" role="progressbar"
                    [style.width.%]="(h.cantidad / maxHabilidades) * 100"
-                   [style.background]="h.color"
-                   style="border-radius:6px;"></div>
+                   [style.background]="h.color"></div>
             </div>
           </div>
         </div>
@@ -185,17 +177,16 @@ interface HabilidadTipo {
       <!-- Nivel promedio -->
       <div class="col-lg-6">
         <div class="bg-white rounded-3 shadow-sm p-4 h-100">
-          <div class="fw-bold" style="font-size:.95rem;">Nivel promedio de habilidades por tipo</div>
-          <div class="text-muted mb-3" style="font-size:.8rem;">Nivel promedio en cada categoría (1 = Básico → 4 = Experto).</div>
+          <div class="fw-bold cv-analytics-card-title">Nivel promedio de habilidades por tipo</div>
+          <div class="text-muted mb-3 cv-analytics-card-desc">Nivel promedio en cada categoría (1 = Básico → 4 = Experto).</div>
           <div *ngFor="let n of nivelPromedio" class="mb-3">
             <div class="d-flex justify-content-between mb-1">
-              <span style="font-size:.85rem;font-weight:600;">{{ n.tipo }}</span>
-              <span class="text-muted" style="font-size:.8rem;">{{ n.promedio.toFixed(1) }} / 4</span>
+              <span class="cv-analytics-row-label">{{ n.tipo }}</span>
+              <span class="text-muted cv-analytics-row-meta">{{ n.promedio.toFixed(1) }} / 4</span>
             </div>
-            <div class="progress" style="height:8px;border-radius:6px;">
-              <div class="progress-bar" role="progressbar"
-                   [style.width.%]="(n.promedio / 4) * 100"
-                   style="background:#22c55e;border-radius:6px;"></div>
+            <div class="progress cv-progress-hab">
+              <div class="progress-bar cv-progress-nivel-fill" role="progressbar"
+                   [style.width.%]="(n.promedio / 4) * 100"></div>
             </div>
           </div>
         </div>

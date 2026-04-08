@@ -25,23 +25,21 @@ import { Component } from '@angular/core';
       <div class="seccion-titulo">Plantilla de presentación</div>
       <div class="row g-3">
         <div class="col-md-3" *ngFor="let t of plantillas">
-          <div class="rounded-3 overflow-hidden border-2 p-0"
-               style="cursor:pointer;transition:box-shadow .2s;"
+          <div class="rounded-3 overflow-hidden border-2 p-0 cv-editor-tile"
                [style.border]="t.activa ? '2px solid #2c7be5' : '2px solid #e4effd'"
                [style.box-shadow]="t.activa ? '0 0 0 3px rgba(44,123,229,.15)' : 'none'"
                (click)="seleccionar(t)">
-            <div class="d-flex align-items-center justify-content-center"
-                 style="height:120px;"
+            <div class="d-flex align-items-center justify-content-center cv-editor-tile-preview"
                  [style.background]="t.color">
-              <i class="bi bi-file-earmark-person" style="font-size:2.5rem;color:white;opacity:.8;"></i>
+              <i class="bi bi-file-earmark-person cv-editor-icon-doc"></i>
             </div>
             <div class="p-2 text-center"
                  [style.background]="t.activa ? '#ebf3fb' : '#fafafa'">
-              <span style="font-size:.85rem;font-weight:600;"
+              <span class="cv-editor-tile-label"
                     [style.color]="t.activa ? '#2c7be5' : '#495057'">
                 {{ t.nombre }}
               </span>
-              <span *ngIf="t.activa" class="d-block" style="font-size:.7rem;color:#2c7be5;">
+              <span *ngIf="t.activa" class="d-block cv-editor-activa-label">
                 <i class="bi bi-check-circle-fill me-1"></i>Activa
               </span>
             </div>
@@ -53,11 +51,10 @@ import { Component } from '@angular/core';
     <!-- Vista previa -->
     <div class="seccion-card">
       <div class="seccion-titulo">Vista previa</div>
-      <div class="d-flex align-items-center justify-content-center rounded-3"
-           style="height:400px;background:#f4f6f9;border:2px dashed #c9d6e3;">
+      <div class="d-flex align-items-center justify-content-center rounded-3 cv-preview-placeholder">
         <div class="text-center text-muted">
-          <i class="bi bi-file-earmark-pdf" style="font-size:3rem;opacity:.4;"></i>
-          <p class="mt-2 mb-1" style="font-size:.9rem;">Vista previa del CV generado</p>
+          <i class="bi bi-file-earmark-pdf cv-preview-pdf-icon"></i>
+          <p class="mt-2 mb-1 cv-preview-hint">Vista previa del CV generado</p>
           <p class="small mb-3">Completa tus datos para ver la previsualización</p>
           <button class="btn btn-outline-primary btn-sm">
             <i class="bi bi-arrow-clockwise me-1"></i>Actualizar vista previa

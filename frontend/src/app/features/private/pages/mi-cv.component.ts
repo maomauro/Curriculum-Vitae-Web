@@ -23,14 +23,12 @@ import { Component } from '@angular/core';
     <!-- CV Card preview -->
     <div class="bg-white rounded-3 shadow-sm overflow-hidden">
       <!-- Cabecera gradiente -->
-      <div class="p-4 text-white d-flex align-items-center gap-4"
-           style="background:linear-gradient(135deg,#2c7be5 0%,#1a5fb4 100%);">
-        <div class="avatar-circle blue" style="width:96px;height:96px;font-size:2.2rem;
-             border:3px solid rgba(255,255,255,.5);">AG</div>
+      <div class="p-4 text-white d-flex align-items-center gap-4 cv-preview-header">
+        <div class="avatar-circle blue cv-preview-avatar">AG</div>
         <div>
-          <div class="fw-bold" style="font-size:1.8rem;">Ana García</div>
-          <div style="opacity:.9;">Frontend Developer</div>
-          <div class="d-flex flex-wrap gap-3 mt-2" style="font-size:.85rem;opacity:.85;">
+          <div class="fw-bold cv-preview-name">Ana García</div>
+          <div class="cv-preview-sub">Frontend Developer</div>
+          <div class="d-flex flex-wrap gap-3 mt-2 cv-preview-meta">
             <span><i class="bi bi-envelope-fill me-1"></i>ana.garcia@email.com</span>
             <span><i class="bi bi-geo-alt-fill me-1"></i>Madrid, España</span>
             <span><i class="bi bi-linkedin me-1"></i>linkedin.com/in/anagarcia</span>
@@ -41,22 +39,22 @@ import { Component } from '@angular/core';
       <!-- Cuerpo 2 columnas -->
       <div class="row g-0">
         <!-- Sidebar izquierdo -->
-        <div class="col-md-4 p-4" style="background:#f8f9fa;border-right:1px solid #dee2e6;">
+        <div class="col-md-4 p-4 cv-preview-sidebar">
           <!-- Habilidades -->
           <div class="mb-4">
-            <div class="section-title" style="color:#2c7be5;border-bottom-color:#2c7be5;">Habilidades</div>
+            <div class="section-title section-title-accent">Habilidades</div>
             <div *ngFor="let h of habilidades" class="mb-2">
-              <div class="d-flex justify-content-between" style="font-size:.82rem;color:#343a40;">
+              <div class="d-flex justify-content-between cv-skill-line">
                 <span>{{ h.nombre }}</span><small class="text-muted">{{ h.nivel }}%</small>
               </div>
-              <div class="progress" style="height:6px;border-radius:3px;">
-                <div class="progress-bar" [style.width.%]="h.nivel" style="background:#2c7be5;"></div>
+              <div class="progress cv-progress-preview">
+                <div class="progress-bar cv-progress-bar-fill" [style.width.%]="h.nivel"></div>
               </div>
             </div>
           </div>
           <!-- Idiomas -->
           <div>
-            <div class="section-title" style="color:#2c7be5;border-bottom-color:#2c7be5;">Idiomas</div>
+            <div class="section-title section-title-accent">Idiomas</div>
             <div class="d-flex flex-wrap gap-2">
               <span class="badge-idioma" *ngFor="let id of idiomas">{{ id }}</span>
             </div>
@@ -67,7 +65,7 @@ import { Component } from '@angular/core';
         <div class="col-md-8 p-4">
           <div class="mb-4">
             <div class="section-title">Resumen profesional</div>
-            <p style="font-size:.88rem;color:#495057;line-height:1.7;">
+            <p class="cv-summary-text">
               Desarrolladora Frontend con más de 6 años de experiencia construyendo aplicaciones web modernas con Angular y React.
             </p>
           </div>

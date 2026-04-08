@@ -1,3 +1,5 @@
+@use './styles/portal-pages' as *;
+
 // ── Paleta Portal CV ─────────────────────────────────────────────────────────
 :root {
   // Bootstrap overrides
@@ -297,4 +299,3 @@ body {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--cv-primary); flex-shrink: 0; margin-top: 6px;
 }
-

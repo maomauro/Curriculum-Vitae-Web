@@ -43,31 +43,28 @@ interface ExperienciaUI extends ExperienciaDto {
     <div *ngFor="let exp of experiencias; let i = index">
       <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
         <!-- Cabecera del card -->
-        <div class="p-4 d-flex align-items-center gap-3" style="cursor:pointer;"
+        <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
              (click)="exp.expanded = !exp.expanded">
-          <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-               style="width:44px;height:44px;background:#ebf2ff;color:#2c7be5;font-size:1.1rem;">
+          <div class="rounded-3 cv-icon-box cv-icon-box--primary">
             <i class="bi bi-building"></i>
           </div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="font-size:.95rem;">{{ exp.cargo }}</div>
-            <div style="font-size:.85rem;color:#2c7be5;font-weight:600;">{{ exp.empresa }}</div>
+            <div class="fw-bold cv-accordion-title">{{ exp.cargo }}</div>
+            <div class="cv-accordion-sub-primary">{{ exp.empresa }}</div>
           </div>
           <span class="text-muted small me-3">
             {{ exp.fechaInicio | date:'MMM yyyy' }} —
             {{ exp.esActual ? 'Actualidad' : (exp.fechaFin | date:'MMM yyyy') }}
           </span>
-          <span class="badge" [style.background]="exp.esActual ? '#d1fae5' : '#f1f5f9'"
-                [style.color]="exp.esActual ? '#065f46' : '#6c757d'"
-                style="font-size:.7rem;border-radius:12px;padding:3px 10px;">
+          <span class="badge cv-badge-pill" [class.cv-badge-actual]="exp.esActual" [class.cv-badge-pasado]="!exp.esActual">
             {{ exp.esActual ? 'Actual' : 'Finalizado' }}
           </span>
-          <i class="bi ms-2" [class.bi-chevron-down]="!exp.expanded"
-             [class.bi-chevron-up]="exp.expanded" style="color:#adb5bd;"></i>
+          <i class="bi ms-2 cv-chevron-muted" [class.bi-chevron-down]="!exp.expanded"
+             [class.bi-chevron-up]="exp.expanded"></i>
         </div>
 
         <!-- Cuerpo expandible -->
-        <div *ngIf="exp.expanded" class="px-4 pb-4" style="border-top:1px solid #f0f0f0;">
+        <div *ngIf="exp.expanded" class="px-4 pb-4 cv-border-t-soft">
           <div class="row g-3 mt-1">
             <div class="col-md-6">
               <label class="form-label">Empresa</label>
@@ -115,8 +112,7 @@ interface ExperienciaUI extends ExperienciaDto {
               <label class="form-label">Descripción de funciones</label>
               <textarea class="form-control" rows="3" [(ngModel)]="exp.form.funciones"></textarea>
             </div>
-            <div class="col-12 d-flex justify-content-end gap-2 pt-2"
-                 style="border-top:1px solid #f0f0f0;">
+            <div class="col-12 d-flex justify-content-end gap-2 pt-2 cv-actions-row-soft">
               <button class="btn btn-outline-danger btn-sm" (click)="eliminar(exp)">
                 <i class="bi bi-trash me-1"></i>Eliminar
               </button>
