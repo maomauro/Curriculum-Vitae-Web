@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "http": {
@@ -8,7 +8,7 @@
       "applicationUrl": "http://localhost:5005",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": "Server=.;Database=PortalCV;Trusted_Connection=true;Encrypt=false;",
+        "ConnectionStrings__DefaultConnection": "Server=.\\SQLEXPRESS;Database=PortalCV;Trusted_Connection=true;Encrypt=false;TrustServerCertificate=true;",
         "Jwt__Issuer": "PortalCV.Api",
         "Jwt__Audience": "PortalCV.Client",
         "Jwt__Key": "SuperSecretJwtKeyForPortalCvThatIsAtLeast256BitsLong1234567890123456789012345678901234567890",
@@ -23,7 +23,7 @@
       "applicationUrl": "https://localhost:7070;http://localhost:5005",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": "Server=.;Database=PortalCV;Trusted_Connection=true;Encrypt=false;",
+        "ConnectionStrings__DefaultConnection": "Server=.\\SQLEXPRESS;Database=PortalCV;Trusted_Connection=true;Encrypt=false;TrustServerCertificate=true;",
         "Jwt__Issuer": "PortalCV.Api",
         "Jwt__Audience": "PortalCV.Client",
         "Jwt__Key": "SuperSecretJwtKeyForPortalCvThatIsAtLeast256BitsLong1234567890123456789012345678901234567890",

@@ -43,8 +43,16 @@ public class AuthController : ControllerBase
             request.Password,
             request.NombreCompleto);
 
-        var result = await _authService.RegisterAsync(appRequest, ct);
-        return CreatedAtAction(nameof(Me), result);
+        try
+        {
+            var result = await _authService.RegisterAsync(appRequest, ct);
+            // routeValues debe coincidir con la acción (Me no tiene parámetros); el cuerpo va en el 3er argumento.
+            return CreatedAtAction(nameof(Me), null, result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     /// <summary>Devuelve información del usuario autenticado.</summary>

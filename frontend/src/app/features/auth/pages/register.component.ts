@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -63,9 +64,23 @@ export class RegisterComponent {
     this.loading = true;
     this.errorMsg = '';
     this.authService.register(this.name, this.email, this.password).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: () => {
-        this.errorMsg = 'No se pudo crear la cuenta. Intenta de nuevo.';
+      next: () => {
+        // El API no devuelve JWT en register; iniciamos sesión con las mismas credenciales.
+        this.authService.login(this.email, this.password).subscribe({
+          next: () => this.router.navigate(['/dashboard']),
+          error: () => {
+            this.errorMsg = 'Cuenta creada. Inicia sesión con tu correo y contraseña.';
+            this.loading = false;
+            void this.router.navigate(['/auth/login']);
+          }
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        const body = err.error as { message?: string } | null;
+        this.errorMsg =
+          typeof body?.message === 'string'
+            ? body.message
+            : 'No se pudo crear la cuenta. Revisa la consola o que el API y la base de datos estén en marcha.';
         this.loading = false;
       }
     });
