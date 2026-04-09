@@ -86,7 +86,7 @@ interface FormacionUI extends FormacionDto {
             </div>
             <div class="col-md-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
               <label class="form-label">Área de estudio</label>
-              <input type="text" class="form-control" [(ngModel)]="edu.form.area"
+              <input type="text" class="form-control" [(ngModel)]="edu.form.area" maxlength="300"
                      placeholder="Ej: Ingeniería de Software">
             </div>
             <div class="col-md-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">

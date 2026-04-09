@@ -646,6 +646,129 @@
   border-top: 1px solid #eef0f2;
 }
 
+// ── Proyectos (prototipo docs/diseño/prototipos/privada/proyectos.html) ───────
+.project-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.project-card--nuevo {
+  border: 2px dashed var(--cv-primary);
+  box-shadow: none;
+}
+.project-card-header {
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  user-select: none;
+}
+.project-card:not(.project-card--nuevo) .project-card-header {
+  cursor: pointer;
+}
+.project-card:not(.project-card--nuevo) .project-card-header:hover {
+  background: #f8fafc;
+}
+.project-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #ebf2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cv-primary);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.project-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #212529;
+}
+.project-role {
+  font-size: 0.83rem;
+  color: #6c757d;
+}
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.meta-pill {
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.project-chevron {
+  margin-left: auto;
+  color: #adb5bd;
+  transition: transform 0.25s;
+  flex-shrink: 0;
+}
+.project-card.expanded .project-chevron {
+  transform: rotate(180deg);
+}
+.project-body {
+  display: none;
+  padding: 0 22px 22px;
+  border-top: 1px solid #f0f0f0;
+}
+.project-card.expanded .project-body {
+  display: block;
+  padding-top: 20px;
+}
+.project-card--nuevo .project-body {
+  display: block;
+  padding-top: 20px;
+}
+.project-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+.stack-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stack-tag {
+  background: #ebf2ff;
+  color: #1d4ed8;
+  border-radius: 6px;
+  padding: 3px 6px 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.stack-tag-del {
+  background: none;
+  border: none;
+  color: #1d4ed8;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+.stack-tag-del:hover {
+  color: #dc3545;
+}
+.stack-input-group {
+  max-width: 320px;
+}
+
 // ── Experiencia laboral (prototipo job-card) ─────────────────────────────────
 .job-card {
   background: #fff;

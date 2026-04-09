@@ -275,7 +275,7 @@ CREATE TABLE dbo.Formacion (
     CurriculumId   INT NOT NULL,
     Titulo         NVARCHAR(200) NULL,
     Institucion    NVARCHAR(200) NULL,
-    Area           NVARCHAR(100) NULL,
+    Area           NVARCHAR(300) NULL,
     FechaInicio    DATE NULL,
     FechaFin       DATE NULL,
     TipoFormacion  NVARCHAR(50) NULL,

@@ -60,6 +60,11 @@ export const APP_MESSAGES = {
       perfil: {
         requiredNombre: 'Indica el nombre del perfil o cargo objetivo.',
       },
+      proyectos: {
+        requiredNombreRol: 'Indica el nombre del proyecto y tu rol en el proyecto.',
+        completeNuevoAntesDeOtro: 'Termina o cancela el proyecto nuevo antes de agregar otro.',
+        confirmDelete: '¿Eliminar este proyecto?',
+      },
     },
   },
 } as const;
