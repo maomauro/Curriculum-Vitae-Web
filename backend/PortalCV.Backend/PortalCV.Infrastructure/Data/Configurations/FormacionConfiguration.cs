@@ -12,8 +12,8 @@ public class FormacionConfiguration : IEntityTypeConfiguration<Formacion>
 
         builder.HasKey(f => f.FormacionId);
 
-        builder.Property(f => f.Titulo).HasMaxLength(150);
-        builder.Property(f => f.Institucion).HasMaxLength(150);
+        builder.Property(f => f.Titulo).HasMaxLength(200);
+        builder.Property(f => f.Institucion).HasMaxLength(200);
         builder.Property(f => f.Area).HasMaxLength(100);
         builder.Property(f => f.TipoFormacion).HasMaxLength(50);
         builder.Property(f => f.Descripcion).HasColumnType("nvarchar(max)");

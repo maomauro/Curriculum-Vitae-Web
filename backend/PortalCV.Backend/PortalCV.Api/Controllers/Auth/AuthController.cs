@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PortalCV.Api.Contracts.Auth;
+using PortalCV.Application.Constants;
 using PortalCV.Application.Interfaces;
 using AppDto = PortalCV.Application.DTOs.Auth;
 
@@ -75,6 +76,6 @@ public class AuthController : ControllerBase
     [HttpPost("forgot-password")]
     public IActionResult ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
-        return Ok(new { message = "Si el correo está registrado, recibirás las instrucciones en breve." });
+        return Ok(new { message = ApiMessages.Auth.ForgotPasswordRespuestaGenerica });
     }
 }

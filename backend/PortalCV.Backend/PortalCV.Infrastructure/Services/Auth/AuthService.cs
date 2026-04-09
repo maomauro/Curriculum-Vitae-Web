@@ -5,6 +5,7 @@ using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Auth;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -47,11 +48,28 @@ public class AuthService : IAuthService
 
         var roles = usuario.UsuarioRoles.Select(ur => ur.Rol.NombreRol).ToList();
         var curriculum = usuario.Curriculums.FirstOrDefault();
-        var curriculumId = curriculum?.CurriculumId ?? 0;
+
+        // Usuarios heredados o datos de prueba sin fila en Curriculum: FK falla en POST (p. ej. formaciones).
+        if (curriculum is null)
+        {
+            var urlPublica = await GenerarUrlPublicaUnicaAsync(string.Empty, usuario.Email, ct);
+            curriculum = new Curriculum
+            {
+                UrlPublica = urlPublica,
+                Estado = "Borrador",
+                FechaCreacion = DateTime.UtcNow,
+                FechaActualizacion = DateTime.UtcNow,
+                Usuario = usuario
+            };
+            usuario.Curriculums.Add(curriculum);
+            await _context.SaveChangesAsync(ct);
+        }
+
+        var curriculumId = curriculum.CurriculumId;
 
         // NombreCompleto desde Personales si ya está cargado, si no usa el email
         string nombreCompleto = usuario.Email;
-        if (curriculum?.Personales is { PrimerNombre: var pn, PrimerApellido: var pa })
+        if (curriculum.Personales is { PrimerNombre: var pn, PrimerApellido: var pa })
             nombreCompleto = $"{pn} {pa}".Trim();
 
         var (token, expiracion) = BuildJwt(usuario, roles, curriculumId, nombreCompleto);
@@ -69,7 +87,7 @@ public class AuthService : IAuthService
             .AnyAsync(u => u.Email == request.Email, ct);
 
         if (emailTaken)
-            throw new InvalidOperationException("El correo ya está registrado.");
+            throw new InvalidOperationException(ApiMessages.Auth.CorreoYaRegistrado);
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
 

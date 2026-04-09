@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Admin;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -62,7 +63,7 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> SetEstado(int id, [FromBody] SetEstadoRequest request, CancellationToken ct = default)
     {
         var usuario = await _usuarioRepo.GetByIdAsync(id, ct);
-        if (usuario is null) return NotFound(new { message = "Usuario no encontrado." });
+        if (usuario is null) return NotFound(new { message = ApiMessages.Admin.UsuarioNoEncontrado });
 
         usuario.Estado = request.Activo ? "Activo" : "Inactivo";
         _usuarioRepo.Update(usuario);
@@ -91,15 +92,15 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> AsignarRol(int usuarioId, int rolId, CancellationToken ct = default)
     {
         var usuario = await _usuarioRepo.GetByIdAsync(usuarioId, ct);
-        if (usuario is null) return NotFound(new { message = "Usuario no encontrado." });
+        if (usuario is null) return NotFound(new { message = ApiMessages.Admin.UsuarioNoEncontrado });
 
         var rol = await _rolRepo.GetByIdAsync(rolId, ct);
-        if (rol is null) return NotFound(new { message = "Rol no encontrado." });
+        if (rol is null) return NotFound(new { message = ApiMessages.Admin.RolNoEncontrado });
 
         var existentes = await _usuarioRolRepo.FindAsync(
             ur => ur.UsuarioId == usuarioId && ur.RolId == rolId, ct);
         if (existentes.Count > 0)
-            return Conflict(new { message = "El usuario ya tiene ese rol." });
+            return Conflict(new { message = ApiMessages.Admin.UsuarioYaTieneEseRol });
 
         await _usuarioRolRepo.AddAsync(new UsuarioRol { UsuarioId = usuarioId, RolId = rolId }, ct);
         await _usuarioRolRepo.SaveChangesAsync(ct);
@@ -121,7 +122,7 @@ public class AdminController : ControllerBase
             var otrosAdmins = await _usuarioRolRepo.FindAsync(
                 ur => ur.RolId == rolId && ur.UsuarioId != usuarioId, ct);
             if (otrosAdmins.Count == 0)
-                return BadRequest(new { message = "Debe quedar al menos un usuario con rol Admin." });
+                return BadRequest(new { message = ApiMessages.Admin.DebeQuedarAlMenosUnAdmin });
         }
 
         _usuarioRolRepo.Remove(asignaciones[0]);

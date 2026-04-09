@@ -658,6 +658,20 @@
   border: 2px dashed var(--cv-primary);
   box-shadow: none;
 }
+
+// Educación: misma señal visual que empleo/perfil al crear (borde discontinuo)
+.edu-formacion-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.edu-formacion-card--nuevo {
+  border: 2px dashed var(--cv-primary);
+  box-shadow: none;
+}
+
 .job-card-header {
   padding: 18px 22px;
   cursor: pointer;

@@ -33,6 +33,12 @@ export const APP_MESSAGES = {
       },
       educacion: {
         invalidDate: 'Revisa las fechas de educación. Usa formato AAAA-MM-DD.',
+        requiredTituloObtenido: 'Indica el título obtenido.',
+        requiredNombreCertificado: 'Indica el nombre del certificado.',
+        requiredInstitucion: 'Indica la institución.',
+        requiredEntidadCertificadora: 'Indica la entidad certificadora.',
+        completeNuevaAntesDeOtra: 'Termina o cancela la formación nueva antes de agregar otra.',
+        confirmDelete: '¿Eliminar esta formación?',
       },
       referencias: {
         requiredNombre: 'Indica el nombre de la referencia.',
