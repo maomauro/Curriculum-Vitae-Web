@@ -48,6 +48,12 @@ export const APP_MESSAGES = {
         requiredNombres: 'Indica el nombre del contacto familiar.',
         invalidEmail: 'El correo del familiar no es válido.',
       },
+      habilidades: {
+        confirmDelete: '¿Eliminar esta habilidad?',
+        nothingToSaveTecnicas: 'Agrega al menos una fila con nombre antes de guardar las habilidades técnicas.',
+        nothingToSaveBlandas: 'Agrega al menos una fila con nombre antes de guardar las habilidades blandas.',
+        nothingToSaveIdiomas: 'Agrega al menos una fila con nombre antes de guardar los idiomas.',
+      },
       redes: {
         requiredNombreRed: 'Indica el nombre de la red social.',
       },

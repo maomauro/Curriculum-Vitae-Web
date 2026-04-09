@@ -221,16 +221,19 @@ public class CvEditorService : ICvEditorService
     // â”€â”€ Habilidades â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<IReadOnlyList<HabilidadDto>> GetHabilidadesAsync(int curriculumId, CancellationToken ct = default)
-        => await _context.Habilidades.AsNoTracking()
+    {
+        var rows = await _context.Habilidades.AsNoTracking()
             .Where(h => h.CurriculumId == curriculumId)
-            .Select(h => MapHabilidad(h)).ToListAsync(ct);
+            .ToListAsync(ct);
+        return rows.Select(MapHabilidad).ToList();
+    }
 
     public async Task<HabilidadDto> CreateHabilidadAsync(int curriculumId, UpsertHabilidadRequest r, CancellationToken ct = default)
     {
         var e = new Habilidad
         {
             CurriculumId = curriculumId, Nombre = r.Nombre, Tipo = r.Tipo,
-            Nivel = r.Nivel, Descripcion = r.Descripcion,
+            Nivel = NormalizeHabilidadNivelForStorage(r.Nivel), Descripcion = r.Descripcion,
             NivelLectura = r.NivelLectura, NivelEscritura = r.NivelEscritura,
             NivelEscucha = r.NivelEscucha, NivelHabla = r.NivelHabla
         };
@@ -242,7 +245,7 @@ public class CvEditorService : ICvEditorService
     public async Task<HabilidadDto> UpdateHabilidadAsync(int curriculumId, int id, UpsertHabilidadRequest r, CancellationToken ct = default)
     {
         var e = await GetOwnedOrThrowAsync(_context.Habilidades, id, curriculumId, ct);
-        e.Nombre = r.Nombre; e.Tipo = r.Tipo; e.Nivel = r.Nivel; e.Descripcion = r.Descripcion;
+        e.Nombre = r.Nombre; e.Tipo = r.Tipo; e.Nivel = NormalizeHabilidadNivelForStorage(r.Nivel); e.Descripcion = r.Descripcion;
         e.NivelLectura = r.NivelLectura; e.NivelEscritura = r.NivelEscritura;
         e.NivelEscucha = r.NivelEscucha; e.NivelHabla = r.NivelHabla;
         await _context.SaveChangesAsync(ct);
@@ -506,8 +509,24 @@ public class CvEditorService : ICvEditorService
         e.FormacionId, e.Titulo, e.Institucion, e.Area, e.FechaInicio, e.FechaFin,
         e.TipoFormacion, e.Descripcion, e.AdjuntoSoporte, e.FechaVigencia, e.DuracionHoras);
 
+    /// <summary>CK SQL histórico: solo 'Basico' sin tilde; el front envía 'Básico'.</summary>
+    private static string? NormalizeHabilidadNivelForStorage(string? nivel)
+    {
+        if (string.IsNullOrWhiteSpace(nivel)) return null;
+        var t = nivel.Trim();
+        return t == "Básico" ? "Basico" : t;
+    }
+
+    /// <summary>Respuesta al editor: mismo texto que los desplegables (Básico con tilde).</summary>
+    private static string? NormalizeHabilidadNivelForApi(string? nivel)
+    {
+        if (string.IsNullOrWhiteSpace(nivel)) return null;
+        var t = nivel.Trim();
+        return string.Equals(t, "Basico", StringComparison.Ordinal) ? "Básico" : t;
+    }
+
     private static HabilidadDto MapHabilidad(Habilidad e) => new(
-        e.HabilidadId, e.Nombre, e.Tipo, e.Nivel, e.Descripcion,
+        e.HabilidadId, e.Nombre, e.Tipo, NormalizeHabilidadNivelForApi(e.Nivel), e.Descripcion,
         e.NivelLectura, e.NivelEscritura, e.NivelEscucha, e.NivelHabla);
 
     private static ProyectoDto MapProyecto(Proyecto e) => new(

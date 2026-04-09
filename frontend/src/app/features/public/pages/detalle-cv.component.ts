@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
+import { PublicService, CvDetalleDto, ContactarDto, HabilidadPublicoDto } from '../../../core/services/public/public.service';
 
 @Component({
   selector: 'app-detalle-cv',
@@ -58,10 +58,10 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
               </div>
             </div>
 
-            <!-- Habilidades -->
-            <div class="text-start mb-4" *ngIf="cv.habilidades?.length">
+            <!-- Habilidades (excluye idiomas: van en su bloque con nombre + nivel + descripción) -->
+            <div class="text-start mb-4" *ngIf="habilidadesSinIdiomas.length">
               <div class="section-title">Habilidades</div>
-              <div *ngFor="let h of cv.habilidades">
+              <div *ngFor="let h of habilidadesSinIdiomas">
                 <div class="d-flex justify-content-between mb-1">
                   <span class="cv-skill-row-text">{{ h.nombre }}</span>
                   <small class="text-muted">{{ h.nivel }}</small>
@@ -72,11 +72,15 @@ import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/service
               </div>
             </div>
 
-            <!-- Idiomas -->
+            <!-- Idiomas: mismos tres campos que el editor (nombre, nivel, descripción opcional) -->
             <div class="text-start mb-4" *ngIf="idiomasPublicos.length">
               <div class="section-title">Idiomas</div>
-              <div class="d-flex flex-wrap gap-2">
-                <span class="badge-idioma" *ngFor="let idioma of idiomasPublicos">{{ idioma.nombre }}</span>
+              <div *ngFor="let idioma of idiomasPublicos" class="mb-2 pb-2 border-bottom border-light">
+                <div class="d-flex justify-content-between align-items-baseline gap-2">
+                  <span class="fw-semibold">{{ idioma.nombre }}</span>
+                  <small class="text-muted text-nowrap" *ngIf="idioma.nivel">{{ idioma.nivel }}</small>
+                </div>
+                <small class="text-muted d-block mt-1" *ngIf="idioma.descripcion">{{ idioma.descripcion }}</small>
               </div>
             </div>
 
@@ -230,8 +234,12 @@ export class DetalleCvComponent implements OnInit {
     return map;
   }
 
-  get idiomasPublicos() {
-    return (this.cv?.habilidades ?? []).filter((h: any) => h.tipo === 'Idioma');
+  get idiomasPublicos(): HabilidadPublicoDto[] {
+    return (this.cv?.habilidades ?? []).filter(h => h.tipo === 'Idioma');
+  }
+
+  get habilidadesSinIdiomas(): HabilidadPublicoDto[] {
+    return (this.cv?.habilidades ?? []).filter(h => h.tipo !== 'Idioma');
   }
 
   constructor(

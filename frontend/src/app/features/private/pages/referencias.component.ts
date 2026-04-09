@@ -21,7 +21,7 @@ interface ReferenciaUI extends ReferenciaDto {
         <h4><i class="bi bi-people-fill me-2 text-primary"></i>Referencias personales</h4>
         <span class="text-muted small">Personas que pueden dar fe de tu trayectoria (solo referencias de tipo personal)</span>
       </div>
-      <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregar()">
         <i class="bi bi-plus-circle me-1"></i>Agregar referencia
       </button>
     </div>

@@ -301,7 +301,7 @@ CREATE TABLE dbo.Habilidad (
     CONSTRAINT PK_Habilidad PRIMARY KEY CLUSTERED (HabilidadId),
     CONSTRAINT FK_Habilidad_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT CK_Habilidad_Tipo CHECK (Tipo IN (N'Tecnica', N'Blanda', N'Idioma', N'Otra')),
-    CONSTRAINT CK_Habilidad_Nivel CHECK (Nivel IN (N'Basico', N'Intermedio', N'Avanzado', N'Experto')),
+    CONSTRAINT CK_Habilidad_Nivel CHECK (Nivel IN (N'Basico', N'Básico', N'Intermedio', N'Avanzado', N'Experto') OR Nivel IS NULL),
     CONSTRAINT CK_Habilidad_NivelLectura   CHECK (NivelLectura   IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelLectura   IS NULL),
     CONSTRAINT CK_Habilidad_NivelEscritura CHECK (NivelEscritura IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelEscritura IS NULL),
     CONSTRAINT CK_Habilidad_NivelEscucha   CHECK (NivelEscucha   IN (N'A1', N'A2', N'B1', N'B2', N'C1', N'C2') OR NivelEscucha   IS NULL),

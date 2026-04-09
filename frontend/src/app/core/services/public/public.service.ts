@@ -70,6 +70,7 @@ export interface HabilidadPublicoDto {
   nombre: string;
   tipo: string | null;
   nivel: string | null;
+  descripcion: string | null;
   nivelLectura: string | null;
   nivelEscritura: string | null;
   nivelEscucha: string | null;
