@@ -171,6 +171,25 @@ body {
   padding: 28px;
 }
 
+@media print {
+  app-topbar,
+  app-sidebar {
+    display: none !important;
+  }
+
+  .cv-main {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}
+
 // ── Page header ───────────────────────────────────────────────────────────────
 .page-header {
   background: #fff; border-radius: 10px;

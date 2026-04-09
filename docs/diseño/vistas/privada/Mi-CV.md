@@ -53,8 +53,13 @@
 | Datos personales / Cabecera | `/datos-personales` | Nombre, cargo, foto, resumen |
 | Experiencia | `/experiencia` | Lista de empleos en acordeón |
 | Educación | `/educacion` | Formaciones por tipo |
-| Habilidades | `/habilidades` | Técnicas, blandas, idiomas, cursos |
+| Habilidades (v1) | `/habilidades` | En esta versión se muestran **Habilidades Técnicas** e **Idiomas**; no hay bloque independiente de habilidades blandas en el prototipo |
 | Proyectos | `/proyectos` | Lista de proyectos con stack |
+
+### Nota de alcance (v1)
+- El prototipo de `Mi CV` prioriza consistencia visual con una columna lateral de habilidades técnicas e idiomas.
+- Las habilidades blandas siguen registrándose en la tabla `Habilidad` (`Tipo = 'Blanda'`) y quedan listas para una versión futura con bloque dedicado.
+- Criterio recomendado: exponer blandas en narrativa de `Perfil Profesional` hasta habilitar su bloque propio en `Mi CV`.
 
 ---
 

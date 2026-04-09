@@ -103,6 +103,7 @@ public class CvEditorService : ICvEditorService
             CurriculumId = curriculumId,
             NombrePerfil = r.NombrePerfil,
             DescripcionPerfil = r.DescripcionPerfil,
+            ExperienciaPerfilAnios = r.ExperienciaPerfilAnios,
             AspiracionSalarialPesos = r.AspiracionSalarialPesos,
             AspiracionSalarialDolares = r.AspiracionSalarialDolares,
             EsActivo = r.EsActivo
@@ -117,6 +118,7 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Perfiles, id, curriculumId, ct);
         e.NombrePerfil = r.NombrePerfil;
         e.DescripcionPerfil = r.DescripcionPerfil;
+        e.ExperienciaPerfilAnios = r.ExperienciaPerfilAnios;
         e.AspiracionSalarialPesos = r.AspiracionSalarialPesos;
         e.AspiracionSalarialDolares = r.AspiracionSalarialDolares;
         e.EsActivo = r.EsActivo;
@@ -499,7 +501,7 @@ public class CvEditorService : ICvEditorService
 
     private static PerfilDto MapPerfil(Perfil e) => new(
         e.PerfilId, e.NombrePerfil, e.DescripcionPerfil,
-        e.AspiracionSalarialPesos, e.AspiracionSalarialDolares, e.EsActivo);
+        e.ExperienciaPerfilAnios, e.AspiracionSalarialPesos, e.AspiracionSalarialDolares, e.EsActivo);
 
     private static ExperienciaDto MapExperiencia(Experiencia e) => new(
         e.ExperienciaId, e.Empresa, e.Cargo, e.Sector, e.FechaInicio, e.FechaFin,

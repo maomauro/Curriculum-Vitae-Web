@@ -63,6 +63,11 @@ interface PerfilUI extends PerfilDto {
                     [(ngModel)]="formNuevo.descripcionPerfil"></textarea>
         </div>
         <div class="col-md-3">
+          <label class="form-label">Experiencia en este perfil (años)</label>
+          <input type="number" class="form-control" min="0" step="0.5" placeholder="Ej: 7.5"
+                 [(ngModel)]="formNuevo.experienciaPerfilAnios">
+        </div>
+        <div class="col-md-3">
           <label class="form-label">Aspiración salarial (COP)</label>
           <div class="input-group">
             <span class="input-group-text">$</span>
@@ -134,6 +139,11 @@ interface PerfilUI extends PerfilDto {
                       [(ngModel)]="p.form.descripcionPerfil"></textarea>
           </div>
           <div class="col-md-3">
+            <label class="form-label">Experiencia en este perfil (años)</label>
+            <input type="number" class="form-control" min="0" step="0.5"
+                   [(ngModel)]="p.form.experienciaPerfilAnios">
+          </div>
+          <div class="col-md-3">
             <label class="form-label">Aspiración salarial (COP)</label>
             <div class="input-group">
               <span class="input-group-text">$</span>
@@ -173,6 +183,7 @@ export class PerfilComponent implements OnInit {
   formNuevo: UpsertPerfilRequest = {
     nombrePerfil: null,
     descripcionPerfil: null,
+    experienciaPerfilAnios: null,
     aspiracionSalarialPesos: null,
     aspiracionSalarialDolares: null,
     esActivo: true,
@@ -195,6 +206,7 @@ export class PerfilComponent implements OnInit {
     return {
       nombrePerfil: p.nombrePerfil,
       descripcionPerfil: p.descripcionPerfil,
+      experienciaPerfilAnios: p.experienciaPerfilAnios,
       aspiracionSalarialPesos: p.aspiracionSalarialPesos,
       aspiracionSalarialDolares: p.aspiracionSalarialDolares,
       esActivo: p.esActivo,
@@ -206,6 +218,7 @@ export class PerfilComponent implements OnInit {
     return {
       nombrePerfil: f.nombrePerfil?.trim() || null,
       descripcionPerfil: f.descripcionPerfil?.trim() || null,
+      experienciaPerfilAnios: f.experienciaPerfilAnios ?? null,
       aspiracionSalarialPesos: f.aspiracionSalarialPesos ?? null,
       aspiracionSalarialDolares: f.aspiracionSalarialDolares ?? null,
       esActivo: f.esActivo,
@@ -232,6 +245,7 @@ export class PerfilComponent implements OnInit {
     this.formNuevo = {
       nombrePerfil: null,
       descripcionPerfil: null,
+      experienciaPerfilAnios: null,
       aspiracionSalarialPesos: null,
       aspiracionSalarialDolares: null,
       esActivo: true,
@@ -305,6 +319,7 @@ export class PerfilComponent implements OnInit {
     const payload: UpsertPerfilRequest = {
       nombrePerfil: nombre,
       descripcionPerfil: this.formNuevo.descripcionPerfil?.trim() || null,
+      experienciaPerfilAnios: this.formNuevo.experienciaPerfilAnios ?? null,
       aspiracionSalarialPesos: this.formNuevo.aspiracionSalarialPesos ?? null,
       aspiracionSalarialDolares: this.formNuevo.aspiracionSalarialDolares ?? null,
       esActivo: this.formNuevo.esActivo,

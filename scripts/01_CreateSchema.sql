@@ -228,6 +228,7 @@ CREATE TABLE dbo.Perfil (
     CurriculumId            INT NOT NULL,
     NombrePerfil            NVARCHAR(100) NULL,
     DescripcionPerfil       NVARCHAR(MAX) NULL,
+    ExperienciaPerfilAnios  DECIMAL(5,2) NULL,
     AspiracionSalarialPesos DECIMAL(18,2) NULL,
     AspiracionSalarialDolares DECIMAL(18,2) NULL,
     EsActivo                  BIT           NOT NULL DEFAULT 1,

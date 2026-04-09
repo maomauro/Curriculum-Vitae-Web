@@ -407,6 +407,160 @@
 .cv-switch-cursor {
   cursor: pointer;
 }
+.vis-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vis-accordion-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.vis-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: none;
+  background: #fafbfc;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px rgba(44, 123, 229, 0.35);
+  }
+}
+.vis-accordion-grupo-titulo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+.vis-accordion-body {
+  padding: 4px 4px 8px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+.vis-group {
+  margin-bottom: 4px;
+}
+.vis-group-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: #94a3b8;
+  padding: 14px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vis-group-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #f0f0f0;
+}
+.vis-group-label--personal {
+  color: #0369a1;
+}
+.vis-group-label--profesional {
+  color: #6d28d9;
+}
+.vis-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 10px 12px;
+  border-bottom: 1px solid #f8f8f8;
+}
+.vis-row:last-child {
+  border-bottom: none;
+}
+.vis-row--sin-switch-seccion {
+  justify-content: flex-start;
+}
+.vis-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.vis-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.vis-icon--datos {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.vis-icon--perfil {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.vis-icon--experiencia {
+  background: #fef3c7;
+  color: #b45309;
+}
+.vis-icon--educacion {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.vis-icon--habilidades {
+  background: #f0fdf4;
+  color: #166534;
+}
+.vis-icon--proyectos {
+  background: #f1f5f9;
+  color: #475569;
+}
+.vis-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #212529;
+}
+.vis-desc {
+  font-size: 0.78rem;
+  color: #6c757d;
+}
+.vis-attr-list {
+  margin-left: 46px;
+  margin-top: -2px;
+  margin-bottom: 8px;
+}
+.vis-attr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0 6px 12px;
+  border-left: 2px dashed #e5e7eb;
+}
+.vis-attr-name {
+  font-size: 0.8rem;
+  color: #475569;
+}
 .cv-danger-zone {
   border-color: #fecaca !important;
 }
@@ -521,6 +675,442 @@
   font-size: 0.88rem;
   color: #495057;
   line-height: 1.7;
+}
+
+// ── Mi CV: layout alineado al prototipo mi-cv.html ─────────────────────────────
+// Ancho carta (US Letter) para pantalla = misma referencia que impresión / PDF.
+.cv-mi-letter-wrap {
+  width: 100%;
+}
+
+.cv-mi-preview {
+  max-width: 8.5in;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.08);
+  position: relative;
+  box-sizing: border-box;
+
+  .cv-mi-preview-stack {
+    position: relative;
+    z-index: 2;
+  }
+
+  .cv-mi-page-guide {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(11in - 22px),
+      rgba(0, 0, 0, 0.06) calc(11in - 20px),
+      #c5ccd8 calc(11in - 18px),
+      #e8ebf1 calc(11in - 14px),
+      #d1d7e2 calc(11in - 10px),
+      rgba(0, 0, 0, 0.05) calc(11in - 4px),
+      transparent calc(11in - 1px),
+      transparent 11in
+    );
+    background-size: 100% 11in;
+    background-repeat: repeat-y;
+    background-position: top center;
+  }
+
+  .cv-mi-body {
+    display: grid;
+    grid-template-columns: minmax(252px, 300px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cv-preview-header {
+    padding: 2rem clamp(1.5rem, 4vw, 2.5rem);
+    gap: clamp(1rem, 3vw, 1.75rem);
+    align-items: flex-start;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .cv-preview-avatar {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .cv-preview-photo {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  .cv-preview-name {
+    font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+
+  .cv-preview-sub {
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .cv-preview-meta {
+    gap: 10px 20px;
+    line-height: 1.45;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    i {
+      opacity: 0.88;
+      flex-shrink: 0;
+    }
+  }
+
+  .cv-preview-sidebar {
+    background: #f1f3f5;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-right: 1px solid #dee2e6;
+  }
+
+  .cv-preview-main {
+    max-width: 52rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .cv-mi-section-title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--cv-primary);
+    border-bottom: 2px solid var(--cv-primary);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+
+  .cv-mi-section {
+    margin-bottom: 1.75rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .cv-mi-cv-section {
+    margin-bottom: 1.75rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .cv-mi-skill-item {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .cv-mi-skill-block {
+    margin-bottom: 0;
+  }
+
+  .cv-mi-timeline {
+    padding-left: 0;
+    position: static;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .cv-mi-timeline > .timeline-item {
+    position: relative;
+    padding-left: 18px;
+    border-left: 2px solid var(--cv-primary);
+    margin-bottom: 22px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 6px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--cv-primary);
+      box-shadow: 0 0 0 2px #fff;
+      border: none;
+    }
+  }
+
+  .cv-mi-timeline > .timeline-item.timeline-item--compact {
+    margin-bottom: 16px;
+
+    &::before {
+      top: 5px;
+    }
+  }
+
+  .cv-mi-timeline .timeline-title {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #212529;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  .cv-mi-timeline .timeline-sub {
+    font-size: 0.84375rem;
+    color: var(--cv-primary);
+    margin-bottom: 6px;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+
+  .cv-mi-timeline .timeline-date {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 4px;
+    line-height: 1.4;
+    font-weight: 400;
+  }
+
+  .cv-mi-timeline .timeline-desc {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    line-height: 1.6;
+    margin-top: 2px;
+  }
+
+  .cv-mi-timeline .timeline-inline {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .cv-mi-timeline .timeline-inline .timeline-title {
+    display: inline;
+    font-size: inherit;
+    font-weight: 700;
+    letter-spacing: normal;
+  }
+
+  .cv-mi-timeline .timeline-inline .timeline-sep {
+    color: #adb5bd;
+    font-size: 0.84375rem;
+    font-weight: 400;
+  }
+
+  .cv-mi-timeline .timeline-inline .timeline-sub {
+    display: inline;
+    margin-bottom: 0;
+    font-size: 0.84375rem;
+  }
+
+  .cv-mi-timeline .timeline-inline .timeline-date {
+    display: inline;
+    margin-bottom: 0;
+    font-size: 0.75rem;
+  }
+
+  .cv-mi-prose {
+    font-size: 0.875rem;
+    color: #495057;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .cv-mi-profile-meta {
+    font-size: 0.8125rem;
+    color: #495057;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+
+  .cv-mi-exp-duration {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .cv-mi-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 10px;
+  }
+
+  .cv-mi-tag {
+    display: inline-block;
+    background: #e8f1fc;
+    color: var(--cv-primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(44, 123, 229, 0.15);
+  }
+
+  .cv-mi-support {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .cv-ref-block {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+
+    strong {
+      color: #495057;
+      font-weight: 600;
+    }
+  }
+
+  a.cv-mi-support-link {
+    color: var(--cv-primary) !important;
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover {
+      color: #1a5fb4 !important;
+      text-decoration: underline;
+    }
+  }
+
+  .cv-progress-preview {
+    height: 7px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #e9ecef;
+  }
+
+  .cv-progress-bar-fill {
+    background: linear-gradient(90deg, var(--cv-primary) 0%, #4a9aef 100%);
+    border-radius: 4px;
+  }
+
+  .cv-skill-line span:first-child {
+    font-weight: 600;
+  }
+
+  .cv-skill-line small {
+    font-weight: 500;
+    font-size: 0.75rem;
+  }
+}
+
+@media screen {
+  /* Fondo tipo “escritorio” y hojas separadas por franjas */
+  .cv-mi-letter-wrap {
+    background: #e8ebf0;
+    padding: 12px 10px 20px;
+    border-radius: 12px;
+  }
+
+  .cv-mi-preview {
+    min-height: 11in;
+    background: #dce1e9;
+  }
+
+  /* Márgenes interiores ~impresión (alineado a @page 0.45in) */
+  .cv-mi-preview .cv-mi-preview-stack {
+    margin: clamp(10px, 2.5vw, 0.45in);
+    border-radius: 2px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.75),
+      0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .cv-mi-preview .cv-mi-body {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-mi-preview .cv-preview-sidebar {
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .cv-mi-preview .cv-preview-main {
+    max-width: none;
+  }
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.45in;
+  }
+
+  .cv-mi-screen-only {
+    display: none !important;
+  }
+
+  .cv-mi-letter-wrap {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .cv-mi-preview {
+    max-width: none !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .cv-mi-preview .cv-mi-preview-stack {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .cv-mi-preview .cv-mi-body {
+    grid-template-columns: 260px 1fr;
+  }
+
+  .cv-mi-preview .cv-preview-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cv-mi-preview .cv-preview-sidebar {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border-bottom: none;
+    border-right: 1px solid #ccc;
+  }
+
+  .cv-mi-screen-flow {
+    margin-top: 0 !important;
+  }
 }
 
 // ── Dashboard candidato (público / analítico) ─────────────────────────────────

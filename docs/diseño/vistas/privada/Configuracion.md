@@ -76,9 +76,23 @@ Controles de privacidad para cada dato personal sensible. Niveles:
 | Fecha de nacimiento | Público / Oculto |
 | Nº documento | Siempre oculto (informativo) |
 
-### Visibilidad — Secciones del CV
-Toggle ON/OFF para activar o desactivar la visualización de cada sección en el CV público:
-- Experiencia laboral, Educación, Habilidades, Proyectos, Referencias
+### Visibilidad — Secciones del CV (clasificado por páginas)
+Toggle ON/OFF para activar o desactivar la visualización pública de cada página ya implementada:
+- Datos Personales
+- Perfil
+- Experiencia
+- Educación
+- Habilidades
+- Proyectos
+
+En cada fila se muestra además una descripción de **atributos visibles** (qué campos concretos se publican cuando está activa la sección).
+Cada sección incluye:
+- un switch general para activar/desactivar toda la página;
+- switches por atributo para control más personalizado (ej. en Proyectos: nombre, rol, equipo, duración, stack, aporte, logro y desafío).
+
+**Regla actual para `Mi CV` (v1):**
+- En `Habilidades`, el prototipo de `Mi CV` solo muestra bloques de **técnicas** e **idiomas**.
+- Las habilidades blandas se mantienen en datos (tabla `Habilidad`) pero no se renderizan como bloque independiente en `Mi CV` hasta la siguiente iteración de diseño.
 
 ### Privacidad
 - Toggle "CV indexable por buscadores" (activa/desactiva `<meta name="robots">`)
