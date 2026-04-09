@@ -1,11 +1,13 @@
 # Vista: Mi CV (`/mi-cv`)
 
 **Layout:** `AdminLayoutComponent`  
-**Módulo:** `EditorModule`  
+**Módulo:** `PrivateModule`  
 **Componente:** `MiCvComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [mi-cv.html](../../../frontend/prototipos/privada/mi-cv.html)
+**Prototipo:** [mi-cv.html](../../prototipos/privada/mi-cv.html)
+
+En la cabecera de la vista: selector de **plantilla** (Clásico / Profesional), persistida vía API `presentacion`; impresión / PDF desde el mismo lugar.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿using PortalCV.Application.DTOs.Privada;
+using PortalCV.Application.DTOs.Privada;
 
 namespace PortalCV.Application.Interfaces;
 
@@ -59,5 +59,9 @@ public interface ICvEditorService
     // Visibilidad de secciones
     Task<IReadOnlyList<VisibilidadSeccionDto>> GetVisibilidadAsync(int curriculumId, CancellationToken ct = default);
     Task<IReadOnlyList<VisibilidadSeccionDto>> UpdateVisibilidadAsync(int curriculumId, IEnumerable<UpdateVisibilidadRequest> cambios, CancellationToken ct = default);
+
+    // Plantilla de presentación (Mi CV / impresión)
+    Task<PresentacionCvDto> GetPresentacionAsync(int curriculumId, CancellationToken ct = default);
+    Task<PresentacionCvDto> UpdatePresentacionAsync(int curriculumId, UpdatePresentacionCvRequest request, CancellationToken ct = default);
 }
 

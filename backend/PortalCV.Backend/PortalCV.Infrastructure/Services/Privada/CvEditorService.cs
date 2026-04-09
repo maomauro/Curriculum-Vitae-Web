@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PortalCV.Application;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -443,6 +444,33 @@ public class CvEditorService : ICvEditorService
 
         await _context.SaveChangesAsync(ct);
         return await GetVisibilidadAsync(curriculumId, ct);
+    }
+
+    // --- Presentacion / plantilla ---
+
+    public async Task<PresentacionCvDto> GetPresentacionAsync(int curriculumId, CancellationToken ct = default)
+    {
+        var c = await _context.Curriculums
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
+
+        return new PresentacionCvDto(CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo));
+    }
+
+    public async Task<PresentacionCvDto> UpdatePresentacionAsync(
+        int curriculumId, UpdatePresentacionCvRequest request, CancellationToken ct = default)
+    {
+        var code = request.PlantillaCodigo.Trim().ToLowerInvariant();
+
+        var c = await _context.Curriculums
+            .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
+
+        c.PlantillaCodigo = code;
+        c.FechaActualizacion = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+        return new PresentacionCvDto(code);
     }
 
     // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

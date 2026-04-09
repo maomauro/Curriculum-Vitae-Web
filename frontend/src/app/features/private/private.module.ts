@@ -19,8 +19,6 @@ import { ReferenciasComponent }      from './pages/referencias.component';
 import { RedesSocialesComponent }    from './pages/redes-sociales.component';
 import { FamiliaresComponent }       from './pages/familiares.component';
 import { ContactosComponent }        from './pages/contactos.component';
-import { EditorCvComponent }         from './pages/editor-cv.component';
-
 @NgModule({
   declarations: [
     DashboardComponent,
@@ -37,7 +35,6 @@ import { EditorCvComponent }         from './pages/editor-cv.component';
     FamiliaresComponent,
     ContactosComponent,
     ConfiguracionComponent,
-    EditorCvComponent,
   ],
   imports: [
     CommonModule,

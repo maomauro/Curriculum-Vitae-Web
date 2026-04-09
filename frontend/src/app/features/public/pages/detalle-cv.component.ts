@@ -72,7 +72,7 @@ import { PublicService, CvDetalleDto, ContactarDto, HabilidadPublicoDto } from '
               </div>
             </div>
 
-            <!-- Idiomas: mismos tres campos que el editor (nombre, nivel, descripción opcional) -->
+            <!-- Idiomas: nombre, nivel, descripción opcional (misma semántica que en Mi CV / datos) -->
             <div class="text-start mb-4" *ngIf="idiomasPublicos.length">
               <div class="section-title">Idiomas</div>
               <div *ngFor="let idioma of idiomasPublicos" class="mb-2 pb-2 border-bottom border-light">

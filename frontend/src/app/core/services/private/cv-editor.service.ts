@@ -188,6 +188,16 @@ export interface UpdateVisibilidadRequest {
   visible: boolean;
 }
 
+// ── Presentación (plantilla Mi CV) ────────────────────────────────────────────
+
+export interface PresentacionCvDto {
+  plantillaCodigo: string;
+}
+
+export interface UpdatePresentacionCvRequest {
+  plantillaCodigo: string;
+}
+
 // ── Servicio ───────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -322,5 +332,14 @@ export class CvEditorService {
   }
   updateVisibilidad(cambios: UpdateVisibilidadRequest[]): Observable<VisibilidadSeccionDto[]> {
     return this.http.put<VisibilidadSeccionDto[]>(`${this.BASE}/visibilidad`, cambios);
+  }
+
+  // — Presentación / plantilla —
+  getPresentacion(): Observable<PresentacionCvDto> {
+    return this.http.get<PresentacionCvDto>(`${this.BASE}/presentacion`);
+  }
+
+  updatePresentacion(data: UpdatePresentacionCvRequest): Observable<PresentacionCvDto> {
+    return this.http.put<PresentacionCvDto>(`${this.BASE}/presentacion`, data);
   }
 }

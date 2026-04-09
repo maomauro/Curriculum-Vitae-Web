@@ -95,6 +95,7 @@ CREATE TABLE dbo.Curriculum (
     Estado            NVARCHAR(20)  NOT NULL DEFAULT N'Borrador',
     ContadorVisitas   INT NOT NULL DEFAULT 0,
     ContadorContactos INT NOT NULL DEFAULT 0,
+    PlantillaCodigo   NVARCHAR(32)  NOT NULL DEFAULT N'clasico',
     FechaCreacion     DATETIME2(0)  NOT NULL DEFAULT SYSDATETIME(),
     FechaActualizacion DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
     CONSTRAINT PK_Curriculum PRIMARY KEY CLUSTERED (CurriculumId),

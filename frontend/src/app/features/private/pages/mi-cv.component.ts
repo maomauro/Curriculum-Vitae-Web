@@ -1,12 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import {
   CvEditorService,
@@ -20,6 +12,11 @@ import {
   ReferenciaDto,
   VisibilidadSeccionDto,
 } from '../../../core/services/private/cv-editor.service';
+import {
+  CV_PLANTILLAS,
+  type CvPlantillaCodigo,
+  normalizeCvPlantillaCodigo,
+} from '../../../core/constants/cv-plantillas';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 
@@ -31,17 +28,47 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
       <div>
         <h4><i class="bi bi-file-earmark-person-fill me-2 text-primary"></i>Mi CV</h4>
         <span class="text-muted small">
-          Vista de tu hoja de vida en ancho tamaño carta (8,5" × 11"): el mismo que al imprimir, en PDF o el que
-          suele ver un reclutador.
+          Vista previa en ancho tamaño carta (8,5"); un solo bloque con scroll. Al imprimir o guardar PDF el
+          navegador pagina automáticamente.
         </span>
+        <div *ngIf="!loading" class="mt-2 d-flex flex-wrap align-items-center gap-2 cv-mi-plantilla-bar">
+          <span class="small text-muted mb-0 d-inline-flex align-items-center text-nowrap">
+            <i class="bi bi-palette2 me-1 text-primary" aria-hidden="true"></i>
+            Plantilla
+          </span>
+          <div
+            class="d-inline-flex align-items-center cv-mi-plantilla-dots"
+            role="group"
+            aria-label="Elegir plantilla por color">
+            <button
+              *ngFor="let t of plantillas"
+              type="button"
+              class="cv-mi-plantilla-dot"
+              [class.cv-mi-plantilla-dot--active]="t.codigo === plantillaCodigo"
+              [style.background-color]="t.color"
+              [disabled]="savingPlantilla"
+              [attr.aria-pressed]="t.codigo === plantillaCodigo"
+              [attr.title]="t.nombre + ' — ' + t.resumen"
+              (click)="onPlantillaSelect(t.codigo)">
+              <span class="visually-hidden">{{ t.nombre }}</span>
+            </button>
+          </div>
+          <span
+            class="small cv-mi-plantilla-nombre text-truncate"
+            [style.borderLeftColor]="plantillaColor"
+            [attr.title]="plantillaNombre + ' — ' + plantillaResumen">
+            {{ plantillaNombre }}
+          </span>
+          <span *ngIf="savingPlantilla" class="small text-muted d-inline-flex align-items-center">
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            Guardando…
+          </span>
+        </div>
       </div>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex align-items-center" (click)="imprimir()">
+        <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" (click)="imprimir()">
           <i class="bi bi-printer-fill me-1"></i>Imprimir / PDF
         </button>
-        <a routerLink="/editor" class="btn btn-outline-primary btn-sm">
-          <i class="bi bi-pencil-fill me-1"></i>Editar CV
-        </a>
       </div>
     </div>
 
@@ -52,14 +79,11 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
     </div>
 
     <div *ngIf="!loading" class="cv-mi-letter-wrap">
-      <div #cvMiSheet class="cv-mi-preview bg-white rounded-3 overflow-hidden">
-        <div class="cv-mi-page-guide cv-mi-screen-only" aria-hidden="true"></div>
+      <div [class]="previewRootClass">
         <div class="cv-mi-preview-stack">
-      <div class="text-white d-flex align-items-start cv-preview-header">
-        <ng-container *ngIf="fotoHeaderUrl as url">
-          <img [src]="url" alt="" class="cv-preview-photo rounded-circle" />
-        </ng-container>
-        <div *ngIf="!fotoHeaderUrl" class="avatar-circle blue cv-preview-avatar">{{ iniciales() }}</div>
+      <div
+        class="d-flex align-items-start cv-preview-header"
+        [class.text-white]="plantillaCodigo === 'clasico'">
         <div class="flex-grow-1 min-w-0">
           <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
           <div class="cv-preview-sub">
@@ -86,7 +110,7 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
       </div>
 
       <div class="cv-mi-body">
-        <div class="cv-preview-sidebar">
+        <div class="cv-preview-sidebar" *ngIf="!esPlantillaCuerpoUnico">
           <div class="cv-mi-cv-section cv-mi-skill-block" *ngIf="visibleSeccion('habilidades') && habilidadesTecnicas.length">
             <div class="cv-mi-section-title">Habilidades Técnicas</div>
             <div *ngFor="let h of habilidadesTecnicas" class="cv-mi-skill-item">
@@ -154,7 +178,10 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
                   {{ exp.esActual ? 'Presente' : (exp.fechaFin | date:'MMM yyyy') }}
                 </div>
                 <div class="cv-mi-exp-duration text-muted" *ngIf="exp.fechaInicio">{{ duracionExperiencia(exp) }}</div>
-                <div class="timeline-desc" *ngIf="exp.funciones">{{ exp.funciones }}</div>
+                <ul class="cv-pro-list mb-0 mt-1" *ngIf="esPlantillaProfesional && lineasBulletTexto(exp.funciones).length">
+                  <li *ngFor="let linea of lineasBulletTexto(exp.funciones)">{{ linea }}</li>
+                </ul>
+                <div class="timeline-desc" *ngIf="!esPlantillaProfesional && exp.funciones">{{ exp.funciones }}</div>
                 <ng-container *ngIf="visibleAtributoSafe('experiencia','referencia-laboral')">
                   <div class="cv-ref-block text-muted" *ngFor="let ref of referenciasLaboralesDe(exp.experienciaId)">
                     <strong>Referencia laboral:</strong> {{ textoReferenciaLaboral(ref) }}
@@ -248,13 +275,47 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
               <div class="timeline-item" *ngFor="let pr of proyectos">
                 <div class="timeline-title" *ngIf="visibleAtributo('proyectos','nombre')">{{ pr.nombreProyecto }}</div>
                 <div class="timeline-sub" *ngIf="lineaProyectoMeta(pr)">{{ lineaProyectoMeta(pr) }}</div>
-                <div class="timeline-desc" *ngIf="textoProyecto(pr)">{{ textoProyecto(pr) }}</div>
+                <ul class="cv-pro-list mb-0 mt-1" *ngIf="esPlantillaProfesional && lineasBulletTexto(textoProyecto(pr)).length">
+                  <li *ngFor="let linea of lineasBulletTexto(textoProyecto(pr))">{{ linea }}</li>
+                </ul>
+                <div class="timeline-desc" *ngIf="!esPlantillaProfesional && textoProyecto(pr)">{{ textoProyecto(pr) }}</div>
                 <div class="cv-mi-tags" *ngIf="visibleAtributo('proyectos','stack') && stackTags(pr.stackTecnologico).length">
                   <span class="cv-mi-tag" *ngFor="let t of stackTags(pr.stackTecnologico)">{{ t }}</span>
                 </div>
               </div>
             </div>
           </div>
+
+          <ng-container *ngIf="esPlantillaProfesional">
+            <div class="cv-mi-section" *ngIf="visibleSeccion('habilidades') && habilidadesTecnicas.length">
+              <div class="cv-mi-section-title">Habilidades técnicas</div>
+              <ul class="cv-pro-list">
+                <li *ngFor="let h of habilidadesTecnicas">
+                  <ng-container *ngIf="visibleAtributo('habilidades','nombre')">
+                    <strong>{{ h.nombre }}</strong><ng-container *ngIf="visibleAtributo('habilidades','nivel') && h.nivel">: {{ h.nivel }}</ng-container><ng-container *ngIf="h.descripcion?.trim()"> — {{ h.descripcion }}</ng-container>
+                  </ng-container>
+                </li>
+              </ul>
+            </div>
+            <div class="cv-mi-section" *ngIf="visibleSeccion('habilidades') && habilidadesBlandas.length">
+              <div class="cv-mi-section-title">Habilidades blandas</div>
+              <ul class="cv-pro-list">
+                <ng-container *ngFor="let h of habilidadesBlandas">
+                  <li *ngIf="textoBlandaProfesional(h) as t">{{ t }}</li>
+                </ng-container>
+              </ul>
+            </div>
+            <div class="cv-mi-section" *ngIf="visibleSeccion('habilidades') && idiomas.length">
+              <div class="cv-mi-section-title">Idiomas</div>
+              <ul class="cv-pro-list">
+                <li *ngFor="let id of idiomas">
+                  <ng-container *ngIf="visibleAtributo('habilidades','nombre')">
+                    <strong>{{ id.nombre }}</strong><ng-container *ngIf="visibleAtributo('habilidades','nivel') && id.nivel"> — {{ id.nivel }}</ng-container><ng-container *ngIf="textoDetalleIdioma(id)"> · {{ textoDetalleIdioma(id) }}</ng-container>
+                  </ng-container>
+                </li>
+              </ul>
+            </div>
+          </ng-container>
         </div>
       </div>
         </div>
@@ -262,12 +323,11 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
     </div>
   `,
 })
-export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
-  loading = false;
+export class MiCvComponent implements OnInit {
+  readonly plantillas = CV_PLANTILLAS;
 
-  @ViewChild('cvMiSheet', { static: false }) private cvMiSheet?: ElementRef<HTMLElement>;
-  private sheetResizeObserver?: ResizeObserver;
-  private pageFlowDebounce?: ReturnType<typeof setTimeout>;
+  loading = false;
+  savingPlantilla = false;
 
   personales: PersonalesDto | null = null;
   perfiles: PerfilDto[] = [];
@@ -279,33 +339,69 @@ export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
   referencias: ReferenciaDto[] = [];
   private visibilidadMap = new Map<string, boolean>();
 
+  /** Plantilla de presentación (API). */
+  plantillaCodigo: CvPlantillaCodigo = 'clasico';
+
   private readonly tiposAcademicos = new Set(['Posgrado', 'Pregrado', 'Tecnologo', 'Tecnico']);
+
+  get previewRootClass(): string {
+    return `cv-mi-preview bg-white rounded-3 overflow-hidden cv-tpl--${this.plantillaCodigo}`;
+  }
+
+  get plantillaResumen(): string {
+    return CV_PLANTILLAS.find(p => p.codigo === this.plantillaCodigo)?.resumen ?? '';
+  }
+
+  get plantillaNombre(): string {
+    return CV_PLANTILLAS.find(p => p.codigo === this.plantillaCodigo)?.nombre ?? 'Clásico';
+  }
+
+  get plantillaColor(): string {
+    return CV_PLANTILLAS.find(p => p.codigo === this.plantillaCodigo)?.color ?? '#2c7be5';
+  }
+
+  /** Una columna, sin barra lateral (solo Profesional). */
+  get esPlantillaCuerpoUnico(): boolean {
+    return this.plantillaCodigo === 'profesional';
+  }
+
+  /** Estilo documento / PDF de ejemplo: viñetas en experiencia y listas de habilidades. */
+  get esPlantillaProfesional(): boolean {
+    return this.plantillaCodigo === 'profesional';
+  }
 
   constructor(
     private cvEditorService: CvEditorService,
-    private notificationService: NotificationService,
-    private ngZone: NgZone
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.cargarDatos();
   }
 
-  ngAfterViewInit(): void {
-    this.tryAttachSheetObserver();
-  }
-
-  ngOnDestroy(): void {
-    this.sheetResizeObserver?.disconnect();
-    this.sheetResizeObserver = undefined;
-    if (this.pageFlowDebounce != null) {
-      clearTimeout(this.pageFlowDebounce);
-      this.pageFlowDebounce = undefined;
-    }
-  }
-
   imprimir(): void {
     window.print();
+  }
+
+  onPlantillaSelect(raw: CvPlantillaCodigo | string): void {
+    const codigo = normalizeCvPlantillaCodigo(raw);
+    if (codigo === this.plantillaCodigo || this.savingPlantilla) {
+      return;
+    }
+    const anterior = this.plantillaCodigo;
+    this.savingPlantilla = true;
+    this.cvEditorService.updatePresentacion({ plantillaCodigo: codigo }).subscribe({
+      next: p => {
+        this.plantillaCodigo = normalizeCvPlantillaCodigo(p.plantillaCodigo);
+        this.savingPlantilla = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: () => {
+        this.plantillaCodigo = anterior;
+        this.savingPlantilla = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
+      },
+    });
   }
 
   get nombreCompleto(): string {
@@ -418,16 +514,6 @@ export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
     return ciudad || pais || null;
   }
 
-  iniciales(): string {
-    const parts = this.nombreCompleto.split(' ').filter(Boolean);
-    if (!parts.length) return '?';
-    return parts
-      .slice(0, 2)
-      .map(p => p[0])
-      .join('')
-      .toUpperCase();
-  }
-
   skillPercent(nivel: string | null): number {
     const n = (nivel ?? '').toLowerCase();
     if (n.includes('nativo')) return 100;
@@ -455,6 +541,36 @@ export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
       default:
         return 50;
     }
+  }
+
+  /** Detalle de idioma (descripción o subniveles CEFR) para timeline / lista profesional. */
+  textoDetalleIdioma(h: HabilidadDto): string | null {
+    const d = h.descripcion?.trim();
+    if (d) return d;
+    const bits: string[] = [];
+    if (h.nivelLectura?.trim()) bits.push(`Lectura: ${h.nivelLectura}`);
+    if (h.nivelEscritura?.trim()) bits.push(`Escritura: ${h.nivelEscritura}`);
+    if (h.nivelEscucha?.trim()) bits.push(`Escucha: ${h.nivelEscucha}`);
+    if (h.nivelHabla?.trim()) bits.push(`Habla: ${h.nivelHabla}`);
+    return bits.length ? bits.join(' · ') : null;
+  }
+
+  /** Una línea por renglón; quita viñeta inicial si el usuario ya la escribió (como en Word/PDF). */
+  lineasBulletTexto(raw: string | null | undefined): string[] {
+    if (raw == null || !String(raw).trim()) return [];
+    return String(raw)
+      .split(/\r?\n/)
+      .map(l => l.replace(/^\s*[•\u2022\u00B7\-*]\s*/, '').trim())
+      .filter(Boolean);
+  }
+
+  /** Texto para lista de habilidades blandas en plantilla Profesional. */
+  textoBlandaProfesional(h: HabilidadDto): string | null {
+    const n = h.nombre?.trim();
+    const d = h.descripcion?.trim();
+    if (!n && !d) return null;
+    if (n && d) return `${n} — ${d}`;
+    return n || d || null;
   }
 
   lineaEmpresaContrato(exp: ExperienciaDto): string | null {
@@ -617,6 +733,7 @@ export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
       redes: this.cvEditorService.getRedesSociales(),
       referencias: this.cvEditorService.getReferencias(),
       visibilidad: this.cvEditorService.getVisibilidad(),
+      presentacion: this.cvEditorService.getPresentacion(),
     }).subscribe({
       next: ({
         personales,
@@ -628,6 +745,7 @@ export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
         redes,
         referencias,
         visibilidad,
+        presentacion,
       }) => {
         this.personales = personales;
         this.perfiles = perfiles;
@@ -638,195 +756,14 @@ export class MiCvComponent implements OnInit, AfterViewInit, OnDestroy {
         this.redes = redes;
         this.referencias = referencias;
         this.setVisibilidad(visibilidad);
+        this.plantillaCodigo = normalizeCvPlantillaCodigo(presentacion.plantillaCodigo);
         this.loading = false;
-        queueMicrotask(() => {
-          this.tryAttachSheetObserver();
-          this.scheduleApplyScreenPageFlow();
-        });
       },
       error: () => {
         this.loading = false;
         this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
       },
     });
-  }
-
-  private tryAttachSheetObserver(): void {
-    const el = this.cvMiSheet?.nativeElement;
-    if (!el || typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    if (!this.sheetResizeObserver) {
-      this.sheetResizeObserver = new ResizeObserver(() => {
-        this.ngZone.run(() => this.scheduleApplyScreenPageFlow());
-      });
-      this.sheetResizeObserver.observe(el);
-    }
-    this.scheduleApplyScreenPageFlow();
-  }
-
-  /** En pantalla, empuja bloques que cruzan cada 11" para alinearlos con las “hojas” (no afecta impresión). */
-  private scheduleApplyScreenPageFlow(): void {
-    if (this.pageFlowDebounce != null) {
-      clearTimeout(this.pageFlowDebounce);
-    }
-    this.pageFlowDebounce = setTimeout(() => {
-      this.pageFlowDebounce = undefined;
-      this.ngZone.run(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => this.applyScreenPageFlow());
-        });
-      });
-    }, 50);
-  }
-
-  private clearScreenPageFlow(stack: HTMLElement): void {
-    stack.querySelectorAll('.cv-mi-screen-flow').forEach(node => {
-      const el = node as HTMLElement;
-      el.style.marginTop = '';
-      el.classList.remove('cv-mi-screen-flow');
-    });
-  }
-
-  /**
-   * Para el primer ítem de un timeline, el bloque “atómico” incluye el título de sección encima.
-   * Así título + primer experiencia/proyecto/etc. saltan juntos a la siguiente hoja.
-   */
-  private getFlowBlockBounds(
-    el: HTMLElement,
-    pRect: DOMRect
-  ): { topRel: number; bottomRel: number; height: number } {
-    const r = el.getBoundingClientRect();
-    const timeline = el.parentElement;
-    if (timeline?.classList.contains('cv-mi-timeline') && el === timeline.firstElementChild) {
-      const section = timeline.parentElement;
-      const title = section?.querySelector(':scope > .cv-mi-section-title') as HTMLElement | null;
-      if (title) {
-        const tr = title.getBoundingClientRect();
-        const topRel = tr.top - pRect.top;
-        const bottomRel = r.bottom - pRect.top;
-        return { topRel, bottomRel, height: Math.max(0, bottomRel - topRel) };
-      }
-    }
-    const topRel = r.top - pRect.top;
-    const bottomRel = r.bottom - pRect.top;
-    return { topRel, bottomRel, height: Math.max(0, bottomRel - topRel) };
-  }
-
-  /** Dónde aplicar margin-top para que se mueva el bloque completo (título + timeline si aplica). */
-  private getPageFlowMarginTarget(el: HTMLElement): HTMLElement {
-    const timeline = el.parentElement;
-    if (!timeline?.classList.contains('cv-mi-timeline')) {
-      return el;
-    }
-    const section = timeline.parentElement;
-    if (!section?.classList.contains('cv-mi-section')) {
-      return el;
-    }
-    const isFirst = el === timeline.firstElementChild;
-    const title = section.querySelector(':scope > .cv-mi-section-title') as HTMLElement | null;
-    if (isFirst && title) {
-      return title;
-    }
-    return el;
-  }
-
-  private collectPageAlignTargets(stack: HTMLElement): HTMLElement[] {
-    const out: HTMLElement[] = [];
-    stack.querySelectorAll('.cv-preview-sidebar > .cv-mi-cv-section').forEach(el => {
-      out.push(el as HTMLElement);
-    });
-    stack.querySelectorAll('.cv-preview-main > .cv-mi-section').forEach(section => {
-      const timeline = section.querySelector('.cv-mi-timeline');
-      if (timeline) {
-        timeline.querySelectorAll(':scope > .timeline-item').forEach(item => {
-          out.push(item as HTMLElement);
-        });
-      } else {
-        out.push(section as HTMLElement);
-      }
-    });
-    return out;
-  }
-
-  private applyScreenPageFlow(): void {
-    if (typeof window !== 'undefined' && window.matchMedia?.('print').matches) {
-      return;
-    }
-    const preview = this.cvMiSheet?.nativeElement;
-    const stack = preview?.querySelector('.cv-mi-preview-stack') as HTMLElement | null;
-    if (!preview || !stack) {
-      return;
-    }
-
-    this.clearScreenPageFlow(stack);
-
-    const pagePx = this.cssInchesToPx(11);
-    if (pagePx <= 0) {
-      return;
-    }
-
-    /** Espacio bajo la franja decorativa para que el texto no quede pegado al corte. */
-    const bandClearPx = 18;
-    /** Tolerancia por subpíxeles, bordes y fuentes. */
-    const roomBufferPx = 6;
-    const maxPasses = 64;
-
-    for (let pass = 0; pass < maxPasses; pass++) {
-      const pRect = preview.getBoundingClientRect();
-      const targets = this.collectPageAlignTargets(stack).sort((a, b) => {
-        const ra = a.getBoundingClientRect();
-        const rb = b.getBoundingClientRect();
-        if (Math.abs(ra.top - rb.top) > 4) {
-          return ra.top - rb.top;
-        }
-        return ra.left - rb.left;
-      });
-      let changed = false;
-
-      for (const el of targets) {
-        const { topRel, bottomRel, height: h } = this.getFlowBlockBounds(el, pRect);
-        if (h < 2) {
-          continue;
-        }
-
-        const pageIdx = Math.max(0, Math.floor(topRel / pagePx));
-        const pageEnd = (pageIdx + 1) * pagePx;
-        const remainingOnSheet = pageEnd - topRel;
-
-        const spillsPastCut = bottomRel > pageEnd - roomBufferPx;
-        const doesNotFitRemainder = h > remainingOnSheet - roomBufferPx;
-
-        if (spillsPastCut || doesNotFitRemainder) {
-          const delta = Math.ceil(remainingOnSheet + bandClearPx);
-          if (delta < 4) {
-            continue;
-          }
-          const target = this.getPageFlowMarginTarget(el);
-          const prev = parseFloat(target.style.marginTop) || 0;
-          target.style.marginTop = `${prev + delta}px`;
-          target.classList.add('cv-mi-screen-flow');
-          changed = true;
-        }
-      }
-
-      if (!changed) {
-        break;
-      }
-    }
-  }
-
-  /** Convierte pulgadas CSS a píxeles según el dispositivo (coherente con líneas 11" en CSS). */
-  private cssInchesToPx(inches: number): number {
-    const probe = document.createElement('div');
-    probe.style.cssText =
-      'position:absolute;left:-9999px;top:0;height:0;width:0;visibility:hidden;pointer-events:none;';
-    probe.style.height = `${inches}in`;
-    document.body.appendChild(probe);
-    const px = probe.offsetHeight;
-    document.body.removeChild(probe);
-    return px;
   }
 
   private setVisibilidad(data: VisibilidadSeccionDto[]): void {

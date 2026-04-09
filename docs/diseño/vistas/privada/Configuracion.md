@@ -1,11 +1,11 @@
 # Vista: Configuración (`/configuracion`)
 
 **Layout:** `AdminLayoutComponent`  
-**Módulo:** `ConfiguracionModule`  
+**Módulo:** `PrivateModule`  
 **Componente:** `ConfiguracionComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [configuracion.html](../../../frontend/prototipos/privada/configuracion.html)
+**Prototipo:** [configuracion.html](../../prototipos/privada/configuracion.html)
 
 ---
 

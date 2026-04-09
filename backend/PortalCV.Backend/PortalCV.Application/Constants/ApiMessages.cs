@@ -21,6 +21,9 @@ public static class ApiMessages
     {
         public const string SesionSinCurriculumValido =
             "Tu sesión no tiene un curriculum válido. Cierra sesión y vuelve a entrar para renovar el token.";
+
+        public const string PlantillaInvalida =
+            "La plantilla indicada no es válida. Usa: clasico o profesional.";
     }
 
     /// <summary>
