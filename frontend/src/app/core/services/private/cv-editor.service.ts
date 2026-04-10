@@ -199,6 +199,10 @@ interface VisibilidadSeccionApiDto {
 export interface PresentacionCvDto {
   plantillaCodigo: string;
   experienciaLaboralMesesAcumulados: number;
+  /** Slug del CV en la ruta pública /cv/:urlPublica */
+  urlPublica: string;
+  /** Si el curriculum está en estado Publicado (visible en búsqueda y detalle público). */
+  publicado: boolean;
 }
 
 export interface UpdatePresentacionCvRequest {
@@ -366,5 +370,9 @@ export class CvEditorService {
 
   updatePresentacion(data: UpdatePresentacionCvRequest): Observable<PresentacionCvDto> {
     return this.http.put<PresentacionCvDto>(`${this.BASE}/presentacion`, data);
+  }
+
+  updateCurriculumPublicacion(publicado: boolean): Observable<PresentacionCvDto> {
+    return this.http.put<PresentacionCvDto>(`${this.BASE}/presentacion/publicacion`, { publicado });
   }
 }

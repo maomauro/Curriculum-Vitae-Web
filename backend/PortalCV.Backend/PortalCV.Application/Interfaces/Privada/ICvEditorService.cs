@@ -63,5 +63,6 @@ public interface ICvEditorService
     // Plantilla de presentación (Mi CV / impresión)
     Task<PresentacionCvDto> GetPresentacionAsync(int curriculumId, CancellationToken ct = default);
     Task<PresentacionCvDto> UpdatePresentacionAsync(int curriculumId, UpdatePresentacionCvRequest request, CancellationToken ct = default);
+    Task<PresentacionCvDto> UpdateCurriculumPublicacionAsync(int curriculumId, bool publicado, CancellationToken ct = default);
 }
 

@@ -13,6 +13,8 @@ export const APP_MESSAGES = {
       operationSuccess: 'Operación completada correctamente.',
       operationError: 'No se pudo completar la operación.',
       operationPartial: 'Operación completada parcialmente.',
+      passwordChanged: 'Contraseña actualizada correctamente.',
+      cvPublicacionUpdated: 'Estado de publicación del CV actualizado.',
     },
     forms: {
       personales: {
@@ -66,6 +68,12 @@ export const APP_MESSAGES = {
         requiredNombreRol: 'Indica el nombre del proyecto y tu rol en el proyecto.',
         completeNuevoAntesDeOtro: 'Termina o cancela el proyecto nuevo antes de agregar otro.',
         confirmDelete: '¿Eliminar este proyecto?',
+      },
+      configuracion: {
+        passwordCurrentRequired: 'Indica tu contraseña actual.',
+        passwordNewRequired: 'Indica la nueva contraseña.',
+        passwordMinLength: 'La nueva contraseña debe tener al menos 8 caracteres.',
+        passwordMismatch: 'La nueva contraseña y su confirmación no coinciden.',
       },
     },
   },

@@ -45,6 +45,7 @@ public static class ApiMessages
         public const string CorreoYaRegistrado = "El correo ya está registrado.";
         public const string ForgotPasswordRespuestaGenerica =
             "Si el correo está registrado, recibirás las instrucciones en breve.";
+        public const string ContraseñaActualizada = "Contraseña actualizada correctamente.";
     }
 
     /// <summary>
