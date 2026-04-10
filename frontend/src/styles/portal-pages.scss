@@ -34,11 +34,12 @@
 // ── Perfil profesional (página /perfil) ─────────────────────────────────────────
 .profile-card {
   border: 2px solid #e9ecef;
-  border-radius: 10px;
+  border-radius: var(--cv-editor-card-radius);
   padding: 20px 22px;
   margin-bottom: 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
   background: #fff;
+  box-shadow: var(--cv-editor-card-shadow);
 }
 .profile-card.is-active {
   border-color: var(--cv-primary);
@@ -108,10 +109,11 @@
 }
 .perfil-nuevo-card {
   border: 2px dashed var(--cv-primary);
-  border-radius: 10px;
+  border-radius: var(--cv-editor-card-radius);
   padding: 20px 22px;
   margin-bottom: 16px;
   background: #fff;
+  box-shadow: var(--cv-editor-card-shadow);
 }
 
 // ── Habilidades: niveles ───────────────────────────────────────────────────────
@@ -1760,8 +1762,8 @@
 // ── Proyectos (prototipo docs/diseño/prototipos/privada/proyectos.html) ───────
 .project-card {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -1883,8 +1885,8 @@
 // ── Experiencia laboral (prototipo job-card) ─────────────────────────────────
 .job-card {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -1896,8 +1898,8 @@
 // Educación: misma señal visual que empleo/perfil al crear (borde discontinuo)
 .edu-formacion-card {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -2190,6 +2192,9 @@
 }
 
 .cv-contact-card {
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
+  background: #fff;
   border-left: 4px solid #e9ecef;
 }
 .cv-contact-unread {
