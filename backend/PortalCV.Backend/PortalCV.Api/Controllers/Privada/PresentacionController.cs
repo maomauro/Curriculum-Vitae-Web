@@ -36,4 +36,16 @@ public class PresentacionController : CvControllerBase
             return BadRequest(new { message = ApiMessages.Cv.PlantillaInvalida });
         return Ok(await _editor.UpdatePresentacionAsync(id, new UpdatePresentacionCvRequest(code), ct));
     }
+
+    /// <summary>Publica u oculta el CV en el portal (Estado Publicado / Borrador).</summary>
+    [HttpPut("publicacion")]
+    public async Task<IActionResult> UpdatePublicacion(
+        [FromBody] UpdateCurriculumPublicacionRequest request,
+        CancellationToken ct = default)
+    {
+        var id = GetCurriculumId();
+        if (id <= 0)
+            return BadRequest(new { message = ApiMessages.Cv.SesionSinCurriculumValido });
+        return Ok(await _editor.UpdateCurriculumPublicacionAsync(id, request.Publicado, ct));
+    }
 }

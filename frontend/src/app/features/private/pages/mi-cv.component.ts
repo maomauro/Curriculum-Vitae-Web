@@ -140,8 +140,10 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
         </div>
       </ng-container>
 
-      <div class="cv-mi-body">
-        <div class="cv-preview-sidebar" *ngIf="plantillaCodigo === 'clasico' || plantillaCodigo === 'corporativo'">
+      <div
+        class="cv-mi-body"
+        [class.cv-mi-body--sin-sidebar-izq]="plantillaCodigo === 'clasico' && !sidebarClasicoTieneContenido">
+        <div class="cv-preview-sidebar" *ngIf="mostrarCvPreviewSidebar">
           <div class="cv-corp-identity" *ngIf="plantillaCodigo === 'corporativo'">
             <div class="cv-corp-name">{{ nombreCompleto }}</div>
             <div class="cv-corp-role" *ngIf="visibleSeccion('perfil')">
@@ -220,15 +222,20 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
             <div class="cv-mi-section-title">Experiencia Laboral</div>
             <div class="cv-mi-timeline">
               <div class="timeline-item" *ngFor="let exp of experiencias">
-                <div class="timeline-title" *ngIf="exp.cargo">{{ exp.cargo }}</div>
-                <div class="timeline-sub" *ngIf="lineaEmpresaContrato(exp)">
-                  {{ lineaEmpresaContrato(exp) }}
+                <div class="timeline-title cv-mi-exp-headline" *ngIf="exp.cargo || lineaEmpresaContrato(exp)">
+                  <strong class="cv-mi-exp-cargo" *ngIf="exp.cargo">{{ exp.cargo }}</strong>
+                  <ng-container *ngIf="lineaEmpresaContrato(exp) as empLine">
+                    <span *ngIf="exp.cargo" class="cv-mi-exp-headline-sep" aria-hidden="true"> | </span>
+                    <span class="cv-mi-exp-empresa">{{ empLine }}</span>
+                  </ng-container>
                 </div>
-                <div class="timeline-date" *ngIf="exp.fechaInicio">
+                <div class="timeline-date cv-mi-exp-fecha-duracion" *ngIf="exp.fechaInicio">
                   {{ exp.fechaInicio | date:'MMM yyyy' }} —
                   {{ exp.esActual ? 'Presente' : (exp.fechaFin | date:'MMM yyyy') }}
+                  <ng-container *ngIf="duracionExperiencia(exp) as durExp">
+                    <span *ngIf="durExp !== '—'" class="text-muted"> | {{ durExp }}</span>
+                  </ng-container>
                 </div>
-                <div class="cv-mi-exp-duration text-muted" *ngIf="exp.fechaInicio">{{ duracionExperiencia(exp) }}</div>
                 <ul class="cv-pro-list mb-0 mt-1" *ngIf="esPlantillaProfesional && lineasBulletTexto(exp.funciones).length">
                   <li *ngFor="let linea of lineasBulletTexto(exp.funciones)">{{ linea }}</li>
                 </ul>
@@ -251,9 +258,30 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
             <div class="cv-mi-section-title">Formación Académica</div>
             <div class="cv-mi-timeline">
               <div class="timeline-item" *ngFor="let edu of formacionesAcademicas">
-                <div class="timeline-title" *ngIf="visibleAtributoSafe('educacion','titulo')">{{ edu.titulo }}</div>
-                <div class="timeline-sub" *ngIf="visibleAtributoSafe('educacion','institucion')">{{ edu.institucion }}</div>
-                <div class="timeline-date" *ngIf="visibleAtributoSafe('educacion','fechas')">{{ rangoAcademico(edu) }}</div>
+                <div
+                  class="timeline-title cv-mi-acad-headline"
+                  *ngIf="
+                    (visibleAtributoSafe('educacion', 'titulo') && (edu.titulo || '').trim()) ||
+                    (visibleAtributoSafe('educacion', 'institucion') && (edu.institucion || '').trim())
+                  ">
+                  <strong
+                    class="cv-mi-acad-titulo"
+                    *ngIf="visibleAtributoSafe('educacion', 'titulo') && (edu.titulo || '').trim()">
+                    {{ edu.titulo }}
+                  </strong>
+                  <ng-container *ngIf="visibleAtributoSafe('educacion', 'institucion') && (edu.institucion || '').trim()">
+                    <span
+                      *ngIf="visibleAtributoSafe('educacion', 'titulo') && (edu.titulo || '').trim()"
+                      class="cv-mi-acad-headline-sep"
+                      aria-hidden="true">
+                      {{ ' | ' }}
+                    </span>
+                    <span class="cv-mi-acad-institucion">{{ edu.institucion }}</span>
+                  </ng-container>
+                </div>
+                <div class="timeline-date cv-mi-acad-graduacion" *ngIf="textoGraduacionAcademica(edu) as gradTxt">
+                  {{ gradTxt }}
+                </div>
                 <div class="cv-mi-support" *ngIf="edu.adjuntoSoporte && visibleDescargarSoporte('formacion-academica','descargar-soporte')">
                   <a [href]="edu.adjuntoSoporte" target="_blank" rel="noopener noreferrer" class="cv-mi-support-link">
                     <i class="bi bi-download me-1"></i>Descargar soporte
@@ -569,6 +597,26 @@ export class MiCvComponent implements OnInit, OnDestroy {
     return this.visibleSeccion('perfil') && this.perfilPrincipal != null;
   }
 
+  /**
+   * Clásico: la columna izquierda solo tiene sentido si hay habilidades visibles con datos.
+   * (Corporativo siempre muestra identidad/contacto en el sidebar.)
+   */
+  get sidebarClasicoTieneContenido(): boolean {
+    if (this.plantillaCodigo !== 'clasico') return false;
+    if (!this.visibleSeccion('habilidades')) return false;
+    return (
+      this.habilidadesTecnicas.length > 0 ||
+      this.habilidadesBlandas.length > 0 ||
+      this.idiomas.length > 0
+    );
+  }
+
+  get mostrarCvPreviewSidebar(): boolean {
+    if (this.plantillaCodigo === 'corporativo') return true;
+    if (this.plantillaCodigo === 'clasico') return this.sidebarClasicoTieneContenido;
+    return false;
+  }
+
   get habilidadesTecnicas(): HabilidadDto[] {
     return this.habilidades.filter(h => h.tipo === 'Tecnica' || h.tipo === 'Otra');
   }
@@ -690,19 +738,22 @@ export class MiCvComponent implements OnInit, OnDestroy {
     const m = months % 12;
     if (y === 0) return `${m} mes${m === 1 ? '' : 'es'}`;
     if (m === 0) return `${y} año${y === 1 ? '' : 's'}`;
-    return `${y} año${y === 1 ? '' : 's'} | ${m} mes${m === 1 ? '' : 'es'}`;
+    return `${y} año${y === 1 ? '' : 's'} y ${m} mes${m === 1 ? '' : 'es'}`;
   }
 
-  rangoAcademico(f: FormacionDto): string {
-    const esCert = (f.tipoFormacion ?? '').trim() === 'Certificacion';
-    if (esCert) {
-      const d = f.fechaInicio || f.fechaFin;
-      return d ? d.slice(0, 4) : '—';
-    }
-    const yi = f.fechaInicio?.slice(0, 4);
-    const yf = f.fechaFin?.slice(0, 4);
-    if (yi && yf && yi !== yf) return `${yi}-${yf}`;
-    return yf || yi || '—';
+  /** Formación académica: segunda línea bajo título | institución (solo año de fecha fin). */
+  textoGraduacionAcademica(f: FormacionDto): string | null {
+    if (!this.visibleAtributoSafe('educacion', 'fechas')) return null;
+    const y = this.anioDesdeFechaIso(f.fechaFin);
+    if (y) return `Graduado en ${y}`;
+    return null;
+  }
+
+  private anioDesdeFechaIso(iso: string | null | undefined): string | null {
+    const s = iso?.trim();
+    if (!s) return null;
+    const y = s.slice(0, 4);
+    return /^\d{4}$/.test(y) ? y : null;
   }
 
   anioEntreParentesis(f: FormacionDto): string {

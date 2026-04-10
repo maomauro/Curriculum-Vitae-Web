@@ -759,6 +759,10 @@
     align-items: start;
   }
 
+  .cv-mi-body.cv-mi-body--sin-sidebar-izq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .cv-preview-header {
     padding: 0;
     gap: clamp(1rem, 3vw, 1.75rem);
@@ -932,6 +936,50 @@
     letter-spacing: -0.01em;
   }
 
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline {
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline .cv-mi-exp-cargo {
+    font-weight: 700;
+    color: #212529;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline .cv-mi-exp-headline-sep {
+    color: #adb5bd;
+    font-weight: 400;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline .cv-mi-exp-empresa {
+    font-weight: 400;
+    color: #495057;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline {
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-titulo {
+    font-weight: 700;
+    color: #212529;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-headline-sep {
+    color: #adb5bd;
+    font-weight: 400;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-institucion {
+    font-weight: 400;
+    color: #495057;
+  }
+
+  .cv-mi-timeline .timeline-date.cv-mi-acad-graduacion {
+    line-height: 1.45;
+  }
+
   .cv-mi-timeline .timeline-sub {
     font-size: 0.84375rem;
     color: var(--cv-primary);
@@ -999,10 +1047,8 @@
     margin-top: 8px;
   }
 
-  .cv-mi-exp-duration {
-    font-size: 0.75rem;
-    margin-bottom: 6px;
-    line-height: 1.4;
+  .cv-mi-exp-fecha-duracion {
+    line-height: 1.45;
   }
 
   .cv-mi-tags {
@@ -1099,13 +1145,40 @@
     color: #111;
   }
 
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline {
+    font-weight: 400;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline .cv-mi-exp-cargo {
+    font-weight: 700;
+    color: #111;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-exp-headline .cv-mi-exp-empresa {
+    font-weight: 400;
+    color: #495057;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline {
+    font-weight: 400;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-titulo {
+    font-weight: 700;
+    color: #111;
+  }
+
+  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-institucion {
+    font-weight: 400;
+    color: #495057;
+  }
+
   .cv-mi-timeline .timeline-sub {
     color: #212529;
     font-weight: 500;
   }
 
-  .cv-mi-timeline .timeline-date,
-  .cv-mi-exp-duration {
+  .cv-mi-timeline .timeline-date {
     color: #495057;
     font-size: 0.8125rem;
   }
@@ -1688,6 +1761,10 @@
 
   .cv-mi-preview .cv-mi-body {
     grid-template-columns: 260px 1fr;
+  }
+
+  .cv-mi-preview.cv-tpl--clasico .cv-mi-body.cv-mi-body--sin-sidebar-izq {
+    grid-template-columns: 1fr;
   }
 
   .cv-mi-preview .cv-preview-header {

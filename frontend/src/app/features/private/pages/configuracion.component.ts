@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService } from '../../../core/services/private/cv-editor.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { APP_MESSAGES, DEFAULT_APP_LOCALE } from '../../../core/constants/messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
@@ -50,6 +52,7 @@ interface ConfigVisGroup {
       <div class="seccion-subtitulo">
         Clasifica la visibilidad por páginas ya implementadas. En cada sección se listan los atributos que se mostrarán
         en tu CV público cuando el switch esté activo.
+        <strong class="d-block mt-2">Los cambios se guardan automáticamente</strong> al activar o desactivar cada opción.
       </div>
       <div class="vis-accordion">
         <div class="vis-accordion-item" *ngFor="let grupo of visibilidadGrupos">
@@ -113,26 +116,33 @@ interface ConfigVisGroup {
           </div>
         </div>
       </div>
-      <div class="text-end mt-3 pt-3 cv-border-t-soft">
-        <button class="btn btn-primary px-4" (click)="guardarVisibilidadLote()">
-          <i class="bi bi-floppy-fill me-2"></i>Guardar visibilidad
-        </button>
-      </div>
     </div>
 
     <!-- URL pública del CV -->
     <div class="seccion-card">
       <div class="seccion-titulo">URL pública del CV</div>
-      <p class="text-muted small mb-3">Comparte este enlace para que otros puedan ver tu CV.</p>
+      <p class="text-muted small mb-3">
+        Comparte este enlace para que otros puedan ver tu CV. El dominio es el de esta misma ventana (por ejemplo
+        <code class="small">localhost</code> en desarrollo o tu sitio en producción); no hace falta configurarlo a mano.
+      </p>
       <div class="d-flex flex-column flex-sm-row gap-2">
         <div class="input-group">
           <span class="input-group-text">
             <i class="bi bi-link-45deg text-primary"></i>
           </span>
-          <input type="text" class="form-control" [value]="urlCv" readonly>
+          <input
+            type="text"
+            class="form-control"
+            [value]="urlCv"
+            [placeholder]="urlCvCargando ? 'Cargando enlace…' : 'No disponible'"
+            readonly>
         </div>
         <div class="d-flex gap-2 flex-shrink-0">
-          <button type="button" class="btn btn-outline-primary btn-sm px-3" (click)="copiarUrl()">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm px-3"
+            [disabled]="!urlCv"
+            (click)="copiarUrl()">
             <i class="bi bi-clipboard me-1"></i>
             {{ copiado ? '¡Copiado!' : 'Copiar' }}
           </button>
@@ -143,49 +153,147 @@ interface ConfigVisGroup {
     <!-- Cambio de contraseña -->
     <div class="seccion-card">
       <div class="seccion-titulo">Cambiar contraseña</div>
+      <p class="text-muted small mb-3">Mínimo 8 caracteres. Tras guardar, sigue usando tu correo para iniciar sesión.</p>
       <div class="row g-3">
         <div class="col-md-4">
-          <label class="form-label">Contraseña actual</label>
-          <input type="password" class="form-control">
+          <label class="form-label" for="cfg_pwd_actual">Contraseña actual</label>
+          <input
+            id="cfg_pwd_actual"
+            type="password"
+            class="form-control"
+            name="cfgPwdActual"
+            [(ngModel)]="passwordActual"
+            autocomplete="current-password"
+            [disabled]="guardandoContrasena">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Nueva contraseña</label>
-          <input type="password" class="form-control">
+          <label class="form-label" for="cfg_pwd_nueva">Nueva contraseña</label>
+          <input
+            id="cfg_pwd_nueva"
+            type="password"
+            class="form-control"
+            name="cfgPwdNueva"
+            [(ngModel)]="passwordNueva"
+            autocomplete="new-password"
+            minlength="8"
+            [disabled]="guardandoContrasena"
+            [class.is-invalid]="nuevaContrasenaMuyCorta || contrasenasNuevasDesalineadas"
+            [class.is-valid]="contrasenasNuevasCoincidenOk"
+            [attr.aria-invalid]="nuevaContrasenaMuyCorta || contrasenasNuevasDesalineadas">
+          <div class="invalid-feedback d-block" *ngIf="nuevaContrasenaMuyCorta">
+            {{ pwdFormMsg.passwordMinLength }}
+          </div>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Repetir nueva contraseña</label>
-          <input type="password" class="form-control">
+          <label class="form-label" for="cfg_pwd_nueva2">Repetir nueva contraseña</label>
+          <input
+            id="cfg_pwd_nueva2"
+            type="password"
+            class="form-control"
+            name="cfgPwdNueva2"
+            [(ngModel)]="passwordNueva2"
+            autocomplete="new-password"
+            minlength="8"
+            [disabled]="guardandoContrasena"
+            [class.is-invalid]="repetirContrasenaMismatchEnVivo"
+            [class.is-valid]="contrasenasNuevasCoincidenOk"
+            [attr.aria-invalid]="repetirContrasenaMismatchEnVivo">
+          <div class="invalid-feedback d-block" *ngIf="repetirContrasenaMismatchEnVivo">
+            {{ pwdFormMsg.passwordMismatch }}
+          </div>
         </div>
         <div class="col-12">
-          <button class="btn btn-primary btn-sm">
-            <i class="bi bi-shield-lock me-1"></i>Actualizar contraseña
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            [disabled]="guardandoContrasena"
+            (click)="actualizarContrasena()">
+            <span *ngIf="guardandoContrasena" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            <i *ngIf="!guardandoContrasena" class="bi bi-shield-lock me-1"></i>
+            {{ guardandoContrasena ? 'Guardando…' : 'Actualizar contraseña' }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Zona peligrosa -->
-    <div class="seccion-card cv-danger-zone">
+    <!-- Publicación en el portal (Estado Publicado / Borrador en curriculum) -->
+    <div class="seccion-card">
       <div class="seccion-titulo">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>Zona de peligro
+        <i class="bi bi-megaphone me-2 text-primary"></i>Publicación del CV
       </div>
       <p class="text-muted small mb-3">
-        Estas acciones son irreversibles. Procede con cautela.
+        Con el interruptor activo tu CV queda <strong>publicado</strong>: aparece en la búsqueda pública y el enlace de arriba
+        funciona para quien lo visite. Si lo desactivas, pasa a <strong>borrador</strong>: solo tú lo ves en el portal privado;
+        el enlace público ya no mostrará tu CV.
       </p>
-      <div class="d-flex flex-column flex-sm-row gap-2">
-        <button class="btn btn-outline-warning btn-sm">
-          <i class="bi bi-eye-slash me-1"></i>Hacer perfil privado
-        </button>
-        <button class="btn btn-outline-danger btn-sm">
-          <i class="bi bi-trash me-1"></i>Eliminar mi cuenta
-        </button>
+      <div class="vis-row align-items-center py-1">
+        <div class="vis-info flex-grow-1 min-w-0">
+          <div class="vis-name">Publicar mi CV en el portal</div>
+          <div class="vis-desc small text-muted mb-0">
+            Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
+          </div>
+        </div>
+        <div class="form-check form-switch mb-0 flex-shrink-0">
+          <input
+            class="form-check-input cv-switch-cursor"
+            type="checkbox"
+            role="switch"
+            id="cfg_cv_publicado"
+            name="cfgCvPublicado"
+            [(ngModel)]="cvPublicado"
+            [disabled]="!presentacionLista || guardandoPublicacion"
+            (change)="onCvPublicadoChange()">
+        </div>
       </div>
+      <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        Actualizando publicación…
+      </p>
     </div>
   `
 })
 export class ConfiguracionComponent implements OnInit {
-  urlCv = 'https://portalcv.app/cv/mi-perfil';
+  readonly pwdFormMsg = APP_MESSAGES[DEFAULT_APP_LOCALE].forms.configuracion;
+
+  /** URL absoluta del CV público (origen actual + /cv/{slug}). */
+  urlCv = '';
+  urlCvCargando = true;
   copiado = false;
+
+  /** Curriculum en estado Publicado (visible en API pública). */
+  cvPublicado = false;
+  presentacionLista = false;
+  guardandoPublicacion = false;
+
+  passwordActual = '';
+  passwordNueva = '';
+  passwordNueva2 = '';
+  guardandoContrasena = false;
+
+  /** Hay texto en “repetir” y no coincide con “nueva” (validación mientras escribe). */
+  get repetirContrasenaMismatchEnVivo(): boolean {
+    const r = this.passwordNueva2.trim();
+    if (!r.length) return false;
+    return this.passwordNueva.trim() !== r;
+  }
+
+  /** Ambas nuevas tienen el mismo valor y longitud ≥ 8. */
+  get contrasenasNuevasCoincidenOk(): boolean {
+    const n = this.passwordNueva.trim();
+    const r = this.passwordNueva2.trim();
+    return n.length >= 8 && r.length >= 8 && n === r;
+  }
+
+  /** “Nueva” tiene contenido pero aún no cumple 8 caracteres. */
+  get nuevaContrasenaMuyCorta(): boolean {
+    const n = this.passwordNueva.trim();
+    return n.length > 0 && n.length < 8;
+  }
+
+  /** Desalineación entre las dos nuevas (para marcar también el primer campo). */
+  get contrasenasNuevasDesalineadas(): boolean {
+    return this.repetirContrasenaMismatchEnVivo;
+  }
 
   visibilidadGrupos: ConfigVisGroup[] = [
     {
@@ -301,19 +409,6 @@ export class ConfiguracionComponent implements OnInit {
           ],
         },
         {
-          key: 'habilidades',
-          label: 'Habilidades',
-          icon: 'bi-stars',
-          iconStyle: 'vis-icon--habilidades',
-          visible: true,
-          atributos: [
-            { key: 'habilidades.nombre', label: 'Nombre', visible: true },
-            { key: 'habilidades.tipo', label: 'Tipo', visible: true },
-            { key: 'habilidades.nivel', label: 'Nivel', visible: true },
-            { key: 'habilidades.descripcion', label: 'Descripción', visible: true },
-          ],
-        },
-        {
           key: 'proyectos',
           label: 'Proyectos',
           icon: 'bi-kanban-fill',
@@ -330,12 +425,26 @@ export class ConfiguracionComponent implements OnInit {
             { key: 'proyectos.desafio', label: 'Desafío', visible: true },
           ],
         },
+        {
+          key: 'habilidades',
+          label: 'Habilidades',
+          icon: 'bi-stars',
+          iconStyle: 'vis-icon--habilidades',
+          visible: true,
+          atributos: [
+            { key: 'habilidades.nombre', label: 'Nombre', visible: true },
+            { key: 'habilidades.tipo', label: 'Tipo', visible: true },
+            { key: 'habilidades.nivel', label: 'Nivel', visible: true },
+            { key: 'habilidades.descripcion', label: 'Descripción', visible: true },
+          ],
+        },
       ],
     },
   ];
 
   constructor(
     private cvEditorService: CvEditorService,
+    private authService: AuthService,
     private notificationService: NotificationService
   ) {}
 
@@ -344,6 +453,21 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.cvEditorService.getPresentacion().subscribe({
+      next: p => {
+        this.urlCv = this.construirUrlCvPublico(p.urlPublica);
+        this.cvPublicado = !!p.publicado;
+        this.urlCvCargando = false;
+        this.presentacionLista = true;
+      },
+      error: () => {
+        this.urlCv = '';
+        this.cvPublicado = false;
+        this.urlCvCargando = false;
+        this.presentacionLista = false;
+      },
+    });
+
     this.cvEditorService.getVisibilidad().subscribe({
       next: data => {
         const map = new Map<string, boolean>();
@@ -388,13 +512,6 @@ export class ConfiguracionComponent implements OnInit {
     return this.visibilidadGrupos.flatMap(g => g.items);
   }
 
-  private allVisEntries(): Array<{ key: string; visible: boolean }> {
-    return this.allVisItems().flatMap(item => [
-      { key: item.key, visible: item.sinSwitchSeccion ? true : item.visible },
-      ...item.atributos.map(attr => ({ key: attr.key, visible: attr.visible })),
-    ]);
-  }
-
   private normalizeSeccionKey(seccion: string | null | undefined): string {
     const raw = (seccion ?? '').trim().toLowerCase();
     if (raw.includes('.')) return raw;
@@ -434,10 +551,10 @@ export class ConfiguracionComponent implements OnInit {
     }
   }
 
-  private guardarVisibilidad(cambios: Array<{ seccion: string; visible: boolean }>, silent = false): void {
+  private guardarVisibilidad(cambios: Array<{ seccion: string; visible: boolean }>): void {
     this.cvEditorService.updateVisibilidad(cambios).subscribe({
       next: () => {
-        if (!silent) this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
       },
       error: (error: HttpErrorResponse) =>
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError),
@@ -467,23 +584,89 @@ export class ConfiguracionComponent implements OnInit {
       const visibles = campo.atributos.some(a => a.visible);
       if (!visibles) campo.visible = false;
     }
-    this.guardarVisibilidad(
-      [
-        { seccion: campo.key, visible: campo.sinSwitchSeccion ? true : campo.visible },
-        { seccion: attr.key, visible: attr.visible },
-      ],
-      true
-    );
-  }
-
-  guardarVisibilidadLote(): void {
-    const cambios = this.allVisEntries().map(campo => ({ seccion: campo.key, visible: campo.visible }));
-    this.guardarVisibilidad(cambios);
+    this.guardarVisibilidad([
+      { seccion: campo.key, visible: campo.sinSwitchSeccion ? true : campo.visible },
+      { seccion: attr.key, visible: attr.visible },
+    ]);
   }
 
   copiarUrl(): void {
-    navigator.clipboard.writeText(this.urlCv);
+    const u = this.urlCv?.trim();
+    if (!u) return;
+    navigator.clipboard.writeText(u);
     this.copiado = true;
     setTimeout(() => (this.copiado = false), 2000);
+  }
+
+  onCvPublicadoChange(): void {
+    if (!this.presentacionLista || this.guardandoPublicacion) return;
+    const deseado = this.cvPublicado;
+    this.guardandoPublicacion = true;
+    this.cvEditorService.updateCurriculumPublicacion(deseado).subscribe({
+      next: p => {
+        this.cvPublicado = !!p.publicado;
+        this.guardandoPublicacion = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.cvPublicacionUpdated);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.cvPublicado = !deseado;
+        this.guardandoPublicacion = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  actualizarContrasena(): void {
+    const actual = this.passwordActual.trim();
+    const nueva = this.passwordNueva.trim();
+    const nueva2 = this.passwordNueva2.trim();
+
+    if (!actual) {
+      this.notificationService.warning(this.pwdFormMsg.passwordCurrentRequired);
+      return;
+    }
+    if (!nueva) {
+      this.notificationService.warning(this.pwdFormMsg.passwordNewRequired);
+      return;
+    }
+    if (nueva.length < 8) {
+      this.notificationService.warning(this.pwdFormMsg.passwordMinLength);
+      return;
+    }
+    if (nueva !== nueva2) {
+      this.notificationService.warning(this.pwdFormMsg.passwordMismatch);
+      return;
+    }
+
+    this.guardandoContrasena = true;
+    this.authService.changePassword(actual, nueva).subscribe({
+      next: res => {
+        this.notificationService.success(
+          (res.message && res.message.trim()) || NOTIFICATION_MESSAGES.passwordChanged
+        );
+        this.limpiarCamposContrasena();
+        this.guardandoContrasena = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.notificationService.error(
+          extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError
+        );
+        this.guardandoContrasena = false;
+      },
+    });
+  }
+
+  private limpiarCamposContrasena(): void {
+    this.passwordActual = '';
+    this.passwordNueva = '';
+    this.passwordNueva2 = '';
+  }
+
+  /** Origen del navegador + ruta de la app pública `/cv/{slug}` (mismo despliegue que esta SPA). */
+  private construirUrlCvPublico(urlPublica: string | null | undefined): string {
+    const slug = (urlPublica ?? '').trim();
+    if (!slug || typeof window === 'undefined') return '';
+    const origin = window.location.origin.replace(/\/$/, '');
+    return `${origin}/cv/${encodeURIComponent(slug)}`;
   }
 }
