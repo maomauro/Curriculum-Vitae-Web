@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService, UserInfo } from '../../core/services/auth.service';
-import { DashboardService, NotificacionItemDto } from '../../core/services/dashboard.service';
+import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
+import { DashboardService, NotificacionItemDto } from '../../core/services/private/dashboard.service';
+import { CvEditorService } from '../../core/services/private/cv-editor.service';
 
 @Component({
   selector: 'app-topbar',
@@ -17,10 +18,11 @@ import { DashboardService, NotificacionItemDto } from '../../core/services/dashb
       <a routerLink="/dashboard" class="brand"><span>Portal</span>CV</a>
 
       <!-- Info usuario (centro) -->
-      <span class="d-none d-md-flex align-items-center gap-2"
-            style="color:#ced4da; font-size:.85rem; margin-right:auto;">
+      <span class="d-none d-md-flex align-items-center gap-2 text-truncate cv-topbar-user-hint">
         <i class="bi bi-person-circle"></i>
-        <span>{{ currentUser?.nombre }}</span>
+        <span class="text-truncate">
+          {{ (currentUser?.nombre || 'Usuario') + ' - ' + cargoActual }}
+        </span>
       </span>
 
       <!-- Campanita con dropdown de notificaciones -->
@@ -33,14 +35,12 @@ import { DashboardService, NotificacionItemDto } from '../../core/services/dashb
         <span class="notif-badge" *ngIf="conteoNoLeidas > 0">{{ conteoNoLeidas }}</span>
 
         <!-- Dropdown panel -->
-        <div class="dropdown-menu dropdown-menu-end p-0"
-             style="width:340px;max-height:420px;overflow-y:auto;border-radius:12px;">
+        <div class="dropdown-menu dropdown-menu-end p-0 cv-notif-dropdown">
           <!-- Cabecera -->
-          <div class="d-flex justify-content-between align-items-center px-3 py-2"
-               style="border-bottom:1px solid #f0f0f0;">
-            <span class="fw-semibold" style="font-size:.9rem;">Notificaciones</span>
+          <div class="d-flex justify-content-between align-items-center px-3 py-2 cv-notif-header">
+            <span class="fw-semibold cv-notif-title">Notificaciones</span>
             <span *ngIf="conteoNoLeidas > 0"
-                  class="badge rounded-pill bg-primary" style="font-size:.7rem;">
+                  class="badge rounded-pill bg-primary cv-notif-badge-sm">
               {{ conteoNoLeidas }} nuevas
             </span>
           </div>
@@ -52,77 +52,53 @@ import { DashboardService, NotificacionItemDto } from '../../core/services/dashb
 
           <!-- Sin notificaciones -->
           <div *ngIf="!loadingNotif && notificaciones.length === 0"
-               class="text-center text-muted py-4" style="font-size:.85rem;">
+               class="text-center text-muted py-4 cv-notif-empty">
             <i class="bi bi-bell-slash d-block fs-3 mb-2"></i>
             No hay notificaciones
           </div>
 
           <!-- Lista -->
           <div *ngFor="let n of notificaciones"
-               class="d-flex align-items-start gap-2 px-3 py-2"
-               style="border-bottom:1px solid #f9f9f9;"
+               class="d-flex align-items-start gap-2 px-3 py-2 cv-notif-row"
                [style.background]="n.esLeida ? '#fff' : '#f0f7ff'">
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:32px;height:32px;font-size:.85rem;"
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 cv-notif-icon-sm"
                  [style.background]="tipoIconBg(n.tipoVisita)"
                  [style.color]="tipoIconColor(n.tipoVisita)">
               <i class="bi" [ngClass]="tipoIcono(n.tipoVisita)"></i>
             </div>
-            <div class="flex-grow-1" style="min-width:0;">
-              <div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div class="flex-grow-1 cv-notif-body">
+              <div class="cv-notif-line1">
                 {{ n.titulo }}
               </div>
-              <div style="font-size:.75rem;color:#6c757d;">
+              <div class="cv-notif-line2">
                 {{ n.fechaVisita | date:'dd/MM/yyyy HH:mm' }}
               </div>
             </div>
             <div *ngIf="!n.esLeida"
-                 class="rounded-circle bg-primary flex-shrink-0"
-                 style="width:8px;height:8px;margin-top:6px;"></div>
+                 class="rounded-circle bg-primary flex-shrink-0 cv-notif-dot"></div>
           </div>
 
           <!-- Pie -->
-          <div class="text-center py-2" style="border-top:1px solid #f0f0f0;">
-            <a routerLink="/privado/alertas" class="text-primary"
-               style="font-size:.8rem;text-decoration:none;">
+          <div class="text-center py-2 cv-notif-footer">
+            <a routerLink="/alertas" class="text-primary cv-notif-link">
               Ver todas las alertas →
             </a>
           </div>
         </div>
       </div>
 
-      <!-- Menú usuario -->
-      <div class="user-menu dropdown">
-        <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown"
-             style="cursor:pointer;">
-          <div class="user-avatar">{{ initials }}</div>
-          <span class="d-none d-md-inline">{{ currentUser?.nombre }}</span>
-          <i class="bi bi-chevron-down" style="font-size:.75rem;"></i>
-        </div>
-        <ul class="dropdown-menu dropdown-menu-end mt-1">
-          <li>
-            <a class="dropdown-item" routerLink="/perfil">
-              <i class="bi bi-person me-2"></i>Mi perfil
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" routerLink="/privado/configuracion">
-              <i class="bi bi-gear me-2"></i>Configuración
-            </a>
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <a class="dropdown-item text-danger" role="button" (click)="logout()">
-              <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
-            </a>
-          </li>
-        </ul>
+      <!-- Usuario + logout directo -->
+      <div class="user-menu">
+        <button type="button" class="btn btn-sm btn-danger" (click)="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+        </button>
       </div>
     </header>
   `
 })
 export class TopbarComponent implements OnInit {
   currentUser: UserInfo | null = null;
+  cargoActual = 'Perfil profesional';
   conteoNoLeidas = 0;
   notificaciones: NotificacionItemDto[] = [];
   loadingNotif = false;
@@ -141,13 +117,19 @@ export class TopbarComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private cvEditorService: CvEditorService
   ) {}
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      if (user) this.cargarConteo();
+      if (user) {
+        this.cargarConteo();
+        this.cargarCargoActual();
+      } else {
+        this.cargoActual = 'Perfil profesional';
+      }
     });
   }
 
@@ -176,6 +158,21 @@ export class TopbarComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  private cargarCargoActual(): void {
+    this.cvEditorService.getPerfiles().subscribe({
+      next: perfiles => {
+        const activo = perfiles.find(p => p.esActivo && !!p.nombrePerfil?.trim());
+        const primero = perfiles.find(p => !!p.nombrePerfil?.trim());
+        this.cargoActual = activo?.nombrePerfil?.trim()
+          ?? primero?.nombrePerfil?.trim()
+          ?? 'Perfil profesional';
+      },
+      error: () => {
+        this.cargoActual = 'Perfil profesional';
+      }
+    });
   }
 
   tipoIcono(tipo: string | null): string {

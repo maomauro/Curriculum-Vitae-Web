@@ -89,7 +89,7 @@
 | **Formulario Contacto** | Formulario | Para reclutadores contactar profesionales | ✅ | ✅ | ✅ |
 | **Registro** | Formulario | Creación de cuenta para publicadores | ❌ | ✅ | ✅ |
 | **Login** | Formulario | Acceso al sistema para publicadores | ❌ | ✅ | ✅ |
-| **Editor CV** | Formularios | Gestión completa del CV (CRUD) | ❌ | ✅ | ✅ |
+| **Área privada CV** | Formularios + vista | **Mi CV** (vista previa, plantilla, impresión) y formularios por sección (CRUD) | ❌ | ✅ | ✅ |
 | - Personales | Formulario | Datos personales del profesional | ❌ | ✅ | ✅ |
 | - Perfil | Formulario | Perfiles y aspiraciones profesionales | ❌ | ✅ | ✅ |
 | - Experiencia | Formulario | Historial laboral | ❌ | ✅ | ✅ |

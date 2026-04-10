@@ -5,7 +5,7 @@
 **Componente:** `DatosPersonalesComponent`  
 **Clases `<body>`:** `layout-fixed sidebar-expand-lg bg-body-tertiary` (via `Renderer2`)  
 **Acceso:** requiere `authGuard`  
-**Prototipo:** [datos-personales.html](../../../frontend/prototipos/privada/datos-personales.html)
+**Prototipo:** [datos-personales.html](../../prototipos/privada/datos-personales.html)
 
 ---
 

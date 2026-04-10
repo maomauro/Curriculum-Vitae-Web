@@ -35,6 +35,11 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Curriculum>
             .IsRequired()
             .HasDefaultValue(0);
 
+        builder.Property(x => x.PlantillaCodigo)
+            .HasMaxLength(32)
+            .IsRequired()
+            .HasDefaultValue("clasico");
+
         builder.Property(x => x.FechaCreacion)
             .IsRequired();
 

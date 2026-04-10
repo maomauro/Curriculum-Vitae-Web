@@ -1,5 +1,9 @@
-﻿import { Component, OnInit } from '@angular/core';
-import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/admin.service';
+import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/admin/admin.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-admin-panel',
@@ -9,55 +13,52 @@ import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/ad
     <div class="page-header">
       <div>
         <h4>
-          <i class="bi bi-shield-fill-check me-2" style="color:#dc3545;"></i>
-          Panel de AdministraciÃ³n
+          <i class="bi bi-shield-fill-check me-2 admin-icon-danger"></i>
+          Panel de Administración
         </h4>
-        <span class="text-muted small">GestiÃ³n de usuarios y roles del sistema</span>
+        <span class="text-muted small">Gestión de usuarios y roles del sistema</span>
       </div>
     </div>
 
     <!-- Spinner -->
     <div *ngIf="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;"></div>
+      <div class="spinner-border text-primary admin-spinner-lg"></div>
     </div>
 
     <ng-container *ngIf="!loading">
 
-      <!-- MÃ©tricas rÃ¡pidas -->
+      <!-- Métricas rápidas -->
       <div class="row g-3 mb-4">
         <div class="col-md-4">
           <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
-            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:48px;height:48px;background:#ebf2ff;color:#2c7be5">
-              <i class="bi bi-people-fill" style="font-size:1.2rem;"></i>
+            <div class="rounded-3 admin-stat-icon admin-stat-icon--blue">
+              <i class="bi bi-people-fill"></i>
             </div>
             <div>
-              <div style="font-size:1.4rem;font-weight:700;line-height:1;">{{ totalUsuarios }}</div>
-              <div class="text-muted" style="font-size:.8rem;">Usuarios registrados</div>
+              <div class="admin-stat-value">{{ totalUsuarios }}</div>
+              <div class="text-muted admin-stat-label">Usuarios registrados</div>
             </div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
-            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:48px;height:48px;background:#d1fae5;color:#065f46">
-              <i class="bi bi-person-check-fill" style="font-size:1.2rem;"></i>
+            <div class="rounded-3 admin-stat-icon admin-stat-icon--green">
+              <i class="bi bi-person-check-fill"></i>
             </div>
             <div>
-              <div style="font-size:1.4rem;font-weight:700;line-height:1;">{{ totalActivos }}</div>
-              <div class="text-muted" style="font-size:.8rem;">Usuarios activos</div>
+              <div class="admin-stat-value">{{ totalActivos }}</div>
+              <div class="text-muted admin-stat-label">Usuarios activos</div>
             </div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
-            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:48px;height:48px;background:#fee2e2;color:#991b1b">
-              <i class="bi bi-person-x-fill" style="font-size:1.2rem;"></i>
+            <div class="rounded-3 admin-stat-icon admin-stat-icon--red">
+              <i class="bi bi-person-x-fill"></i>
             </div>
             <div>
-              <div style="font-size:1.4rem;font-weight:700;line-height:1;">{{ totalInactivos }}</div>
-              <div class="text-muted" style="font-size:.8rem;">Usuarios inactivos</div>
+              <div class="admin-stat-value">{{ totalInactivos }}</div>
+              <div class="text-muted admin-stat-label">Usuarios inactivos</div>
             </div>
           </div>
         </div>
@@ -69,33 +70,33 @@ import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/ad
           <div class="seccion-titulo mb-0">Usuarios del sistema</div>
           <div class="d-flex gap-2">
             <!-- Filtro estado -->
-            <select class="form-select form-select-sm" [(ngModel)]="filtroEstado" style="width:auto;">
+            <select class="form-select form-select-sm admin-filter-select" [(ngModel)]="filtroEstado">
               <option value="">Todos</option>
               <option value="Activo">Activos</option>
               <option value="Inactivo">Inactivos</option>
             </select>
-            <!-- BÃºsqueda -->
-            <input type="text" class="form-control form-control-sm"
-                   placeholder="Buscar por email..." style="min-width:200px;"
+            <!-- Búsqueda -->
+            <input type="text" class="form-control form-control-sm admin-search-input"
+                   placeholder="Buscar por email..."
                    [(ngModel)]="busqueda">
           </div>
         </div>
 
         <!-- Empty state -->
         <div *ngIf="usuariosFiltrados.length === 0" class="text-center text-muted py-4">
-          <i class="bi bi-search" style="font-size:2rem;"></i>
+          <i class="bi bi-search admin-search-icon"></i>
           <p class="mt-2 mb-0">No se encontraron usuarios con los filtros aplicados.</p>
         </div>
 
         <div class="table-responsive" *ngIf="usuariosFiltrados.length > 0">
           <table class="table table-hover align-middle mb-0">
-            <thead style="background:#f8faff;">
+            <thead class="admin-table-head">
               <tr>
-                <th style="font-size:.8rem;color:#6c757d;font-weight:600;">USUARIO</th>
-                <th style="font-size:.8rem;color:#6c757d;font-weight:600;">REGISTRO</th>
-                <th style="font-size:.8rem;color:#6c757d;font-weight:600;">ROLES</th>
-                <th style="font-size:.8rem;color:#6c757d;font-weight:600;">ESTADO</th>
-                <th style="font-size:.8rem;color:#6c757d;font-weight:600;"></th>
+                <th class="admin-th">USUARIO</th>
+                <th class="admin-th">REGISTRO</th>
+                <th class="admin-th">ROLES</th>
+                <th class="admin-th">ESTADO</th>
+                <th class="admin-th"></th>
               </tr>
             </thead>
             <tbody>
@@ -103,25 +104,23 @@ import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/ad
                 <td>
                   <div class="d-flex align-items-center gap-2">
                     <div class="avatar-circle avatar-circle-sm blue">{{ inicial(u.email) }}</div>
-                    <span class="fw-semibold" style="font-size:.9rem;">{{ u.email }}</span>
+                    <span class="fw-semibold admin-email">{{ u.email }}</span>
                   </div>
                 </td>
-                <td style="font-size:.85rem;color:#6c757d;">{{ u.fechaRegistro | date:'dd/MM/yyyy' }}</td>
+                <td class="admin-td-muted">{{ u.fechaRegistro | date:'dd/MM/yyyy' }}</td>
                 <td>
                   <span *ngFor="let r of u.roles"
                         class="badge rounded-pill me-1"
-                        [style.background]="r.nombreRol === 'Admin' ? '#ede9fe' : '#ebf2ff'"
-                        [style.color]="r.nombreRol === 'Admin' ? '#5b21b6' : '#2c7be5'"
-                        style="font-size:.72rem;padding:4px 10px;">
+                        [class.badge-role-admin]="r.nombreRol === 'Admin'"
+                        [class.badge-role-user]="r.nombreRol !== 'Admin'">
                     {{ r.nombreRol }}
                   </span>
-                  <span *ngIf="u.roles.length === 0" class="text-muted" style="font-size:.8rem;">Sin roles</span>
+                  <span *ngIf="u.roles.length === 0" class="text-muted sin-roles">Sin roles</span>
                 </td>
                 <td>
                   <span class="badge rounded-pill"
-                        [style.background]="u.estado === 'Activo' ? '#d1fae5' : '#fee2e2'"
-                        [style.color]="u.estado === 'Activo' ? '#065f46' : '#991b1b'"
-                        style="font-size:.72rem;padding:4px 10px;">
+                        [class.badge-user-activo]="u.estado === 'Activo'"
+                        [class.badge-user-inactivo]="u.estado !== 'Activo'">
                     {{ u.estado }}
                   </span>
                 </td>
@@ -150,7 +149,7 @@ import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/ad
         </div>
       </div>
 
-      <!-- Modal gestiÃ³n de roles -->
+      <!-- Modal gestión de roles -->
       <div *ngIf="usuarioSeleccionado" class="modal-overlay" (click)="cerrarRoles()">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <div class="d-flex align-items-center justify-content-between mb-3">
@@ -168,16 +167,14 @@ import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/ad
           <!-- Roles disponibles -->
           <div class="d-flex flex-column gap-2">
             <div *ngFor="let rol of todoRoles"
-                 class="d-flex align-items-center justify-content-between p-3 rounded-3"
-                 style="background:#f8faff;">
+                 class="d-flex align-items-center justify-content-between p-3 rounded-3 admin-roles-row">
               <div>
-                <span class="fw-semibold" style="font-size:.9rem;">{{ rol.nombreRol }}</span>
-                <div class="text-muted" style="font-size:.75rem;">{{ rol.descripcion || 'Sin descripciÃ³n' }}</div>
+                <span class="fw-semibold admin-rol-name">{{ rol.nombreRol }}</span>
+                <div class="text-muted admin-rol-desc">{{ rol.descripcion || 'Sin descripción' }}</div>
               </div>
               <div>
                 <span *ngIf="tieneRol(usuarioSeleccionado, rol.rolId)"
-                      class="badge rounded-pill me-2"
-                      style="background:#d1fae5;color:#065f46;font-size:.72rem;">Asignado</span>
+                      class="badge rounded-pill me-2 badge-asignado">Asignado</span>
                 <button class="btn btn-sm"
                         [class.btn-outline-danger]="tieneRol(usuarioSeleccionado, rol.rolId)"
                         [class.btn-outline-primary]="!tieneRol(usuarioSeleccionado, rol.rolId)"
@@ -193,17 +190,7 @@ import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/ad
         </div>
       </div>
     </ng-container>
-  `,
-  styles: [`
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      z-index: 1050; display: flex; align-items: center; justify-content: center;
-    }
-    .modal-card {
-      background: #fff; border-radius: 12px; padding: 1.5rem;
-      width: 100%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,.2);
-    }
-  `]
+  `
 })
 export class AdminPanelComponent implements OnInit {
   loading       = true;
@@ -216,7 +203,10 @@ export class AdminPanelComponent implements OnInit {
   rolesGuardando = false;
   rolesError: string | null = null;
 
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.adminService.getUsuarios().subscribe({
@@ -224,10 +214,14 @@ export class AdminPanelComponent implements OnInit {
         this.usuarios = data;
         this.loading  = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
     this.adminService.getRoles().subscribe({
-      next: roles => { this.todoRoles = roles; }
+      next: roles => { this.todoRoles = roles; },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError)
     });
   }
 
@@ -256,7 +250,12 @@ export class AdminPanelComponent implements OnInit {
   toggleEstado(u: UsuarioAdminDto): void {
     const nuevoActivo = u.estado !== 'Activo';
     this.adminService.setEstado(u.usuarioId, nuevoActivo).subscribe({
-      next: res => { u.estado = res.estado; }
+      next: res => {
+        u.estado = res.estado;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 
@@ -278,9 +277,10 @@ export class AdminPanelComponent implements OnInit {
         next: () => {
           u.roles = u.roles.filter(r => r.rolId !== rol.rolId);
           this.rolesGuardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: (err) => {
-          this.rolesError = err?.error?.message ?? 'No se pudo quitar el rol.';
+        error: (error: HttpErrorResponse) => {
+          this.rolesError = extractApiErrorMessage(error) ?? 'No se pudo quitar el rol.';
           this.rolesGuardando = false;
         }
       });
@@ -289,9 +289,10 @@ export class AdminPanelComponent implements OnInit {
         next: () => {
           u.roles = [...u.roles, rol];
           this.rolesGuardando = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         },
-        error: (err) => {
-          this.rolesError = err?.error?.message ?? 'No se pudo asignar el rol.';
+        error: (error: HttpErrorResponse) => {
+          this.rolesError = extractApiErrorMessage(error) ?? 'No se pudo asignar el rol.';
           this.rolesGuardando = false;
         }
       });

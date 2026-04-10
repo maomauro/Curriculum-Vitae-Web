@@ -1,3 +1,5 @@
+@use './styles/portal-pages' as *;
+
 // ── Paleta Portal CV ─────────────────────────────────────────────────────────
 :root {
   // Bootstrap overrides
@@ -169,6 +171,25 @@ body {
   padding: 28px;
 }
 
+@media print {
+  app-topbar,
+  app-sidebar {
+    display: none !important;
+  }
+
+  .cv-main {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}
+
 // ── Page header ───────────────────────────────────────────────────────────────
 .page-header {
   background: #fff; border-radius: 10px;
@@ -180,7 +201,7 @@ body {
   h4 { font-weight: 700; color: #212529; margin: 0; }
 }
 
-// ── Sección card (editor privado) ─────────────────────────────────────────────
+// ── Sección card (área privada — formularios CV) ────────────────────────────────
 .seccion-card {
   background: #fff; border-radius: 10px;
   padding: 24px; margin-bottom: 20px;
@@ -297,4 +318,3 @@ body {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--cv-primary); flex-shrink: 0; margin-top: 6px;
 }
-

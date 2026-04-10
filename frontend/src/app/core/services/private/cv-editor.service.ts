@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -53,6 +53,7 @@ export interface PerfilDto {
   perfilId: number;
   nombrePerfil: string | null;
   descripcionPerfil: string | null;
+  experienciaPerfilAnios: number | null;
   aspiracionSalarialPesos: number | null;
   aspiracionSalarialDolares: number | null;
   esActivo: boolean;
@@ -185,6 +186,16 @@ export interface VisibilidadSeccionDto {
 export interface UpdateVisibilidadRequest {
   seccion: string;
   visible: boolean;
+}
+
+// ── Presentación (plantilla Mi CV) ────────────────────────────────────────────
+
+export interface PresentacionCvDto {
+  plantillaCodigo: string;
+}
+
+export interface UpdatePresentacionCvRequest {
+  plantillaCodigo: string;
 }
 
 // ── Servicio ───────────────────────────────────────────────────────────────────
@@ -321,5 +332,14 @@ export class CvEditorService {
   }
   updateVisibilidad(cambios: UpdateVisibilidadRequest[]): Observable<VisibilidadSeccionDto[]> {
     return this.http.put<VisibilidadSeccionDto[]>(`${this.BASE}/visibilidad`, cambios);
+  }
+
+  // — Presentación / plantilla —
+  getPresentacion(): Observable<PresentacionCvDto> {
+    return this.http.get<PresentacionCvDto>(`${this.BASE}/presentacion`);
+  }
+
+  updatePresentacion(data: UpdatePresentacionCvRequest): Observable<PresentacionCvDto> {
+    return this.http.put<PresentacionCvDto>(`${this.BASE}/presentacion`, data);
   }
 }

@@ -1,4 +1,9 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-recuperar-contrasena',
@@ -36,9 +41,14 @@ import { Component } from '@angular/core';
             </div>
           </form>
 
-          <p class="mt-3 mb-0 text-center small text-muted">
+          <p class="mt-3 mb-1 text-center small text-muted">
             <a routerLink="/auth/login">Volver al inicio de sesión</a>
           </p>
+          <div class="d-grid mt-3">
+            <a routerLink="/" class="btn btn-light border text-secondary">
+              <i class="bi bi-house-door me-1"></i>Volver al inicio
+            </a>
+          </div>
 
         </div>
       </div>
@@ -50,13 +60,24 @@ export class RecuperarContrasenaComponent {
   loading = false;
   sent = false;
 
+  constructor(
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) {}
+
   onSubmit(): void {
     if (!this.email) return;
     this.loading = true;
-    // TODO: conectar con API cuando esté disponible
-    setTimeout(() => {
-      this.sent = true;
-      this.loading = false;
-    }, 800);
+    this.authService.forgotPassword(this.email).subscribe({
+      next: () => {
+        this.sent = true;
+        this.loading = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loading = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.operationError);
+      }
+    });
   }
 }

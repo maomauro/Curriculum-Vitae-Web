@@ -15,7 +15,6 @@ import { ReferenciasComponent }     from './pages/referencias.component';
 import { RedesSocialesComponent }   from './pages/redes-sociales.component';
 import { FamiliaresComponent }      from './pages/familiares.component';
 import { ContactosComponent }       from './pages/contactos.component';
-import { EditorCvComponent }        from './pages/editor-cv.component';
 
 const routes: Routes = [
   { path: 'dashboard',        component: DashboardComponent },
@@ -32,7 +31,6 @@ const routes: Routes = [
   { path: 'familiares',     component: FamiliaresComponent },
   { path: 'contactos',      component: ContactosComponent },
   { path: 'configuracion',  component: ConfiguracionComponent },
-  { path: 'editor',           component: EditorCvComponent },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
 

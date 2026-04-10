@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService, UserInfo } from '../../../core/services/auth.service';
-import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../../core/services/dashboard.service';
+import { AuthService, UserInfo } from '../../../core/services/auth/auth.service';
+import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../../core/services/private/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,19 +31,19 @@ import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-3" style="color:#fd7e14;">{{ stats?.totalContactos ?? 0 }}</div>
+          <div class="fw-bold fs-3 stat-text-warning">{{ stats?.totalContactos ?? 0 }}</div>
           <div class="text-muted small">Contactos recibidos</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-3" style="color:#dc3545;">{{ stats?.alertasNoLeidas ?? 0 }}</div>
+          <div class="fw-bold fs-3 stat-text-danger">{{ stats?.alertasNoLeidas ?? 0 }}</div>
           <div class="text-muted small">Alertas sin leer</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-3" style="color:#20c997;">{{ stats?.porcentajeCompletitud ?? 0 }}%</div>
+          <div class="fw-bold fs-3 stat-text-teal">{{ stats?.porcentajeCompletitud ?? 0 }}%</div>
           <div class="text-muted small">Completitud CV</div>
         </div>
       </div>
@@ -53,9 +53,9 @@ import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../
     <div *ngIf="!loadingStats && stats" class="bg-white rounded-3 p-4 shadow-sm mb-4">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="fw-semibold">Completitud del CV</span>
-        <span class="fw-bold" style="color:#20c997;">{{ stats.porcentajeCompletitud }}%</span>
+        <span class="fw-bold stat-text-teal">{{ stats.porcentajeCompletitud }}%</span>
       </div>
-      <div class="progress" style="height:10px;border-radius:6px;">
+      <div class="progress cv-progress-dashboard">
         <div class="progress-bar bg-success" role="progressbar"
              [style.width]="stats.porcentajeCompletitud + '%'"
              [attr.aria-valuenow]="stats.porcentajeCompletitud"
@@ -102,7 +102,7 @@ import { DashboardService, DashboardStatsDto, NotificacionItemDto } from '../../
       </div>
 
       <div class="mt-3 text-end">
-        <a routerLink="/privado/alertas" class="btn btn-sm btn-outline-primary">
+        <a routerLink="/alertas" class="btn btn-sm btn-outline-primary">
           Ver todas las alertas →
         </a>
       </div>

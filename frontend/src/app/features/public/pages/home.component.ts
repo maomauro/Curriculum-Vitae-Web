@@ -35,40 +35,7 @@ import { Router } from '@angular/router';
         </a>
       </div>
     </section>
-  `,
-  styles: [`
-    .hero-section {
-      background: #F8F9FA;
-      padding: 96px 0 80px;
-      text-align: center;
-    }
-    .hero-title {
-      font-size: 2.6rem;
-      font-weight: 700;
-      color: #2C7BE5;
-      margin-bottom: 16px;
-    }
-    .hero-subtitle {
-      font-size: 1.1rem;
-      color: #6C757D;
-      max-width: 560px;
-      margin: 0 auto 36px;
-    }
-    .hero-search {
-      max-width: 520px;
-      margin: 0 auto;
-    }
-    .cta-section {
-      background: #fff;
-      padding: 80px 0;
-    }
-    .cta-section h2 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      color: #212529;
-      margin-bottom: 12px;
-    }
-  `]
+  `
 })
 export class HomeComponent {
   busqueda = '';

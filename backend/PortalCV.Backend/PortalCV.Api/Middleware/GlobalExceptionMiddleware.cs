@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using PortalCV.Application.Constants;
 
 namespace PortalCV.Api.Middleware;
 
@@ -33,7 +34,10 @@ public sealed class GlobalExceptionMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error no controlado en la solicitud {Method} {Path}", context.Request.Method, context.Request.Path);
-            await WriteErrorResponseAsync(context, (int)HttpStatusCode.InternalServerError, "Ocurrió un error interno del servidor.");
+            await WriteErrorResponseAsync(
+                context,
+                (int)HttpStatusCode.InternalServerError,
+                ApiMessages.General.ErrorInternoServidor);
         }
     }
 

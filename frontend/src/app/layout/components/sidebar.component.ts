@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthService, UserInfo } from '../../core/services/auth.service';
+import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -32,6 +32,8 @@ import { AuthService, UserInfo } from '../../core/services/auth.service';
           <i class="bi bi-file-earmark-person-fill"></i><span>Mi CV</span>
         </a>
 
+        <hr class="my-1 cv-sidebar-hr">
+
         <!-- Datos Personales -->
         <a class="nav-item-sidebar" routerLink="/datos-personales" routerLinkActive="active">
           <i class="bi bi-person-lines-fill"></i><span>Datos Personales</span>
@@ -52,15 +54,17 @@ import { AuthService, UserInfo } from '../../core/services/auth.service';
           <i class="bi bi-mortarboard-fill"></i><span>Educación</span>
         </a>
 
+        <!-- Proyectos -->
+        <a class="nav-item-sidebar" routerLink="/proyectos" routerLinkActive="active">
+          <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
+        </a>
+
         <!-- Habilidades -->
         <a class="nav-item-sidebar" routerLink="/habilidades" routerLinkActive="active">
           <i class="bi bi-stars"></i><span>Habilidades</span>
         </a>
 
-        <!-- Proyectos -->
-        <a class="nav-item-sidebar" routerLink="/proyectos" routerLinkActive="active">
-          <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
-        </a>
+        <hr class="my-1 cv-sidebar-hr">
 
         <!-- Configuración -->
         <a class="nav-item-sidebar" routerLink="/configuracion" routerLinkActive="active">
