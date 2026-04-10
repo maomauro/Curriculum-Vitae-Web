@@ -26,6 +26,10 @@ interface RegisterApiResponse {
   nombreCompleto: string;
 }
 
+interface ForgotPasswordApiResponse {
+  message: string;
+}
+
 // Claim name que usa ClaimTypes.Role en .NET
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
@@ -66,6 +70,10 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string): Observable<ForgotPasswordApiResponse> {
+    return this.http.post<ForgotPasswordApiResponse>(`${this.API_URL}/forgot-password`, { email });
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this.currentUserSubject.next(null);
@@ -92,7 +100,9 @@ export class AuthService {
 
     return {
       id:           Number(payload['sub'] ?? 0),
-      nombre:       nombreCompleto ?? str(payload['nombre']) ?? str(payload['email']),
+      // En refresh no tenemos nombreCompleto del login; si el claim "nombre" no existe,
+      // usamos email para evitar que la UI muestre "Usuario".
+      nombre:       (nombreCompleto && nombreCompleto.trim()) || str(payload['nombre']) || str(payload['email']) || 'Usuario',
       email:        str(payload['email']),
       rol:          roles[0] ?? '',
       curriculumId: Number(payload['curriculum_id'] ?? 0),

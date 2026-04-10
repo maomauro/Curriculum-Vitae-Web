@@ -8,6 +8,8 @@ public class Curriculum
     public string Estado { get; set; } = "Borrador";
     public int ContadorVisitas { get; set; }
     public int ContadorContactos { get; set; }
+    /// <summary>Código de plantilla de presentación (Mi CV / PDF). Valores: clasico, profesional, ats, corporativo, ejecutivo.</summary>
+    public string PlantillaCodigo { get; set; } = "clasico";
     public DateTime FechaCreacion { get; set; }
     public DateTime FechaActualizacion { get; set; }
 

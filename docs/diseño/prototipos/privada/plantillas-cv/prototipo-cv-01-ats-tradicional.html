@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototipo CV — ATS / tradicional</title>
+  <!--
+    Referencia de mercado: formato de una columna, títulos estándar, texto lineal,
+    fuentes comunes y buen contraste. Recomendado cuando el CV pasa por parsers ATS
+    o revisión rápida en procesos con muchos candidatos (LinkedIn Easy Apply, portales).
+  -->
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #444;
+      --rule: #ccc;
+      --accent: #1a365d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2rem clamp(1rem, 4vw, 2.5rem);
+      font-family: Calibri, "Segoe UI", Arial, Helvetica, sans-serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: var(--text);
+      max-width: 8.5in;
+      margin-inline: auto;
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin: 0 0 0.15rem;
+      color: var(--accent);
+    }
+    .headline {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 0 0 0.75rem;
+    }
+    .contact-line {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+    h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      border-bottom: 2px solid var(--rule);
+      padding-bottom: 0.25rem;
+      margin: 1.35rem 0 0.65rem;
+    }
+    p { margin: 0 0 0.65rem; }
+    ul { margin: 0 0 0.65rem; padding-left: 1.25rem; }
+    li { margin-bottom: 0.35rem; }
+    .job-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.25rem 1rem;
+      font-weight: 600;
+      margin-top: 0.85rem;
+    }
+    .job-title { color: var(--text); }
+    .job-meta { color: var(--muted); font-weight: 500; font-size: 0.95rem; }
+    .skills-row { color: var(--muted); font-size: 0.95rem; }
+    @media print {
+      body { padding: 0.4in; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>María Fernanda López Ruiz</h1>
+    <p class="headline">Desarrolladora backend · Arquitectura de APIs y datos</p>
+    <p class="contact-line">
+      Bogotá, Colombia · maria.lopez@email.com · +57 300 000 0000 · linkedin.com/in/mariaflopez
+    </p>
+  </header>
+
+  <section aria-labelledby="sec-resumen">
+    <h2 id="sec-resumen">Resumen profesional</h2>
+    <p>
+      Ingeniera de sistemas con 6 años diseñando e implementando servicios REST y pipelines de datos
+      en entornos cloud. Enfoque en calidad, observabilidad y colaboración con producto. Palabras clave:
+      .NET, SQL, Azure, microservicios, CI/CD, DDD.
+    </p>
+  </section>
+
+  <section aria-labelledby="sec-exp">
+    <h2 id="sec-exp">Experiencia laboral</h2>
+
+    <div class="job-header">
+      <span class="job-title">TechCorp SAS — Líder técnico backend</span>
+      <span class="job-meta">ene 2022 — actual</span>
+    </div>
+    <ul>
+      <li>Liderazgo de squad de 4 personas; definición de estándares de API y revisiones de diseño.</li>
+      <li>Reducción del tiempo de respuesta p95 en un 28% mediante caché y optimización de consultas.</li>
+      <li>Integración con pasarelas de pago y sistemas legados vía colas y contratos versionados.</li>
+    </ul>
+
+    <div class="job-header">
+      <span class="job-title">DataNova Ltda. — Desarrolladora senior</span>
+      <span class="job-meta">mar 2019 — dic 2021</span>
+    </div>
+    <ul>
+      <li>Migración de monolito a servicios desacoplados; documentación OpenAPI y pruebas automatizadas.</li>
+      <li>Mentoría a desarrolladores junior en buenas prácticas de Git y revisiones de código.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="sec-edu">
+    <h2 id="sec-edu">Educación</h2>
+    <div class="job-header">
+      <span class="job-title">Universidad Nacional — Ingeniería de sistemas</span>
+      <span class="job-meta">2013 — 2018</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="sec-hab">
+    <h2 id="sec-hab">Habilidades técnicas</h2>
+    <p class="skills-row">
+      C# · .NET 8 · SQL Server · PostgreSQL · Azure · Docker · Kubernetes (básico) · Git · Scrum
+    </p>
+  </section>
+
+  <section aria-labelledby="sec-cert">
+    <h2 id="sec-cert">Certificaciones</h2>
+    <ul>
+      <li>Microsoft Certified: Azure Developer Associate — 2023</li>
+    </ul>
+  </section>
+
+  <p style="margin-top:2rem;font-size:0.8rem;color:#666;">
+    Prototipo PortalCV — plantilla 01 ATS / tradicional · <a href="index.html">Índice</a>
+  </p>
+</body>
+</html>

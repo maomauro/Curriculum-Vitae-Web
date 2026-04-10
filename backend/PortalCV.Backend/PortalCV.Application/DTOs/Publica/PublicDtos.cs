@@ -1,4 +1,4 @@
-﻿namespace PortalCV.Application.DTOs.Publica;
+namespace PortalCV.Application.DTOs.Publica;
 
 public record BuscarCvsQuery(
     string? Ciudad = null,
@@ -72,6 +72,7 @@ public record HabilidadPublicoDto(
     string Nombre,
     string? Tipo,
     string? Nivel,
+    string? Descripcion,
     string? NivelLectura,
     string? NivelEscritura,
     string? NivelEscucha,

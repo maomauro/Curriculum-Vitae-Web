@@ -1,6 +1,10 @@
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-login',
@@ -48,9 +52,14 @@ import { AuthService } from '../../../core/services/auth.service';
           <p class="mt-3 mb-1 text-center small">
             <a routerLink="/auth/recuperar-contrasena">¿Olvidaste tu contraseña?</a>
           </p>
-          <p class="mb-0 text-center small text-muted">
+          <p class="mb-1 text-center small text-muted">
             ¿No tienes cuenta? <a routerLink="/auth/register">Regístrate aquí</a>
           </p>
+          <div class="d-grid mt-3">
+            <a routerLink="/" class="btn btn-light border text-secondary">
+              <i class="bi bi-house-door me-1"></i>Volver al inicio
+            </a>
+          </div>
 
         </div>
       </div>
@@ -63,16 +72,24 @@ export class LoginComponent {
   loading = false;
   errorMsg = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private notificationService: NotificationService
+  ) {}
 
   onLogin(): void {
     if (!this.email || !this.password) return;
     this.loading = true;
     this.errorMsg = '';
     this.authService.login(this.email, this.password).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: () => {
-        this.errorMsg = 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
+      next: () => {
+        this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMsg = extractApiErrorMessage(error) || 'Correo o contraseña incorrectos. Inténtalo de nuevo.';
+        this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
         this.loading = false;
       }
     });

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 
@@ -22,7 +22,7 @@ public class ExperienciaController : CvControllerBase
     public async Task<IActionResult> Create([FromBody] UpsertExperienciaRequest request, CancellationToken ct = default)
     {
         var result = await _editor.CreateExperienciaAsync(GetCurriculumId(), request, ct);
-        return CreatedAtAction(nameof(GetAll), new { }, result);
+        return Ok(result);
     }
 
     [HttpPut("{id:int}")]

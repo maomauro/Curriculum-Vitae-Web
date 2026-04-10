@@ -5,6 +5,7 @@ using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Auth;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -47,14 +48,31 @@ public class AuthService : IAuthService
 
         var roles = usuario.UsuarioRoles.Select(ur => ur.Rol.NombreRol).ToList();
         var curriculum = usuario.Curriculums.FirstOrDefault();
-        var curriculumId = curriculum?.CurriculumId ?? 0;
+
+        // Usuarios heredados o datos de prueba sin fila en Curriculum: FK falla en POST (p. ej. formaciones).
+        if (curriculum is null)
+        {
+            var urlPublica = await GenerarUrlPublicaUnicaAsync(string.Empty, usuario.Email, ct);
+            curriculum = new Curriculum
+            {
+                UrlPublica = urlPublica,
+                Estado = "Borrador",
+                FechaCreacion = DateTime.UtcNow,
+                FechaActualizacion = DateTime.UtcNow,
+                Usuario = usuario
+            };
+            usuario.Curriculums.Add(curriculum);
+            await _context.SaveChangesAsync(ct);
+        }
+
+        var curriculumId = curriculum.CurriculumId;
 
         // NombreCompleto desde Personales si ya está cargado, si no usa el email
         string nombreCompleto = usuario.Email;
-        if (curriculum?.Personales is { PrimerNombre: var pn, PrimerApellido: var pa })
+        if (curriculum.Personales is { PrimerNombre: var pn, PrimerApellido: var pa })
             nombreCompleto = $"{pn} {pa}".Trim();
 
-        var (token, expiracion) = BuildJwt(usuario, roles, curriculumId);
+        var (token, expiracion) = BuildJwt(usuario, roles, curriculumId, nombreCompleto);
 
         return new LoginResponse(token, usuario.Email, nombreCompleto, roles, expiracion);
     }
@@ -69,7 +87,7 @@ public class AuthService : IAuthService
             .AnyAsync(u => u.Email == request.Email, ct);
 
         if (emailTaken)
-            throw new InvalidOperationException("El correo ya está registrado.");
+            throw new InvalidOperationException(ApiMessages.Auth.CorreoYaRegistrado);
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
 
@@ -112,7 +130,7 @@ public class AuthService : IAuthService
     // ──────────────────────────────────────────────────────────────────────────
 
     private (string token, DateTime expiracion) BuildJwt(
-        Usuario usuario, IEnumerable<string> roles, int curriculumId)
+        Usuario usuario, IEnumerable<string> roles, int curriculumId, string nombreCompleto)
     {
         var issuer    = _configuration["Jwt:Issuer"]    ?? throw new InvalidOperationException("Jwt:Issuer no configurado.");
         var audience  = _configuration["Jwt:Audience"]  ?? throw new InvalidOperationException("Jwt:Audience no configurado.");
@@ -124,6 +142,7 @@ public class AuthService : IAuthService
         {
             new(JwtRegisteredClaimNames.Sub,   usuario.UsuarioId.ToString()),
             new(JwtRegisteredClaimNames.Email, usuario.Email),
+            new("nombre",                      string.IsNullOrWhiteSpace(nombreCompleto) ? usuario.Email : nombreCompleto),
             new("curriculum_id",               curriculumId.ToString())
         };
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));

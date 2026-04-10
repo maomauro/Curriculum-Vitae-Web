@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -197,6 +197,14 @@ public class PublicCvService : IPublicCvService
         }
     }
 
+    /// <summary>BD puede tener 'Basico'; el sitio público muestra 'Básico'.</summary>
+    private static string? MapHabilidadNivelPublico(string? nivel)
+    {
+        if (string.IsNullOrWhiteSpace(nivel)) return null;
+        var t = nivel.Trim();
+        return string.Equals(t, "Basico", StringComparison.Ordinal) ? "Básico" : t;
+    }
+
     private static CvDetalleDto MapToDetalle(Curriculum c) => new(
         c.CurriculumId,
         c.UrlPublica,
@@ -217,7 +225,7 @@ public class PublicCvService : IPublicCvService
             e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones)),
         c.Formaciones.Select(f => new FormacionPublicoDto(f.FormacionId, f.Titulo, f.Institucion,
             f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin)),
-        c.Habilidades.Select(h => new HabilidadPublicoDto(h.HabilidadId, h.Nombre, h.Tipo, h.Nivel,
+        c.Habilidades.Select(h => new HabilidadPublicoDto(h.HabilidadId, h.Nombre, h.Tipo, MapHabilidadNivelPublico(h.Nivel), h.Descripcion,
             h.NivelLectura, h.NivelEscritura, h.NivelEscucha, h.NivelHabla)),
         c.Proyectos.Select(p => new ProyectoPublicoDto(p.ProyectoId, p.NombreProyecto, p.Rol,
             p.StackTecnologico, p.Aporte, p.Logro, p.EquipoTamano, p.DuracionMeses)),

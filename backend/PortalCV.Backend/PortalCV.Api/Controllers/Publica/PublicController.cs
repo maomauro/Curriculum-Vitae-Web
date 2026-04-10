@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
 
@@ -74,7 +75,7 @@ public class PublicController : ControllerBase
         CancellationToken ct = default)
     {
         await _publicCvService.ContactarAsync(urlPublica, request, ct);
-        return Ok(new { message = "Mensaje enviado correctamente." });
+        return Ok(new { message = ApiMessages.Publico.MensajeEnviadoCorrectamente });
     }
 }
 

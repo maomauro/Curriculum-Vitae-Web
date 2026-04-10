@@ -37,7 +37,8 @@ Documento de arquitectura visual. Cada vista tiene su propio archivo detallado e
 | Habilidades | `/habilidades` | AdminLayout | [habilidades.html](../prototipos/privada/habilidades.html) | [Habilidades.md](./vistas/privada/Habilidades.md) |
 | Proyectos | `/proyectos` | AdminLayout | [proyectos.html](../prototipos/privada/proyectos.html) | [Proyectos.md](./vistas/privada/Proyectos.md) |
 | Configuración | `/configuracion` | AdminLayout | [configuracion.html](../prototipos/privada/configuracion.html) | [Configuracion.md](./vistas/privada/Configuracion.md) |
-| Editor CV | `/editor` | AdminLayout | [editor-cv.html](../prototipos/privada/editor-cv.html) | [Editor-CV.md](./vistas/privada/Editor-CV.md) |
+
+> La ruta `/editor` y la vista “Editor CV” fueron retiradas: la **plantilla de presentación** (Clásico / Profesional) se elige en **Mi CV** (`/mi-cv`).
 
 ### 👑 Módulo de Administración (`adminGuard`)
 
@@ -49,7 +50,7 @@ Documento de arquitectura visual. Cada vista tiene su propio archivo detallado e
 
 ## Decisión de plantilla: AdminLTE 4
 
-**AdminLTE 4** es la plantilla seleccionada para el área privada (editor y dashboard).
+**AdminLTE 4** es la plantilla seleccionada para el área privada (dashboard y formularios del CV).
 
 - Gratuita (MIT), compatible con Bootstrap 5, sin jQuery
 - NPM: `npm install admin-lte@4`
@@ -76,7 +77,7 @@ AppComponent
        │
        └── AdminLayoutComponent    (/dashboard  /alertas  /mi-cv  /datos-personales
                                     /perfil  /experiencia  /educacion  /habilidades
-                                    /proyectos  /configuracion  /editor  /admin)
+                                    /proyectos  /configuracion  /admin)
             ├── TopbarComponent
             ├── SidebarComponent
             └── <router-outlet>

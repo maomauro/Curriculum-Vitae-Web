@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using PortalCV.Application;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -22,7 +23,19 @@ public class CvEditorService : ICvEditorService
         var e = await _context.Personales
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.CurriculumId == curriculumId, ct);
-        return e is null ? null : MapPersonales(e);
+        if (e is null)
+        {
+            var empty = new Personales
+            {
+                CurriculumId = curriculumId,
+                PrimerNombre = string.Empty,
+                PrimerApellido = string.Empty,
+                PrivacidadEmail = "Publico",
+                PrivacidadTelefono = "Publico"
+            };
+            return MapPersonales(empty);
+        }
+        return MapPersonales(e);
     }
 
     public async Task<PersonalesDto> UpsertPersonalesAsync(int curriculumId, UpsertPersonalesRequest r, CancellationToken ct = default)
@@ -47,9 +60,9 @@ public class CvEditorService : ICvEditorService
         existing.VisaNumero = r.VisaNumero;
         existing.VisaVigencia = r.VisaVigencia;
         existing.VisaClase = r.VisaClase;
-        existing.PrimerNombre = r.PrimerNombre;
+        existing.PrimerNombre = (r.PrimerNombre ?? string.Empty).Trim();
         existing.SegundoNombre = r.SegundoNombre;
-        existing.PrimerApellido = r.PrimerApellido;
+        existing.PrimerApellido = (r.PrimerApellido ?? string.Empty).Trim();
         existing.SegundoApellido = r.SegundoApellido;
         existing.FechaNacimiento = r.FechaNacimiento;
         existing.LugarNacimiento = r.LugarNacimiento;
@@ -70,8 +83,8 @@ public class CvEditorService : ICvEditorService
         existing.Direccion = r.Direccion;
         existing.TipoResidencia = r.TipoResidencia;
         existing.FotoUrl = r.FotoUrl;
-        existing.PrivacidadEmail = r.PrivacidadEmail;
-        existing.PrivacidadTelefono = r.PrivacidadTelefono;
+        existing.PrivacidadEmail = NormalizarPrivacidadEmail(r.PrivacidadEmail);
+        existing.PrivacidadTelefono = NormalizarPrivacidadTelefono(r.PrivacidadTelefono);
 
         await _context.SaveChangesAsync(ct);
         return MapPersonales(existing);
@@ -91,6 +104,7 @@ public class CvEditorService : ICvEditorService
             CurriculumId = curriculumId,
             NombrePerfil = r.NombrePerfil,
             DescripcionPerfil = r.DescripcionPerfil,
+            ExperienciaPerfilAnios = r.ExperienciaPerfilAnios,
             AspiracionSalarialPesos = r.AspiracionSalarialPesos,
             AspiracionSalarialDolares = r.AspiracionSalarialDolares,
             EsActivo = r.EsActivo
@@ -105,6 +119,7 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Perfiles, id, curriculumId, ct);
         e.NombrePerfil = r.NombrePerfil;
         e.DescripcionPerfil = r.DescripcionPerfil;
+        e.ExperienciaPerfilAnios = r.ExperienciaPerfilAnios;
         e.AspiracionSalarialPesos = r.AspiracionSalarialPesos;
         e.AspiracionSalarialDolares = r.AspiracionSalarialDolares;
         e.EsActivo = r.EsActivo;
@@ -209,16 +224,19 @@ public class CvEditorService : ICvEditorService
     // â”€â”€ Habilidades â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<IReadOnlyList<HabilidadDto>> GetHabilidadesAsync(int curriculumId, CancellationToken ct = default)
-        => await _context.Habilidades.AsNoTracking()
+    {
+        var rows = await _context.Habilidades.AsNoTracking()
             .Where(h => h.CurriculumId == curriculumId)
-            .Select(h => MapHabilidad(h)).ToListAsync(ct);
+            .ToListAsync(ct);
+        return rows.Select(MapHabilidad).ToList();
+    }
 
     public async Task<HabilidadDto> CreateHabilidadAsync(int curriculumId, UpsertHabilidadRequest r, CancellationToken ct = default)
     {
         var e = new Habilidad
         {
             CurriculumId = curriculumId, Nombre = r.Nombre, Tipo = r.Tipo,
-            Nivel = r.Nivel, Descripcion = r.Descripcion,
+            Nivel = NormalizeHabilidadNivelForStorage(r.Nivel), Descripcion = r.Descripcion,
             NivelLectura = r.NivelLectura, NivelEscritura = r.NivelEscritura,
             NivelEscucha = r.NivelEscucha, NivelHabla = r.NivelHabla
         };
@@ -230,7 +248,7 @@ public class CvEditorService : ICvEditorService
     public async Task<HabilidadDto> UpdateHabilidadAsync(int curriculumId, int id, UpsertHabilidadRequest r, CancellationToken ct = default)
     {
         var e = await GetOwnedOrThrowAsync(_context.Habilidades, id, curriculumId, ct);
-        e.Nombre = r.Nombre; e.Tipo = r.Tipo; e.Nivel = r.Nivel; e.Descripcion = r.Descripcion;
+        e.Nombre = r.Nombre; e.Tipo = r.Tipo; e.Nivel = NormalizeHabilidadNivelForStorage(r.Nivel); e.Descripcion = r.Descripcion;
         e.NivelLectura = r.NivelLectura; e.NivelEscritura = r.NivelEscritura;
         e.NivelEscucha = r.NivelEscucha; e.NivelHabla = r.NivelHabla;
         await _context.SaveChangesAsync(ct);
@@ -428,6 +446,33 @@ public class CvEditorService : ICvEditorService
         return await GetVisibilidadAsync(curriculumId, ct);
     }
 
+    // --- Presentacion / plantilla ---
+
+    public async Task<PresentacionCvDto> GetPresentacionAsync(int curriculumId, CancellationToken ct = default)
+    {
+        var c = await _context.Curriculums
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
+
+        return new PresentacionCvDto(CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo));
+    }
+
+    public async Task<PresentacionCvDto> UpdatePresentacionAsync(
+        int curriculumId, UpdatePresentacionCvRequest request, CancellationToken ct = default)
+    {
+        var code = request.PlantillaCodigo.Trim().ToLowerInvariant();
+
+        var c = await _context.Curriculums
+            .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
+
+        c.PlantillaCodigo = code;
+        c.FechaActualizacion = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+        return new PresentacionCvDto(code);
+    }
+
     // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static async Task<T> GetOwnedOrThrowAsync<T>(
@@ -444,6 +489,32 @@ public class CvEditorService : ICvEditorService
         return entity;
     }
 
+    private static string NormalizarPrivacidadEmail(string? valor)
+    {
+        return valor?.Trim() switch
+        {
+            "Publico" => "Publico",
+            "SoloFormulario" => "SoloFormulario",
+            "Oculto" => "Oculto",
+            // Compatibilidad hacia atrás con frontend previo
+            "Privado" => "Oculto",
+            _ => "Publico"
+        };
+    }
+
+    private static string NormalizarPrivacidadTelefono(string? valor)
+    {
+        return valor?.Trim() switch
+        {
+            "Publico" => "Publico",
+            "Parcial" => "Parcial",
+            "Oculto" => "Oculto",
+            // Compatibilidad hacia atrás con frontend previo
+            "Privado" => "Oculto",
+            _ => "Publico"
+        };
+    }
+
     // â”€â”€ Mappers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static PersonalesDto MapPersonales(Personales e) => new(
@@ -458,7 +529,7 @@ public class CvEditorService : ICvEditorService
 
     private static PerfilDto MapPerfil(Perfil e) => new(
         e.PerfilId, e.NombrePerfil, e.DescripcionPerfil,
-        e.AspiracionSalarialPesos, e.AspiracionSalarialDolares, e.EsActivo);
+        e.ExperienciaPerfilAnios, e.AspiracionSalarialPesos, e.AspiracionSalarialDolares, e.EsActivo);
 
     private static ExperienciaDto MapExperiencia(Experiencia e) => new(
         e.ExperienciaId, e.Empresa, e.Cargo, e.Sector, e.FechaInicio, e.FechaFin,
@@ -468,8 +539,24 @@ public class CvEditorService : ICvEditorService
         e.FormacionId, e.Titulo, e.Institucion, e.Area, e.FechaInicio, e.FechaFin,
         e.TipoFormacion, e.Descripcion, e.AdjuntoSoporte, e.FechaVigencia, e.DuracionHoras);
 
+    /// <summary>CK SQL histórico: solo 'Basico' sin tilde; el front envía 'Básico'.</summary>
+    private static string? NormalizeHabilidadNivelForStorage(string? nivel)
+    {
+        if (string.IsNullOrWhiteSpace(nivel)) return null;
+        var t = nivel.Trim();
+        return t == "Básico" ? "Basico" : t;
+    }
+
+    /// <summary>Respuesta al editor: mismo texto que los desplegables (Básico con tilde).</summary>
+    private static string? NormalizeHabilidadNivelForApi(string? nivel)
+    {
+        if (string.IsNullOrWhiteSpace(nivel)) return null;
+        var t = nivel.Trim();
+        return string.Equals(t, "Basico", StringComparison.Ordinal) ? "Básico" : t;
+    }
+
     private static HabilidadDto MapHabilidad(Habilidad e) => new(
-        e.HabilidadId, e.Nombre, e.Tipo, e.Nivel, e.Descripcion,
+        e.HabilidadId, e.Nombre, e.Tipo, NormalizeHabilidadNivelForApi(e.Nivel), e.Descripcion,
         e.NivelLectura, e.NivelEscritura, e.NivelEscucha, e.NivelHabla);
 
     private static ProyectoDto MapProyecto(Proyecto e) => new(

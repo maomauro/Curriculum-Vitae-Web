@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { AlertasService, AlertaVisitaDto } from '../../../core/services/alertas.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AlertasService, AlertaVisitaDto } from '../../../core/services/private/alertas.service';
+import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
+import { NotificationService } from '../../../core/services/shared/notification.service';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
 @Component({
   selector: 'app-alertas',
@@ -29,7 +33,7 @@ import { AlertasService, AlertaVisitaDto } from '../../../core/services/alertas.
       </div>
       <div class="col-6 col-md-3">
         <div class="bg-white rounded-3 p-3 shadow-sm text-center">
-          <div class="fw-bold fs-4" style="color:#2c7be5;">{{ conteoContactos }}</div>
+          <div class="fw-bold fs-4 text-primary">{{ conteoContactos }}</div>
           <div class="text-muted small">Contactos nuevos</div>
         </div>
       </div>
@@ -60,7 +64,7 @@ import { AlertasService, AlertaVisitaDto } from '../../../core/services/alertas.
           No leídas ({{ noLeidasCount }})
         </button>
       </div>
-      <select class="form-select form-select-sm" style="width:auto;" [(ngModel)]="tipo" (change)="aplicarFiltros()">
+      <select class="form-select form-select-sm admin-filter-select" [(ngModel)]="tipo" (change)="aplicarFiltros()">
         <option value="">Tipo: Todos</option>
         <option value="Contacto">Contactos recibidos</option>
         <option value="Vista">Vistas del CV</option>
@@ -84,9 +88,9 @@ import { AlertasService, AlertaVisitaDto } from '../../../core/services/alertas.
       </div>
 
       <div *ngFor="let alerta of alertasFiltradas"
-           class="alert-item" [class.unread]="!alerta.esLeida"
+           class="alert-item cv-cursor-pointer" [class.unread]="!alerta.esLeida"
            [ngClass]="'type-' + tipoClass(alerta.tipoVisita)"
-           style="cursor:pointer;" (click)="marcarLeida(alerta)">
+           (click)="marcarLeida(alerta)">
         <div class="alert-icon" [ngClass]="tipoClass(alerta.tipoVisita)">
           <i class="bi" [ngClass]="tipoIcono(alerta.tipoVisita)"></i>
         </div>
@@ -128,7 +132,10 @@ export class AlertasComponent implements OnInit {
     return this.alertas.filter(a => a.tipoVisita === 'Descarga').length;
   }
 
-  constructor(private alertasService: AlertasService) {}
+  constructor(
+    private alertasService: AlertasService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.cargarAlertas();
@@ -142,7 +149,10 @@ export class AlertasComponent implements OnInit {
         this.aplicarFiltros();
         this.loading = false;
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      }
     });
   }
 
@@ -162,7 +172,9 @@ export class AlertasComponent implements OnInit {
   marcarLeida(alerta: AlertaVisitaDto): void {
     if (alerta.esLeida) return;
     this.alertasService.marcarLeida(alerta.alertaVisitaId).subscribe({
-      next: () => { alerta.esLeida = true; this.aplicarFiltros(); }
+      next: () => { alerta.esLeida = true; this.aplicarFiltros(); },
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 
@@ -171,7 +183,10 @@ export class AlertasComponent implements OnInit {
       next: () => {
         this.alertas.forEach(a => (a.esLeida = true));
         this.aplicarFiltros();
-      }
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: (error: HttpErrorResponse) =>
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });
   }
 

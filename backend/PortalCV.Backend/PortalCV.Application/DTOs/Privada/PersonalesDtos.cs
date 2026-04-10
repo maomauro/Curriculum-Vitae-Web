@@ -1,4 +1,4 @@
-﻿namespace PortalCV.Application.DTOs.Privada;
+namespace PortalCV.Application.DTOs.Privada;
 
 public record PersonalesDto(
     int PersonalesId,
