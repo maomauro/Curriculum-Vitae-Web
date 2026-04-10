@@ -34,11 +34,12 @@
 // ── Perfil profesional (página /perfil) ─────────────────────────────────────────
 .profile-card {
   border: 2px solid #e9ecef;
-  border-radius: 10px;
+  border-radius: var(--cv-editor-card-radius);
   padding: 20px 22px;
   margin-bottom: 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
   background: #fff;
+  box-shadow: var(--cv-editor-card-shadow);
 }
 .profile-card.is-active {
   border-color: var(--cv-primary);
@@ -108,10 +109,11 @@
 }
 .perfil-nuevo-card {
   border: 2px dashed var(--cv-primary);
-  border-radius: 10px;
+  border-radius: var(--cv-editor-card-radius);
   padding: 20px 22px;
   margin-bottom: 16px;
   background: #fff;
+  box-shadow: var(--cv-editor-card-shadow);
 }
 
 // ── Habilidades: niveles ───────────────────────────────────────────────────────
@@ -642,6 +644,10 @@
 .cv-preview-sub {
   opacity: 0.9;
 }
+.cv-mi-trayectoria-acumulada {
+  opacity: 0.9;
+  line-height: 1.4;
+}
 .cv-preview-meta {
   font-size: 0.85rem;
   opacity: 0.85;
@@ -669,6 +675,7 @@
   font-size: 0.88rem;
   color: #495057;
   line-height: 1.7;
+  text-align: justify;
 }
 
 // ── Mi CV: layout alineado al prototipo mi-cv.html ─────────────────────────────
@@ -761,6 +768,39 @@
 
   .cv-preview-header-body {
     padding: 2rem clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .cv-mi-photo-slot {
+    width: 84px;
+    height: 84px;
+    flex: 0 0 84px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .cv-mi-photo-img,
+  .cv-mi-photo-placeholder {
+    width: 100%;
+    height: 100%;
+  }
+
+  .cv-mi-photo-img {
+    object-fit: cover;
+    display: block;
+  }
+
+  .cv-mi-photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: linear-gradient(135deg, #5e9dec 0%, #2c7be5 100%);
   }
 
   .cv-preview-name {
@@ -1086,6 +1126,10 @@
     max-width: none;
   }
 
+  .cv-summary-text {
+    text-align: justify;
+  }
+
   .cv-pro-list {
     margin: 0.35rem 0 0;
     padding-left: 1.15rem;
@@ -1208,6 +1252,17 @@
     }
   }
 
+  .cv-mi-photo-slot {
+    border: 2px solid #dee2e6;
+    box-shadow: 0 2px 10px rgba(33, 37, 41, 0.14);
+    background: #f8f9fa;
+  }
+
+  .cv-mi-photo-placeholder {
+    color: #111;
+    background: linear-gradient(135deg, #f1f3f5 0%, #dee2e6 100%);
+  }
+
   .cv-mi-section-title {
     font-size: 0.9375rem;
     font-weight: 700;
@@ -1286,6 +1341,17 @@
     }
   }
 
+  .cv-mi-photo-slot {
+    border: 2px solid #cbd5e1;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
+    background: #f8fafc;
+  }
+
+  .cv-mi-photo-placeholder {
+    color: #1a365d;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  }
+
   .cv-mi-section-title {
     font-size: 0.72rem;
     font-weight: 700;
@@ -1356,6 +1422,15 @@
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.88);
     font-weight: 500;
+  }
+
+  .cv-mi-trayectoria-acumulada {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+
+    i {
+      opacity: 0.88;
+    }
   }
 
   .cv-corp-contact {
@@ -1483,6 +1558,18 @@
       color: inherit !important;
       opacity: 1;
     }
+  }
+
+  .cv-mi-photo-slot {
+    border: 2px solid #d1d5db;
+    box-shadow: 0 2px 12px rgba(17, 24, 39, 0.14);
+    background: #f9fafb;
+  }
+
+  .cv-mi-photo-placeholder {
+    color: #111827;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    font-family: Merriweather, Georgia, serif;
   }
 
   .cv-preview-header-body::after {
@@ -1760,8 +1847,8 @@
 // ── Proyectos (prototipo docs/diseño/prototipos/privada/proyectos.html) ───────
 .project-card {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -1883,8 +1970,8 @@
 // ── Experiencia laboral (prototipo job-card) ─────────────────────────────────
 .job-card {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -1896,8 +1983,8 @@
 // Educación: misma señal visual que empleo/perfil al crear (borde discontinuo)
 .edu-formacion-card {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
   margin-bottom: 16px;
   overflow: hidden;
 }
@@ -2190,6 +2277,9 @@
 }
 
 .cv-contact-card {
+  border-radius: var(--cv-editor-card-radius);
+  box-shadow: var(--cv-editor-card-shadow);
+  background: #fff;
   border-left: 4px solid #e9ecef;
 }
 .cv-contact-unread {

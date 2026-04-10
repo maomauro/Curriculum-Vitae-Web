@@ -144,11 +144,12 @@ public class CvEditorService : ICvEditorService
 
     public async Task<ExperienciaDto> CreateExperienciaAsync(int curriculumId, UpsertExperienciaRequest r, CancellationToken ct = default)
     {
+        var (fechaInicio, fechaFin) = ValidarYNormalizarFechasExperiencia(r.FechaInicio, r.FechaFin, r.EsActual);
         var e = new Experiencia
         {
             CurriculumId = curriculumId,
             Empresa = r.Empresa, Cargo = r.Cargo, Sector = r.Sector,
-            FechaInicio = r.FechaInicio, FechaFin = r.FechaFin,
+            FechaInicio = fechaInicio, FechaFin = fechaFin,
             TipoContrato = r.TipoContrato, MotivoRetiro = r.MotivoRetiro,
             Funciones = r.Funciones, EsActual = r.EsActual,
             AdjuntoSoporte = r.AdjuntoSoporte,
@@ -161,9 +162,10 @@ public class CvEditorService : ICvEditorService
 
     public async Task<ExperienciaDto> UpdateExperienciaAsync(int curriculumId, int id, UpsertExperienciaRequest r, CancellationToken ct = default)
     {
+        var (fechaInicio, fechaFin) = ValidarYNormalizarFechasExperiencia(r.FechaInicio, r.FechaFin, r.EsActual);
         var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
         e.Empresa = r.Empresa; e.Cargo = r.Cargo; e.Sector = r.Sector;
-        e.FechaInicio = r.FechaInicio; e.FechaFin = r.FechaFin;
+        e.FechaInicio = fechaInicio; e.FechaFin = fechaFin;
         e.TipoContrato = r.TipoContrato; e.MotivoRetiro = r.MotivoRetiro;
         e.Funciones = r.Funciones; e.EsActual = r.EsActual;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
@@ -455,7 +457,9 @@ public class CvEditorService : ICvEditorService
             .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
             ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
 
-        return new PresentacionCvDto(CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo));
+        var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
+        var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
+        return new PresentacionCvDto(plantilla, meses);
     }
 
     public async Task<PresentacionCvDto> UpdatePresentacionAsync(
@@ -470,7 +474,87 @@ public class CvEditorService : ICvEditorService
         c.PlantillaCodigo = code;
         c.FechaActualizacion = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
-        return new PresentacionCvDto(code);
+        var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
+        return new PresentacionCvDto(code, meses);
+    }
+
+    private const int TrayectoriaAnioMin = 1950;
+    private const int TrayectoriaMesesMaxPorPuesto = 600;
+
+    private static int DiffInMonthsDateOnly(DateOnly start, DateOnly end)
+    {
+        // Conteo por mes calendario (incluyente): ene->ene = 1, ene->feb = 2, etc.
+        var total = (end.Year - start.Year) * 12 + (end.Month - start.Month) + 1;
+        return Math.Max(0, total);
+    }
+
+    private async Task<int> CalcularExperienciaLaboralMesesAcumuladosAsync(int curriculumId, CancellationToken ct)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+
+        var rows = await _context.Experiencias.AsNoTracking()
+            .Where(e => e.CurriculumId == curriculumId)
+            .Select(e => new { e.FechaInicio, e.FechaFin, e.EsActual })
+            .ToListAsync(ct);
+
+        var suma = 0;
+        foreach (var exp in rows)
+        {
+            if (exp.FechaInicio is null)
+                continue;
+
+            var start = exp.FechaInicio.Value;
+            if (start.Year < TrayectoriaAnioMin || start > today)
+                continue;
+
+            var end = exp.EsActual
+                ? today
+                : (exp.FechaFin ?? today);
+
+            if (end > today)
+                end = today;
+            if (end < start || end.Year < TrayectoriaAnioMin)
+                continue;
+
+            var meses = DiffInMonthsDateOnly(start, end);
+            if (meses > TrayectoriaMesesMaxPorPuesto)
+                meses = TrayectoriaMesesMaxPorPuesto;
+
+            suma += meses;
+        }
+
+        return suma;
+    }
+
+    private static (DateOnly? fechaInicio, DateOnly? fechaFin) ValidarYNormalizarFechasExperiencia(
+        DateOnly? fechaInicio,
+        DateOnly? fechaFin,
+        bool esActual)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+
+        if (fechaInicio is { } inicio)
+        {
+            if (inicio.Year < TrayectoriaAnioMin)
+                throw new ArgumentException($"La fecha de inicio no puede ser menor a {TrayectoriaAnioMin}-01-01.");
+            if (inicio > today)
+                throw new ArgumentException("La fecha de inicio no puede ser futura.");
+        }
+
+        if (esActual)
+            return (fechaInicio, null);
+
+        if (fechaFin is { } fin)
+        {
+            if (fin.Year < TrayectoriaAnioMin)
+                throw new ArgumentException($"La fecha de fin no puede ser menor a {TrayectoriaAnioMin}-01-01.");
+            if (fin > today)
+                throw new ArgumentException("La fecha de fin no puede ser futura.");
+            if (fechaInicio is { } inicioFecha && fin < inicioFecha)
+                throw new ArgumentException("La fecha de fin no puede ser anterior a la fecha de inicio.");
+        }
+
+        return (fechaInicio, fechaFin);
     }
 
     // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

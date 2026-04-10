@@ -1,3 +1,8 @@
+---
+name: Estándar
+about: Cambios normales o amplios (feat, refactor, docs, chore). Usa esta plantilla por defecto.
+---
+
 ## Resumen
 Describe brevemente que cambia este PR y por que.
 

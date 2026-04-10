@@ -1,3 +1,8 @@
+---
+name: Hotfix / fix corto
+about: Correcciones puntuales y de bajo alcance. Para cambios amplios usa la plantilla «Estándar».
+---
+
 ## Resumen breve
 Describe en 2 a 4 lineas que se corrige y por que era necesario.
 

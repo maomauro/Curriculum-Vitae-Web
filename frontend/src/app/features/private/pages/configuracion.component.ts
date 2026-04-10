@@ -206,6 +206,8 @@ export class ConfiguracionComponent implements OnInit {
             { key: 'datos-personales.foto', label: 'Foto', visible: true },
             { key: 'datos-personales.email', label: 'Correo electrónico', visible: true },
             { key: 'datos-personales.telefono', label: 'Teléfono', visible: true },
+            { key: 'datos-personales.ciudad-pais', label: 'Ciudad y país', visible: true },
+            { key: 'datos-personales.linkedin', label: 'LinkedIn', visible: true },
           ],
         },
       ],
@@ -223,6 +225,7 @@ export class ConfiguracionComponent implements OnInit {
           icon: 'bi-person-badge-fill',
           iconStyle: 'vis-icon--perfil',
           visible: true,
+          sinSwitchSeccion: true,
           atributos: [
             { key: 'perfil.experiencia-perfil', label: 'Experiencia (perfil)', visible: true },
             { key: 'perfil.aspiracion-salarial', label: 'Salarios', visible: true },
