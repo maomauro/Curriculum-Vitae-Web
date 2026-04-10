@@ -1,5 +1,5 @@
 -- Añade plantilla de presentación del CV (Mi CV / impresión).
--- Valores válidos en aplicación: clasico | profesional
+-- Valores válidos en aplicación: clasico | profesional | ats | corporativo | ejecutivo
 
 IF COL_LENGTH(N'dbo.Curriculum', N'PlantillaCodigo') IS NULL
 BEGIN

@@ -108,7 +108,17 @@ interface PerfilUI extends PerfilDto {
            [class.is-active]="p.form.esActivo">
 
         <div class="profile-card-header">
-          <div class="profile-name">
+          <div class="profile-name cv-cursor-pointer"
+               role="button"
+               tabindex="0"
+               [attr.aria-expanded]="isPerfilAccordionOpen(p.perfilId)"
+               [attr.aria-controls]="'perfil-panel-' + p.perfilId"
+               (click)="togglePerfilAccordion(p.perfilId)"
+               (keydown.enter)="togglePerfilAccordion(p.perfilId)"
+               (keydown.space)="$event.preventDefault(); togglePerfilAccordion(p.perfilId)">
+            <i class="bi cv-chevron-muted" aria-hidden="true"
+               [class.bi-chevron-down]="!isPerfilAccordionOpen(p.perfilId)"
+               [class.bi-chevron-up]="isPerfilAccordionOpen(p.perfilId)"></i>
             {{ p.form.nombrePerfil || 'Sin nombre' }}
             <span *ngIf="p.form.esActivo" class="badge-active">
               <i class="bi bi-check-circle-fill" aria-hidden="true"></i>Activo
@@ -127,7 +137,10 @@ interface PerfilUI extends PerfilDto {
           </div>
         </div>
 
-        <div class="row g-3">
+        <div *ngIf="isPerfilAccordionOpen(p.perfilId)"
+             class="row g-3"
+             [id]="'perfil-panel-' + p.perfilId"
+             role="region">
           <div class="col-md-5">
             <label class="form-label" [attr.for]="'nombre-' + p.perfilId">Nombre del perfil / Cargo objetivo <span class="text-danger">*</span></label>
             <input type="text" class="form-control" [id]="'nombre-' + p.perfilId"
@@ -161,7 +174,7 @@ interface PerfilUI extends PerfilDto {
           </div>
         </div>
 
-        <div class="perfil-action-row">
+        <div *ngIf="isPerfilAccordionOpen(p.perfilId)" class="perfil-action-row">
           <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminar(p)" [disabled]="guardando">
             <i class="bi bi-trash3 me-1"></i>Eliminar
           </button>
@@ -179,6 +192,7 @@ export class PerfilComponent implements OnInit {
   loading = false;
   guardando = false;
   mostrarFormNuevo = false;
+  private perfilesAbiertos = new Set<number>();
 
   formNuevo: UpsertPerfilRequest = {
     nombrePerfil: null,
@@ -200,6 +214,18 @@ export class PerfilComponent implements OnInit {
 
   trackByPerfil(_index: number, p: PerfilUI): number {
     return p.perfilId;
+  }
+
+  togglePerfilAccordion(perfilId: number): void {
+    if (this.perfilesAbiertos.has(perfilId)) {
+      this.perfilesAbiertos.delete(perfilId);
+      return;
+    }
+    this.perfilesAbiertos.add(perfilId);
+  }
+
+  isPerfilAccordionOpen(perfilId: number): boolean {
+    return this.perfilesAbiertos.has(perfilId);
   }
 
   private toForm(p: PerfilDto): UpsertPerfilRequest {
@@ -230,6 +256,7 @@ export class PerfilComponent implements OnInit {
     this.cvEditorService.getPerfiles().subscribe({
       next: data => {
         this.perfiles = data.map(p => ({ ...p, form: this.toForm(p) }));
+        this.perfilesAbiertos.clear();
         this.loading = false;
         this.guardando = false;
       },

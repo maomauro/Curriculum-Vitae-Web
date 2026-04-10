@@ -753,10 +753,14 @@
   }
 
   .cv-preview-header {
-    padding: 2rem clamp(1.5rem, 4vw, 2.5rem);
+    padding: 0;
     gap: clamp(1rem, 3vw, 1.75rem);
     align-items: flex-start;
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .cv-preview-header-body {
+    padding: 2rem clamp(1.5rem, 4vw, 2.5rem);
   }
 
   .cv-preview-name {
@@ -1030,81 +1034,9 @@
 }
 
 // ── Plantillas Mi CV (misma estructura HTML; modificador en la raíz .cv-mi-preview)
-/* Inspiración: CV tipo documento / PDF (nombre + contacto, secciones con título en negrita, listas con viñeta). */
-.cv-mi-preview.cv-tpl--profesional {
-  --cv-primary: #212529;
+// Prototipos: docs/diseño/prototipos/privada/plantillas-cv/
 
-  .cv-mi-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-  }
-
-  .cv-preview-main {
-    grid-column: 1;
-    max-width: none;
-    width: 100%;
-  }
-
-  .cv-preview-header {
-    background: #fff;
-    color: #111;
-    border-bottom: 2px solid #212529;
-    box-shadow: none;
-  }
-
-  .cv-preview-name {
-    color: #111;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: clamp(1.05rem, 2.1vw, 1.3rem);
-    text-shadow: none;
-    font-weight: 800;
-    line-height: 1.25;
-  }
-
-  .cv-preview-sub {
-    color: #212529;
-    font-weight: 600;
-    font-size: 0.9375rem;
-    margin-top: 0.15rem;
-  }
-
-  .cv-preview-meta {
-    color: #343a40;
-    font-size: 0.8125rem;
-    line-height: 1.5;
-
-    span {
-      color: #343a40;
-    }
-
-    i {
-      opacity: 0.65;
-      color: #495057;
-    }
-  }
-
-  .cv-mi-section-title {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    text-transform: none;
-    letter-spacing: normal;
-    color: #111;
-    border-bottom: 1.5px solid #212529;
-    padding-bottom: 4px;
-    margin-bottom: 0.65rem;
-    margin-top: 1.35rem;
-  }
-
-  .cv-mi-section:first-of-type .cv-mi-section-title {
-    margin-top: 0;
-  }
-
-  .cv-mi-section {
-    margin-bottom: 1.35rem;
-  }
-
+@mixin cv-mi-listas-documento {
   .cv-mi-timeline > .timeline-item {
     border-left: none;
     padding-left: 0;
@@ -1200,6 +1132,397 @@
   }
 }
 
+/* Clásico: cabecera degradada + sidebar clara (grid base); texto claro en cabecera. */
+.cv-mi-preview.cv-tpl--clasico {
+  .cv-preview-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cv-preview-sub {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .cv-preview-meta {
+    color: rgba(255, 255, 255, 0.88) !important;
+
+    span,
+    i {
+      color: inherit !important;
+    }
+  }
+}
+
+/* Profesional: una columna, estilo documento / PDF (viñetas + listas de habilidades en cuerpo). */
+.cv-mi-preview.cv-tpl--profesional {
+  --cv-primary: #212529;
+
+  .cv-mi-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cv-preview-main {
+    grid-column: 1;
+    max-width: none;
+    width: 100%;
+  }
+
+  .cv-preview-header {
+    background: #fff !important;
+    color: #111 !important;
+    border-bottom: 2px solid #212529;
+    box-shadow: none !important;
+  }
+
+  .cv-preview-name {
+    color: #111 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: clamp(1.05rem, 2.1vw, 1.3rem);
+    text-shadow: none;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .cv-preview-sub {
+    color: #212529 !important;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-top: 0.15rem;
+  }
+
+  .cv-preview-meta {
+    color: #343a40 !important;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+
+    span {
+      color: #343a40 !important;
+    }
+
+    i {
+      opacity: 0.65;
+      color: #495057 !important;
+    }
+  }
+
+  .cv-mi-section-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #111;
+    border-bottom: 1.5px solid #212529;
+    padding-bottom: 4px;
+    margin-bottom: 0.65rem;
+    margin-top: 1.35rem;
+  }
+
+  .cv-mi-section:first-of-type .cv-mi-section-title {
+    margin-top: 0;
+  }
+
+  .cv-mi-section {
+    margin-bottom: 1.35rem;
+  }
+
+  @include cv-mi-listas-documento;
+}
+
+/* 01 — ATS / tradicional: una columna, títulos en mayúsculas, acento navy, sin barras de progreso. */
+.cv-mi-preview.cv-tpl--ats {
+  --cv-primary: #1a365d;
+
+  .cv-mi-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cv-preview-main {
+    grid-column: 1;
+    max-width: none;
+    width: 100%;
+    font-family: Calibri, 'Segoe UI', Candara, system-ui, sans-serif;
+  }
+
+  .cv-preview-header {
+    background: #fff !important;
+    color: #333 !important;
+    border-bottom: 1px solid #ccc;
+    box-shadow: none !important;
+  }
+
+  .cv-preview-header-body {
+    padding: 1.25rem clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .cv-preview-name {
+    color: #1a365d !important;
+    font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: normal;
+    text-transform: none;
+    text-shadow: none;
+  }
+
+  .cv-preview-sub {
+    color: #555 !important;
+    font-weight: 400;
+    font-size: 1rem;
+    margin-top: 0.2rem;
+  }
+
+  .cv-preview-meta {
+    color: #333 !important;
+    font-size: 0.875rem;
+
+    span,
+    i {
+      color: inherit !important;
+      opacity: 1;
+    }
+  }
+
+  .cv-mi-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #1a365d;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 6px;
+    margin-bottom: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .cv-mi-section:first-of-type .cv-mi-section-title {
+    margin-top: 0;
+  }
+
+  .cv-mi-section {
+    margin-bottom: 1.25rem;
+  }
+
+  .cv-progress-preview {
+    display: none !important;
+  }
+
+  @include cv-mi-listas-documento;
+
+  a.cv-mi-support-link {
+    color: #1a365d !important;
+
+    &:hover {
+      color: #0f2444 !important;
+    }
+  }
+}
+
+/* 02 — Corporativo: sidebar navy, identidad en columna izquierda. */
+.cv-mi-preview.cv-tpl--corporativo {
+  --cv-primary: #4a90d9;
+
+  .cv-mi-body {
+    display: grid;
+    grid-template-columns: minmax(220px, 32%) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .cv-preview-sidebar {
+    background: #1e3a5f !important;
+    color: rgba(255, 255, 255, 0.95);
+    border-right: none !important;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+  }
+
+  .cv-corp-identity {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .cv-corp-name {
+    font-size: clamp(1.2rem, 2.2vw, 1.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+  }
+
+  .cv-corp-role {
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 500;
+  }
+
+  .cv-corp-contact {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.82);
+
+    div {
+      margin-bottom: 0.35rem;
+    }
+
+    i {
+      opacity: 0.85;
+    }
+  }
+
+  .cv-preview-main {
+    background: #fff;
+    max-width: none;
+  }
+
+  .cv-mi-cv-section .cv-mi-section-title,
+  .cv-preview-sidebar .cv-mi-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+  }
+
+  .cv-preview-sidebar .cv-skill-line {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .cv-preview-sidebar .cv-skill-line small {
+    color: rgba(255, 255, 255, 0.65) !important;
+  }
+
+  .cv-progress-preview {
+    display: none !important;
+  }
+
+  .cv-mi-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #365478;
+    border-bottom: 2px solid #365478;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+
+  .cv-mi-timeline > .timeline-item {
+    border-left-color: #365478;
+
+    &::before {
+      background: #365478;
+    }
+  }
+
+  .cv-mi-timeline .timeline-sub {
+    color: #365478;
+  }
+}
+
+/* 03 — Ejecutivo: serif + sans, mucho aire. */
+.cv-mi-preview.cv-tpl--ejecutivo {
+  --cv-primary: #111827;
+
+  .cv-mi-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cv-preview-main {
+    grid-column: 1;
+    max-width: 42rem;
+    width: 100%;
+    margin: 0 auto;
+    font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .cv-preview-header {
+    background: #fff !important;
+    color: #111 !important;
+    border-bottom: none;
+    box-shadow: none !important;
+  }
+
+  .cv-preview-header-body {
+    padding: 2rem clamp(1.5rem, 4vw, 2.5rem) 1.25rem;
+  }
+
+  .cv-preview-name {
+    font-family: Merriweather, Georgia, 'Times New Roman', serif;
+    color: #111 !important;
+    font-size: clamp(1.65rem, 2.8vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-shadow: none;
+    line-height: 1.15;
+  }
+
+  .cv-preview-sub {
+    font-family: Merriweather, Georgia, serif;
+    font-style: italic;
+    color: #4b5563 !important;
+    font-weight: 400;
+    font-size: 1rem;
+    margin-top: 0.35rem;
+  }
+
+  .cv-preview-meta {
+    color: #6b7280 !important;
+    font-size: 0.8125rem;
+
+    span,
+    i {
+      color: inherit !important;
+      opacity: 1;
+    }
+  }
+
+  .cv-preview-header-body::after {
+    content: '';
+    display: block;
+    margin-top: 1.25rem;
+    height: 1px;
+    background: #111827;
+    max-width: 48px;
+  }
+
+  .cv-mi-section {
+    margin-bottom: 2rem;
+  }
+
+  .cv-mi-section-title {
+    font-family: Merriweather, Georgia, serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #6b7280;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0.85rem;
+    margin-top: 0;
+  }
+
+  .cv-mi-section:not(:first-of-type) {
+    padding-top: 0.25rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  @include cv-mi-listas-documento;
+
+  a.cv-mi-support-link {
+    color: #111827 !important;
+  }
+}
+
 @media screen {
   /* Fondo tipo escritorio; vista = un solo bloque con scroll (paginación en impresión/PDF). */
   .cv-mi-letter-wrap {
@@ -1292,13 +1615,21 @@
     border-right: 1px solid #ccc;
   }
 
-  .cv-mi-preview.cv-tpl--profesional .cv-mi-body {
+  .cv-mi-preview.cv-tpl--profesional .cv-mi-body,
+  .cv-mi-preview.cv-tpl--ats .cv-mi-body,
+  .cv-mi-preview.cv-tpl--ejecutivo .cv-mi-body {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .cv-mi-preview.cv-tpl--profesional .cv-preview-main {
+  .cv-mi-preview.cv-tpl--profesional .cv-preview-main,
+  .cv-mi-preview.cv-tpl--ats .cv-preview-main,
+  .cv-mi-preview.cv-tpl--ejecutivo .cv-preview-main {
     max-width: none;
     width: 100%;
+  }
+
+  .cv-mi-preview.cv-tpl--ejecutivo .cv-preview-main {
+    max-width: none;
   }
 
 }

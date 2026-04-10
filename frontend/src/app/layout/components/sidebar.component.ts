@@ -54,14 +54,14 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
           <i class="bi bi-mortarboard-fill"></i><span>Educación</span>
         </a>
 
-        <!-- Habilidades -->
-        <a class="nav-item-sidebar" routerLink="/habilidades" routerLinkActive="active">
-          <i class="bi bi-stars"></i><span>Habilidades</span>
-        </a>
-
         <!-- Proyectos -->
         <a class="nav-item-sidebar" routerLink="/proyectos" routerLinkActive="active">
           <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
+        </a>
+
+        <!-- Habilidades -->
+        <a class="nav-item-sidebar" routerLink="/habilidades" routerLinkActive="active">
+          <i class="bi bi-stars"></i><span>Habilidades</span>
         </a>
 
         <hr class="my-1 cv-sidebar-hr">

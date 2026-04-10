@@ -63,6 +63,23 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
             <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             Guardando…
           </span>
+          <span *ngIf="hayCambiosPlantilla && !savingPlantilla" class="small text-warning-emphasis">
+            Cambios sin guardar
+          </span>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            [disabled]="!hayCambiosPlantilla || savingPlantilla"
+            (click)="guardarPlantilla()">
+            Guardar plantilla
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            [disabled]="!hayCambiosPlantilla || savingPlantilla"
+            (click)="revertirPlantilla()">
+            Cancelar
+          </button>
         </div>
       </div>
       <div class="d-flex gap-2">
@@ -81,36 +98,59 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
     <div *ngIf="!loading" class="cv-mi-letter-wrap">
       <div [class]="previewRootClass">
         <div class="cv-mi-preview-stack">
-      <div
-        class="d-flex align-items-start cv-preview-header"
-        [class.text-white]="plantillaCodigo === 'clasico'">
-        <div class="flex-grow-1 min-w-0">
-          <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
-          <div class="cv-preview-sub">
-            {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional' }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Perfil activo</ng-container>
-          </div>
-          <div class="d-flex flex-wrap mt-2 cv-preview-meta">
-            <span *ngIf="visibleAtributoSafe('datos-personales','email') && personales?.email">
-              <i class="bi bi-envelope-fill"></i>{{ personales?.email }}
-            </span>
-            <span *ngIf="visibleAtributoSafe('datos-personales','telefono') && telefonoContacto">
-              <i class="bi bi-telephone-fill"></i>{{ telefonoContacto }}
-            </span>
-            <span *ngIf="visibleAtributoSafe('datos-personales','ciudad-pais') && ciudadPais">
-              <i class="bi bi-geo-alt-fill"></i>{{ ciudadPais }}
-            </span>
-            <span *ngIf="linkedin">
-              <i class="bi bi-linkedin"></i>{{ linkedin }}
-            </span>
-            <span *ngIf="trayectoriaCabecera">
-              <i class="bi bi-briefcase-fill"></i>{{ trayectoriaCabecera }}
-            </span>
+      <ng-container *ngIf="plantillaCodigo !== 'corporativo'">
+        <div
+          class="cv-preview-header d-flex align-items-start"
+          [class.text-white]="plantillaCodigo === 'clasico'">
+          <div class="d-flex align-items-start w-100 cv-preview-header-body">
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
+              <div class="cv-preview-sub">
+                {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional' }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Perfil activo</ng-container>
+              </div>
+              <div class="d-flex flex-wrap mt-2 cv-preview-meta">
+                <span *ngIf="visibleAtributoSafe('datos-personales','email') && personales?.email">
+                  <i class="bi bi-envelope-fill"></i>{{ personales?.email }}
+                </span>
+                <span *ngIf="visibleAtributoSafe('datos-personales','telefono') && telefonoContacto">
+                  <i class="bi bi-telephone-fill"></i>{{ telefonoContacto }}
+                </span>
+                <span *ngIf="visibleAtributoSafe('datos-personales','ciudad-pais') && ciudadPais">
+                  <i class="bi bi-geo-alt-fill"></i>{{ ciudadPais }}
+                </span>
+                <span *ngIf="linkedin">
+                  <i class="bi bi-linkedin"></i>{{ linkedin }}
+                </span>
+                <span *ngIf="trayectoriaCabecera">
+                  <i class="bi bi-briefcase-fill"></i>{{ trayectoriaCabecera }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </ng-container>
 
       <div class="cv-mi-body">
-        <div class="cv-preview-sidebar" *ngIf="!esPlantillaCuerpoUnico">
+        <div class="cv-preview-sidebar" *ngIf="plantillaCodigo === 'clasico' || plantillaCodigo === 'corporativo'">
+          <div class="cv-corp-identity" *ngIf="plantillaCodigo === 'corporativo'">
+            <div class="cv-corp-name">{{ nombreCompleto }}</div>
+            <div class="cv-corp-role">
+              {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional' }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Activo</ng-container>
+            </div>
+            <div class="cv-corp-contact">
+              <div *ngIf="visibleAtributoSafe('datos-personales','email') && personales?.email">
+                <i class="bi bi-envelope-fill me-1" aria-hidden="true"></i>{{ personales?.email }}
+              </div>
+              <div *ngIf="visibleAtributoSafe('datos-personales','telefono') && telefonoContacto">
+                <i class="bi bi-telephone-fill me-1" aria-hidden="true"></i>{{ telefonoContacto }}
+              </div>
+              <div *ngIf="visibleAtributoSafe('datos-personales','ciudad-pais') && ciudadPais">
+                <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>{{ ciudadPais }}
+              </div>
+              <div *ngIf="linkedin"><i class="bi bi-linkedin me-1" aria-hidden="true"></i>{{ linkedin }}</div>
+              <div *ngIf="trayectoriaCabecera"><i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>{{ trayectoriaCabecera }}</div>
+            </div>
+          </div>
           <div class="cv-mi-cv-section cv-mi-skill-block" *ngIf="visibleSeccion('habilidades') && habilidadesTecnicas.length">
             <div class="cv-mi-section-title">Habilidades Técnicas</div>
             <div *ngFor="let h of habilidadesTecnicas" class="cv-mi-skill-item">
@@ -341,6 +381,7 @@ export class MiCvComponent implements OnInit {
 
   /** Plantilla de presentación (API). */
   plantillaCodigo: CvPlantillaCodigo = 'clasico';
+  private plantillaCodigoPersistida: CvPlantillaCodigo = 'clasico';
 
   private readonly tiposAcademicos = new Set(['Posgrado', 'Pregrado', 'Tecnologo', 'Tecnico']);
 
@@ -360,14 +401,22 @@ export class MiCvComponent implements OnInit {
     return CV_PLANTILLAS.find(p => p.codigo === this.plantillaCodigo)?.color ?? '#2c7be5';
   }
 
-  /** Una columna, sin barra lateral (solo Profesional). */
+  /** Una columna, sin barra lateral (Profesional, ATS, Ejecutivo). */
   get esPlantillaCuerpoUnico(): boolean {
-    return this.plantillaCodigo === 'profesional';
+    return (
+      this.plantillaCodigo === 'profesional' ||
+      this.plantillaCodigo === 'ats' ||
+      this.plantillaCodigo === 'ejecutivo'
+    );
   }
 
-  /** Estilo documento / PDF de ejemplo: viñetas en experiencia y listas de habilidades. */
+  /** Viñetas en experiencia/proyectos y bloques de habilidades en columna principal. */
   get esPlantillaProfesional(): boolean {
-    return this.plantillaCodigo === 'profesional';
+    return this.esPlantillaCuerpoUnico;
+  }
+
+  get hayCambiosPlantilla(): boolean {
+    return this.plantillaCodigo !== this.plantillaCodigoPersistida;
   }
 
   constructor(
@@ -388,20 +437,33 @@ export class MiCvComponent implements OnInit {
     if (codigo === this.plantillaCodigo || this.savingPlantilla) {
       return;
     }
-    const anterior = this.plantillaCodigo;
+    this.plantillaCodigo = codigo;
+  }
+
+  guardarPlantilla(): void {
+    if (!this.hayCambiosPlantilla || this.savingPlantilla) return;
+    const objetivo = this.plantillaCodigo;
+    const anterior = this.plantillaCodigoPersistida;
     this.savingPlantilla = true;
-    this.cvEditorService.updatePresentacion({ plantillaCodigo: codigo }).subscribe({
+    this.cvEditorService.updatePresentacion({ plantillaCodigo: objetivo }).subscribe({
       next: p => {
         this.plantillaCodigo = normalizeCvPlantillaCodigo(p.plantillaCodigo);
+        this.plantillaCodigoPersistida = this.plantillaCodigo;
         this.savingPlantilla = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
       error: () => {
         this.plantillaCodigo = anterior;
+        this.plantillaCodigoPersistida = anterior;
         this.savingPlantilla = false;
         this.notificationService.error(NOTIFICATION_MESSAGES.saveError);
       },
     });
+  }
+
+  revertirPlantilla(): void {
+    if (this.savingPlantilla) return;
+    this.plantillaCodigo = this.plantillaCodigoPersistida;
   }
 
   get nombreCompleto(): string {
@@ -757,6 +819,7 @@ export class MiCvComponent implements OnInit {
         this.referencias = referencias;
         this.setVisibilidad(visibilidad);
         this.plantillaCodigo = normalizeCvPlantillaCodigo(presentacion.plantillaCodigo);
+        this.plantillaCodigoPersistida = this.plantillaCodigo;
         this.loading = false;
       },
       error: () => {

@@ -28,7 +28,7 @@ interface ConfigVisGroup {
   icon: string;
   clase: string;
   items: ConfigVisItem[];
-  /** Panel del acordeón de visibilidad */
+  /** Panel del acordeón de visibilidad (por defecto colapsado al entrar). */
   accordionOpen: boolean;
 }
 
@@ -193,7 +193,7 @@ export class ConfiguracionComponent implements OnInit {
       titulo: 'Información Personal',
       icon: 'bi-person-fill',
       clase: 'vis-group-label--personal',
-      accordionOpen: true,
+      accordionOpen: false,
       items: [
         {
           key: 'datos-personales',
@@ -215,7 +215,7 @@ export class ConfiguracionComponent implements OnInit {
       titulo: 'Información Profesional',
       icon: 'bi-briefcase-fill',
       clase: 'vis-group-label--profesional',
-      accordionOpen: true,
+      accordionOpen: false,
       items: [
         {
           key: 'perfil',

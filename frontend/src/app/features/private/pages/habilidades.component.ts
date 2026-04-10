@@ -332,8 +332,8 @@ export class HabilidadesComponent implements OnInit {
   guardandoBlandas = false;
   guardandoIdiomas = false;
 
-  /** Acordeón por sección (técnicas abiertas por defecto). */
-  accordionTecnicasOpen = true;
+  /** Acordeón por sección (todas colapsadas por defecto). */
+  accordionTecnicasOpen = false;
   accordionBlandasOpen = false;
   accordionIdiomasOpen = false;
 
