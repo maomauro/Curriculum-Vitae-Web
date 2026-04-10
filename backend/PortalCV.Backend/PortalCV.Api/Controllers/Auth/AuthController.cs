@@ -78,4 +78,26 @@ public class AuthController : ControllerBase
     {
         return Ok(new { message = ApiMessages.Auth.ForgotPasswordRespuestaGenerica });
     }
+
+    /// <summary>Cambia la contraseña del usuario autenticado (valida la actual).</summary>
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request,
+        CancellationToken ct)
+    {
+        // El handler JWT suele mapear "sub" → ClaimTypes.NameIdentifier; buscar ambos.
+        var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrEmpty(idStr) || !int.TryParse(idStr, out var usuarioId))
+            return Unauthorized();
+
+        await _authService.ChangePasswordAsync(
+            usuarioId,
+            request.CurrentPassword ?? string.Empty,
+            request.NewPassword ?? string.Empty,
+            ct);
+
+        return Ok(new { message = ApiMessages.Auth.ContraseñaActualizada });
+    }
 }

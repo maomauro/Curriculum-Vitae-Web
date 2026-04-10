@@ -459,7 +459,8 @@ public class CvEditorService : ICvEditorService
 
         var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
         var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
-        return new PresentacionCvDto(plantilla, meses);
+        var publicado = string.Equals(c.Estado, "Publicado", StringComparison.OrdinalIgnoreCase);
+        return new PresentacionCvDto(plantilla, meses, c.UrlPublica ?? string.Empty, publicado);
     }
 
     public async Task<PresentacionCvDto> UpdatePresentacionAsync(
@@ -475,7 +476,24 @@ public class CvEditorService : ICvEditorService
         c.FechaActualizacion = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
         var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
-        return new PresentacionCvDto(code, meses);
+        var publicado = string.Equals(c.Estado, "Publicado", StringComparison.OrdinalIgnoreCase);
+        return new PresentacionCvDto(code, meses, c.UrlPublica ?? string.Empty, publicado);
+    }
+
+    public async Task<PresentacionCvDto> UpdateCurriculumPublicacionAsync(
+        int curriculumId,
+        bool publicado,
+        CancellationToken ct = default)
+    {
+        var c = await _context.Curriculums
+            .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
+
+        c.Estado = publicado ? "Publicado" : "Borrador";
+        c.FechaActualizacion = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+
+        return await GetPresentacionAsync(curriculumId, ct);
     }
 
     private const int TrayectoriaAnioMin = 1950;

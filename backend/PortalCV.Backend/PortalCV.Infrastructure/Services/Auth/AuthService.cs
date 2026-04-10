@@ -126,6 +126,36 @@ public class AuthService : IAuthService
     }
 
     // ──────────────────────────────────────────────────────────────────────────
+    // Cambio de contraseña (usuario autenticado)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    public async Task ChangePasswordAsync(
+        int usuarioId,
+        string currentPassword,
+        string newPassword,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+            throw new ArgumentException("La nueva contraseña debe tener al menos 8 caracteres.");
+
+        if (string.Equals(currentPassword, newPassword, StringComparison.Ordinal))
+            throw new ArgumentException("La nueva contraseña debe ser distinta de la actual.");
+
+        var usuario = await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.UsuarioId == usuarioId, ct)
+            ?? throw new KeyNotFoundException("Usuario no encontrado.");
+
+        if (usuario.Estado != "Activo")
+            throw new ArgumentException("La cuenta no está activa.");
+
+        if (!BCrypt.Net.BCrypt.Verify(currentPassword, usuario.PasswordHash))
+            throw new ArgumentException("La contraseña actual no es correcta.");
+
+        usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 12);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
     // Helpers privados
     // ──────────────────────────────────────────────────────────────────────────
 
