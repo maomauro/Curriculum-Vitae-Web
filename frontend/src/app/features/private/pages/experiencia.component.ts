@@ -109,12 +109,12 @@ interface BorradorRefLaboral {
           </div>
           <div class="col-md-3">
             <label class="form-label">Fecha de inicio</label>
-            <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="exp.form.fechaInicio">
+            <input type="date" class="form-control" [min]="minDate" [max]="todayDate" [(ngModel)]="exp.form.fechaInicio">
           </div>
           <div class="col-md-3">
             <label class="form-label">Fecha de fin</label>
             <div class="input-group">
-              <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="exp.form.fechaFin"
+              <input type="date" class="form-control" [min]="minDate" [max]="todayDate" [(ngModel)]="exp.form.fechaFin"
                      [disabled]="exp.form.esActual">
               <div class="input-group-text p-0 px-2 bg-white">
                 <div class="form-check mb-0 py-1">
@@ -361,6 +361,7 @@ interface BorradorRefLaboral {
   `,
 })
 export class ExperienciaComponent implements OnInit {
+  readonly minDate = '1950-01-01';
   experiencias: ExperienciaUI[] = [];
   referencias: ReferenciaDto[] = [];
   /** Borradores por empleo (experienciaId real o 0 = empleo nuevo); mismas tarjetas en ambos casos. */
@@ -766,6 +767,21 @@ export class ExperienciaComponent implements OnInit {
 
     if (!exp.form.esActual && exp.form.fechaFin && !payload.fechaFin) {
       this.notificationService.warning(FORM_MESSAGES.experiencia.invalidDate);
+      return;
+    }
+
+    if (payload.fechaInicio && (payload.fechaInicio < this.minDate || payload.fechaInicio > this.todayDate)) {
+      this.notificationService.warning(FORM_MESSAGES.experiencia.invalidDateRange);
+      return;
+    }
+
+    if (payload.fechaFin && (payload.fechaFin < this.minDate || payload.fechaFin > this.todayDate)) {
+      this.notificationService.warning(FORM_MESSAGES.experiencia.invalidDateRange);
+      return;
+    }
+
+    if (!payload.esActual && payload.fechaInicio && payload.fechaFin && payload.fechaFin < payload.fechaInicio) {
+      this.notificationService.warning(FORM_MESSAGES.experiencia.endBeforeStart);
       return;
     }
 

@@ -31,6 +31,11 @@ public sealed class GlobalExceptionMiddleware
             _logger.LogWarning(ex, "Acceso no autorizado en {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteErrorResponseAsync(context, (int)HttpStatusCode.Forbidden, ex.Message);
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Solicitud inválida en {Method} {Path}", context.Request.Method, context.Request.Path);
+            await WriteErrorResponseAsync(context, (int)HttpStatusCode.BadRequest, ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error no controlado en la solicitud {Method} {Path}", context.Request.Method, context.Request.Path);

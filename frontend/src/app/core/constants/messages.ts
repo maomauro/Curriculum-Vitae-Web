@@ -23,6 +23,8 @@ export const APP_MESSAGES = {
       },
       experiencia: {
         invalidDate: 'Revisa las fechas de experiencia. Usa formato AAAA-MM-DD.',
+        invalidDateRange: 'Las fechas de experiencia deben estar entre 1950-01-01 y hoy.',
+        endBeforeStart: 'La fecha de fin no puede ser anterior a la fecha de inicio.',
         requiredEmpresa: 'Indica el nombre de la empresa.',
         requiredCargo: 'Indica el cargo o puesto.',
         refPendientesAlCrearEmpleo:

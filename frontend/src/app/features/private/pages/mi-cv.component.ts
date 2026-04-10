@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { forkJoin, Subject } from 'rxjs';
+import { filter, skip, takeUntil } from 'rxjs/operators';
 import {
   CvEditorService,
   ExperienciaDto,
@@ -103,10 +105,21 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
           class="cv-preview-header d-flex align-items-start"
           [class.text-white]="plantillaCodigo === 'clasico'">
           <div class="d-flex align-items-start w-100 cv-preview-header-body">
+            <div *ngIf="visibleAtributoSafe('datos-personales','foto')" class="cv-mi-photo-slot me-3">
+              <img *ngIf="fotoHeaderUrl" [src]="fotoHeaderUrl" alt="Foto de perfil" class="cv-mi-photo-img" />
+              <div *ngIf="!fotoHeaderUrl" class="cv-mi-photo-placeholder" aria-hidden="true">
+                {{ inicialesFoto }}
+              </div>
+            </div>
             <div class="flex-grow-1 min-w-0">
               <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
-              <div class="cv-preview-sub">
+              <div class="cv-preview-sub" *ngIf="visibleSeccion('perfil')">
                 {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional' }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Perfil activo</ng-container>
+              </div>
+              <div
+                class="small mt-1 cv-mi-trayectoria-acumulada"
+                *ngIf="visibleSeccion('experiencia') && trayectoriaCabecera">
+                <i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>{{ trayectoriaCabecera }}
               </div>
               <div class="d-flex flex-wrap mt-2 cv-preview-meta">
                 <span *ngIf="visibleAtributoSafe('datos-personales','email') && personales?.email">
@@ -118,11 +131,8 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
                 <span *ngIf="visibleAtributoSafe('datos-personales','ciudad-pais') && ciudadPais">
                   <i class="bi bi-geo-alt-fill"></i>{{ ciudadPais }}
                 </span>
-                <span *ngIf="linkedin">
+                <span *ngIf="visibleAtributoSafe('datos-personales','linkedin') && linkedin">
                   <i class="bi bi-linkedin"></i>{{ linkedin }}
-                </span>
-                <span *ngIf="trayectoriaCabecera">
-                  <i class="bi bi-briefcase-fill"></i>{{ trayectoriaCabecera }}
                 </span>
               </div>
             </div>
@@ -134,8 +144,13 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
         <div class="cv-preview-sidebar" *ngIf="plantillaCodigo === 'clasico' || plantillaCodigo === 'corporativo'">
           <div class="cv-corp-identity" *ngIf="plantillaCodigo === 'corporativo'">
             <div class="cv-corp-name">{{ nombreCompleto }}</div>
-            <div class="cv-corp-role">
+            <div class="cv-corp-role" *ngIf="visibleSeccion('perfil')">
               {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional' }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Activo</ng-container>
+            </div>
+            <div
+              class="small mt-1 cv-mi-trayectoria-acumulada"
+              *ngIf="visibleSeccion('experiencia') && trayectoriaCabecera">
+              <i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>{{ trayectoriaCabecera }}
             </div>
             <div class="cv-corp-contact">
               <div *ngIf="visibleAtributoSafe('datos-personales','email') && personales?.email">
@@ -147,8 +162,7 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
               <div *ngIf="visibleAtributoSafe('datos-personales','ciudad-pais') && ciudadPais">
                 <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>{{ ciudadPais }}
               </div>
-              <div *ngIf="linkedin"><i class="bi bi-linkedin me-1" aria-hidden="true"></i>{{ linkedin }}</div>
-              <div *ngIf="trayectoriaCabecera"><i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>{{ trayectoriaCabecera }}</div>
+              <div *ngIf="visibleAtributoSafe('datos-personales','linkedin') && linkedin"><i class="bi bi-linkedin me-1" aria-hidden="true"></i>{{ linkedin }}</div>
             </div>
           </div>
           <div class="cv-mi-cv-section cv-mi-skill-block" *ngIf="visibleSeccion('habilidades') && habilidadesTecnicas.length">
@@ -196,9 +210,6 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
             </p>
             <div class="cv-mi-profile-meta" *ngIf="visibleAtributoSafe('perfil','experiencia-perfil') && perfilPrincipal?.experienciaPerfilAnios != null">
               <span class="text-muted">Experiencia (perfil)</span> · {{ perfilPrincipal?.experienciaPerfilAnios }} años
-            </div>
-            <div class="cv-mi-profile-meta text-muted">
-              Trayectoria profesional: {{ trayectoriaTotalTexto }}
             </div>
             <div class="cv-mi-profile-meta" *ngIf="visibleAtributoSafe('perfil','aspiracion-salarial') && aspiracionTexto">
               <span class="text-muted">Aspiración salarial</span> · {{ aspiracionTexto }}
@@ -332,7 +343,7 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
               <ul class="cv-pro-list">
                 <li *ngFor="let h of habilidadesTecnicas">
                   <ng-container *ngIf="visibleAtributo('habilidades','nombre')">
-                    <strong>{{ h.nombre }}</strong><ng-container *ngIf="visibleAtributo('habilidades','nivel') && h.nivel">: {{ h.nivel }}</ng-container><ng-container *ngIf="h.descripcion?.trim()"> — {{ h.descripcion }}</ng-container>
+                    <strong>{{ h.nombre }}</strong><ng-container *ngIf="visibleAtributo('habilidades','nivel') && h.nivel">: {{ h.nivel }}</ng-container><ng-container *ngIf="visibleAtributo('habilidades','descripcion') && h.descripcion?.trim()"> — {{ h.descripcion }}</ng-container>
                   </ng-container>
                 </li>
               </ul>
@@ -350,7 +361,7 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
               <ul class="cv-pro-list">
                 <li *ngFor="let id of idiomas">
                   <ng-container *ngIf="visibleAtributo('habilidades','nombre')">
-                    <strong>{{ id.nombre }}</strong><ng-container *ngIf="visibleAtributo('habilidades','nivel') && id.nivel"> — {{ id.nivel }}</ng-container><ng-container *ngIf="textoDetalleIdioma(id)"> · {{ textoDetalleIdioma(id) }}</ng-container>
+                    <strong>{{ id.nombre }}</strong><ng-container *ngIf="visibleAtributo('habilidades','nivel') && id.nivel"> — {{ id.nivel }}</ng-container><ng-container *ngIf="visibleAtributo('habilidades','descripcion') && textoDetalleIdioma(id)"> · {{ textoDetalleIdioma(id) }}</ng-container>
                   </ng-container>
                 </li>
               </ul>
@@ -363,7 +374,7 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
     </div>
   `,
 })
-export class MiCvComponent implements OnInit {
+export class MiCvComponent implements OnInit, OnDestroy {
   readonly plantillas = CV_PLANTILLAS;
 
   loading = false;
@@ -378,11 +389,12 @@ export class MiCvComponent implements OnInit {
   redes: RedSocialDto[] = [];
   referencias: ReferenciaDto[] = [];
   private visibilidadMap = new Map<string, boolean>();
+  private readonly destroy$ = new Subject<void>();
 
   /** Plantilla de presentación (API). */
   plantillaCodigo: CvPlantillaCodigo = 'clasico';
   private plantillaCodigoPersistida: CvPlantillaCodigo = 'clasico';
-
+  experienciaLaboralMesesAcumulados = 0;
   private readonly tiposAcademicos = new Set(['Posgrado', 'Pregrado', 'Tecnologo', 'Tecnico']);
 
   get previewRootClass(): string {
@@ -421,11 +433,28 @@ export class MiCvComponent implements OnInit {
 
   constructor(
     private cvEditorService: CvEditorService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.cargarDatos();
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        skip(1),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(e => {
+        if (e.urlAfterRedirects.includes('/mi-cv')) {
+          this.cargarDatos();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   imprimir(): void {
@@ -449,6 +478,7 @@ export class MiCvComponent implements OnInit {
       next: p => {
         this.plantillaCodigo = normalizeCvPlantillaCodigo(p.plantillaCodigo);
         this.plantillaCodigoPersistida = this.plantillaCodigo;
+        this.experienciaLaboralMesesAcumulados = p.experienciaLaboralMesesAcumulados ?? 0;
         this.savingPlantilla = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
@@ -480,23 +510,19 @@ export class MiCvComponent implements OnInit {
     return this.perfiles.find(p => p.esActivo) ?? this.perfiles[0] ?? null;
   }
 
-  get trayectoriaTotalTexto(): string {
-    const totalMeses = this.calcularMesesTrayectoria(this.experiencias);
-    const anios = Math.floor(totalMeses / 12);
-    const meses = totalMeses % 12;
-    return `${anios} años | ${meses} meses`;
-  }
-
   get trayectoriaCabecera(): string | null {
-    const totalMeses = this.calcularMesesTrayectoria(this.experiencias);
+    const totalMeses = this.experienciaLaboralMesesAcumulados;
     if (totalMeses <= 0) return null;
     const anios = Math.floor(totalMeses / 12);
     const meses = totalMeses % 12;
+    const etiqueta = 'Experiencia laboral acumulada';
     if (anios < 1) {
-      return `+${meses} mes${meses === 1 ? '' : 'es'} de experiencia total`;
+      return `${etiqueta}: ${meses} mes${meses === 1 ? '' : 'es'}`;
     }
-    const extra = meses > 0 ? ` (+${meses} mes${meses === 1 ? '' : 'es'})` : '';
-    return `+${anios} año${anios === 1 ? '' : 's'} de experiencia total${extra}`;
+    if (meses === 0) {
+      return `${etiqueta}: ${anios} año${anios === 1 ? '' : 's'}`;
+    }
+    return `${etiqueta}: ${anios} año${anios === 1 ? '' : 's'} y ${meses} mes${meses === 1 ? '' : 'es'}`;
   }
 
   get aspiracionTexto(): string | null {
@@ -529,6 +555,14 @@ export class MiCvComponent implements OnInit {
     const u = this.personales?.fotoUrl?.trim();
     if (!u || !this.visibleAtributoSafe('datos-personales', 'foto')) return null;
     return u;
+  }
+
+  get inicialesFoto(): string {
+    const p = this.personales;
+    if (!p) return 'CV';
+    const a = (p.primerNombre?.trim()?.[0] ?? '').toUpperCase();
+    const b = (p.primerApellido?.trim()?.[0] ?? '').toUpperCase();
+    return (a + b) || 'CV';
   }
 
   get mostrarBloquePerfil(): boolean {
@@ -630,9 +664,11 @@ export class MiCvComponent implements OnInit {
   textoBlandaProfesional(h: HabilidadDto): string | null {
     const n = h.nombre?.trim();
     const d = h.descripcion?.trim();
+    const showDesc = this.visibleAtributo('habilidades', 'descripcion');
     if (!n && !d) return null;
-    if (n && d) return `${n} — ${d}`;
-    return n || d || null;
+    if (n && d && showDesc) return `${n} — ${d}`;
+    if (n) return n;
+    return showDesc ? d ?? null : null;
   }
 
   lineaEmpresaContrato(exp: ExperienciaDto): string | null {
@@ -647,12 +683,8 @@ export class MiCvComponent implements OnInit {
   duracionExperiencia(exp: ExperienciaDto): string {
     if (!exp.fechaInicio) return '—';
     const start = new Date(exp.fechaInicio);
-    const end = exp.esActual
-      ? new Date()
-      : exp.fechaFin
-        ? new Date(exp.fechaFin)
-        : new Date();
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return '—';
+    const end = this.resolverFinExperiencia(exp, new Date());
+    if (!end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return '—';
     const months = this.diffInMonths(start, end);
     const y = Math.floor(months / 12);
     const m = months % 12;
@@ -765,7 +797,7 @@ export class MiCvComponent implements OnInit {
     return this.tiposAcademicos.has(t);
   }
 
-  /** Estas secciones son esenciales en la HV; no se pueden apagar desde configuración. */
+  /** Secciones que siguen presentes en el CV aunque no tengan interruptor de sección en configuración. */
   private seccionSiempreVisibleEnCv(key: string): boolean {
     const k = (key ?? '').trim().toLowerCase();
     return (
@@ -820,6 +852,7 @@ export class MiCvComponent implements OnInit {
         this.setVisibilidad(visibilidad);
         this.plantillaCodigo = normalizeCvPlantillaCodigo(presentacion.plantillaCodigo);
         this.plantillaCodigoPersistida = this.plantillaCodigo;
+        this.experienciaLaboralMesesAcumulados = presentacion.experienciaLaboralMesesAcumulados ?? 0;
         this.loading = false;
       },
       error: () => {
@@ -834,32 +867,11 @@ export class MiCvComponent implements OnInit {
     data.forEach(v => this.visibilidadMap.set((v.seccion ?? '').trim().toLowerCase(), v.visible));
   }
 
-  private calcularMesesTrayectoria(exps: ExperienciaDto[]): number {
-    const ranges: Array<{ start: Date; end: Date }> = [];
-    exps.forEach(exp => {
-      if (!exp.fechaInicio) return;
-      const start = new Date(exp.fechaInicio);
-      const end = exp.esActual
-        ? new Date()
-        : exp.fechaFin
-          ? new Date(exp.fechaFin)
-          : new Date();
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return;
-      ranges.push({ start, end });
-    });
-    if (!ranges.length) return 0;
-    ranges.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const merged: Array<{ start: Date; end: Date }> = [ranges[0]];
-    for (let i = 1; i < ranges.length; i++) {
-      const current = ranges[i];
-      const last = merged[merged.length - 1];
-      if (current.start <= last.end) {
-        if (current.end > last.end) last.end = current.end;
-      } else {
-        merged.push({ ...current });
-      }
-    }
-    return merged.reduce((sum, r) => sum + this.diffInMonths(r.start, r.end), 0);
+  private resolverFinExperiencia(exp: ExperienciaDto, referencia: Date): Date | null {
+    if (exp.esActual) return referencia;
+    const fin = exp.fechaFin?.trim();
+    if (fin) return new Date(fin);
+    return referencia;
   }
 
   private diffInMonths(start: Date, end: Date): number {

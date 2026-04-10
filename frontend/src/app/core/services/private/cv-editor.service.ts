@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 // ── DTOs — Personales ─────────────────────────────────────────────────────────
 
@@ -188,10 +189,16 @@ export interface UpdateVisibilidadRequest {
   visible: boolean;
 }
 
+interface VisibilidadSeccionApiDto {
+  nombreSeccion: string;
+  esVisible: boolean;
+}
+
 // ── Presentación (plantilla Mi CV) ────────────────────────────────────────────
 
 export interface PresentacionCvDto {
   plantillaCodigo: string;
+  experienciaLaboralMesesAcumulados: number;
 }
 
 export interface UpdatePresentacionCvRequest {
@@ -328,10 +335,28 @@ export class CvEditorService {
 
   // — Visibilidad —
   getVisibilidad(): Observable<VisibilidadSeccionDto[]> {
-    return this.http.get<VisibilidadSeccionDto[]>(`${this.BASE}/visibilidad`);
+    return this.http.get<VisibilidadSeccionApiDto[]>(`${this.BASE}/visibilidad`).pipe(
+      map(items =>
+        items.map(item => ({
+          seccion: item.nombreSeccion,
+          visible: item.esVisible,
+        }))
+      )
+    );
   }
   updateVisibilidad(cambios: UpdateVisibilidadRequest[]): Observable<VisibilidadSeccionDto[]> {
-    return this.http.put<VisibilidadSeccionDto[]>(`${this.BASE}/visibilidad`, cambios);
+    const payload = cambios.map(c => ({
+      nombreSeccion: c.seccion,
+      esVisible: c.visible,
+    }));
+    return this.http.put<VisibilidadSeccionApiDto[]>(`${this.BASE}/visibilidad`, payload).pipe(
+      map(items =>
+        items.map(item => ({
+          seccion: item.nombreSeccion,
+          visible: item.esVisible,
+        }))
+      )
+    );
   }
 
   // — Presentación / plantilla —

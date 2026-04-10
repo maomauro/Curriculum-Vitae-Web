@@ -18,6 +18,10 @@
   --cv-main-bg:        #f4f6f9;
   --cv-card-shadow:    0 1px 6px rgba(0,0,0,.08);
   --cv-card-radius:    12px;
+  --cv-editor-card-radius: 12px;
+  --cv-editor-card-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  --cv-editor-card-padding: 24px;
+  --cv-editor-header-padding: 20px 24px;
 
   // Avatar colors
   --cv-avatar-blue:    #2c7be5;
@@ -192,20 +196,36 @@ body {
 
 // ── Page header ───────────────────────────────────────────────────────────────
 .page-header {
-  background: #fff; border-radius: 10px;
-  padding: 20px 24px; margin-bottom: 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  background: #fff;
+  border-radius: var(--cv-editor-card-radius);
+  padding: var(--cv-editor-header-padding);
+  margin-bottom: 24px;
+  box-shadow: var(--cv-editor-card-shadow);
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 12px;
 
-  h4 { font-weight: 700; color: #212529; margin: 0; }
+  h4 {
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.25;
+  }
+
+  .text-muted.small,
+  p.text-muted.small {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+  }
 }
 
 // ── Sección card (área privada — formularios CV) ────────────────────────────────
 .seccion-card {
-  background: #fff; border-radius: 10px;
-  padding: 24px; margin-bottom: 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  background: #fff;
+  border-radius: var(--cv-editor-card-radius);
+  padding: var(--cv-editor-card-padding);
+  margin-bottom: 20px;
+  box-shadow: var(--cv-editor-card-shadow);
 }
 
 .seccion-titulo {
