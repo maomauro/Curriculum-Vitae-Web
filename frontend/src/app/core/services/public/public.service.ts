@@ -148,11 +148,9 @@ export interface CvEstadisticasDto {
 
 export interface ContactarDto {
   nombre: string;
-  empresa: string | null;
+  empresa: string;
   email: string;
-  motivoContacto: string | null;
-  asunto: string | null;
-  mensaje: string;
+  motivoContacto: string;
 }
 
 export interface BuscarCvsParams {

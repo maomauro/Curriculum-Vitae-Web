@@ -1,30 +1,21 @@
 import {
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   ElementRef,
-  HostListener,
   inject,
   OnDestroy,
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
-import { catchError, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import Chart from 'chart.js/auto';
 import {
-  PublicService,
   CvDetalleDto,
-  ContactarDto,
   ExperienciaPublicoDto,
   FormacionPublicoDto,
   HabilidadPublicoDto,
   ProyectoPublicoDto,
 } from '../../../core/services/public/public.service';
-
-type DashboardEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
+import { CvPublicoShellContext } from '../cv-publico-shell.context';
 
 interface MetricaCard {
   label: string;
@@ -50,6 +41,8 @@ interface ProyectoChartRow {
   etiqueta: string;
   nombreLargo: string;
   meses: number;
+  /** % del total de meses entre proyectos con duración (dona). */
+  porcentajeTiempo: number;
   rol: string | null;
   equipoTamano: number | null;
 }
@@ -57,10 +50,18 @@ interface ProyectoChartRow {
 /** Paleta prototipo dashboard-candidato.html */
 const CHART_COLOR_VERDE = '#6EE7B7';
 const CHART_COLOR_PURPLE = '#818CF8';
-/** Barras “Proyectos”: naranja tipo Bootstrap #fd7e14, relleno suave */
-const CHART_COLOR_PROYECTOS_FILL = 'rgba(253, 126, 20, 0.68)';
-const CHART_COLOR_PROYECTOS_BORDER = 'rgba(230, 105, 15, 0.55)';
 const CHART_COLOR_BARRAS = '#7C6FCD';
+/** Dona participación proyectos: colores alternados (naranja portal + paleta suave) */
+const CHART_PROYECTOS_DONA_COLORS = [
+  'rgba(253, 126, 20, 0.88)',
+  '#7C6FCD',
+  '#6EE7B7',
+  '#818CF8',
+  '#f472b6',
+  '#22c55e',
+  '#0ea5e9',
+  '#eab308',
+];
 const TIPOS_FORMACION_ACADEMICA = new Set([
   'Posgrado',
   'Pregrado',
@@ -221,19 +222,29 @@ function truncarEtiquetaGrafico(s: string, max = 44): string {
   return `${t.slice(0, max - 1)}…`;
 }
 
-/** Filas para gráfico de proyectos (eje Y = nombre corto; tooltip usa nombre largo y rol). */
-function buildProyectosChartRows(proyectos: ProyectoPublicoDto[]): ProyectoChartRow[] {
-  return (proyectos ?? []).map(p => {
+/** Proyectos con meses > 0, ordenados; % respecto al total de meses-proyecto (dona participación). */
+function buildProyectosParticipacionPorTiempo(proyectos: ProyectoPublicoDto[]): ProyectoChartRow[] {
+  const base = (proyectos ?? []).map(p => {
     const nombreLargo = (p.nombreProyecto ?? '').trim() || `Proyecto ${p.proyectoId}`;
     const meses = p.duracionMeses != null && p.duracionMeses >= 0 ? p.duracionMeses : 0;
     return {
-      etiqueta: truncarEtiquetaGrafico(nombreLargo, 44),
+      etiqueta: truncarEtiquetaGrafico(nombreLargo, 36),
       nombreLargo,
       meses,
+      porcentajeTiempo: 0,
       rol: (p.rol ?? '').trim() || null,
       equipoTamano: p.equipoTamano,
     };
   });
+  const conMeses = base.filter(r => r.meses > 0);
+  const total = conMeses.reduce((s, r) => s + r.meses, 0);
+  if (total <= 0) return [];
+  return conMeses
+    .sort((a, b) => b.meses - a.meses)
+    .map(r => ({
+      ...r,
+      porcentajeTiempo: Math.round((1000 * r.meses) / total) / 10,
+    }));
 }
 
 function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string; promedio: number }[] {
@@ -257,39 +268,6 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
   selector: 'app-dashboard-candidato',
   standalone: false,
   template: `
-    <div class="public-cv-ficha">
-      <div class="container py-5 text-center" *ngIf="estado === 'cargando'">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Cargando dashboard…</span>
-        </div>
-        <p class="text-muted small mt-3 mb-0">Cargando analíticas del perfil…</p>
-      </div>
-
-      <div class="container py-4" *ngIf="estado === 'listo' && cv">
-        <a routerLink="/cvs" class="btn btn-sm btn-outline-secondary mb-3">
-          <i class="bi bi-arrow-left me-1"></i>Volver al listado
-        </a>
-
-        <ul class="nav gap-1 mb-3 cv-tabs-nav">
-          <li class="nav-item">
-            <a class="nav-link fw-semibold text-muted cv-nav-link-passive"
-               [routerLink]="['/cv', urlPublica]">
-              <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link fw-semibold cv-nav-link-active">
-              <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
-            </a>
-          </li>
-        </ul>
-
-        <div class="d-flex flex-wrap justify-content-end gap-2 mb-4">
-          <button type="button" class="btn btn-primary" (click)="abrirModalContacto()">
-            <i class="bi bi-envelope-fill me-2"></i>Contactar a {{ primerNombre(cv.personales?.nombreCompleto) }}
-          </button>
-        </div>
-
         <div class="cv-page-header-card">
           <div class="cv-ph-icon" aria-hidden="true">
             <i class="bi bi-bar-chart-steps"></i>
@@ -347,15 +325,15 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
         <div class="row g-3 mb-5">
           <div class="col-lg-6">
             <div class="cv-chart-card">
-              <div class="cv-ct-title">Proyectos y duración</div>
+              <div class="cv-ct-title">Participación por tiempo (proyectos)</div>
               <div class="cv-ct-subtitle">
-                Meses declarados por proyecto; en el detalle del gráfico verás rol y tamaño de equipo si están registrados.
+                Porcentaje de los meses totales dedicados a cada proyecto (solo proyectos con duración declarada).
               </div>
-              <p *ngIf="!proyectosChart.length" class="text-muted small mb-0">No hay proyectos en este CV.</p>
-              <div
-                *ngIf="proyectosChart.length"
-                class="cv-chart-canvas-h"
-                [style.height.px]="chartProyectosHeightPx">
+              <p *ngIf="proyectosRawCount === 0" class="text-muted small mb-0">No hay proyectos en este CV.</p>
+              <p *ngIf="proyectosRawCount > 0 && !proyectosChart.length" class="text-muted small mb-0">
+                Los proyectos no tienen duración en meses; no se puede calcular la participación.
+              </p>
+              <div *ngIf="proyectosChart.length" class="cv-chart-canvas-dona">
                 <canvas #cvDashChartProyectos></canvas>
               </div>
             </div>
@@ -371,111 +349,10 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="container py-5 text-center" *ngIf="estado === 'no_encontrado'">
-        <i class="bi bi-file-earmark-x display-4 text-muted"></i>
-        <p class="text-muted mt-3">CV no encontrado o ya no está publicado.</p>
-        <a routerLink="/cvs" class="btn btn-outline-primary">Ver todos los CVs</a>
-      </div>
-
-      <div class="container py-5 text-center" *ngIf="estado === 'error'">
-        <i class="bi bi-wifi-off display-4 text-muted"></i>
-        <p class="text-muted mt-3">No pudimos cargar el dashboard. Revisa tu conexión o inténtalo de nuevo.</p>
-        <button type="button" class="btn btn-outline-primary me-2" (click)="reintentar()">Reintentar</button>
-        <a routerLink="/cvs" class="btn btn-outline-secondary">Volver al listado</a>
-      </div>
-
-      <!-- Sin bootstrap.bundle.js: modal controlado por Angular + clases BS -->
-      <ng-container *ngIf="cv && modalContactoAbierto">
-        <div class="modal-backdrop fade show" (click)="cerrarModalContacto()" aria-hidden="true"></div>
-        <div
-          id="modalContactoDash"
-          class="modal fade show d-block"
-          tabindex="-1"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modalContactoDashLabel"
-          (click)="cerrarModalContacto()">
-          <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
-          <div class="modal-content cv-modal-soft">
-            <div class="modal-header border-0 pb-0">
-              <h5 class="modal-title fw-bold" id="modalContactoDashLabel">
-                <i class="bi bi-envelope-fill me-2 text-primary"></i>
-                Contactar a {{ cv.personales?.nombreCompleto }}
-              </h5>
-              <button type="button" class="btn-close" (click)="cerrarModalContacto()" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body pt-2">
-              <p class="text-muted small mb-4">
-                Completa el formulario y {{ primerNombre(cv.personales?.nombreCompleto) }} recibirá tu mensaje directamente.
-              </p>
-              <div *ngIf="contactoEnviado" class="alert alert-success d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-check-circle-fill"></i>
-                <div>¡Mensaje enviado correctamente!</div>
-              </div>
-              <form *ngIf="!contactoEnviado">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small">Tu nombre</label>
-                    <input type="text" class="form-control" [(ngModel)]="contacto.nombre"
-                           name="dashCtcNombre" placeholder="Juan Pérez">
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold small">Tu empresa</label>
-                    <input type="text" class="form-control" [(ngModel)]="contacto.empresa"
-                           name="dashCtcEmpresa" placeholder="Empresa SA">
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label fw-semibold small">Tu correo electrónico</label>
-                    <input type="email" class="form-control" [(ngModel)]="contacto.email"
-                           name="dashCtcEmail" placeholder="tu@empresa.com">
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label fw-semibold small">Motivo de contacto</label>
-                    <select class="form-select" [(ngModel)]="contacto.motivoContacto" name="dashCtcMotivo">
-                      <option value="">— Selecciona un motivo —</option>
-                      <option value="oferta_laboral">Oferta laboral</option>
-                      <option value="freelance">Proyecto freelance</option>
-                      <option value="consulta">Consulta</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label fw-semibold small">Asunto</label>
-                    <input type="text" class="form-control" [(ngModel)]="contacto.asunto"
-                           name="dashCtcAsunto" placeholder="Motivo del contacto">
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label fw-semibold small">Mensaje</label>
-                    <textarea class="form-control" rows="4" [(ngModel)]="contacto.mensaje"
-                              name="dashCtcMensaje" placeholder="Escribe tu mensaje aquí..."></textarea>
-                  </div>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-              <button type="button" class="btn btn-outline-secondary" (click)="cerrarModalContacto()">
-                Cancelar
-              </button>
-              <button type="button" class="btn btn-primary px-4"
-                      (click)="enviarContacto()"
-                      [disabled]="contactoEnviado || enviandoContacto">
-                <span *ngIf="enviandoContacto" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <i *ngIf="!enviandoContacto" class="bi bi-send-fill me-2"></i>Enviar mensaje
-              </button>
-            </div>
-          </div>
-        </div>
-        </div>
-      </ng-container>
-    </div>
   `,
 })
 export class DashboardCandidatoComponent implements OnInit, OnDestroy {
-  private readonly route = inject(ActivatedRoute);
-  private readonly publicService = inject(PublicService);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly shellCtx = inject(CvPublicoShellContext);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('cvDashChartExp') private chartExpEl?: ElementRef<HTMLCanvasElement>;
@@ -483,171 +360,30 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   @ViewChild('cvDashChartProyectos') private chartProyectosEl?: ElementRef<HTMLCanvasElement>;
   @ViewChild('cvDashChartRadar') private chartRadarEl?: ElementRef<HTMLCanvasElement>;
 
-  estado: DashboardEstado = 'cargando';
-  urlPublica = '';
-  cv: CvDetalleDto | null = null;
-
-  modalContactoAbierto = false;
-
-  contactoEnviado = false;
-  enviandoContacto = false;
-  contacto: ContactarDto = {
-    nombre: '',
-    empresa: null,
-    email: '',
-    motivoContacto: null,
-    asunto: null,
-    mensaje: '',
-  };
-
   metricas: MetricaCard[] = [];
   expEmpresas: ExpEmpresa[] = [];
   timelineYearSeries: TimelineYearSeries = { labels: [], edu: [], exp: [] };
   proyectosChart: ProyectoChartRow[] = [];
+  /** Total de registros de proyecto en el CV (aunque no tengan meses). */
+  proyectosRawCount = 0;
   nivelPromedio: { tipo: string; promedio: number }[] = [];
   completitud = 0;
   chartExpHeightPx = 260;
-  chartProyectosHeightPx = 220;
 
   /** Chart.js tipa cada chart por tipo; guardamos solo instancias con destroy(). */
   private chartInstances: Array<{ destroy(): void }> = [];
 
-  primerNombre(nombreCompleto: string | null | undefined): string {
-    const t = nombreCompleto?.trim();
-    return t ? t.split(/\s+/)[0] : '';
-  }
-
-  enviarContacto(): void {
-    if (!this.cv) return;
-    this.enviandoContacto = true;
-    this.publicService.contactar(this.cv.urlPublica, this.contacto).subscribe({
-      next: () => {
-        this.contactoEnviado = true;
-        this.enviandoContacto = false;
-      },
-      error: () => {
-        this.enviandoContacto = false;
-      },
-    });
-  }
-
-  abrirModalContacto(): void {
-    this.modalContactoAbierto = true;
-    document.body.style.overflow = 'hidden';
-  }
-
-  cerrarModalContacto(): void {
-    this.modalContactoAbierto = false;
-    document.body.style.overflow = '';
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscapeCerrarModal(): void {
-    if (this.modalContactoAbierto) {
-      this.cerrarModalContacto();
-    }
-  }
-
   ngOnInit(): void {
-    this.route.paramMap
-      .pipe(
-        map(p => p.get('urlPublica')?.trim() ?? ''),
-        distinctUntilChanged(),
-        switchMap(slug => {
-          if (!slug) {
-            this.urlPublica = '';
-            this.estado = 'no_encontrado';
-            return of(null);
-          }
-          this.estado = 'cargando';
-          this.urlPublica = slug;
-          return this.publicService.getDetalle(slug).pipe(
-            catchError((err: unknown) => {
-              if (err instanceof HttpErrorResponse && err.status === 404) {
-                return of<CvDetalleDto | null>(null);
-              }
-              throw err;
-            })
-          );
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: detalle => {
-          if (detalle === null && !this.urlPublica) return;
-          if (!detalle) {
-            this.cv = null;
-            this.estado = 'no_encontrado';
-            return;
-          }
-          this.cv = detalle;
-          this.modalContactoAbierto = false;
-          document.body.style.overflow = '';
-          this.contactoEnviado = false;
-          this.contacto = {
-            nombre: '',
-            empresa: null,
-            email: '',
-            motivoContacto: null,
-            asunto: null,
-            mensaje: '',
-          };
-          this.rellenarDesdeCv(detalle);
-          this.estado = 'listo';
-          this.cdr.detectChanges();
-          this.scheduleRenderCharts();
-        },
-        error: () => {
-          this.estado = 'error';
-        },
-      });
+    const detalle = this.shellCtx.cv;
+    if (detalle) {
+      this.rellenarDesdeCv(detalle);
+      this.cdr.detectChanges();
+      this.scheduleRenderCharts();
+    }
   }
 
   ngOnDestroy(): void {
-    document.body.style.overflow = '';
     this.destroyCharts();
-  }
-
-  reintentar(): void {
-    const slug = this.urlPublica || this.route.snapshot.paramMap.get('urlPublica')?.trim();
-    if (!slug) {
-      this.estado = 'no_encontrado';
-      return;
-    }
-    this.estado = 'cargando';
-    this.publicService.getDetalle(slug).subscribe({
-      next: detalle => {
-        if (!detalle) {
-          this.cv = null;
-          this.estado = 'no_encontrado';
-          return;
-        }
-        this.cv = detalle;
-        this.urlPublica = slug;
-        this.modalContactoAbierto = false;
-        document.body.style.overflow = '';
-        this.contactoEnviado = false;
-        this.contacto = {
-          nombre: '',
-          empresa: null,
-          email: '',
-          motivoContacto: null,
-          asunto: null,
-          mensaje: '',
-        };
-        this.rellenarDesdeCv(detalle);
-        this.estado = 'listo';
-        this.cdr.detectChanges();
-        this.scheduleRenderCharts();
-      },
-      error: (err: unknown) => {
-        if (err instanceof HttpErrorResponse && err.status === 404) {
-          this.estado = 'no_encontrado';
-        } else {
-          this.estado = 'error';
-        }
-      },
-    });
   }
 
   /** Tras *ngIf y ViewChild, Chart.js necesita DOM ya pintado (CD + siguiente frame). */
@@ -669,13 +405,10 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     this.completitud = completitudAproximada(cv);
     this.expEmpresas = buildExpPorEmpresa(cv.experiencias ?? []);
     this.timelineYearSeries = buildTimelineYearSeries(cv);
-    this.proyectosChart = buildProyectosChartRows(cv.proyectos ?? []);
+    this.proyectosRawCount = cv.proyectos?.length ?? 0;
+    this.proyectosChart = buildProyectosParticipacionPorTiempo(cv.proyectos ?? []);
     this.nivelPromedio = buildNivelPromedioPorTipo(cv.habilidades ?? []);
     this.chartExpHeightPx = Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80));
-    this.chartProyectosHeightPx = Math.min(
-      420,
-      Math.max(180, this.proyectosChart.length * 40 + 80)
-    );
   }
 
   private destroyCharts(): void {
@@ -687,7 +420,7 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
 
   private renderCharts(): void {
     this.destroyCharts();
-    if (this.estado !== 'listo' || !this.cv) return;
+    if (!this.shellCtx.cv) return;
 
     const exp = this.chartExpEl?.nativeElement;
     if (this.expEmpresas.length && exp) {
@@ -783,27 +516,35 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
         const rows = this.proyectosChart;
         this.chartInstances.push(
           new Chart(ctx, {
-            type: 'bar',
+            type: 'doughnut',
             data: {
               labels: rows.map(r => r.etiqueta),
               datasets: [
                 {
-                  label: 'Meses',
                   data: rows.map(r => r.meses),
-                  backgroundColor: CHART_COLOR_PROYECTOS_FILL,
-                  borderColor: CHART_COLOR_PROYECTOS_BORDER,
-                  borderWidth: 1,
-                  borderRadius: 4,
-                  borderSkipped: false,
+                  backgroundColor: rows.map(
+                    (_, i) => CHART_PROYECTOS_DONA_COLORS[i % CHART_PROYECTOS_DONA_COLORS.length]
+                  ),
+                  borderColor: '#fff',
+                  borderWidth: 2,
+                  hoverOffset: 6,
                 },
               ],
             },
             options: {
-              indexAxis: 'y',
               responsive: true,
               maintainAspectRatio: false,
+              cutout: '56%',
               plugins: {
-                legend: { display: false },
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    boxWidth: 12,
+                    padding: 14,
+                    font: { size: 11 },
+                    usePointStyle: true,
+                  },
+                },
                 tooltip: {
                   callbacks: {
                     title: items => {
@@ -819,17 +560,14 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
                       if (r.equipoTamano != null) partes.push(`Equipo: ${r.equipoTamano} pers.`);
                       return partes.length ? partes.join('\n') : '';
                     },
-                    label: item => `${item.dataset.label ?? 'Duración'}: ${item.raw} meses`,
+                    label: item => {
+                      const i = item.dataIndex;
+                      const r = rows[i];
+                      if (!r) return '';
+                      return `${r.meses} meses · ${r.porcentajeTiempo}% del tiempo en proyectos`;
+                    },
                   },
                 },
-              },
-              scales: {
-                x: {
-                  grid: { color: '#f0f0f0' },
-                  beginAtZero: true,
-                  ticks: { callback: v => `${v}m` },
-                },
-                y: { grid: { display: false } },
               },
             },
           })
