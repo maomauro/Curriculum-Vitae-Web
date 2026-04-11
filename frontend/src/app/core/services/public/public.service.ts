@@ -136,11 +136,14 @@ export interface CvDetalleDto {
   redesSociales: RedSocialPublicoDto[];
 }
 
-export interface EstadisticasPublicasDto {
-  contadorVisitas: number;
-  contadorContactos: number;
-  contadorDescargas: number;
+/** Espejo de CvEstadisticasDto (backend). */
+export interface CvEstadisticasDto {
+  curriculumId: number;
+  urlPublica: string;
+  totalVisitas: number;
+  totalContactos: number;
   ultimaVisita: string | null;
+  fechaActualizacion: string;
 }
 
 export interface ContactarDto {
@@ -185,8 +188,10 @@ export class PublicService {
       .pipe(map(raw => deepToCamel(raw) as CvDetalleDto));
   }
 
-  getEstadisticas(urlPublica: string): Observable<EstadisticasPublicasDto> {
-    return this.http.get<EstadisticasPublicasDto>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}/stats`);
+  getEstadisticas(urlPublica: string): Observable<CvEstadisticasDto> {
+    return this.http
+      .get<unknown>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}/stats`)
+      .pipe(map(raw => deepToCamel(raw) as CvEstadisticasDto));
   }
 
   contactar(urlPublica: string, dto: ContactarDto): Observable<void> {
