@@ -635,6 +635,12 @@
 }
 
 // ── Detalle CV público ───────────────────────────────────────────────────────
+// Contenedor común: detalle CV + dashboard (misma cinta que listado público)
+.public-cv-ficha {
+  background: var(--cv-main-bg);
+  min-height: 100%;
+}
+
 .cv-tabs-nav {
   border-bottom: 2px solid #dee2e6;
   padding-bottom: 0;
@@ -1841,59 +1847,124 @@
 }
 
 // ── Dashboard candidato (público / analítico) ─────────────────────────────────
-.cv-dash-avatar-lg {
-  width: 68px;
-  height: 68px;
-  font-size: 1.45rem;
+// Tabs: usar siempre .cv-tabs-nav + .cv-nav-link-* (igual que detalle CV).
+// Prototipo: docs/diseño/prototipos/publica/dashboard-candidato.html
+.public-cv-ficha .cv-page-header-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 26px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
 }
-.cv-nav-tab-passive {
-  border-radius: 0;
-}
-.cv-nav-tab-active-analytics {
-  color: var(--cv-primary);
-  border-bottom: 2px solid var(--cv-primary);
-  border-radius: 0;
-  margin-bottom: -1px;
-}
-.cv-dash-page-icon {
+.public-cv-ficha .cv-ph-icon {
   width: 50px;
   height: 50px;
+  border-radius: 10px;
   background: #eef3fb;
   color: var(--cv-primary);
-  font-size: 1.55rem;
-  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.55rem;
   flex-shrink: 0;
 }
-.cv-analytics-lead {
-  font-size: 0.9rem;
+// Reparto equitativo del ancho según cantidad de métricas y viewport (sin huecos fijos).
+.cv-metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 1rem;
 }
-.cv-metric-card-shadow {
+.public-cv-ficha .cv-dash-metric-card {
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  padding: 18px 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.13);
+  height: 100%;
 }
-.cv-metric-label {
+.public-cv-ficha .cv-dash-metric-card .mc-label {
   font-size: 0.75rem;
   opacity: 0.88;
   font-weight: 600;
   margin-bottom: 6px;
   line-height: 1.3;
 }
-.cv-metric-value {
+.public-cv-ficha .cv-dash-metric-card .mc-value {
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;
   margin-bottom: 4px;
 }
-.cv-metric-sub {
+.public-cv-ficha .cv-dash-metric-card .mc-sub {
   font-size: 0.72rem;
   opacity: 0.78;
   line-height: 1.35;
 }
-.cv-metric-icon-watermark {
+.public-cv-ficha .cv-dash-metric-card .mc-icon {
   font-size: 2.6rem;
   opacity: 0.2;
+}
+.public-cv-ficha .cv-chart-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  height: 100%;
+}
+.public-cv-ficha .cv-chart-card .cv-ct-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #212529;
+  margin-bottom: 2px;
+}
+.public-cv-ficha .cv-chart-card .cv-ct-subtitle {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 18px;
+}
+// No forzar width/height con !important en canvas: Chart.js asigna tamaño; !important dejaba gráficos en blanco.
+.public-cv-ficha .cv-chart-canvas-h {
+  position: relative;
+  width: 100%;
+}
+.public-cv-ficha .cv-chart-canvas-h canvas {
+  display: block;
+  max-width: 100%;
+}
+.public-cv-ficha .cv-chart-canvas-timeline {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}
+.public-cv-ficha .cv-chart-canvas-timeline canvas {
+  display: block;
+  max-width: 100%;
+}
+.public-cv-ficha .cv-chart-canvas-pie {
+  position: relative;
+  max-width: 300px;
+  height: 280px;
+  margin: 0 auto;
+}
+.public-cv-ficha .cv-chart-canvas-pie canvas {
+  display: block;
+  max-width: 100%;
+}
+.public-cv-ficha .cv-chart-canvas-radar {
+  position: relative;
+  max-width: 340px;
+  height: 300px;
+  margin: 0 auto;
+}
+.public-cv-ficha .cv-chart-canvas-radar canvas {
+  display: block;
+  max-width: 100%;
+}
+.cv-analytics-lead {
+  font-size: 0.9rem;
 }
 .cv-analytics-card-title {
   font-size: 0.95rem;

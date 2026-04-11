@@ -28,6 +28,7 @@
     "@angular/router": "^20.1.0",
     "admin-lte": "^4.0.0-rc7",
     "bootstrap-icons": "^1.13.1",
+    "chart.js": "^4.4.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

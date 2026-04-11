@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,6 +13,7 @@ type DetalleEstadoCarga = 'cargando' | 'listo' | 'no_encontrado' | 'error';
   selector: 'app-detalle-cv',
   standalone: false,
   template: `
+    <div class="public-cv-ficha">
     <div class="container py-5 text-center" *ngIf="estado === 'cargando'">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando CV…</span>
@@ -43,8 +44,7 @@ type DetalleEstadoCarga = 'cargando' | 'listo' | 'no_encontrado' | 'error';
       </ul>
 
       <div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-primary"
-                data-bs-toggle="modal" data-bs-target="#modalContacto">
+        <button type="button" class="btn btn-primary" (click)="abrirModalContacto()">
           <i class="bi bi-envelope-fill me-2"></i>Contactar a {{ primerNombre(cv.personales?.nombreCompleto) }}
         </button>
       </div>
@@ -65,17 +65,25 @@ type DetalleEstadoCarga = 'cargando' | 'listo' | 'no_encontrado' | 'error';
       <a routerLink="/cvs" class="btn btn-outline-secondary">Volver al listado</a>
     </div>
 
-    <!-- Modal: Formulario de contacto -->
-    <div class="modal fade" id="modalContacto" tabindex="-1"
-         aria-labelledby="modalContactoLabel" aria-hidden="true" *ngIf="cv">
-      <div class="modal-dialog modal-dialog-centered">
+    <!-- Sin bootstrap.bundle.js: modal controlado por Angular -->
+    <ng-container *ngIf="cv && modalContactoAbierto">
+      <div class="modal-backdrop fade show" (click)="cerrarModalContacto()" aria-hidden="true"></div>
+      <div
+        id="modalContacto"
+        class="modal fade show d-block"
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalContactoLabel"
+        (click)="cerrarModalContacto()">
+        <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
         <div class="modal-content cv-modal-soft">
           <div class="modal-header border-0 pb-0">
             <h5 class="modal-title fw-bold" id="modalContactoLabel">
               <i class="bi bi-envelope-fill me-2 text-primary"></i>
               Contactar a {{ cv.personales?.nombreCompleto }}
             </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button type="button" class="btn-close" (click)="cerrarModalContacto()" aria-label="Cerrar"></button>
           </div>
           <div class="modal-body pt-2">
             <p class="text-muted small mb-4">
@@ -126,21 +134,26 @@ type DetalleEstadoCarga = 'cargando' | 'listo' | 'no_encontrado' | 'error';
             </form>
           </div>
           <div class="modal-footer border-0 pt-0">
-            <button type="button" class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-outline-secondary" (click)="cerrarModalContacto()">
+              Cancelar
+            </button>
             <button type="button" class="btn btn-primary px-4"
-                    (click)="enviarContacto()" [disabled]="contactoEnviado">
-              <i class="bi bi-send-fill me-2"></i>Enviar mensaje
+                    (click)="enviarContacto()" [disabled]="contactoEnviado || enviandoContacto">
+              <span *ngIf="enviandoContacto" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              <i *ngIf="!enviandoContacto" class="bi bi-send-fill me-2"></i>Enviar mensaje
             </button>
           </div>
         </div>
       </div>
+      </div>
+    </ng-container>
     </div>
   `
 })
-export class DetalleCvComponent implements OnInit {
+export class DetalleCvComponent implements OnInit, OnDestroy {
   cv: CvDetalleDto | null = null;
   estado: DetalleEstadoCarga = 'cargando';
+  modalContactoAbierto = false;
   contactoEnviado = false;
   enviandoContacto = false;
   contacto: ContactarDto = { nombre: '', empresa: null, email: '', motivoContacto: null, asunto: null, mensaje: '' };
@@ -187,6 +200,8 @@ export class DetalleCvComponent implements OnInit {
         if (data) {
           this.cv = data;
           this.estado = 'listo';
+          this.modalContactoAbierto = false;
+          document.body.style.overflow = '';
           this.contactoEnviado = false;
           this.contacto = {
             nombre: '',
@@ -212,6 +227,8 @@ export class DetalleCvComponent implements OnInit {
       next: data => {
         this.cv = data;
         this.estado = 'listo';
+        this.modalContactoAbierto = false;
+        document.body.style.overflow = '';
       },
       error: (err: HttpErrorResponse) => {
         this.cv = null;
@@ -222,6 +239,27 @@ export class DetalleCvComponent implements OnInit {
 
   primerNombre(nombreCompleto: string | null | undefined): string {
     return nombreCompleto ? nombreCompleto.split(' ')[0] : '';
+  }
+
+  abrirModalContacto(): void {
+    this.modalContactoAbierto = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  cerrarModalContacto(): void {
+    this.modalContactoAbierto = false;
+    document.body.style.overflow = '';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeCerrarModal(): void {
+    if (this.modalContactoAbierto) {
+      this.cerrarModalContacto();
+    }
+  }
+
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
   }
 
   enviarContacto(): void {
