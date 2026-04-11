@@ -8,7 +8,6 @@ import { HomeComponent } from './pages/home.component';
 import { BuscarCvsComponent } from './pages/buscar-cvs.component';
 import { CvPublicoShellComponent } from './pages/cv-publico-shell.component';
 import { DetalleCvComponent } from './pages/detalle-cv.component';
-import { DashboardCandidatoComponent } from './pages/dashboard-candidato.component';
 import { SharedModule } from '../../shared/shared-module';
 
 @NgModule({
@@ -17,7 +16,6 @@ import { SharedModule } from '../../shared/shared-module';
     BuscarCvsComponent,
     CvPublicoShellComponent,
     DetalleCvComponent,
-    DashboardCandidatoComponent,
   ],
   imports: [
     CommonModule,

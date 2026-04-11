@@ -4,12 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, distinctUntilChanged, map, Observable, of, switchMap, tap } from 'rxjs';
-import {
-  PublicService,
-  CvDetalleDto,
-  ContactarDto,
-} from '../../../core/services/public/public.service';
-import { CvPublicoShellContext } from '../cv-publico-shell.context';
+import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
+import { CvAnaliticasDetalleService } from '../../../core/services/cv/cv-analiticas-detalle.service';
+import { CvDetalleVistaContext } from '../../../shared/contexts/cv-detalle-vista.context';
 import {
   contactoPublicoVacio,
   marcarControlesTocados,
@@ -21,7 +18,7 @@ type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 @Component({
   selector: 'app-cv-publico-shell',
   standalone: false,
-  providers: [CvPublicoShellContext],
+  providers: [CvDetalleVistaContext],
   template: `
     <div class="public-cv-ficha">
       <div class="container py-5 text-center" *ngIf="estado === 'cargando'">
@@ -171,9 +168,10 @@ type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
   `,
 })
 export class CvPublicoShellComponent implements OnInit, OnDestroy {
-  readonly ctx = inject(CvPublicoShellContext);
+  readonly ctx = inject(CvDetalleVistaContext);
   private readonly route = inject(ActivatedRoute);
   private readonly publicService = inject(PublicService);
+  private readonly cvAnaliticasDetalle = inject(CvAnaliticasDetalleService);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Expuesto al template (alias de utilidad pura). */
@@ -286,7 +284,7 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
       this.estado = 'no_encontrado';
       return of(null);
     }
-    return this.publicService.getDetalle(slug).pipe(
+    return this.cvAnaliticasDetalle.detallePublicoParaAnaliticas$(slug).pipe(
       catchError((err: HttpErrorResponse) => {
         if (err.status === 404) {
           this.estado = 'no_encontrado';

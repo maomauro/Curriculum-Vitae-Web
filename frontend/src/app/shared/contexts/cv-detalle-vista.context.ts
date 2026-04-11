@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import type { CvDetalleDto } from '../../core/services/public/public.service';
 
-/** Estado del CV cargado por el layout padre (hoja de vida + dashboard comparten una sola carga HTTP). */
+/** CV cargado por un padre (shell público o página privada) para el dashboard analítico. */
 @Injectable()
-export class CvPublicoShellContext {
+export class CvDetalleVistaContext {
   cv: CvDetalleDto | null = null;
 }
