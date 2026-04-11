@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PortalCV.Application;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -67,7 +68,7 @@ public class PublicCvService : IPublicCvService
         var cv = await _context.Curriculums
             .AsNoTracking()
             .Include(c => c.EstadisticasPublicas)
-            .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == "Publicado", ct);
+            .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == CurriculumEstados.Publicado, ct);
 
         if (cv is null) return null;
 
