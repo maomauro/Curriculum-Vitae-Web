@@ -14,8 +14,8 @@ import {
   FormacionPublicoDto,
   HabilidadPublicoDto,
   ProyectoPublicoDto,
-} from '../../../core/services/public/public.service';
-import { CvPublicoShellContext } from '../cv-publico-shell.context';
+} from '../../core/services/public/public.service';
+import { CvDetalleVistaContext } from '../contexts/cv-detalle-vista.context';
 
 interface MetricaCard {
   label: string;
@@ -352,7 +352,7 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
   `,
 })
 export class DashboardCandidatoComponent implements OnInit, OnDestroy {
-  private readonly shellCtx = inject(CvPublicoShellContext);
+  private readonly shellCtx = inject(CvDetalleVistaContext);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('cvDashChartExp') private chartExpEl?: ElementRef<HTMLCanvasElement>;

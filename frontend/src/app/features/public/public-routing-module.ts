@@ -4,7 +4,7 @@ import { HomeComponent } from './pages/home.component';
 import { BuscarCvsComponent } from './pages/buscar-cvs.component';
 import { CvPublicoShellComponent } from './pages/cv-publico-shell.component';
 import { DetalleCvComponent } from './pages/detalle-cv.component';
-import { DashboardCandidatoComponent } from './pages/dashboard-candidato.component';
+import { DashboardCandidatoComponent } from '../../shared/components/dashboard-candidato.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
