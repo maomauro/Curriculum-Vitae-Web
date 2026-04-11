@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PortalCV.Application.DTOs.Publica;
 
 public record BuscarCvsQuery(
@@ -109,7 +111,7 @@ public record RedSocialPublicoDto(
 
 public record ContactarCvRequest(
     string? Nombre,
-    string Correo,
+    [property: JsonPropertyName("email")] string? Correo,
     string? Empresa,
     string? MotivoContacto,
     string? Asunto,

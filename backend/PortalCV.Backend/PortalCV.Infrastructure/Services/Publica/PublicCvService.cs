@@ -127,7 +127,7 @@ public class PublicCvService : IPublicCvService
         {
             CurriculumId = curriculumId,
             Nombre = request.Nombre,
-            Correo = request.Correo,
+            Correo = request.Correo ?? string.Empty,
             Empresa = request.Empresa,
             MotivoContacto = request.MotivoContacto,
             Asunto = request.Asunto,
