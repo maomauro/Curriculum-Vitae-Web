@@ -8,6 +8,7 @@ import { HomeComponent } from './pages/home.component';
 import { BuscarCvsComponent } from './pages/buscar-cvs.component';
 import { DetalleCvComponent } from './pages/detalle-cv.component';
 import { DashboardCandidatoComponent } from './pages/dashboard-candidato.component';
+import { SharedModule } from '../../shared/shared-module';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { DashboardCandidatoComponent } from './pages/dashboard-candidato.compone
     CommonModule,
     FormsModule,
     RouterModule,
-    PublicRoutingModule
+    PublicRoutingModule,
+    SharedModule,
   ]
 })
 export class PublicModule { }
