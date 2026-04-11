@@ -4,6 +4,7 @@ using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data;
+using PortalCV.Infrastructure.Helpers;
 
 namespace PortalCV.Infrastructure.Services;
 
@@ -496,52 +497,15 @@ public class CvEditorService : ICvEditorService
         return await GetPresentacionAsync(curriculumId, ct);
     }
 
-    private const int TrayectoriaAnioMin = 1950;
-    private const int TrayectoriaMesesMaxPorPuesto = 600;
-
-    private static int DiffInMonthsDateOnly(DateOnly start, DateOnly end)
-    {
-        // Conteo por mes calendario (incluyente): ene->ene = 1, ene->feb = 2, etc.
-        var total = (end.Year - start.Year) * 12 + (end.Month - start.Month) + 1;
-        return Math.Max(0, total);
-    }
-
     private async Task<int> CalcularExperienciaLaboralMesesAcumuladosAsync(int curriculumId, CancellationToken ct)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
-
         var rows = await _context.Experiencias.AsNoTracking()
             .Where(e => e.CurriculumId == curriculumId)
             .Select(e => new { e.FechaInicio, e.FechaFin, e.EsActual })
             .ToListAsync(ct);
 
-        var suma = 0;
-        foreach (var exp in rows)
-        {
-            if (exp.FechaInicio is null)
-                continue;
-
-            var start = exp.FechaInicio.Value;
-            if (start.Year < TrayectoriaAnioMin || start > today)
-                continue;
-
-            var end = exp.EsActual
-                ? today
-                : (exp.FechaFin ?? today);
-
-            if (end > today)
-                end = today;
-            if (end < start || end.Year < TrayectoriaAnioMin)
-                continue;
-
-            var meses = DiffInMonthsDateOnly(start, end);
-            if (meses > TrayectoriaMesesMaxPorPuesto)
-                meses = TrayectoriaMesesMaxPorPuesto;
-
-            suma += meses;
-        }
-
-        return suma;
+        return ExperienciaLaboralAcumulada.CalcularMeses(
+            rows.Select(r => (r.FechaInicio, r.FechaFin, r.EsActual)));
     }
 
     private static (DateOnly? fechaInicio, DateOnly? fechaFin) ValidarYNormalizarFechasExperiencia(
@@ -553,8 +517,8 @@ public class CvEditorService : ICvEditorService
 
         if (fechaInicio is { } inicio)
         {
-            if (inicio.Year < TrayectoriaAnioMin)
-                throw new ArgumentException($"La fecha de inicio no puede ser menor a {TrayectoriaAnioMin}-01-01.");
+            if (inicio.Year < ExperienciaLaboralAcumulada.AnoMinimoTrayectoria)
+                throw new ArgumentException($"La fecha de inicio no puede ser menor a {ExperienciaLaboralAcumulada.AnoMinimoTrayectoria}-01-01.");
             if (inicio > today)
                 throw new ArgumentException("La fecha de inicio no puede ser futura.");
         }
@@ -564,8 +528,8 @@ public class CvEditorService : ICvEditorService
 
         if (fechaFin is { } fin)
         {
-            if (fin.Year < TrayectoriaAnioMin)
-                throw new ArgumentException($"La fecha de fin no puede ser menor a {TrayectoriaAnioMin}-01-01.");
+            if (fin.Year < ExperienciaLaboralAcumulada.AnoMinimoTrayectoria)
+                throw new ArgumentException($"La fecha de fin no puede ser menor a {ExperienciaLaboralAcumulada.AnoMinimoTrayectoria}-01-01.");
             if (fin > today)
                 throw new ArgumentException("La fecha de fin no puede ser futura.");
             if (fechaInicio is { } inicioFecha && fin < inicioFecha)
