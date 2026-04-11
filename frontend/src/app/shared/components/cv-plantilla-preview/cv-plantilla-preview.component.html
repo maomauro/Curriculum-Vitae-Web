@@ -1,0 +1,337 @@
+<div class="cv-mi-letter-wrap">
+  <div [class]="previewRootClass">
+    <div class="cv-mi-preview-stack">
+      <ng-container *ngIf="plantillaCodigo !== 'corporativo'">
+        <div
+          class="cv-preview-header d-flex align-items-start"
+          [class.text-white]="plantillaCodigo === 'clasico'">
+          <div class="d-flex align-items-start w-100 cv-preview-header-body">
+            <div *ngIf="attrSafe('datos-personales', 'foto')" class="cv-mi-photo-slot me-3">
+              <img *ngIf="fotoHeaderUrl" [src]="fotoHeaderUrl" alt="Foto de perfil" class="cv-mi-photo-img" />
+              <div *ngIf="!fotoHeaderUrl" class="cv-mi-photo-placeholder" aria-hidden="true">
+                {{ inicialesFoto }}
+              </div>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
+              <div class="cv-preview-sub" *ngIf="sec('perfil')">
+                {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional'
+                }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Perfil activo</ng-container>
+              </div>
+              <div class="small mt-1 cv-mi-trayectoria-acumulada" *ngIf="sec('experiencia') && trayectoriaCabecera">
+                <i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>{{ trayectoriaCabecera }}
+              </div>
+              <div class="d-flex flex-wrap mt-2 cv-preview-meta">
+                <span *ngIf="attrSafe('datos-personales', 'email') && personales?.email">
+                  <i class="bi bi-envelope-fill"></i>{{ personales?.email }}
+                </span>
+                <span *ngIf="attrSafe('datos-personales', 'telefono') && telefonoContacto">
+                  <i class="bi bi-telephone-fill"></i>{{ telefonoContacto }}
+                </span>
+                <span *ngIf="attrSafe('datos-personales', 'ciudad-pais') && ciudadPais">
+                  <i class="bi bi-geo-alt-fill"></i>{{ ciudadPais }}
+                </span>
+                <span *ngIf="attrSafe('datos-personales', 'linkedin') && linkedin">
+                  <i class="bi bi-linkedin"></i>{{ linkedin }}
+                </span>
+                <span *ngIf="attrSafe('datos-personales', 'github') && githubDisplay">
+                  <i class="bi bi-github"></i>{{ githubDisplay }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <div
+        class="cv-mi-body"
+        [class.cv-mi-body--sin-sidebar-izq]="plantillaCodigo === 'clasico' && !sidebarClasicoTieneContenido">
+        <div class="cv-preview-sidebar" *ngIf="mostrarCvPreviewSidebar">
+          <div class="cv-corp-identity" *ngIf="plantillaCodigo === 'corporativo'">
+            <div class="cv-corp-name">{{ nombreCompleto }}</div>
+            <div class="cv-corp-role" *ngIf="sec('perfil')">
+              {{ perfilPrincipal?.nombrePerfil || 'Perfil profesional'
+              }}<ng-container *ngIf="perfilPrincipal?.esActivo"> — Activo</ng-container>
+            </div>
+            <div class="small mt-1 cv-mi-trayectoria-acumulada" *ngIf="sec('experiencia') && trayectoriaCabecera">
+              <i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>{{ trayectoriaCabecera }}
+            </div>
+            <div class="cv-corp-contact">
+              <div *ngIf="attrSafe('datos-personales', 'email') && personales?.email">
+                <i class="bi bi-envelope-fill me-1" aria-hidden="true"></i>{{ personales?.email }}
+              </div>
+              <div *ngIf="attrSafe('datos-personales', 'telefono') && telefonoContacto">
+                <i class="bi bi-telephone-fill me-1" aria-hidden="true"></i>{{ telefonoContacto }}
+              </div>
+              <div *ngIf="attrSafe('datos-personales', 'ciudad-pais') && ciudadPais">
+                <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>{{ ciudadPais }}
+              </div>
+              <div *ngIf="attrSafe('datos-personales', 'linkedin') && linkedin">
+                <i class="bi bi-linkedin me-1" aria-hidden="true"></i>{{ linkedin }}
+              </div>
+              <div *ngIf="attrSafe('datos-personales', 'github') && githubDisplay">
+                <i class="bi bi-github me-1" aria-hidden="true"></i>{{ githubDisplay }}
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-cv-section cv-mi-skill-block" *ngIf="sec('habilidades') && habilidadesTecnicas.length">
+            <div class="cv-mi-section-title">Habilidades Técnicas</div>
+            <div *ngFor="let h of habilidadesTecnicas" class="cv-mi-skill-item">
+              <div class="d-flex justify-content-between cv-skill-line" *ngIf="attr('habilidades', 'nombre')">
+                <span>{{ h.nombre }}</span
+                ><small class="text-muted" *ngIf="attr('habilidades', 'nivel')">{{ h.nivel || '—' }}</small>
+              </div>
+              <div class="progress cv-progress-preview" *ngIf="attr('habilidades', 'nivel')">
+                <div class="progress-bar cv-progress-bar-fill" [style.width.%]="skillPercent(h.nivel)"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-cv-section cv-mi-skill-block" *ngIf="sec('habilidades') && habilidadesBlandas.length">
+            <div class="cv-mi-section-title">Habilidades Blandas</div>
+            <div *ngFor="let h of habilidadesBlandas" class="cv-mi-skill-item">
+              <div class="d-flex justify-content-between cv-skill-line" *ngIf="attr('habilidades', 'nombre')">
+                <span>{{ h.nombre }}</span
+                ><small class="text-muted" *ngIf="attr('habilidades', 'nivel')">{{ h.nivel || '—' }}</small>
+              </div>
+              <div class="progress cv-progress-preview" *ngIf="attr('habilidades', 'nivel')">
+                <div class="progress-bar cv-progress-bar-fill" [style.width.%]="skillPercent(h.nivel)"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-cv-section cv-mi-skill-block" *ngIf="sec('habilidades') && idiomas.length">
+            <div class="cv-mi-section-title">Idiomas</div>
+            <div *ngFor="let id of idiomas" class="cv-mi-skill-item">
+              <div class="d-flex justify-content-between cv-skill-line" *ngIf="attr('habilidades', 'nombre')">
+                <span>{{ id.nombre }}</span
+                ><small class="text-muted" *ngIf="attr('habilidades', 'nivel')">{{ id.nivel || '—' }}</small>
+              </div>
+              <div class="progress cv-progress-preview" *ngIf="attr('habilidades', 'nivel')">
+                <div class="progress-bar cv-progress-bar-fill" [style.width.%]="skillPercent(id.nivel)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cv-preview-main">
+          <div class="cv-mi-section" *ngIf="mostrarBloquePerfil">
+            <div class="cv-mi-section-title">Perfil Profesional</div>
+            <p class="cv-mi-prose cv-summary-text" *ngIf="perfilPrincipal?.descripcionPerfil">
+              {{ perfilPrincipal?.descripcionPerfil }}
+            </p>
+            <div
+              class="cv-mi-profile-meta"
+              *ngIf="attrSafe('perfil', 'experiencia-perfil') && perfilPrincipal?.experienciaPerfilAnios != null">
+              <span class="text-muted">Experiencia (perfil)</span> · {{ perfilPrincipal?.experienciaPerfilAnios }} años
+            </div>
+            <div class="cv-mi-profile-meta" *ngIf="attrSafe('perfil', 'aspiracion-salarial') && aspiracionTexto">
+              <span class="text-muted">Aspiración salarial</span> · {{ aspiracionTexto }}
+            </div>
+          </div>
+
+          <div class="cv-mi-section" *ngIf="sec('experiencia') && experiencias.length">
+            <div class="cv-mi-section-title">Experiencia Laboral</div>
+            <div class="cv-mi-timeline">
+              <div class="timeline-item" *ngFor="let exp of experiencias">
+                <div class="timeline-title cv-mi-exp-headline" *ngIf="exp.cargo || lineaEmpresaContrato(exp)">
+                  <strong class="cv-mi-exp-cargo" *ngIf="exp.cargo">{{ exp.cargo }}</strong>
+                  <ng-container *ngIf="lineaEmpresaContrato(exp) as empLine">
+                    <span *ngIf="exp.cargo" class="cv-mi-exp-headline-sep" aria-hidden="true"> | </span>
+                    <span class="cv-mi-exp-empresa">{{ empLine }}</span>
+                  </ng-container>
+                </div>
+                <div class="timeline-date cv-mi-exp-fecha-duracion" *ngIf="exp.fechaInicio">
+                  {{ exp.fechaInicio | date : 'MMM yyyy' }} —
+                  {{ exp.esActual ? 'Presente' : (exp.fechaFin | date : 'MMM yyyy') }}
+                  <ng-container *ngIf="duracionExperiencia(exp) as durExp">
+                    <span *ngIf="durExp !== '—'" class="text-muted"> | {{ durExp }}</span>
+                  </ng-container>
+                </div>
+                <ul class="cv-pro-list mb-0 mt-1" *ngIf="esPlantillaProfesional && lineasBulletTexto(exp.funciones).length">
+                  <li *ngFor="let linea of lineasBulletTexto(exp.funciones)">{{ linea }}</li>
+                </ul>
+                <div class="timeline-desc" *ngIf="!esPlantillaProfesional && exp.funciones">{{ exp.funciones }}</div>
+                <ng-container *ngIf="attrSafe('experiencia', 'referencia-laboral')">
+                  <div class="cv-ref-block text-muted" *ngFor="let ref of referenciasLaboralesDe(exp.experienciaId)">
+                    <strong>Referencia laboral:</strong> {{ textoReferenciaLaboral(ref) }}
+                  </div>
+                </ng-container>
+                <div class="cv-mi-support" *ngIf="exp.adjuntoSoporte && attrSafe('experiencia', 'soporte-certificacion-laboral')">
+                  <a [href]="exp.adjuntoSoporte" target="_blank" rel="noopener noreferrer" class="cv-mi-support-link">
+                    <i class="bi bi-download me-1"></i>Descargar soporte de certificación laboral
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-section" *ngIf="bloqueForm('formacion-academica') && formacionesAcademicas.length">
+            <div class="cv-mi-section-title">Formación Académica</div>
+            <div class="cv-mi-timeline">
+              <div class="timeline-item" *ngFor="let edu of formacionesAcademicas">
+                <div
+                  class="timeline-title cv-mi-acad-headline"
+                  *ngIf="
+                    (attrSafe('educacion', 'titulo') && (edu.titulo || '').trim()) ||
+                    (attrSafe('educacion', 'institucion') && (edu.institucion || '').trim())
+                  ">
+                  <strong class="cv-mi-acad-titulo" *ngIf="attrSafe('educacion', 'titulo') && (edu.titulo || '').trim()">
+                    {{ edu.titulo }}
+                  </strong>
+                  <ng-container *ngIf="attrSafe('educacion', 'institucion') && (edu.institucion || '').trim()">
+                    <span
+                      *ngIf="attrSafe('educacion', 'titulo') && (edu.titulo || '').trim()"
+                      class="cv-mi-acad-headline-sep"
+                      aria-hidden="true">
+                      {{ ' | ' }}
+                    </span>
+                    <span class="cv-mi-acad-institucion">{{ edu.institucion }}</span>
+                  </ng-container>
+                </div>
+                <div class="timeline-date cv-mi-acad-graduacion" *ngIf="textoGraduacionAcademica(edu) as gradTxt">
+                  {{ gradTxt }}
+                </div>
+                <div class="cv-mi-support" *ngIf="edu.adjuntoSoporte && descarga('formacion-academica', 'descargar-soporte')">
+                  <a [href]="edu.adjuntoSoporte" target="_blank" rel="noopener noreferrer" class="cv-mi-support-link">
+                    <i class="bi bi-download me-1"></i>Descargar soporte
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-section" *ngIf="bloqueForm('diplomados') && formacionesDiplomado.length">
+            <div class="cv-mi-section-title">Diplomados</div>
+            <div class="cv-mi-timeline">
+              <div class="timeline-item timeline-item--compact" *ngFor="let edu of formacionesDiplomado">
+                <div class="timeline-inline">
+                  <span class="timeline-title" *ngIf="attrSafe('educacion', 'titulo')">{{ edu.titulo }}</span>
+                  <span class="timeline-sep" *ngIf="attrSafe('educacion', 'institucion') && edu.institucion"> — </span>
+                  <span class="timeline-sub" *ngIf="attrSafe('educacion', 'institucion')">{{ edu.institucion }} </span>
+                  <span class="timeline-date" *ngIf="attrSafe('educacion', 'fechas') && anioEntreParentesis(edu)">{{
+                    anioEntreParentesis(edu)
+                  }}</span>
+                </div>
+                <div class="cv-mi-support" *ngIf="edu.adjuntoSoporte && descarga('diplomados', 'descargar-soporte-certificado')">
+                  <a [href]="edu.adjuntoSoporte" target="_blank" rel="noopener noreferrer" class="cv-mi-support-link">
+                    <i class="bi bi-download me-1"></i>Descargar soporte certificado
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-section" *ngIf="bloqueForm('certificaciones') && formacionesCertificacion.length">
+            <div class="cv-mi-section-title">Certificaciones</div>
+            <div class="cv-mi-timeline">
+              <div class="timeline-item timeline-item--compact" *ngFor="let edu of formacionesCertificacion">
+                <div class="timeline-inline">
+                  <span class="timeline-title" *ngIf="attrSafe('educacion', 'titulo')">{{ edu.titulo }}</span>
+                  <span class="timeline-sep" *ngIf="attrSafe('educacion', 'institucion') && edu.institucion"> — </span>
+                  <span class="timeline-sub" *ngIf="attrSafe('educacion', 'institucion')">{{ edu.institucion }} </span>
+                  <span class="timeline-date" *ngIf="attrSafe('educacion', 'fechas') && anioEntreParentesis(edu)">{{
+                    anioEntreParentesis(edu)
+                  }}</span>
+                </div>
+                <div class="cv-mi-support" *ngIf="edu.adjuntoSoporte && descarga('certificaciones', 'descargar-soporte-certificado')">
+                  <a [href]="edu.adjuntoSoporte" target="_blank" rel="noopener noreferrer" class="cv-mi-support-link">
+                    <i class="bi bi-download me-1"></i>Descargar soporte certificado
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-section" *ngIf="bloqueForm('cursos') && formacionesCurso.length">
+            <div class="cv-mi-section-title">Cursos</div>
+            <div class="cv-mi-timeline">
+              <div class="timeline-item timeline-item--compact" *ngFor="let edu of formacionesCurso">
+                <div class="timeline-inline">
+                  <span class="timeline-title" *ngIf="attrSafe('educacion', 'titulo')">{{ edu.titulo }}</span>
+                  <span class="timeline-sep" *ngIf="attrSafe('educacion', 'institucion') && edu.institucion"> — </span>
+                  <span class="timeline-sub" *ngIf="attrSafe('educacion', 'institucion')">{{ edu.institucion }} </span>
+                  <span class="timeline-date" *ngIf="attrSafe('educacion', 'fechas') && anioEntreParentesis(edu)">{{
+                    anioEntreParentesis(edu)
+                  }}</span>
+                </div>
+                <div class="cv-mi-support" *ngIf="edu.adjuntoSoporte && descarga('cursos', 'descargar-soporte-certificado')">
+                  <a [href]="edu.adjuntoSoporte" target="_blank" rel="noopener noreferrer" class="cv-mi-support-link">
+                    <i class="bi bi-download me-1"></i>Descargar soporte certificado
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-section" *ngIf="sec('proyectos') && proyectos.length">
+            <div class="cv-mi-section-title">Proyectos Destacados</div>
+            <div class="cv-mi-timeline">
+              <div class="timeline-item" *ngFor="let pr of proyectos">
+                <div class="timeline-title" *ngIf="attr('proyectos', 'nombre')">{{ pr.nombreProyecto }}</div>
+                <div class="timeline-sub" *ngIf="lineaProyectoMeta(pr)">{{ lineaProyectoMeta(pr) }}</div>
+                <ul class="cv-pro-list mb-0 mt-1" *ngIf="esPlantillaProfesional && lineasBulletTexto(textoProyecto(pr)).length">
+                  <li *ngFor="let linea of lineasBulletTexto(textoProyecto(pr))">{{ linea }}</li>
+                </ul>
+                <div class="timeline-desc" *ngIf="!esPlantillaProfesional && textoProyecto(pr)">{{ textoProyecto(pr) }}</div>
+                <div class="cv-mi-tags" *ngIf="attr('proyectos', 'stack') && stackTags(pr.stackTecnologico).length">
+                  <span class="cv-mi-tag" *ngFor="let t of stackTags(pr.stackTecnologico)">{{ t }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-container *ngIf="esPlantillaProfesional">
+            <div class="cv-mi-section" *ngIf="sec('habilidades') && habilidadesTecnicas.length">
+              <div class="cv-mi-section-title">Habilidades técnicas</div>
+              <ul class="cv-pro-list">
+                <li *ngFor="let h of habilidadesTecnicas">
+                  <ng-container *ngIf="attr('habilidades', 'nombre')">
+                    <strong>{{ h.nombre }}</strong
+                    ><ng-container *ngIf="attr('habilidades', 'nivel') && h.nivel">: {{ h.nivel }}</ng-container
+                    ><ng-container *ngIf="attr('habilidades', 'descripcion') && h.descripcion?.trim()">
+                      — {{ h.descripcion }}</ng-container
+                    >
+                  </ng-container>
+                </li>
+              </ul>
+            </div>
+            <div class="cv-mi-section" *ngIf="sec('habilidades') && habilidadesBlandas.length">
+              <div class="cv-mi-section-title">Habilidades blandas</div>
+              <ul class="cv-pro-list">
+                <ng-container *ngFor="let h of habilidadesBlandas">
+                  <li *ngIf="textoBlandaProfesional(h) as t">{{ t }}</li>
+                </ng-container>
+              </ul>
+            </div>
+            <div class="cv-mi-section" *ngIf="sec('habilidades') && idiomas.length">
+              <div class="cv-mi-section-title">Idiomas</div>
+              <ul class="cv-pro-list">
+                <li *ngFor="let id of idiomas">
+                  <ng-container *ngIf="attr('habilidades', 'nombre')">
+                    <strong>{{ id.nombre }}</strong
+                    ><ng-container *ngIf="attr('habilidades', 'nivel') && id.nivel"> — {{ id.nivel }}</ng-container
+                    ><ng-container *ngIf="attr('habilidades', 'descripcion') && textoDetalleIdioma(id)">
+                      · {{ textoDetalleIdioma(id) }}</ng-container
+                    >
+                  </ng-container>
+                </li>
+              </ul>
+            </div>
+          </ng-container>
+
+          <div class="cv-mi-section" *ngIf="referenciasPie.length">
+            <div class="cv-mi-section-title">Referencias laborales</div>
+            <div *ngFor="let r of referenciasPie" class="text-muted small mb-2">
+              <strong>{{ r.nombre }} {{ r.apellido || '' }}</strong>
+              <span *ngIf="r.cargo || r.empresa">
+                — {{ r.cargo }}<span *ngIf="r.empresa"> · {{ r.empresa }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

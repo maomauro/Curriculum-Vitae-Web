@@ -19,6 +19,8 @@ import { ReferenciasComponent }      from './pages/referencias.component';
 import { RedesSocialesComponent }    from './pages/redes-sociales.component';
 import { FamiliaresComponent }       from './pages/familiares.component';
 import { ContactosComponent }        from './pages/contactos.component';
+import { SharedModule } from '../../shared/shared-module';
+
 @NgModule({
   declarations: [
     DashboardComponent,
@@ -41,6 +43,7 @@ import { ContactosComponent }        from './pages/contactos.component';
     FormsModule,
     RouterModule,
     PrivateRoutingModule,
+    SharedModule,
   ],
 })
 export class PrivateModule {}

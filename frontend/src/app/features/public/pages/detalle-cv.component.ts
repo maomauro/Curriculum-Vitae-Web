@@ -1,12 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { PublicService, CvDetalleDto, ContactarDto, HabilidadPublicoDto } from '../../../core/services/public/public.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { catchError, distinctUntilChanged, map, of, switchMap, tap } from 'rxjs';
+import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
+import { cvDetalleDtoToPreviewVm } from '../../../shared/mappers/cv-detalle-to-preview-vm';
+import type { CvPreviewVm } from '../../../shared/models/cv-preview-vm';
+
+type DetalleEstadoCarga = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 
 @Component({
   selector: 'app-detalle-cv',
   standalone: false,
   template: `
-    <div class="container py-4" *ngIf="cv; else notFound">
+    <div class="container py-5 text-center" *ngIf="estado === 'cargando'">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando CV…</span>
+      </div>
+      <p class="text-muted small mt-3 mb-0">Cargando hoja de vida…</p>
+    </div>
+
+    <div class="container py-4" *ngIf="estado === 'listo' && cv">
 
       <!-- Botón volver -->
       <a routerLink="/cvs" class="btn btn-sm btn-outline-secondary mb-3">
@@ -14,7 +28,7 @@ import { PublicService, CvDetalleDto, ContactarDto, HabilidadPublicoDto } from '
       </a>
 
       <!-- Tabs -->
-      <ul class="nav gap-1 mb-4 cv-tabs-nav">
+      <ul class="nav gap-1 mb-3 cv-tabs-nav">
         <li class="nav-item">
           <a class="nav-link fw-semibold cv-nav-link-active">
             <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
@@ -28,123 +42,28 @@ import { PublicService, CvDetalleDto, ContactarDto, HabilidadPublicoDto } from '
         </li>
       </ul>
 
-      <div class="row g-4">
-
-        <!-- ── Columna izquierda ─────────────────────────────── -->
-        <div class="col-md-4">
-          <div class="sidebar-cv text-center">
-
-            <!-- Avatar 120px -->
-            <div class="d-flex justify-content-center mb-3">
-              <div class="avatar-circle avatar-xl {{ colorClass(cv.curriculumId) }}">
-                {{ iniciales(cv.personales?.nombreCompleto) }}
-              </div>
-            </div>
-            <h4 class="fw-bold mb-1">{{ cv.personales?.nombreCompleto }}</h4>
-            <p class="text-muted mb-3">{{ cv.perfiles[0]?.nombrePerfil }}</p>
-
-            <!-- Contacto -->
-            <div class="text-start mb-4">
-              <div class="section-title">Contacto</div>
-              <div class="contact-item" *ngIf="cv.personales?.email"><i class="bi bi-envelope-fill me-2 text-primary"></i>{{ cv.personales?.email }}</div>
-            <div class="contact-item" *ngIf="cv.personales?.ciudad || cv.personales?.pais">
-              <i class="bi bi-geo-alt-fill me-2 text-primary"></i>{{ cv.personales?.ciudad }}<ng-container *ngIf="cv.personales?.ciudad && cv.personales?.pais">, </ng-container>{{ cv.personales?.pais }}
-            </div>
-            <div class="contact-item" *ngIf="redesSocialesMap['LinkedIn']">
-              <i class="bi bi-linkedin me-2 text-primary"></i>{{ redesSocialesMap['LinkedIn'] }}
-            </div>
-            <div class="contact-item" *ngIf="redesSocialesMap['GitHub']">
-              <i class="bi bi-github me-2 text-primary"></i>{{ redesSocialesMap['GitHub'] }}
-              </div>
-            </div>
-
-            <!-- Habilidades (excluye idiomas: van en su bloque con nombre + nivel + descripción) -->
-            <div class="text-start mb-4" *ngIf="habilidadesSinIdiomas.length">
-              <div class="section-title">Habilidades</div>
-              <div *ngFor="let h of habilidadesSinIdiomas">
-                <div class="d-flex justify-content-between mb-1">
-                  <span class="cv-skill-row-text">{{ h.nombre }}</span>
-                  <small class="text-muted">{{ h.nivel }}</small>
-                </div>
-                <div class="progress mb-2 cv-progress-xs">
-                  <div class="progress-bar cv-progress-bar-primary" role="progressbar"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Idiomas: nombre, nivel, descripción opcional (misma semántica que en Mi CV / datos) -->
-            <div class="text-start mb-4" *ngIf="idiomasPublicos.length">
-              <div class="section-title">Idiomas</div>
-              <div *ngFor="let idioma of idiomasPublicos" class="mb-2 pb-2 border-bottom border-light">
-                <div class="d-flex justify-content-between align-items-baseline gap-2">
-                  <span class="fw-semibold">{{ idioma.nombre }}</span>
-                  <small class="text-muted text-nowrap" *ngIf="idioma.nivel">{{ idioma.nivel }}</small>
-                </div>
-                <small class="text-muted d-block mt-1" *ngIf="idioma.descripcion">{{ idioma.descripcion }}</small>
-              </div>
-            </div>
-
-            <!-- Botón contactar -->
-            <button class="btn btn-primary w-100"
-                    data-bs-toggle="modal" data-bs-target="#modalContacto">
-              <i class="bi bi-envelope-fill me-2"></i>Contactar a {{ primerNombre(cv.personales?.nombreCompleto) }}
-            </button>
-
-          </div>
-        </div>
-
-        <!-- ── Columna derecha ──────────────────────────────── -->
-        <div class="col-md-8">
-          <div class="content-cv">
-
-            <!-- Resumen -->
-            <div class="mb-4" *ngIf="cv.perfiles?.length">
-              <div class="section-title">Resumen profesional</div>
-              <p class="text-secondary cv-prose">{{ cv.perfiles[0].descripcionPerfil }}</p>
-            </div>
-
-            <!-- Experiencia -->
-            <div class="mb-4" *ngIf="cv.experiencias?.length">
-              <div class="section-title">Experiencia laboral</div>
-              <div class="timeline">
-                <div class="timeline-item" *ngFor="let exp of cv.experiencias">
-                  <div class="timeline-period">
-                    {{ exp.fechaInicio | date:'MMM yyyy' }} —
-                    {{ exp.esActual ? 'Actualidad' : (exp.fechaFin | date:'MMM yyyy') }}
-                  </div>
-                  <div class="timeline-company">{{ exp.empresa }}</div>
-                  <div class="timeline-role">{{ exp.cargo }}</div>
-                  <div class="timeline-desc">{{ exp.funciones }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Educación -->
-            <div *ngIf="cv.formaciones?.length">
-              <div class="section-title">Educación</div>
-              <div class="timeline">
-                <div class="timeline-item" *ngFor="let edu of cv.formaciones">
-                  <div class="timeline-period">{{ edu.fechaFin | date:'yyyy' }}</div>
-                  <div class="timeline-company">{{ edu.institucion }}</div>
-                  <div class="timeline-role">{{ edu.titulo }}</div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+      <div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
+        <button type="button" class="btn btn-primary"
+                data-bs-toggle="modal" data-bs-target="#modalContacto">
+          <i class="bi bi-envelope-fill me-2"></i>Contactar a {{ primerNombre(cv.personales?.nombreCompleto) }}
+        </button>
       </div>
+
+      <app-cv-plantilla-preview *ngIf="vistaPlantilla" [vm]="vistaPlantilla"></app-cv-plantilla-preview>
     </div>
 
-    <!-- CV no encontrado -->
-    <ng-template #notFound>
-      <div class="container py-5 text-center">
-        <i class="bi bi-file-earmark-x display-4 text-muted"></i>
-        <p class="text-muted mt-3">CV no encontrado.</p>
-        <a routerLink="/cvs" class="btn btn-outline-primary">Ver todos los CVs</a>
-      </div>
-    </ng-template>
+    <div class="container py-5 text-center" *ngIf="estado === 'no_encontrado'">
+      <i class="bi bi-file-earmark-x display-4 text-muted"></i>
+      <p class="text-muted mt-3">CV no encontrado o ya no está publicado.</p>
+      <a routerLink="/cvs" class="btn btn-outline-primary">Ver todos los CVs</a>
+    </div>
+
+    <div class="container py-5 text-center" *ngIf="estado === 'error'">
+      <i class="bi bi-wifi-off display-4 text-muted"></i>
+      <p class="text-muted mt-3">No pudimos cargar este CV. Revisa tu conexión o inténtalo de nuevo.</p>
+      <button type="button" class="btn btn-outline-primary me-2" (click)="reintentar()">Reintentar</button>
+      <a routerLink="/cvs" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
 
     <!-- Modal: Formulario de contacto -->
     <div class="modal fade" id="modalContacto" tabindex="-1"
@@ -221,50 +140,84 @@ import { PublicService, CvDetalleDto, ContactarDto, HabilidadPublicoDto } from '
 })
 export class DetalleCvComponent implements OnInit {
   cv: CvDetalleDto | null = null;
+  estado: DetalleEstadoCarga = 'cargando';
   contactoEnviado = false;
   enviandoContacto = false;
-  loading = false;
   contacto: ContactarDto = { nombre: '', empresa: null, email: '', motivoContacto: null, asunto: null, mensaje: '' };
 
-  get redesSocialesMap(): Record<string, string> {
-    const map: Record<string, string> = {};
-    (this.cv?.redesSociales ?? []).forEach((r: any) => {
-      if (r.tipo && r.url) map[r.tipo] = r.url;
-    });
-    return map;
-  }
+  private readonly route = inject(ActivatedRoute);
+  private readonly publicService = inject(PublicService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  get idiomasPublicos(): HabilidadPublicoDto[] {
-    return (this.cv?.habilidades ?? []).filter(h => h.tipo === 'Idioma');
-  }
+  private urlPublicaActual = '';
 
-  get habilidadesSinIdiomas(): HabilidadPublicoDto[] {
-    return (this.cv?.habilidades ?? []).filter(h => h.tipo !== 'Idioma');
+  get vistaPlantilla(): CvPreviewVm | null {
+    return this.cv ? cvDetalleDtoToPreviewVm(this.cv) : null;
   }
-
-  constructor(
-    private route: ActivatedRoute,
-    private publicService: PublicService
-  ) {}
 
   ngOnInit(): void {
-    const urlPublica = this.route.snapshot.paramMap.get('urlPublica') ?? '';
-    if (!urlPublica) return;
-    this.loading = true;
-    this.publicService.getDetalle(urlPublica).subscribe({
-      next: data => { this.cv = data; this.loading = false; },
-      error: () => { this.cv = null; this.loading = false; }
+    this.route.paramMap
+      .pipe(
+        map(p => (p.get('urlPublica') ?? '').trim()),
+        distinctUntilChanged(),
+        tap(slug => {
+          this.urlPublicaActual = slug;
+          this.estado = 'cargando';
+          this.cv = null;
+        }),
+        switchMap(slug => {
+          if (!slug) {
+            this.estado = 'no_encontrado';
+            return of<CvDetalleDto | null>(null);
+          }
+          return this.publicService.getDetalle(slug).pipe(
+            catchError((err: HttpErrorResponse) => {
+              if (err.status === 404) {
+                this.estado = 'no_encontrado';
+              } else {
+                this.estado = 'error';
+              }
+              return of<CvDetalleDto | null>(null);
+            })
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(data => {
+        if (data) {
+          this.cv = data;
+          this.estado = 'listo';
+          this.contactoEnviado = false;
+          this.contacto = {
+            nombre: '',
+            empresa: null,
+            email: '',
+            motivoContacto: null,
+            asunto: null,
+            mensaje: '',
+          };
+        } else if (this.estado === 'cargando') {
+          this.cv = null;
+          this.estado = 'no_encontrado';
+        }
+      });
+  }
+
+  reintentar(): void {
+    const slug = this.urlPublicaActual;
+    if (!slug) return;
+    this.estado = 'cargando';
+    this.cv = null;
+    this.publicService.getDetalle(slug).subscribe({
+      next: data => {
+        this.cv = data;
+        this.estado = 'listo';
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cv = null;
+        this.estado = err.status === 404 ? 'no_encontrado' : 'error';
+      },
     });
-  }
-
-  iniciales(nombre: string | null | undefined): string {
-    if (!nombre) return '?';
-    return nombre.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-  }
-
-  colorClass(id: number | null | undefined): string {
-    const classes = ['bg-primary', 'bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'bg-secondary'];
-    return classes[(id ?? 0) % classes.length];
   }
 
   primerNombre(nombreCompleto: string | null | undefined): string {

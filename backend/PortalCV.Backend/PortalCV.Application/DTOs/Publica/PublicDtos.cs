@@ -22,6 +22,9 @@ public record CvListadoItemDto(
 public record CvDetalleDto(
     int CurriculumId,
     string UrlPublica,
+    /// <summary>Código de plantilla (minúsculas): clasico, profesional, ats, corporativo, ejecutivo.</summary>
+    string PlantillaCodigo,
+    int ExperienciaLaboralMesesAcumulados,
     PersonalesPublicoDto? Personales,
     IEnumerable<PerfilPublicoDto> Perfiles,
     IEnumerable<ExperienciaPublicoDto> Experiencias,
@@ -46,7 +49,8 @@ public record PerfilPublicoDto(
     string? NombrePerfil,
     string? DescripcionPerfil,
     decimal? AspiracionSalarialPesos,
-    decimal? AspiracionSalarialDolares);
+    decimal? AspiracionSalarialDolares,
+    bool EsActivo);
 
 public record ExperienciaPublicoDto(
     int ExperienciaId,
@@ -56,7 +60,8 @@ public record ExperienciaPublicoDto(
     DateOnly? FechaInicio,
     DateOnly? FechaFin,
     bool EsActual,
-    string? Funciones);
+    string? Funciones,
+    string? TipoContrato);
 
 public record FormacionPublicoDto(
     int FormacionId,

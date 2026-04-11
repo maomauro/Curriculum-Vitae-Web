@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PortalCV.Application;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data;
+using PortalCV.Infrastructure.Helpers;
 
 namespace PortalCV.Infrastructure.Services;
 
@@ -14,19 +16,22 @@ public class PublicCvService : IPublicCvService
     private readonly IRepository<AlertaVisita> _alertaRepo;
     private readonly IRepository<EstadisticasPublicas> _estadisticasRepo;
     private readonly PortalCvDbContext _context;
+    private readonly ILogger<PublicCvService> _logger;
 
     public PublicCvService(
         ICurriculumRepository curriculumRepo,
         IRepository<VisitanteContacto> contactoRepo,
         IRepository<AlertaVisita> alertaRepo,
         IRepository<EstadisticasPublicas> estadisticasRepo,
-        PortalCvDbContext context)
+        PortalCvDbContext context,
+        ILogger<PublicCvService> logger)
     {
         _curriculumRepo = curriculumRepo;
         _contactoRepo = contactoRepo;
         _alertaRepo = alertaRepo;
         _estadisticasRepo = estadisticasRepo;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<(IReadOnlyList<CvListadoItemDto> Items, int Total)> BuscarCvsAsync(
@@ -57,10 +62,20 @@ public class PublicCvService : IPublicCvService
         var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct);
         if (cv is null) return null;
 
-        // Registrar visita
-        await RegistrarVisitaAsync(cv, "Vista", ct);
+        try
+        {
+            await RegistrarVisitaAsync(cv.CurriculumId, "Vista", ct);
+        }
+        catch (Exception ex)
+        {
+            // No bloquear la lectura del CV si falla alerta/estadísticas (p. ej. CHECK en BD desactualizado).
+            _logger.LogWarning(ex, "No se pudo registrar la visita al CV público {UrlPublica}", urlPublica);
+        }
 
-        return MapToDetalle(cv);
+        var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
+            cv.Experiencias.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
+
+        return MapToDetalle(cv, mesesAcum);
     }
 
     public async Task<CvEstadisticasDto?> GetEstadisticasAsync(string urlPublica, CancellationToken ct = default)
@@ -150,11 +165,15 @@ public class PublicCvService : IPublicCvService
 
     // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    private async Task RegistrarVisitaAsync(Curriculum cv, string tipo, CancellationToken ct)
+    /// <summary>
+    /// Igual que en <see cref="ContactarAsync"/>: el curriculum viene del repo con AsNoTracking;
+    /// hay que cargar la fila en el contexto actual para persistir contadores.
+    /// </summary>
+    private async Task RegistrarVisitaAsync(int curriculumId, string tipo, CancellationToken ct)
     {
         var alerta = new AlertaVisita
         {
-            CurriculumId = cv.CurriculumId,
+            CurriculumId = curriculumId,
             FechaVisita = DateTime.UtcNow,
             TipoVisita = tipo,
             EsLeida = false,
@@ -162,10 +181,14 @@ public class PublicCvService : IPublicCvService
         };
         await _alertaRepo.AddAsync(alerta, ct);
 
-        cv.ContadorVisitas++;
-        cv.FechaActualizacion = DateTime.UtcNow;
+        var curriculum = await _context.Curriculums.FindAsync(new object[] { curriculumId }, ct);
+        if (curriculum is not null)
+        {
+            curriculum.ContadorVisitas++;
+            curriculum.FechaActualizacion = DateTime.UtcNow;
+        }
 
-        await ActualizarEstadisticasAsync(cv.CurriculumId, esContacto: false, ct);
+        await ActualizarEstadisticasAsync(curriculumId, esContacto: false, ct);
         await _context.SaveChangesAsync(ct);
     }
 
@@ -206,9 +229,14 @@ public class PublicCvService : IPublicCvService
         return string.Equals(t, "Basico", StringComparison.Ordinal) ? "Básico" : t;
     }
 
-    private static CvDetalleDto MapToDetalle(Curriculum c) => new(
+    private static CvDetalleDto MapToDetalle(Curriculum c, int experienciaLaboralMesesAcumulados)
+    {
+        var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
+        return new CvDetalleDto(
         c.CurriculumId,
         c.UrlPublica,
+        plantilla,
+        experienciaLaboralMesesAcumulados,
         c.Personales is null ? null : new PersonalesPublicoDto(
             string.IsNullOrWhiteSpace($"{c.Personales.PrimerNombre} {c.Personales.PrimerApellido}".Trim())
                 ? null
@@ -221,9 +249,9 @@ public class PublicCvService : IPublicCvService
             c.Personales.PrivacidadEmail,
             c.Personales.PrivacidadTelefono),
         c.Perfiles.Select(p => new PerfilPublicoDto(p.PerfilId, p.NombrePerfil, p.DescripcionPerfil,
-            p.AspiracionSalarialPesos, p.AspiracionSalarialDolares)),
+            p.AspiracionSalarialPesos, p.AspiracionSalarialDolares, p.EsActivo)),
         c.Experiencias.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
-            e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones)),
+            e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones, e.TipoContrato)),
         c.Formaciones.Select(f => new FormacionPublicoDto(f.FormacionId, f.Titulo, f.Institucion,
             f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin)),
         c.Habilidades.Select(h => new HabilidadPublicoDto(h.HabilidadId, h.Nombre, h.Tipo, MapHabilidadNivelPublico(h.Nivel), h.Descripcion,
@@ -236,5 +264,6 @@ public class PublicCvService : IPublicCvService
         c.RedesSociales.Select(r => new RedSocialPublicoDto(r.RedSocialId, r.NombreRed,
             r.LinkPublico, r.UsuarioContacto))
     );
+    }
 }
 
