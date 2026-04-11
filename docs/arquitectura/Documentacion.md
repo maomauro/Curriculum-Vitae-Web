@@ -12,14 +12,14 @@
 
 ### 1.1 Propósito del Sistema
 
-**Portal de Currículum Vitae** es una plataforma web diseñada para conectar profesionales (publicadores) con reclutadores y empresas (visitantes) interesadas en su talento. El sistema opera bajo un modelo **100% público y transparente**, donde todos los currículums vitae son accesibles sin necesidad de registro, y las estadísticas de cada perfil están disponibles para cualquier visitante.
+**Portal de Currículum Vitae** es una plataforma web diseñada para conectar profesionales (publicadores) con reclutadores y empresas (visitantes) interesadas en su talento. La **consulta pública** (búsqueda, detalle del CV y formulario de contacto) solo aplica a currículums en estado **Publicado**; en **Borrador** el contenido se edita solo en el portal privado autenticado. Los visitantes no se registran para explorar ni contactar perfiles publicados; la visibilidad fina por sección sigue gobernada por la configuración de privacidad del CV.
 
 ### 1.2 Filosofía del Producto
 
 ```
 🌟 PRINCIPIOS RECTORES
 ├── 1. Acceso sin barreras
-│   └── Cualquier reclutador puede ver CVs sin registrarse
+│   └── Cualquier reclutador puede ver CVs publicados sin registrarse
 ├── 2. Transparencia total
 │   └── Todas las estadísticas son públicas
 ├── 3. Confianza
@@ -32,7 +32,7 @@
 
 | Objetivo | Descripción | Métrica de Éxito |
 |----------|-------------|-------------------|
-| **Maximizar visibilidad** | Todos los CVs son públicos por defecto | >10,000 visitas/mes al portal |
+| **Maximizar visibilidad** | El publicador decide cuándo pasar de borrador a publicado | >10,000 visitas/mes al portal |
 | **Facilitar la conexión** | Reclutadores contactan sin barreras | >200 contactos/mes |
 | **Empoderar profesionales** | Control total sobre su información | >80% de usuarios activos editan su CV |
 | **Generar confianza** | Transparencia en estadísticas | >90% de reclutadores consultan métricas |

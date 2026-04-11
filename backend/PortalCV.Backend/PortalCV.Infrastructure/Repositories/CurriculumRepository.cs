@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PortalCV.Application;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data;
@@ -21,7 +22,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .Include(c => c.Referencias)
             .Include(c => c.RedesSociales)
             .Include(c => c.EstadisticasPublicas)
-            .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == "Publicado", ct);
+            .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == CurriculumEstados.Publicado, ct);
 
     public async Task<Curriculum?> GetByUsuarioIdAsync(int usuarioId, CancellationToken ct = default)
         => await _dbSet
@@ -42,7 +43,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
     {
         var query = _dbSet
             .AsNoTracking()
-            .Where(c => c.Estado == "Publicado")
+            .Where(c => c.Estado == CurriculumEstados.Publicado)
             .Include(c => c.Personales)
             .Include(c => c.Perfiles.Where(p => p.EsActivo))
             .Include(c => c.Habilidades)

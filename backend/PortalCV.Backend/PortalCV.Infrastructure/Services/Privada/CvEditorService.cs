@@ -16,7 +16,7 @@ public class CvEditorService : ICvEditorService
         _context = context;
     }
 
-    // â”€â”€ Personales (1:1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Personales (1:1) ---
 
     public async Task<PersonalesDto?> GetPersonalesAsync(int curriculumId, CancellationToken ct = default)
     {
@@ -90,7 +90,7 @@ public class CvEditorService : ICvEditorService
         return MapPersonales(existing);
     }
 
-    // â”€â”€ Perfil â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Perfil ---
 
     public async Task<IReadOnlyList<PerfilDto>> GetPerfilesAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Perfiles.AsNoTracking()
@@ -134,7 +134,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Experiencia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Experiencia ---
 
     public async Task<IReadOnlyList<ExperienciaDto>> GetExperienciasAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Experiencias.AsNoTracking()
@@ -180,7 +180,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ FormaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Formación ---
 
     public async Task<IReadOnlyList<FormacionDto>> GetFormacionesAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Formaciones.AsNoTracking()
@@ -223,7 +223,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Habilidades â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Habilidades ---
 
     public async Task<IReadOnlyList<HabilidadDto>> GetHabilidadesAsync(int curriculumId, CancellationToken ct = default)
     {
@@ -264,7 +264,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Proyectos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Proyectos ---
 
     public async Task<IReadOnlyList<ProyectoDto>> GetProyectosAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Proyectos.AsNoTracking()
@@ -303,7 +303,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Referencias â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Referencias ---
 
     public async Task<IReadOnlyList<ReferenciaDto>> GetReferenciasAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Referencias.AsNoTracking()
@@ -345,7 +345,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Redes Sociales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Redes sociales ---
 
     public async Task<IReadOnlyList<RedSocialDto>> GetRedesSocialesAsync(int curriculumId, CancellationToken ct = default)
         => await _context.RedesSociales.AsNoTracking()
@@ -375,7 +375,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Familiares â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Familiares ---
 
     public async Task<IReadOnlyList<FamiliarContactoDto>> GetFamiliaresAsync(int curriculumId, CancellationToken ct = default)
         => await _context.FamiliarsContacto.AsNoTracking()
@@ -411,7 +411,7 @@ public class CvEditorService : ICvEditorService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ Visibilidad â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Visibilidad ---
 
     public async Task<IReadOnlyList<VisibilidadSeccionDto>> GetVisibilidadAsync(int curriculumId, CancellationToken ct = default)
         => await _context.VisibilidadesSeccion.AsNoTracking()
@@ -459,7 +459,7 @@ public class CvEditorService : ICvEditorService
 
         var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
         var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
-        var publicado = string.Equals(c.Estado, "Publicado", StringComparison.OrdinalIgnoreCase);
+        var publicado = CurriculumEstados.EsPublicado(c.Estado);
         return new PresentacionCvDto(plantilla, meses, c.UrlPublica ?? string.Empty, publicado);
     }
 
@@ -476,7 +476,7 @@ public class CvEditorService : ICvEditorService
         c.FechaActualizacion = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
         var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
-        var publicado = string.Equals(c.Estado, "Publicado", StringComparison.OrdinalIgnoreCase);
+        var publicado = CurriculumEstados.EsPublicado(c.Estado);
         return new PresentacionCvDto(code, meses, c.UrlPublica ?? string.Empty, publicado);
     }
 
@@ -489,7 +489,7 @@ public class CvEditorService : ICvEditorService
             .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
             ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
 
-        c.Estado = publicado ? "Publicado" : "Borrador";
+        c.Estado = publicado ? CurriculumEstados.Publicado : CurriculumEstados.Borrador;
         c.FechaActualizacion = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
 
@@ -575,7 +575,7 @@ public class CvEditorService : ICvEditorService
         return (fechaInicio, fechaFin);
     }
 
-    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Helpers ---
 
     private static async Task<T> GetOwnedOrThrowAsync<T>(
         DbSet<T> dbSet, int id, int curriculumId, CancellationToken ct) where T : class
@@ -583,7 +583,7 @@ public class CvEditorService : ICvEditorService
         var entity = await dbSet.FindAsync(new object[] { id }, ct)
             ?? throw new KeyNotFoundException($"{typeof(T).Name} {id} no encontrado.");
 
-        // Verificar ownership via reflexiÃ³n en la propiedad CurriculumId
+        // Verificar ownership via reflexión en la propiedad CurriculumId
         var prop = typeof(T).GetProperty("CurriculumId");
         if (prop is not null && (int)(prop.GetValue(entity) ?? 0) != curriculumId)
             throw new UnauthorizedAccessException($"{typeof(T).Name} {id} no pertenece al curriculum {curriculumId}.");
@@ -617,7 +617,7 @@ public class CvEditorService : ICvEditorService
         };
     }
 
-    // â”€â”€ Mappers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --- Mappers ---
 
     private static PersonalesDto MapPersonales(Personales e) => new(
         e.PersonalesId, e.CurriculumId, e.TipoIdentificacion, e.NumeroDocumento,
