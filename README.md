@@ -1,6 +1,6 @@
 # Curriculum-Vitae-Web
 
-Portal web para conectar profesionales (publicadores de CV) con reclutadores. Los CVs son 100% públicos; solo publicadores y administradores requieren registro y autenticación.
+Portal web para conectar profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda y detalle público) o en **borrador** (solo edición en el portal privado). Solo publicadores y administradores requieren registro y autenticación.
 
 ## Documentación
 

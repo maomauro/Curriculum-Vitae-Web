@@ -5,6 +5,7 @@ using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using PortalCV.Application;
 using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Auth;
 using PortalCV.Application.Interfaces;
@@ -112,7 +113,7 @@ public class AuthService : IAuthService
         var curriculum = new Curriculum
         {
             UrlPublica = urlPublica,
-            Estado = "Borrador",
+            Estado = CurriculumEstados.Borrador,
             FechaCreacion = DateTime.UtcNow,
             FechaActualizacion = DateTime.UtcNow,
             Usuario = usuario

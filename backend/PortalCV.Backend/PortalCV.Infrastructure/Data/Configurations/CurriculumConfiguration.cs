@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PortalCV.Application;
 using PortalCV.Domain.Entities;
 
 namespace PortalCV.Infrastructure.Data.Configurations;
@@ -25,7 +26,7 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Curriculum>
         builder.Property(x => x.Estado)
             .HasMaxLength(20)
             .IsRequired()
-            .HasDefaultValue("Borrador");
+            .HasDefaultValue(CurriculumEstados.Borrador);
 
         builder.Property(x => x.ContadorVisitas)
             .IsRequired()
