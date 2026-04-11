@@ -651,6 +651,10 @@
   border-radius: 0;
   margin-bottom: -2px;
 }
+// Pestañas con .text-muted en reposo: el activo debe ganar a Bootstrap
+.cv-tabs-nav .nav-link.cv-nav-link-active.text-muted {
+  color: var(--cv-primary) !important;
+}
 .cv-nav-link-passive {
   border-radius: 0;
 }
@@ -1950,6 +1954,17 @@
   margin: 0 auto;
 }
 .public-cv-ficha .cv-chart-canvas-pie canvas {
+  display: block;
+  max-width: 100%;
+}
+// Dona “participación por tiempo” (proyectos): un poco más ancho por la leyenda inferior
+.public-cv-ficha .cv-chart-canvas-dona {
+  position: relative;
+  max-width: min(100%, 400px);
+  height: 320px;
+  margin: 0 auto;
+}
+.public-cv-ficha .cv-chart-canvas-dona canvas {
   display: block;
   max-width: 100%;
 }
