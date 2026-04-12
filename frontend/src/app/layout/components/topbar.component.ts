@@ -3,30 +3,44 @@ import { Router } from '@angular/router';
 import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 import { DashboardService, NotificacionItemDto } from '../../core/services/private/dashboard.service';
 import { CvEditorService } from '../../core/services/private/cv-editor.service';
+import { PrivateLayoutSidebarService } from '../services/private-layout-sidebar.service';
 
 @Component({
   selector: 'app-topbar',
   standalone: false,
+  host: {
+    class: 'app-header navbar navbar-expand-md navbar-dark cv-topbar border-0',
+  },
   template: `
-    <header class="cv-topbar">
-      <!-- Hamburger -->
-      <button class="btn-icon" aria-label="Menú" title="Menú">
-        <i class="bi bi-list"></i>
-      </button>
+    <div class="container-fluid d-flex flex-wrap align-items-center gap-2 py-1">
+      <!-- Misma lógica que AdminLTE PushMenu; el JS global suele correr antes del render de Angular. -->
+      <ul class="navbar-nav d-flex flex-row align-items-center mb-0">
+        <li class="nav-item">
+          <a
+            href="#"
+            class="nav-link d-flex align-items-center py-1 px-2 cv-topbar-push"
+            role="button"
+            aria-label="Alternar menú lateral"
+            title="Menú"
+            (click)="alternarSidebar($event)">
+            <i class="bi bi-list fs-4 lh-1"></i>
+          </a>
+        </li>
+      </ul>
 
-      <!-- Brand -->
-      <a routerLink="/dashboard" class="brand"><span>Portal</span>CV</a>
+      <!-- Marca solo en sidebar (.brand-link); evita duplicar "PortalCV" aquí. -->
 
-      <!-- Info usuario (centro) -->
-      <span class="d-none d-md-flex align-items-center gap-2 text-truncate cv-topbar-user-hint">
-        <i class="bi bi-person-circle"></i>
-        <span class="text-truncate">
-          {{ (currentUser?.nombre || 'Usuario') + ' - ' + cargoActual }}
-        </span>
+      <span
+        class="d-none d-md-flex align-items-center gap-2 cv-topbar-user-hint ms-2 min-w-0"
+        [attr.aria-label]="lineaUsuarioTopbar"
+        [title]="lineaUsuarioTopbar">
+        <i class="bi bi-person-circle flex-shrink-0" aria-hidden="true"></i>
+        <span class="text-truncate min-w-0">{{ lineaUsuarioTopbar }}</span>
       </span>
 
+      <div class="d-flex align-items-center gap-2 ms-auto">
       <!-- Campanita con dropdown de notificaciones -->
-      <div class="position-relative me-1 dropdown" id="notifDropdown">
+      <div class="position-relative dropdown" id="notifDropdown">
         <button class="btn-icon" data-bs-toggle="dropdown" aria-expanded="false"
                 data-bs-auto-close="outside" title="Notificaciones"
                 (click)="abrirNotificaciones()">
@@ -87,13 +101,13 @@ import { CvEditorService } from '../../core/services/private/cv-editor.service';
         </div>
       </div>
 
-      <!-- Usuario + logout directo -->
       <div class="user-menu">
         <button type="button" class="btn btn-sm btn-danger" (click)="logout()">
           <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
         </button>
       </div>
-    </header>
+      </div>
+    </div>
   `
 })
 export class TopbarComponent implements OnInit {
@@ -103,6 +117,12 @@ export class TopbarComponent implements OnInit {
   notificaciones: NotificacionItemDto[] = [];
   loadingNotif = false;
   private notifCargadas = false;
+
+  /** Nombre (o "Usuario") y perfil activo; visible en barra superior y en tooltip. */
+  get lineaUsuarioTopbar(): string {
+    const nombre = (this.currentUser?.nombre?.trim() || 'Usuario');
+    return `${nombre} - ${this.cargoActual}`;
+  }
 
   get initials(): string {
     if (!this.currentUser?.nombre) return 'U';
@@ -118,8 +138,14 @@ export class TopbarComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private dashboardService: DashboardService,
-    private cvEditorService: CvEditorService
+    private cvEditorService: CvEditorService,
+    private sidebarNav: PrivateLayoutSidebarService
   ) {}
+
+  alternarSidebar(ev: Event): void {
+    ev.preventDefault();
+    this.sidebarNav.toggle();
+  }
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {

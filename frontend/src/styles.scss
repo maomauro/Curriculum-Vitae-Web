@@ -91,108 +91,237 @@ body {
   }
 }
 
-// ── Sidebar (AdminLayout) ─────────────────────────────────────────────────────
+// ── Sidebar (AdminLTE 4 .app-sidebar + sidebar-mini / logo-switch) ───────────
+// Posición y ancho los controla AdminLTE; menú con .sidebar-menu + .nav-link + p
+// para que colapsen textos con body.sidebar-mini.sidebar-collapse.
 .cv-sidebar {
   background: var(--cv-sidebar-bg);
-  width: 220px;
-  min-height: calc(100vh - 56px);
-  position: fixed; top: 56px; left: 0;
-  padding: 20px 0;
+  padding-bottom: 1rem;
+
+  .sidebar-brand {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .brand-link.logo-switch {
+    position: relative;
+    min-height: 3rem;
+
+    .logo-xs {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+  }
 
   .sidebar-user {
-    padding: 0 16px 20px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    margin-bottom: 8px;
-    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 16px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .sidebar-avatar {
-    width: 72px; height: 72px; border-radius: 50%;
-    background: var(--cv-primary); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--cv-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    transition: width 0.2s, height 0.2s, font-size 0.2s, margin 0.2s;
   }
 
-  .sidebar-username { color: #fff; font-weight: 700; font-size: .95rem; }
-  .sidebar-role     { color: #a0aec0; font-size: .78rem; }
+  .sidebar-user-email {
+    color: #e2e8f0;
+    font-weight: 500;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    word-break: break-word;
+    max-width: 100%;
+  }
+  .sidebar-role {
+    color: #a0aec0;
+    font-size: 0.78rem;
+  }
 
-  .nav-item-sidebar {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 20px; color: #a0aec0; text-decoration: none;
-    font-size: .875rem; white-space: nowrap;
-    transition: background .2s, color .2s;
+  .sidebar-menu {
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.55rem 1rem;
+      color: #a0aec0;
+      font-size: 0.875rem;
+      transition: background 0.2s, color 0.2s;
 
-    i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+      .nav-icon {
+        font-size: 1.05rem;
+        width: 1.5rem;
+        text-align: center;
+        flex-shrink: 0;
+      }
 
-    &:hover { background: rgba(255,255,255,.07); color: #fff; }
+      p {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
 
-    &.active {
-      background: rgba(44,123,229,.2);
-      color: #fff;
-      border-left: 3px solid var(--cv-primary);
+      &:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+      }
+
+      &.active {
+        background: rgba(44, 123, 229, 0.2);
+        color: #fff;
+        border-left: 3px solid var(--cv-primary);
+      }
+
+      .nav-badge {
+        background: #dc3545;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 10px;
+        flex-shrink: 0;
+      }
     }
+  }
 
-    .nav-badge {
-      margin-left: auto;
-      background: #dc3545; color: #fff;
-      font-size: .7rem; font-weight: 700;
-      padding: 2px 7px; border-radius: 10px;
-    }
+  .cv-sidebar-divider-li {
+    list-style: none;
   }
 }
 
-// ── Topbar (AdminLayout) ──────────────────────────────────────────────────────
-.cv-topbar {
-  background: var(--cv-topbar-bg);
-  height: 56px;
-  display: flex; align-items: center;
-  padding: 0 20px; gap: 12px;
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+/** Contrae avatar y oculta nombre/rol (equivalente a panel usuario en docs v3). */
+body.sidebar-mini.sidebar-collapse .cv-sidebar {
+  .cv-sidebar-user-text {
+    display: none;
+  }
 
-  .brand { color: #fff; font-size: 1.15rem; font-weight: 700; text-decoration: none; margin-right: auto; }
-  .brand span { color: var(--cv-primary); }
+  .sidebar-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.8rem;
+    margin-bottom: 0;
+  }
 
-  .user-menu { display: flex; align-items: center; gap: 8px; color: #fff; font-size: .875rem; cursor: pointer; }
+  .sidebar-user {
+    padding-bottom: 12px;
+  }
+
+  .cv-sidebar-divider-li {
+    display: none;
+  }
+}
+
+// ── Topbar (AdminLTE 4 .app-header + PortalCV) ───────────────────────────────
+.cv-topbar.app-header {
+  background: var(--cv-topbar-bg) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+
+  .cv-topbar-push {
+    color: #adb5bd;
+    &:hover,
+    &:focus {
+      color: #fff;
+    }
+  }
+
+  .user-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
   .user-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--cv-primary); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: .75rem; font-weight: 700;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--cv-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
 
   .btn-icon {
-    background: none; border: none; color: #adb5bd;
-    font-size: 1.1rem; cursor: pointer; padding: 6px 8px;
-    border-radius: 6px; line-height: 1;
+    background: none;
+    border: none;
+    color: #adb5bd;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    line-height: 1;
 
-    &:hover { background: rgba(255,255,255,.1); color: #fff; }
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
   }
 
   .notif-badge {
-    background: #dc3545; color: #fff;
-    font-size: .65rem; font-weight: 700;
-    width: 18px; height: 18px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    position: absolute; top: 4px; right: 4px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 4px;
+    right: 4px;
   }
 }
 
-// ── Main content área (AdminLayout) ──────────────────────────────────────────
-.cv-main {
-  margin-left: 220px;
-  margin-top: 56px;
+// Área de contenido privado (dentro de .app-main del grid AdminLTE 4)
+.portal-private-main {
   padding: 28px;
+  background: var(--cv-main-bg);
 }
 
 @media print {
-  app-topbar,
-  app-sidebar {
+  /*
+   * AdminLTE 4 fuerza .app-sidebar { display: block !important } en print; un solo
+   * selector de tipo (app-sidebar) pierde frente a .app-sidebar (0,1,0 > 0,0,1).
+   */
+  app-topbar.app-header,
+  app-sidebar.app-sidebar {
     display: none !important;
   }
 
-  .cv-main {
-    margin-left: 0 !important;
-    margin-top: 0 !important;
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  /* Una columna: sin hueco reservado al sidebar en la cuadrícula. */
+  .app-wrapper {
+    display: block !important;
+  }
+
+  main.app-main.portal-private-main {
+    margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     max-width: none !important;

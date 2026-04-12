@@ -114,6 +114,13 @@
             "scripts": [
               "node_modules/admin-lte/dist/js/adminlte.min.js"
             ]
+          },
+          "configurations": {
+            "ci": {
+              "watch": false,
+              "progress": false,
+              "browsers": "ChromeHeadless"
+            }
           }
         }
       }

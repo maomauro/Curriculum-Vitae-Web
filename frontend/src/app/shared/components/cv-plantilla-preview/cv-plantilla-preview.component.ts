@@ -23,6 +23,14 @@ import type {
 export class CvPlantillaPreviewComponent {
   @Input({ required: true }) vm!: CvPreviewVm;
   @Input() vis: CvPreviewVisibilidad | null = null;
+  /** Controles +/- para ampliar la vista previa en pantallas grandes (no afecta impresión/PDF). */
+  @Input() mostrarControlesZoom = true;
+
+  /** Rango de zoom solo pantalla; impresión fuerza 100% en CSS. */
+  readonly zoomMin = 0.75;
+  readonly zoomMax = 1.75;
+  readonly zoomPaso = 0.1;
+  nivelZoom = 1;
 
   private readonly tiposAcademicos = new Set(['Posgrado', 'Pregrado', 'Tecnologo', 'Tecnico']);
 
@@ -51,6 +59,27 @@ export class CvPlantillaPreviewComponent {
 
   get plantillaCodigo(): CvPlantillaCodigo {
     return this.vm.plantillaCodigo;
+  }
+
+  get etiquetaZoom(): string {
+    return `${Math.round(this.nivelZoom * 100)}%`;
+  }
+
+  acercarZoom(): void {
+    this.ajustarZoom(this.nivelZoom + this.zoomPaso);
+  }
+
+  alejarZoom(): void {
+    this.ajustarZoom(this.nivelZoom - this.zoomPaso);
+  }
+
+  restablecerZoom(): void {
+    this.nivelZoom = 1;
+  }
+
+  private ajustarZoom(valor: number): void {
+    const r = Math.round(valor * 100) / 100;
+    this.nivelZoom = Math.min(this.zoomMax, Math.max(this.zoomMin, r));
   }
 
   get previewRootClass(): string {
