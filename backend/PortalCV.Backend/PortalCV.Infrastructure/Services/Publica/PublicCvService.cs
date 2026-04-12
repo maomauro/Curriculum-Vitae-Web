@@ -94,7 +94,11 @@ public class PublicCvService : IPublicCvService
         var cv = await _context.Curriculums
             .AsNoTracking()
             .Include(c => c.EstadisticasPublicas)
-            .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == CurriculumEstados.Publicado, ct);
+            .FirstOrDefaultAsync(c =>
+                c.UrlPublica == urlPublica &&
+                c.Estado == CurriculumEstados.Publicado &&
+                c.Usuario.Estado == UsuarioEstados.Activo,
+                ct);
 
         if (cv is null) return null;
 
@@ -112,7 +116,10 @@ public class PublicCvService : IPublicCvService
     {
         var ciudades = await _context.Personales
             .AsNoTracking()
-            .Where(p => p.Ciudad != null)
+            .Where(p =>
+                p.Ciudad != null &&
+                p.Curriculum.Estado == CurriculumEstados.Publicado &&
+                p.Curriculum.Usuario.Estado == UsuarioEstados.Activo)
             .Select(p => p.Ciudad!)
             .Distinct()
             .OrderBy(c => c)
@@ -120,6 +127,9 @@ public class PublicCvService : IPublicCvService
 
         var habilidades = await _context.Habilidades
             .AsNoTracking()
+            .Where(h =>
+                h.Curriculum.Estado == CurriculumEstados.Publicado &&
+                h.Curriculum.Usuario.Estado == UsuarioEstados.Activo)
             .Select(h => h.Nombre)
             .Distinct()
             .OrderBy(h => h)

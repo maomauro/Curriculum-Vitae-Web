@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
+import { CV_ROL } from '../../core/constants/cv-roles';
 import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 import { DashboardService, NotificacionItemDto } from '../../core/services/private/dashboard.service';
 import { CvEditorService } from '../../core/services/private/cv-editor.service';
@@ -39,8 +41,8 @@ import { PrivateLayoutSidebarService } from '../services/private-layout-sidebar.
       </span>
 
       <div class="d-flex align-items-center gap-2 ms-auto">
-      <!-- Campanita con dropdown de notificaciones -->
-      <div class="position-relative dropdown" id="notifDropdown">
+      <!-- Campanita: solo publicadores (alertas de CV) -->
+      <div class="position-relative dropdown" id="notifDropdown" *ngIf="mostrarCampanaNotificaciones">
         <button class="btn-icon" data-bs-toggle="dropdown" aria-expanded="false"
                 data-bs-auto-close="outside" title="Notificaciones"
                 (click)="abrirNotificaciones()">
@@ -110,17 +112,27 @@ import { PrivateLayoutSidebarService } from '../services/private-layout-sidebar.
     </div>
   `
 })
-export class TopbarComponent implements OnInit {
+export class TopbarComponent implements OnInit, OnDestroy {
   currentUser: UserInfo | null = null;
   cargoActual = 'Perfil profesional';
   conteoNoLeidas = 0;
   notificaciones: NotificacionItemDto[] = [];
   loadingNotif = false;
   private notifCargadas = false;
+  /** Ruta bajo `/admin` (contexto administración en topbar). */
+  enRutaAdmin = false;
+  private routeSub?: Subscription;
 
-  /** Nombre (o "Usuario") y perfil activo; visible en barra superior y en tooltip. */
+  get mostrarCampanaNotificaciones(): boolean {
+    return this.authService.hasRol(CV_ROL.publicador);
+  }
+
+  /** Nombre y contexto: administración en `/admin` o perfil CV para publicadores. */
   get lineaUsuarioTopbar(): string {
     const nombre = (this.currentUser?.nombre?.trim() || 'Usuario');
+    if (this.enRutaAdmin) {
+      return `${nombre} - Administración`;
+    }
     return `${nombre} - ${this.cargoActual}`;
   }
 
@@ -148,15 +160,35 @@ export class TopbarComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.routeSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => this.syncRutaAdmin());
+    this.syncRutaAdmin();
+
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user) {
-        this.cargarConteo();
-        this.cargarCargoActual();
+        if (this.authService.hasRol(CV_ROL.publicador)) {
+          this.cargarConteo();
+          this.cargarCargoActual();
+        } else {
+          this.conteoNoLeidas = 0;
+          this.notifCargadas = false;
+          this.cargoActual = this.authService.hasRol(CV_ROL.admin) ? 'Administración' : 'Perfil profesional';
+        }
       } else {
         this.cargoActual = 'Perfil profesional';
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  private syncRutaAdmin(): void {
+    const path = this.router.url.split('?')[0];
+    this.enRutaAdmin = path.startsWith('/admin');
   }
 
   abrirNotificaciones(): void {

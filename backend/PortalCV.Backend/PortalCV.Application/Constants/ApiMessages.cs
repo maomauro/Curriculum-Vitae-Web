@@ -32,6 +32,7 @@ public static class ApiMessages
     public static class Admin
     {
         public const string UsuarioNoEncontrado = "Usuario no encontrado.";
+        public const string CurriculumNoEncontradoParaUsuario = "El usuario no tiene un curriculum asociado.";
         public const string RolNoEncontrado = "Rol no encontrado.";
         public const string UsuarioYaTieneEseRol = "El usuario ya tiene ese rol.";
         public const string DebeQuedarAlMenosUnAdmin = "Debe quedar al menos un usuario con rol Admin.";

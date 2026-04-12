@@ -7,6 +7,7 @@ import { App } from './app';
 import { CoreModule } from './core/core-module';
 import { LayoutModule } from './layout/layout-module';
 import { SharedModule } from './shared/shared-module';
+import { AdminModule } from './features/admin/admin.module';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { ErrorInterceptor } from './core/interceptors/error.interceptor';
 
@@ -20,7 +21,8 @@ import { ErrorInterceptor } from './core/interceptors/error.interceptor';
     AppRoutingModule,
     CoreModule,
     SharedModule,
-    LayoutModule
+    LayoutModule,
+    AdminModule,
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),

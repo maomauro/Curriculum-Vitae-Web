@@ -14,4 +14,9 @@ public interface ICurriculumRepository : IRepository<Curriculum>
         int page,
         int pageSize,
         CancellationToken ct = default);
+
+    /// <summary>Indica si el CV del usuario está publicado (<c>Curriculum.Estado</c> publicado). Usuarios sin fila no aparecen en el diccionario.</summary>
+    Task<IReadOnlyDictionary<int, bool>> GetCvPublicadoPorUsuarioIdsAsync(
+        IReadOnlyCollection<int> usuarioIds,
+        CancellationToken ct = default);
 }
