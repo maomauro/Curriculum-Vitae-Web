@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CV_ROL } from '../../core/constants/cv-roles';
 import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 
 @Component({
@@ -14,7 +15,7 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
       <!-- Marca: AdminLTE oculta .brand-text y muestra .logo-xs con body.sidebar-mini.sidebar-collapse -->
       <div class="sidebar-brand">
         <a
-          routerLink="/dashboard"
+          [routerLink]="marcaInicio"
           class="brand-link logo-switch text-decoration-none d-flex align-items-center justify-content-center px-3 py-3">
           <span class="brand-text fw-semibold text-white lh-sm text-center">
             Portal<span class="text-primary">CV</span>
@@ -33,78 +34,104 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 
       <nav class="mt-2">
         <ul class="nav sidebar-menu flex-column" role="menu">
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              routerLink="/dashboard"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: true }">
-              <i class="nav-icon bi bi-speedometer2"></i>
-              <p class="mb-0">Dashboard</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/alertas" routerLinkActive="active">
-              <i class="nav-icon bi bi-bell-fill"></i>
-              <p class="mb-0">
-                Alertas
-                <span class="nav-badge">5</span>
-              </p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/mi-cv" routerLinkActive="active">
-              <i class="nav-icon bi bi-file-earmark-person-fill"></i>
-              <p class="mb-0">Mi CV</p>
-            </a>
-          </li>
+          <ng-container *ngIf="mostrarMenuPublicador">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/dashboard"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }">
+                <i class="nav-icon bi bi-speedometer2"></i>
+                <p class="mb-0">Dashboard</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/alertas" routerLinkActive="active">
+                <i class="nav-icon bi bi-bell-fill"></i>
+                <p class="mb-0">
+                  Alertas
+                  <span class="nav-badge">5</span>
+                </p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/mi-cv" routerLinkActive="active">
+                <i class="nav-icon bi bi-file-earmark-person-fill"></i>
+                <p class="mb-0">Mi CV</p>
+              </a>
+            </li>
 
-          <li class="nav-item cv-sidebar-divider-li px-3">
+            <li class="nav-item cv-sidebar-divider-li px-3">
+              <hr class="cv-sidebar-hr my-2" />
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/datos-personales" routerLinkActive="active">
+                <i class="nav-icon bi bi-person-lines-fill"></i>
+                <p class="mb-0">Datos Personales</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/perfil" routerLinkActive="active">
+                <i class="nav-icon bi bi-person-badge-fill"></i>
+                <p class="mb-0">Perfil</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/experiencia" routerLinkActive="active">
+                <i class="nav-icon bi bi-briefcase-fill"></i>
+                <p class="mb-0">Experiencia</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/educacion" routerLinkActive="active">
+                <i class="nav-icon bi bi-mortarboard-fill"></i>
+                <p class="mb-0">Educación</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/proyectos" routerLinkActive="active">
+                <i class="nav-icon bi bi-kanban-fill"></i>
+                <p class="mb-0">Proyectos</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/habilidades" routerLinkActive="active">
+                <i class="nav-icon bi bi-stars"></i>
+                <p class="mb-0">Habilidades</p>
+              </a>
+            </li>
+          </ng-container>
+
+          <ng-container *ngIf="mostrarMenuAdmin">
+            <li class="nav-item px-3 pt-1 pb-0">
+              <span class="cv-sidebar-section-label text-uppercase">Administración</span>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin/usuarios" routerLinkActive="active">
+                <i class="nav-icon bi bi-people-fill"></i>
+                <p class="mb-0">Usuarios</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin/roles" routerLinkActive="active">
+                <i class="nav-icon bi bi-person-badge-fill"></i>
+                <p class="mb-0">Roles</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin/auditoria" routerLinkActive="active">
+                <i class="nav-icon bi bi-journal-text"></i>
+                <p class="mb-0">Auditoría</p>
+              </a>
+            </li>
+          </ng-container>
+
+          <li class="nav-item cv-sidebar-divider-li px-3" *ngIf="mostrarMenuPublicador || mostrarMenuAdmin">
             <hr class="cv-sidebar-hr my-2" />
           </li>
 
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/datos-personales" routerLinkActive="active">
-              <i class="nav-icon bi bi-person-lines-fill"></i>
-              <p class="mb-0">Datos Personales</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/perfil" routerLinkActive="active">
-              <i class="nav-icon bi bi-person-badge-fill"></i>
-              <p class="mb-0">Perfil</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/experiencia" routerLinkActive="active">
-              <i class="nav-icon bi bi-briefcase-fill"></i>
-              <p class="mb-0">Experiencia</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/educacion" routerLinkActive="active">
-              <i class="nav-icon bi bi-mortarboard-fill"></i>
-              <p class="mb-0">Educación</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/proyectos" routerLinkActive="active">
-              <i class="nav-icon bi bi-kanban-fill"></i>
-              <p class="mb-0">Proyectos</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/habilidades" routerLinkActive="active">
-              <i class="nav-icon bi bi-stars"></i>
-              <p class="mb-0">Habilidades</p>
-            </a>
-          </li>
-
-          <li class="nav-item cv-sidebar-divider-li px-3">
-            <hr class="cv-sidebar-hr my-2" />
-          </li>
-
-          <li class="nav-item">
+          <li class="nav-item" *ngIf="mostrarMenuPublicador">
             <a class="nav-link" routerLink="/configuracion" routerLinkActive="active">
               <i class="nav-icon bi bi-gear-fill"></i>
               <p class="mb-0">Configuración</p>
@@ -117,6 +144,19 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 })
 export class SidebarComponent implements OnInit {
   currentUser: UserInfo | null = null;
+
+  get mostrarMenuPublicador(): boolean {
+    return this.authService.hasRol(CV_ROL.publicador);
+  }
+
+  get mostrarMenuAdmin(): boolean {
+    return this.authService.hasRol(CV_ROL.admin);
+  }
+
+  /** Inicio del logo: CV si es publicador; panel admin si solo administrador. */
+  get marcaInicio(): string {
+    return this.mostrarMenuPublicador ? '/dashboard' : '/admin/usuarios';
+  }
 
   get initials(): string {
     if (!this.currentUser?.nombre) return 'U';

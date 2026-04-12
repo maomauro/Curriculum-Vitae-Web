@@ -102,7 +102,7 @@ export class LoginComponent {
         if (this.embedModal) {
           this.authModal.close();
         }
-        this.router.navigate(['/dashboard']);
+        void this.router.navigateByUrl(this.authService.postLoginPath());
       },
       error: (error: HttpErrorResponse) => {
         this.errorMsg = extractApiErrorMessage(error) || 'Correo o contraseña incorrectos. Inténtalo de nuevo.';

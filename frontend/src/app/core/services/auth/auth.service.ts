@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { CV_ROL } from '../../constants/cv-roles';
 
 export interface UserInfo {
   id: number;
   nombre: string;
   email: string;
+  /** Primer rol del token (compatibilidad con UI que muestra un solo rol). */
   rol: string;
+  /** Todos los roles del JWT (p. ej. Admin, Publicador). */
+  roles: string[];
   curriculumId: number;
 }
 
@@ -94,6 +98,21 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  hasRol(nombreRol: string): boolean {
+    return (this.currentUser?.roles ?? []).some(r => r === nombreRol);
+  }
+
+  /** Tras login: Publicador → área CV; solo Admin → panel administración. */
+  postLoginPath(): string {
+    if (this.hasRol(CV_ROL.publicador)) {
+      return '/dashboard';
+    }
+    if (this.hasRol(CV_ROL.admin)) {
+      return '/admin/usuarios';
+    }
+    return '/dashboard';
+  }
+
   private buildUserFromToken(token: string, nombreCompleto?: string): UserInfo | null {
     const payload = this.parseJwt(token);
     if (!payload) return null;
@@ -112,6 +131,7 @@ export class AuthService {
       nombre:       (nombreCompleto && nombreCompleto.trim()) || str(payload['nombre']) || str(payload['email']) || 'Usuario',
       email:        str(payload['email']),
       rol:          roles[0] ?? '',
+      roles,
       curriculumId: Number(payload['curriculum_id'] ?? 0),
     };
   }

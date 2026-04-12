@@ -17,6 +17,8 @@ export interface UsuarioAdminDto {
   email: string;
   estado: string;            // 'Activo' | 'Inactivo'
   fechaRegistro: string;
+  /** CV en estado publicado en el portal (admin puede cambiarlo). */
+  cvPublicado: boolean;
   roles: RolDto[];
 }
 
@@ -34,6 +36,16 @@ export class AdminService {
   setEstado(id: number, activo: boolean): Observable<{ usuarioId: number; estado: string }> {
     return this.http.put<{ usuarioId: number; estado: string }>(
       `${BASE}/usuarios/${id}/estado`, { activo }
+    );
+  }
+
+  setCvPublicacion(
+    id: number,
+    publicado: boolean
+  ): Observable<{ usuarioId: number; cvPublicado: boolean }> {
+    return this.http.put<{ usuarioId: number; cvPublicado: boolean }>(
+      `${BASE}/usuarios/${id}/cv-publicacion`,
+      { publicado }
     );
   }
 

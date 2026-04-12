@@ -288,6 +288,26 @@
   font-size: 0.72rem;
   padding: 4px 10px;
 }
+.badge-cv-publicado {
+  background: #cffafe;
+  color: #0e7490;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+.badge-cv-borrador {
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 0.72rem;
+  padding: 4px 10px;
+}
+.admin-usuarios-table-wrap {
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.admin-acciones-cell {
+  min-width: 9rem;
+  vertical-align: middle;
+}
 .admin-roles-row {
   background: #f8faff;
 }
