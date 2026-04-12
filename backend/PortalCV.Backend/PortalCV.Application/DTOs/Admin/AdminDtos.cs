@@ -7,6 +7,8 @@ public class UsuarioAdminDto
     public string Email        { get; set; } = string.Empty;
     public string Estado       { get; set; } = string.Empty;
     public DateTime FechaRegistro { get; set; }
+    /// <summary>CV en estado <c>Publicado</c> en el portal (por usuario; un curriculum por cuenta).</summary>
+    public bool CvPublicado    { get; set; }
     public List<RolDto> Roles  { get; set; } = [];
 }
 

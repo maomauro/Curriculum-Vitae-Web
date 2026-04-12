@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { publicadorGuard } from '../../core/guards/publicador.guard';
 
 import { DashboardComponent }      from './pages/dashboard.component';
 import { AlertasComponent }        from './pages/alertas.component';
@@ -17,21 +18,27 @@ import { FamiliaresComponent }      from './pages/familiares.component';
 import { ContactosComponent }       from './pages/contactos.component';
 
 const routes: Routes = [
-  { path: 'dashboard',        component: DashboardComponent },
-  { path: 'alertas',          component: AlertasComponent },
-  { path: 'mi-cv',            component: MiCvComponent },
-  { path: 'datos-personales', component: DatosPersonalesComponent },
-  { path: 'perfil',           component: PerfilComponent },
-  { path: 'experiencia',      component: ExperienciaComponent },
-  { path: 'educacion',        component: EducacionComponent },
-  { path: 'habilidades',      component: HabilidadesComponent },
-  { path: 'proyectos',      component: ProyectosComponent },
-  { path: 'referencias',    component: ReferenciasComponent },
-  { path: 'redes-sociales', component: RedesSocialesComponent },
-  { path: 'familiares',     component: FamiliaresComponent },
-  { path: 'contactos',      component: ContactosComponent },
-  { path: 'configuracion',  component: ConfiguracionComponent },
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: '',
+    canActivate: [publicadorGuard],
+    children: [
+      { path: 'dashboard',        component: DashboardComponent },
+      { path: 'alertas',          component: AlertasComponent },
+      { path: 'mi-cv',            component: MiCvComponent },
+      { path: 'datos-personales', component: DatosPersonalesComponent },
+      { path: 'perfil',           component: PerfilComponent },
+      { path: 'experiencia',      component: ExperienciaComponent },
+      { path: 'educacion',        component: EducacionComponent },
+      { path: 'habilidades',      component: HabilidadesComponent },
+      { path: 'proyectos',        component: ProyectosComponent },
+      { path: 'referencias',      component: ReferenciasComponent },
+      { path: 'redes-sociales',   component: RedesSocialesComponent },
+      { path: 'familiares',       component: FamiliaresComponent },
+      { path: 'contactos',        component: ContactosComponent },
+      { path: 'configuracion',    component: ConfiguracionComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
+  },
 ];
 
 @NgModule({

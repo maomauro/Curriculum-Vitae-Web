@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:fresh": "ng cache clean && ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -27,8 +28,11 @@
     "@angular/platform-browser": "^20.1.0",
     "@angular/router": "^20.1.0",
     "admin-lte": "^4.0.0-rc7",
+    "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "chart.js": "^4.4.2",
+    "datatables.net-bs5": "^2.3.7",
+    "datatables.net-responsive-bs5": "^3.0.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -37,7 +41,9 @@
     "@angular/build": "^20.1.1",
     "@angular/cli": "^20.1.1",
     "@angular/compiler-cli": "^20.1.0",
+    "@types/bootstrap": "^5.2.10",
     "@types/jasmine": "~5.1.0",
+    "@types/jquery": "^4.0.0",
     "jasmine-core": "~5.8.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

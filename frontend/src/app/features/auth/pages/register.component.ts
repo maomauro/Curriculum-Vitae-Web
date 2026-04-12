@@ -88,7 +88,7 @@ export class RegisterComponent {
             if (this.embedModal) {
               this.authModal.close();
             }
-            this.router.navigate(['/dashboard']);
+            void this.router.navigateByUrl(this.authService.postLoginPath());
           },
           error: () => {
             this.errorMsg = 'Cuenta creada. Inicia sesión con tu correo y contraseña.';

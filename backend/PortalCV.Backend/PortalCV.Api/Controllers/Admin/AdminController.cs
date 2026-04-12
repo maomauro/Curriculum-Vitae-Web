@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PortalCV.Application;
 using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Admin;
 using PortalCV.Application.Interfaces;
@@ -15,15 +16,21 @@ public class AdminController : ControllerBase
     private readonly IRepository<Usuario>    _usuarioRepo;
     private readonly IRepository<Rol>        _rolRepo;
     private readonly IRepository<UsuarioRol> _usuarioRolRepo;
+    private readonly ICurriculumRepository   _curriculumRepo;
+    private readonly ICvEditorService          _cvEditor;
 
     public AdminController(
         IRepository<Usuario>    usuarioRepo,
         IRepository<Rol>        rolRepo,
-        IRepository<UsuarioRol> usuarioRolRepo)
+        IRepository<UsuarioRol> usuarioRolRepo,
+        ICurriculumRepository   curriculumRepo,
+        ICvEditorService        cvEditor)
     {
         _usuarioRepo    = usuarioRepo;
         _rolRepo        = rolRepo;
         _usuarioRolRepo = usuarioRolRepo;
+        _curriculumRepo = curriculumRepo;
+        _cvEditor       = cvEditor;
     }
 
     // â”€â”€ Usuarios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -38,6 +45,8 @@ public class AdminController : ControllerBase
 
         var rolesDict          = roles.ToDictionary(r => r.RolId);
         var usuarioRolesLookup = usuarioRoles.ToLookup(ur => ur.UsuarioId);
+        var usuarioIds         = usuarios.Select(u => u.UsuarioId).ToList();
+        var cvPublicadoPorUser = await _curriculumRepo.GetCvPublicadoPorUsuarioIdsAsync(usuarioIds, ct);
 
         var dtos = usuarios.Select(u => new UsuarioAdminDto
         {
@@ -45,6 +54,7 @@ public class AdminController : ControllerBase
             Email         = u.Email,
             Estado        = u.Estado,
             FechaRegistro = u.FechaRegistro,
+            CvPublicado   = cvPublicadoPorUser.GetValueOrDefault(u.UsuarioId, false),
             Roles         = usuarioRolesLookup[u.UsuarioId]
                 .Where(ur => rolesDict.ContainsKey(ur.RolId))
                 .Select(ur => new RolDto
@@ -70,6 +80,24 @@ public class AdminController : ControllerBase
         await _usuarioRepo.SaveChangesAsync(ct);
 
         return Ok(new { usuario.UsuarioId, usuario.Estado });
+    }
+
+    /// <summary>Publica u oculta el CV del usuario en el portal (misma lógica que Mi CV / presentación).</summary>
+    [HttpPut("usuarios/{id:int}/cv-publicacion")]
+    public async Task<IActionResult> SetCvPublicacion(
+        int id,
+        [FromBody] SetCvPublicacionRequest request,
+        CancellationToken ct = default)
+    {
+        var usuario = await _usuarioRepo.GetByIdAsync(id, ct);
+        if (usuario is null) return NotFound(new { message = ApiMessages.Admin.UsuarioNoEncontrado });
+
+        var curriculum = await _curriculumRepo.GetByUsuarioIdAsync(id, ct);
+        if (curriculum is null)
+            return NotFound(new { message = ApiMessages.Admin.CurriculumNoEncontradoParaUsuario });
+
+        var dto = await _cvEditor.UpdateCurriculumPublicacionAsync(curriculum.CurriculumId, request.Publicado, ct);
+        return Ok(new { usuarioId = id, cvPublicado = dto.Publicado });
     }
 
     // â”€â”€ Roles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -132,4 +160,6 @@ public class AdminController : ControllerBase
 }
 
 public record SetEstadoRequest(bool Activo);
+
+public record SetCvPublicacionRequest(bool Publicado);
 

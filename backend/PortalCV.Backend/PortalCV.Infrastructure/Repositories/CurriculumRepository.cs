@@ -23,7 +23,11 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .Include(c => c.Referencias)
             .Include(c => c.RedesSociales)
             .Include(c => c.VisibilidadesSeccion)
-            .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == CurriculumEstados.Publicado, ct);
+            .FirstOrDefaultAsync(c =>
+                c.UrlPublica == urlPublica &&
+                c.Estado == CurriculumEstados.Publicado &&
+                c.Usuario.Estado == UsuarioEstados.Activo,
+                ct);
 
     public async Task<Curriculum?> GetByUsuarioIdAsync(int usuarioId, CancellationToken ct = default)
         => await _dbSet
@@ -44,7 +48,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
     {
         var query = _dbSet
             .AsNoTracking()
-            .Where(c => c.Estado == CurriculumEstados.Publicado)
+            .Where(c => c.Estado == CurriculumEstados.Publicado && c.Usuario.Estado == UsuarioEstados.Activo)
             .Include(c => c.Personales)
             .Include(c => c.Perfiles.Where(p => p.EsActivo))
             .Include(c => c.Habilidades)
@@ -76,5 +80,22 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .ToListAsync(ct);
 
         return (items, total);
+    }
+
+    public async Task<IReadOnlyDictionary<int, bool>> GetCvPublicadoPorUsuarioIdsAsync(
+        IReadOnlyCollection<int> usuarioIds,
+        CancellationToken ct = default)
+    {
+        if (usuarioIds.Count == 0)
+            return new Dictionary<int, bool>();
+
+        var rows = await _dbSet.AsNoTracking()
+            .Where(c => usuarioIds.Contains(c.UsuarioId))
+            .Select(c => new { c.UsuarioId, c.Estado })
+            .ToListAsync(ct);
+
+        return rows.ToDictionary(
+            r => r.UsuarioId,
+            r => CurriculumEstados.EsPublicado(r.Estado));
     }
 }
