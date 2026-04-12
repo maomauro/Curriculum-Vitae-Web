@@ -7,6 +7,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
 import {
   CvDetalleDto,
@@ -16,6 +17,7 @@ import {
   ProyectoPublicoDto,
 } from '../../core/services/public/public.service';
 import { CvDetalleVistaContext } from '../contexts/cv-detalle-vista.context';
+import { cvPublicoMuestraPestanaDashboard } from '../../core/utils/cv-dashboard-publico.util';
 
 interface MetricaCard {
   label: string;
@@ -96,13 +98,13 @@ function mesesExperiencia(exp: ExperienciaPublicoDto): number {
 }
 
 function formatTrayectoriaMeses(totalMeses: number): string {
-  if (totalMeses <= 0) return '—';
+  if (totalMeses <= 0) return '0';
   const anios = Math.floor(totalMeses / 12);
   const meses = totalMeses % 12;
   const parts: string[] = [];
   if (anios > 0) parts.push(`${anios} año${anios === 1 ? '' : 's'}`);
   if (meses > 0) parts.push(`${meses} mes${meses === 1 ? '' : 'es'}`);
-  return parts.join(' ') || '—';
+  return parts.join(' ') || '0';
 }
 
 function nivelHabilidadANumero(nivel: string | null | undefined): number | null {
@@ -281,7 +283,7 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
           </div>
         </div>
 
-        <div class="cv-metricas-grid mb-4" *ngIf="metricas.length">
+        <div class="cv-metricas-grid mb-4" *ngIf="mostrarMetricas && metricas.length">
           <div *ngFor="let m of metricas" class="min-w-0">
             <div class="cv-dash-metric-card" [style.background]="m.gradiente">
               <div class="d-flex justify-content-between align-items-start">
@@ -296,7 +298,7 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
           </div>
         </div>
 
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4" *ngIf="mostrarGraficas">
           <div class="col-lg-6">
             <div class="cv-chart-card">
               <div class="cv-ct-title">Experiencia laboral por empresa</div>
@@ -322,7 +324,7 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
           </div>
         </div>
 
-        <div class="row g-3 mb-5">
+        <div class="row g-3 mb-5" *ngIf="mostrarGraficas">
           <div class="col-lg-6">
             <div class="cv-chart-card">
               <div class="cv-ct-title">Participación por tiempo (proyectos)</div>
@@ -354,6 +356,7 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
 export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   private readonly shellCtx = inject(CvDetalleVistaContext);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
   @ViewChild('cvDashChartExp') private chartExpEl?: ElementRef<HTMLCanvasElement>;
   @ViewChild('cvDashChartTimeline') private chartTimelineEl?: ElementRef<HTMLCanvasElement>;
@@ -370,16 +373,35 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   completitud = 0;
   chartExpHeightPx = 260;
 
+  /** En CV público: según visibilidad; en área privada siempre true. */
+  mostrarMetricas = true;
+  mostrarGraficas = true;
+
   /** Chart.js tipa cada chart por tipo; guardamos solo instancias con destroy(). */
   private chartInstances: Array<{ destroy(): void }> = [];
 
   ngOnInit(): void {
     const detalle = this.shellCtx.cv;
-    if (detalle) {
-      this.rellenarDesdeCv(detalle);
-      this.cdr.detectChanges();
-      this.scheduleRenderCharts();
+    if (!detalle) return;
+
+    if (this.esRutaCvPublicoDashboard()) {
+      if (!cvPublicoMuestraPestanaDashboard(detalle)) {
+        const slug = this.slugCvPublicoDesdeUrl();
+        if (slug) {
+          void this.router.navigate(['/cv', slug], { replaceUrl: true });
+        }
+        return;
+      }
+      this.mostrarMetricas = detalle.dashboardMostrarMetricas ?? true;
+      this.mostrarGraficas = detalle.dashboardMostrarGraficas ?? true;
+    } else {
+      this.mostrarMetricas = true;
+      this.mostrarGraficas = true;
     }
+
+    this.rellenarDesdeCv(detalle);
+    this.cdr.detectChanges();
+    this.scheduleRenderCharts();
   }
 
   ngOnDestroy(): void {
@@ -388,6 +410,7 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
 
   /** Tras *ngIf y ViewChild, Chart.js necesita DOM ya pintado (CD + siguiente frame). */
   private scheduleRenderCharts(): void {
+    if (!this.mostrarGraficas) return;
     requestAnimationFrame(() => {
       this.renderCharts();
       requestAnimationFrame(() => {
@@ -401,14 +424,33 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
 
   private rellenarDesdeCv(cv: CvDetalleDto): void {
     this.destroyCharts();
-    this.metricas = buildMetricas(cv);
+    this.metricas = this.mostrarMetricas ? buildMetricas(cv) : [];
     this.completitud = completitudAproximada(cv);
-    this.expEmpresas = buildExpPorEmpresa(cv.experiencias ?? []);
-    this.timelineYearSeries = buildTimelineYearSeries(cv);
-    this.proyectosRawCount = cv.proyectos?.length ?? 0;
-    this.proyectosChart = buildProyectosParticipacionPorTiempo(cv.proyectos ?? []);
-    this.nivelPromedio = buildNivelPromedioPorTipo(cv.habilidades ?? []);
-    this.chartExpHeightPx = Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80));
+    if (this.mostrarGraficas) {
+      this.expEmpresas = buildExpPorEmpresa(cv.experiencias ?? []);
+      this.timelineYearSeries = buildTimelineYearSeries(cv);
+      this.proyectosRawCount = cv.proyectos?.length ?? 0;
+      this.proyectosChart = buildProyectosParticipacionPorTiempo(cv.proyectos ?? []);
+      this.nivelPromedio = buildNivelPromedioPorTipo(cv.habilidades ?? []);
+      this.chartExpHeightPx = Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80));
+    } else {
+      this.expEmpresas = [];
+      this.timelineYearSeries = { labels: [], edu: [], exp: [] };
+      this.proyectosRawCount = cv.proyectos?.length ?? 0;
+      this.proyectosChart = [];
+      this.nivelPromedio = [];
+      this.chartExpHeightPx = 260;
+    }
+  }
+
+  private esRutaCvPublicoDashboard(): boolean {
+    const u = this.router.url;
+    return /\/cv\/[^/]+\/dashboard(?:[/?#]|$)/.test(u);
+  }
+
+  private slugCvPublicoDesdeUrl(): string | null {
+    const m = this.router.url.match(/\/cv\/([^/?#]+)\/dashboard(?:[/?#]|$)/);
+    return m ? decodeURIComponent(m[1]) : null;
   }
 
   private destroyCharts(): void {

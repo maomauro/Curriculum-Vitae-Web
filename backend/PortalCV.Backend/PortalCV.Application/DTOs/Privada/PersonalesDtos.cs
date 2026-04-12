@@ -36,9 +36,7 @@ public record PersonalesDto(
     string? CodigoPostal,
     string? Direccion,
     string? TipoResidencia,
-    string? FotoUrl,
-    string PrivacidadEmail,
-    string PrivacidadTelefono);
+    string? FotoUrl);
 
 public record UpsertPersonalesRequest(
     string? TipoIdentificacion,
@@ -74,7 +72,5 @@ public record UpsertPersonalesRequest(
     string? CodigoPostal,
     string? Direccion,
     string? TipoResidencia,
-    string? FotoUrl,
-    string PrivacidadEmail = "Publico",
-    string PrivacidadTelefono = "Publico");
+    string? FotoUrl);
 

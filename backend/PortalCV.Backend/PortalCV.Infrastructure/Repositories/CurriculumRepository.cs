@@ -13,6 +13,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
     public async Task<Curriculum?> GetByUrlPublicaAsync(string urlPublica, CancellationToken ct = default)
         => await _dbSet
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.Personales)
             .Include(c => c.Perfiles)
             .Include(c => c.Experiencias)
@@ -21,7 +22,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .Include(c => c.Proyectos)
             .Include(c => c.Referencias)
             .Include(c => c.RedesSociales)
-            .Include(c => c.EstadisticasPublicas)
+            .Include(c => c.VisibilidadesSeccion)
             .FirstOrDefaultAsync(c => c.UrlPublica == urlPublica && c.Estado == CurriculumEstados.Publicado, ct);
 
     public async Task<Curriculum?> GetByUsuarioIdAsync(int usuarioId, CancellationToken ct = default)

@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { AuthModalService } from '../../../core/services/auth/auth-modal.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
@@ -9,16 +10,16 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
   selector: 'app-recuperar-contrasena',
   standalone: false,
   template: `
-    <div class="login-box">
+    <div class="login-box" [class.login-box--embed]="embedModal">
 
-      <div class="login-logo">
+      <div class="login-logo" *ngIf="!embedModal">
         <a routerLink="/"><b>Portal</b>CV</a>
       </div>
 
-      <div class="card">
-        <div class="card-body login-card-body">
+      <div class="card" [class.border-0]="embedModal" [class.shadow-none]="embedModal">
+        <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
 
-          <p class="login-box-msg">Recupera el acceso a tu cuenta</p>
+          <p class="login-box-msg" *ngIf="!embedModal">Recupera el acceso a tu cuenta</p>
 
           <div *ngIf="sent" class="alert alert-success text-center mb-3">
             <i class="bi bi-envelope-check me-1"></i>
@@ -42,9 +43,13 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
           </form>
 
           <p class="mt-3 mb-1 text-center small text-muted">
-            <a routerLink="/auth/login">Volver al inicio de sesión</a>
+            <a *ngIf="!embedModal" routerLink="/" [queryParams]="{ authModal: 'login' }">Volver al inicio de sesión</a>
+            <button *ngIf="embedModal" type="button" class="btn btn-link btn-sm p-0"
+                    (click)="authModal.openLogin()">
+              Volver al inicio de sesión
+            </button>
           </p>
-          <div class="d-grid mt-3">
+          <div class="d-grid mt-3" *ngIf="!embedModal">
             <a routerLink="/" class="btn btn-light border text-secondary">
               <i class="bi bi-house-door me-1"></i>Volver al inicio
             </a>
@@ -53,12 +58,16 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class RecuperarContrasenaComponent {
+  @Input() embedModal = false;
+
   email = '';
   loading = false;
   sent = false;
+
+  readonly authModal = inject(AuthModalService);
 
   constructor(
     private authService: AuthService,
@@ -77,7 +86,7 @@ export class RecuperarContrasenaComponent {
       error: (error: HttpErrorResponse) => {
         this.loading = false;
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.operationError);
-      }
+      },
     });
   }
 }

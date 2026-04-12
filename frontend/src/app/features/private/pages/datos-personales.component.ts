@@ -220,20 +220,6 @@ type SeccionDatosPersonales =
           <input type="tel" class="form-control" placeholder="601 000 0000"
                  [(ngModel)]="p.telefonoFijo">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">Privacidad email</label>
-          <select class="form-select" [(ngModel)]="p.privacidadEmail">
-            <option value="Publico">Público</option>
-            <option value="Oculto">Privado</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Privacidad teléfono</label>
-          <select class="form-select" [(ngModel)]="p.privacidadTelefono">
-            <option value="Publico">Público</option>
-            <option value="Oculto">Privado</option>
-          </select>
-        </div>
       </div>
     </div>
 
@@ -422,8 +408,7 @@ export class DatosPersonalesComponent implements OnInit {
     tipoSangre: null, eps: null, pencion: null, cesantias: null,
     email: null, celular: null, telefonoFijo: null,
     pais: null, departamento: null, ciudad: null, barrio: null, codigoPostal: null,
-    direccion: null, tipoResidencia: null, fotoUrl: null,
-    privacidadEmail: 'Oculto', privacidadTelefono: 'Oculto'
+    direccion: null, tipoResidencia: null, fotoUrl: null
   };
 
   constructor(
@@ -475,8 +460,6 @@ export class DatosPersonalesComponent implements OnInit {
     this.p.primerNombre = primerNombre;
     this.p.primerApellido = primerApellido;
     this.p.email = email;
-    this.p.privacidadEmail = this.p.privacidadEmail || 'Publico';
-    this.p.privacidadTelefono = this.p.privacidadTelefono || 'Publico';
 
     // Evita 400 por model binding: campos opcionales vacíos deben viajar como null, no como ''.
     const payload = Object.fromEntries(
@@ -484,8 +467,6 @@ export class DatosPersonalesComponent implements OnInit {
         if (
           key !== 'primerNombre' &&
           key !== 'primerApellido' &&
-          key !== 'privacidadEmail' &&
-          key !== 'privacidadTelefono' &&
           value === ''
         ) {
           return [key, null];

@@ -1,0 +1,32 @@
+/* Fuerza logo a la izquierda y acciones a la derecha (AdminLTE/BS a veces pisan utilities). */
+.cv-navbar-public {
+  .cv-navbar-public-container {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .cv-navbar-collapse {
+    width: 100%;
+  }
+
+  @media (min-width: 992px) {
+    .cv-navbar-public-container {
+      flex-wrap: nowrap !important;
+    }
+
+    .cv-navbar-collapse {
+      width: auto !important;
+      max-width: none !important;
+      flex: 0 0 auto !important;
+      margin-left: auto !important;
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .cv-navbar-public-container {
+      flex-wrap: wrap;
+    }
+  }
+}

@@ -147,15 +147,10 @@ CREATE TABLE dbo.Personales (
     CodigoPostal       NVARCHAR(20) NULL,
     Direccion          NVARCHAR(255) NULL,
     TipoResidencia     NVARCHAR(50) NULL,
-    -- Foto y privacidad de contacto
     FotoUrl            NVARCHAR(500) NULL,
-    PrivacidadEmail    NVARCHAR(20)  NOT NULL DEFAULT N'Publico',
-    PrivacidadTelefono NVARCHAR(20)  NOT NULL DEFAULT N'Publico',
     CONSTRAINT PK_Personales PRIMARY KEY CLUSTERED (PersonalesId),
     CONSTRAINT FK_Personales_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
-    CONSTRAINT UQ_Personales_CurriculumId UNIQUE (CurriculumId),
-    CONSTRAINT CK_Personales_PrivEmail   CHECK (PrivacidadEmail    IN (N'Publico', N'SoloFormulario', N'Oculto')),
-    CONSTRAINT CK_Personales_PrivTel     CHECK (PrivacidadTelefono IN (N'Publico', N'Parcial',        N'Oculto'))
+    CONSTRAINT UQ_Personales_CurriculumId UNIQUE (CurriculumId)
 );
 
 CREATE NONCLUSTERED INDEX IX_Personales_Ciudad ON dbo.Personales (Ciudad)

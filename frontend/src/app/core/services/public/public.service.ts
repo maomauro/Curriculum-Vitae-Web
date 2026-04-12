@@ -47,8 +47,6 @@ export interface PersonalesPublicoDto {
   pais: string | null;
   celular: string | null;
   email: string | null;
-  privacidadEmail: string;
-  privacidadTelefono: string;
 }
 
 export interface PerfilPublicoDto {
@@ -134,6 +132,12 @@ export interface CvDetalleDto {
   proyectos: ProyectoPublicoDto[];
   referencias: ReferenciaPublicoDto[];
   redesSociales: RedSocialPublicoDto[];
+  /** Visibilidad pública: interruptor maestro del dashboard (default true si la API no envía el campo). */
+  dashboardPublicoActivo?: boolean;
+  /** Métricas (3 tarjetas) en el dashboard público. */
+  dashboardMostrarMetricas?: boolean;
+  /** Gráficas (4) en el dashboard público. */
+  dashboardMostrarGraficas?: boolean;
 }
 
 /** Espejo de CvEstadisticasDto (backend). */

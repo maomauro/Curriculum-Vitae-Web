@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { AuthModalService } from '../../../core/services/auth/auth-modal.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
@@ -10,45 +11,45 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
   selector: 'app-register',
   standalone: false,
   template: `
-    <div class="login-box">
-      <div class="login-logo">
+    <div class="login-box" [class.login-box--embed]="embedModal">
+      <div class="login-logo" *ngIf="!embedModal">
         <a routerLink="/" class="text-decoration-none"><b>Portal</b>CV</a>
       </div>
-      <div class="card">
-        <div class="card-body login-card-body">
-          <p class="login-box-msg">Crea tu cuenta gratuita</p>
+      <div class="card" [class.border-0]="embedModal" [class.shadow-none]="embedModal">
+        <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
+          <p class="login-box-msg" *ngIf="!embedModal">Crea tu cuenta gratuita</p>
           <div *ngIf="errorMsg" class="alert alert-danger py-2 mb-3">{{ errorMsg }}</div>
           <form (ngSubmit)="onRegister()">
             <div class="input-group mb-3">
               <input type="text" class="form-control" placeholder="Nombre completo"
-                [(ngModel)]="name" name="name" required>
+                [(ngModel)]="name" name="name" required autocomplete="name">
               <div class="input-group-text"><span class="bi bi-person"></span></div>
             </div>
             <div class="input-group mb-3">
               <input type="email" class="form-control" placeholder="Correo electrónico"
-                [(ngModel)]="email" name="email" required>
+                [(ngModel)]="email" name="email" required autocomplete="email">
               <div class="input-group-text"><span class="bi bi-envelope"></span></div>
             </div>
             <div class="input-group mb-3">
               <input type="password" class="form-control" placeholder="Contraseña (min. 8 caracteres)"
-                [(ngModel)]="password" name="password" required minlength="8">
+                [(ngModel)]="password" name="password" required minlength="8" autocomplete="new-password">
               <div class="input-group-text"><span class="bi bi-lock-fill"></span></div>
             </div>
-            <div class="row">
-              <div class="col-12">
-                <div class="d-grid">
-                  <button type="submit" class="btn btn-success" [disabled]="loading">
-                    <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
-                    Crear cuenta
-                  </button>
-                </div>
-              </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-success" [disabled]="loading">
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                Crear cuenta
+              </button>
             </div>
           </form>
           <p class="mt-3 mb-1 text-center">
-            <a routerLink="/auth/login">¿Ya tienes cuenta? Inicia sesión</a>
+            <a *ngIf="!embedModal" routerLink="/" [queryParams]="{ authModal: 'login' }">¿Ya tienes cuenta? Inicia sesión</a>
+            <button *ngIf="embedModal" type="button" class="btn btn-link btn-sm p-0"
+                    (click)="authModal.openLogin()">
+              ¿Ya tienes cuenta? Inicia sesión
+            </button>
           </p>
-          <div class="d-grid mt-3">
+          <div class="d-grid mt-3" *ngIf="!embedModal">
             <a routerLink="/" class="btn btn-light border text-secondary">
               <i class="bi bi-house-door me-1"></i>Volver al inicio
             </a>
@@ -56,14 +57,18 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class RegisterComponent {
+  @Input() embedModal = false;
+
   name = '';
   email = '';
   password = '';
   loading = false;
   errorMsg = '';
+
+  readonly authModal = inject(AuthModalService);
 
   constructor(
     private authService: AuthService,
@@ -77,18 +82,24 @@ export class RegisterComponent {
     this.errorMsg = '';
     this.authService.register(this.name, this.email, this.password).subscribe({
       next: () => {
-        // El API no devuelve JWT en register; iniciamos sesión con las mismas credenciales.
         this.authService.login(this.email, this.password).subscribe({
           next: () => {
             this.notificationService.success(NOTIFICATION_MESSAGES.operationSuccess);
+            if (this.embedModal) {
+              this.authModal.close();
+            }
             this.router.navigate(['/dashboard']);
           },
           error: () => {
             this.errorMsg = 'Cuenta creada. Inicia sesión con tu correo y contraseña.';
             this.notificationService.warning(NOTIFICATION_MESSAGES.operationPartial);
             this.loading = false;
-            void this.router.navigate(['/auth/login']);
-          }
+            if (this.embedModal) {
+              this.authModal.openLogin();
+            } else {
+              void this.router.navigate(['/'], { queryParams: { authModal: 'login' } });
+            }
+          },
         });
       },
       error: (err: HttpErrorResponse) => {
@@ -97,7 +108,7 @@ export class RegisterComponent {
           'No se pudo crear la cuenta. Revisa la consola o que el API y la base de datos estén en marcha.';
         this.notificationService.error(NOTIFICATION_MESSAGES.operationError);
         this.loading = false;
-      }
+      },
     });
   }
 }

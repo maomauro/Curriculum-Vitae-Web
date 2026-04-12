@@ -42,8 +42,6 @@ export interface PersonalesDto {
   direccion: string | null;
   tipoResidencia: string | null;
   fotoUrl: string | null;
-  privacidadEmail: string;
-  privacidadTelefono: string;
 }
 
 export type UpsertPersonalesRequest = Omit<PersonalesDto, 'personalesId' | 'curriculumId'>;

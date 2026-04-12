@@ -77,6 +77,10 @@ interface ConfigVisGroup {
             [id]="'vis-acc-panel-' + grupo.id"
             role="region"
             [attr.aria-labelledby]="'vis-acc-trigger-' + grupo.id">
+            <p *ngIf="grupo.id === 'dashboard-publico'" class="text-muted small mb-3 px-1">
+              Controla la pestaña <strong>Dashboard analítico</strong> en tu CV público. Si el interruptor principal está
+              activo pero desactivas <strong>métricas</strong> y <strong>gráficas</strong>, esa pestaña no se mostrará.
+            </p>
             <ng-container *ngFor="let campo of grupo.items">
               <div class="vis-row" [class.vis-row--sin-switch-seccion]="campo.sinSwitchSeccion">
                 <div class="vis-info">
@@ -98,6 +102,7 @@ interface ConfigVisGroup {
                 <div class="form-check form-switch mb-0" *ngIf="!campo.sinSwitchSeccion">
                   <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
                          [(ngModel)]="campo.visible" [id]="'vis_' + campo.key"
+                         [disabled]="interruptorVisibilidadDeshabilitado(campo)"
                          (change)="onToggleSeccion(campo)">
                 </div>
               </div>
@@ -107,7 +112,7 @@ interface ConfigVisGroup {
                   <div class="form-check form-switch mb-0">
                     <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
                            [(ngModel)]="attr.visible" [id]="'vis_' + attr.key"
-                           [disabled]="!campo.sinSwitchSeccion && !campo.visible"
+                           [disabled]="interruptorVisibilidadDeshabilitado(campo) || (!campo.sinSwitchSeccion && !campo.visible)"
                            (change)="onToggleAtributo(campo, attr)">
                   </div>
                 </div>
@@ -239,10 +244,9 @@ interface ConfigVisGroup {
             type="checkbox"
             role="switch"
             id="cfg_cv_publicado"
-            name="cfgCvPublicado"
-            [(ngModel)]="cvPublicado"
+            [checked]="cvPublicado"
             [disabled]="!presentacionLista || guardandoPublicacion"
-            (change)="onCvPublicadoChange()">
+            (click)="onCvPublicacionClick($event)">
         </div>
       </div>
       <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
@@ -440,7 +444,48 @@ export class ConfiguracionComponent implements OnInit {
         },
       ],
     },
+    {
+      id: 'dashboard-publico',
+      titulo: 'Dashboard en CV público',
+      icon: 'bi-bar-chart-steps',
+      clase: 'vis-group-label--profesional',
+      accordionOpen: false,
+      items: [
+        {
+          key: 'dashboard.publico',
+          label: 'Dashboard analítico (interruptor principal)',
+          icon: 'bi-bar-chart-line',
+          iconStyle: 'vis-icon--perfil',
+          visible: true,
+          atributos: [],
+        },
+        {
+          key: 'dashboard.metricas',
+          label: 'Tarjetas de métricas (3)',
+          icon: 'bi-speedometer2',
+          iconStyle: 'vis-icon--datos',
+          visible: true,
+          atributos: [],
+        },
+        {
+          key: 'dashboard.graficas',
+          label: 'Gráficas analíticas (4)',
+          icon: 'bi-pie-chart-fill',
+          iconStyle: 'vis-icon--proyectos',
+          visible: true,
+          atributos: [],
+        },
+      ],
+    },
   ];
+
+  interruptorVisibilidadDeshabilitado(campo: ConfigVisItem): boolean {
+    if (campo.key === 'dashboard.metricas' || campo.key === 'dashboard.graficas') {
+      const maestro = this.allVisItems().find(i => i.key === 'dashboard.publico');
+      return !maestro?.visible;
+    }
+    return false;
+  }
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -485,7 +530,12 @@ export class ConfiguracionComponent implements OnInit {
           });
           if (!campo.visible && !campo.sinSwitchSeccion) {
             campo.atributos.forEach(attr => (attr.visible = false));
-          } else if (!campo.sinSwitchSeccion && campo.visible && !campo.atributos.some(a => a.visible)) {
+          } else if (
+            !campo.sinSwitchSeccion &&
+            campo.visible &&
+            campo.atributos.length > 0 &&
+            !campo.atributos.some(a => a.visible)
+          ) {
             campo.visible = false;
           }
         });
@@ -598,18 +648,35 @@ export class ConfiguracionComponent implements OnInit {
     setTimeout(() => (this.copiado = false), 2000);
   }
 
-  onCvPublicadoChange(): void {
-    if (!this.presentacionLista || this.guardandoPublicacion) return;
-    const deseado = this.cvPublicado;
+  /**
+   * `preventDefault` en el click: el navegador no cambia el checkbox hasta confirmar.
+   * Si cancelas, el estado sigue siendo el anterior (p. ej. ON sigue ON).
+   */
+  onCvPublicacionClick(ev: MouseEvent): void {
+    if (!this.presentacionLista || this.guardandoPublicacion) {
+      ev.preventDefault();
+      return;
+    }
+    ev.preventDefault();
+
+    const nuevoValor = !this.cvPublicado;
+    const mensaje = nuevoValor
+      ? '¿Publicar tu CV en el portal? Aparecerá en las búsquedas públicas y quien tenga el enlace podrá ver tu perfil.'
+      : '¿Pasar tu CV a borrador? Dejará de mostrarse en el listado público y el enlace ya no mostrará tu CV a los visitantes.';
+    if (!window.confirm(mensaje)) {
+      return;
+    }
+
+    this.cvPublicado = nuevoValor;
     this.guardandoPublicacion = true;
-    this.cvEditorService.updateCurriculumPublicacion(deseado).subscribe({
+    this.cvEditorService.updateCurriculumPublicacion(nuevoValor).subscribe({
       next: p => {
         this.cvPublicado = !!p.publicado;
         this.guardandoPublicacion = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.cvPublicacionUpdated);
       },
       error: (error: HttpErrorResponse) => {
-        this.cvPublicado = !deseado;
+        this.cvPublicado = !nuevoValor;
         this.guardandoPublicacion = false;
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
       },

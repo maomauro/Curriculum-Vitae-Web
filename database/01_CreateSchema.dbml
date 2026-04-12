@@ -73,8 +73,6 @@ Table Personales {
   Direccion varchar(255)
   TipoResidencia varchar(50)
   FotoUrl varchar(500)
-  PrivacidadEmail varchar(20) [not null, default: 'Publico']
-  PrivacidadTelefono varchar(20) [not null, default: 'Publico']
 }
 
 Table Referencia {
