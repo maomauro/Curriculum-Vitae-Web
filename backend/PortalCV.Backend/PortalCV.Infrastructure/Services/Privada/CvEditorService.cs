@@ -30,9 +30,7 @@ public class CvEditorService : ICvEditorService
             {
                 CurriculumId = curriculumId,
                 PrimerNombre = string.Empty,
-                PrimerApellido = string.Empty,
-                PrivacidadEmail = "Publico",
-                PrivacidadTelefono = "Publico"
+                PrimerApellido = string.Empty
             };
             return MapPersonales(empty);
         }
@@ -84,8 +82,6 @@ public class CvEditorService : ICvEditorService
         existing.Direccion = r.Direccion;
         existing.TipoResidencia = r.TipoResidencia;
         existing.FotoUrl = r.FotoUrl;
-        existing.PrivacidadEmail = NormalizarPrivacidadEmail(r.PrivacidadEmail);
-        existing.PrivacidadTelefono = NormalizarPrivacidadTelefono(r.PrivacidadTelefono);
 
         await _context.SaveChangesAsync(ct);
         return MapPersonales(existing);
@@ -555,32 +551,6 @@ public class CvEditorService : ICvEditorService
         return entity;
     }
 
-    private static string NormalizarPrivacidadEmail(string? valor)
-    {
-        return valor?.Trim() switch
-        {
-            "Publico" => "Publico",
-            "SoloFormulario" => "SoloFormulario",
-            "Oculto" => "Oculto",
-            // Compatibilidad hacia atrás con frontend previo
-            "Privado" => "Oculto",
-            _ => "Publico"
-        };
-    }
-
-    private static string NormalizarPrivacidadTelefono(string? valor)
-    {
-        return valor?.Trim() switch
-        {
-            "Publico" => "Publico",
-            "Parcial" => "Parcial",
-            "Oculto" => "Oculto",
-            // Compatibilidad hacia atrás con frontend previo
-            "Privado" => "Oculto",
-            _ => "Publico"
-        };
-    }
-
     // --- Mappers ---
 
     private static PersonalesDto MapPersonales(Personales e) => new(
@@ -591,7 +561,7 @@ public class CvEditorService : ICvEditorService
         e.FechaNacimiento, e.LugarNacimiento, e.Genero, e.Nacionalidad, e.TipoSangre,
         e.EPS, e.Pencion, e.Cesantias, e.Email, e.Celular, e.TelefonoFijo,
         e.Pais, e.Departamento, e.Ciudad, e.Barrio, e.CodigoPostal, e.Direccion,
-        e.TipoResidencia, e.FotoUrl, e.PrivacidadEmail, e.PrivacidadTelefono);
+        e.TipoResidencia, e.FotoUrl);
 
     private static PerfilDto MapPerfil(Perfil e) => new(
         e.PerfilId, e.NombrePerfil, e.DescripcionPerfil,

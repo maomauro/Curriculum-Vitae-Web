@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PortalCV.Application;
 using PortalCV.Application.DTOs.Publica;
@@ -14,24 +16,24 @@ public class PublicCvService : IPublicCvService
     private readonly ICurriculumRepository _curriculumRepo;
     private readonly IRepository<VisitanteContacto> _contactoRepo;
     private readonly IRepository<AlertaVisita> _alertaRepo;
-    private readonly IRepository<EstadisticasPublicas> _estadisticasRepo;
     private readonly PortalCvDbContext _context;
     private readonly ILogger<PublicCvService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public PublicCvService(
         ICurriculumRepository curriculumRepo,
         IRepository<VisitanteContacto> contactoRepo,
         IRepository<AlertaVisita> alertaRepo,
-        IRepository<EstadisticasPublicas> estadisticasRepo,
         PortalCvDbContext context,
-        ILogger<PublicCvService> logger)
+        ILogger<PublicCvService> logger,
+        IServiceScopeFactory scopeFactory)
     {
         _curriculumRepo = curriculumRepo;
         _contactoRepo = contactoRepo;
         _alertaRepo = alertaRepo;
-        _estadisticasRepo = estadisticasRepo;
         _context = context;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<(IReadOnlyList<CvListadoItemDto> Items, int Total)> BuscarCvsAsync(
@@ -59,23 +61,32 @@ public class PublicCvService : IPublicCvService
 
     public async Task<CvDetalleDto?> GetDetalleAsync(string urlPublica, CancellationToken ct = default)
     {
+        var swTotal = Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct);
+        var msQuery = sw.ElapsedMilliseconds;
         if (cv is null) return null;
 
-        try
-        {
-            await RegistrarVisitaAsync(cv.CurriculumId, "Vista", ct);
-        }
-        catch (Exception ex)
-        {
-            // No bloquear la lectura del CV si falla alerta/estadísticas (p. ej. CHECK en BD desactualizado).
-            _logger.LogWarning(ex, "No se pudo registrar la visita al CV público {UrlPublica}", urlPublica);
-        }
+        EncolarRegistroVista(cv.CurriculumId, urlPublica);
 
         var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
             cv.Experiencias.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
 
-        return MapToDetalle(cv, mesesAcum);
+        var dto = MapToDetalle(cv, mesesAcum);
+        var totalMs = swTotal.ElapsedMilliseconds;
+
+        _logger.LogDebug(
+            "PublicCv.GetDetalle {UrlPublica}: queryMs={QueryMs}, totalMs={TotalMs} (visita en segundo plano)",
+            urlPublica, msQuery, totalMs);
+
+        if (totalMs >= 2000)
+        {
+            _logger.LogWarning(
+                "PublicCv.GetDetalle lento {UrlPublica}: queryMs={QueryMs}, totalMs={TotalMs}",
+                urlPublica, msQuery, totalMs);
+        }
+
+        return dto;
     }
 
     public async Task<CvEstadisticasDto?> GetEstadisticasAsync(string urlPublica, CancellationToken ct = default)
@@ -158,66 +169,31 @@ public class PublicCvService : IPublicCvService
         }
 
         // Actualizar estadÃ­sticas
-        await ActualizarEstadisticasAsync(curriculumId, esContacto: true, ct);
+        await EstadisticasPublicasUpdater.ActualizarAsync(_context, curriculumId, esContacto: true, ct);
 
         await _context.SaveChangesAsync(ct);
     }
-
-    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /// <summary>
-    /// Igual que en <see cref="ContactarAsync"/>: el curriculum viene del repo con AsNoTracking;
-    /// hay que cargar la fila en el contexto actual para persistir contadores.
+    /// No bloquea la respuesta HTTP: nuevo scope + DbContext para persistir visita tras devolver el detalle.
     /// </summary>
-    private async Task RegistrarVisitaAsync(int curriculumId, string tipo, CancellationToken ct)
+    private void EncolarRegistroVista(int curriculumId, string urlPublica)
     {
-        var alerta = new AlertaVisita
-        {
-            CurriculumId = curriculumId,
-            FechaVisita = DateTime.UtcNow,
-            TipoVisita = tipo,
-            EsLeida = false,
-            Titulo = "Nueva visita a tu CV"
-        };
-        await _alertaRepo.AddAsync(alerta, ct);
-
-        var curriculum = await _context.Curriculums.FindAsync(new object[] { curriculumId }, ct);
-        if (curriculum is not null)
-        {
-            curriculum.ContadorVisitas++;
-            curriculum.FechaActualizacion = DateTime.UtcNow;
-        }
-
-        await ActualizarEstadisticasAsync(curriculumId, esContacto: false, ct);
-        await _context.SaveChangesAsync(ct);
+        _ = RegistrarVistaEnSegundoPlanoAsync(curriculumId, urlPublica);
     }
 
-    private async Task ActualizarEstadisticasAsync(int curriculumId, bool esContacto, CancellationToken ct)
+    private async Task RegistrarVistaEnSegundoPlanoAsync(int curriculumId, string urlPublica)
     {
-        var stats = await _context.EstadisticasPublicas
-            .FirstOrDefaultAsync(e => e.CurriculumId == curriculumId, ct);
-
-        if (stats is null)
+        await Task.Yield();
+        try
         {
-            stats = new EstadisticasPublicas
-            {
-                CurriculumId = curriculumId,
-                TotalVisitas = esContacto ? 0 : 1,
-                TotalContactos = esContacto ? 1 : 0,
-                UltimaVisita = esContacto ? null : DateTime.UtcNow,
-                FechaActualizacion = DateTime.UtcNow
-            };
-            await _context.EstadisticasPublicas.AddAsync(stats, ct);
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var registro = scope.ServiceProvider.GetRequiredService<IPublicCvVisitaRegistroService>();
+            await registro.RegistrarVistaAsync(curriculumId, CancellationToken.None);
         }
-        else
+        catch (Exception ex)
         {
-            if (esContacto) stats.TotalContactos++;
-            else
-            {
-                stats.TotalVisitas++;
-                stats.UltimaVisita = DateTime.UtcNow;
-            }
-            stats.FechaActualizacion = DateTime.UtcNow;
+            _logger.LogWarning(ex, "No se pudo registrar la visita al CV público {UrlPublica}", urlPublica);
         }
     }
 
@@ -229,9 +205,40 @@ public class PublicCvService : IPublicCvService
         return string.Equals(t, "Basico", StringComparison.Ordinal) ? "Básico" : t;
     }
 
+    private const string VisDashboardPublico = "dashboard.publico";
+    private const string VisDashboardMetricas = "dashboard.metricas";
+    private const string VisDashboardGraficas = "dashboard.graficas";
+    private const string VisPersonalesEmail = "datos-personales.email";
+    private const string VisPersonalesTelefono = "datos-personales.telefono";
+
+    /// <summary>Visibilidad fina (VisibilidadSeccion). Sin fila = visible por defecto.</summary>
+    private static bool VisibilidadAtributoVisible(IEnumerable<VisibilidadSeccion>? vis, string nombreSeccion, bool defaultVisible = true)
+    {
+        if (vis is null) return defaultVisible;
+        var row = vis.FirstOrDefault(v => string.Equals(v.NombreSeccion, nombreSeccion, StringComparison.Ordinal));
+        return row?.EsVisible ?? defaultVisible;
+    }
+
+    private static (bool Activo, bool Metricas, bool Graficas) ResolverFlagsDashboardPublico(Curriculum c)
+    {
+        var vis = c.VisibilidadesSeccion ?? Array.Empty<VisibilidadSeccion>();
+        bool? master = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardPublico)?.EsVisible;
+        bool? met = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardMetricas)?.EsVisible;
+        bool? graf = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardGraficas)?.EsVisible;
+
+        var m = master ?? true;
+        var me = met ?? true;
+        var g = graf ?? true;
+        return (m, m && me, m && g);
+    }
+
     private static CvDetalleDto MapToDetalle(Curriculum c, int experienciaLaboralMesesAcumulados)
     {
         var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
+        var dash = ResolverFlagsDashboardPublico(c);
+        var vis = c.VisibilidadesSeccion;
+        var mostrarEmail = VisibilidadAtributoVisible(vis, VisPersonalesEmail);
+        var mostrarTelefono = VisibilidadAtributoVisible(vis, VisPersonalesTelefono);
         return new CvDetalleDto(
         c.CurriculumId,
         c.UrlPublica,
@@ -244,10 +251,8 @@ public class PublicCvService : IPublicCvService
             c.Personales.FotoUrl,
             c.Personales.Ciudad,
             c.Personales.Pais,
-            c.Personales.PrivacidadTelefono == "Oculto" ? null : c.Personales.Celular,
-            c.Personales.PrivacidadEmail == "Oculto" ? null : c.Personales.Email,
-            c.Personales.PrivacidadEmail,
-            c.Personales.PrivacidadTelefono),
+            mostrarTelefono ? c.Personales.Celular : null,
+            mostrarEmail ? c.Personales.Email : null),
         c.Perfiles.Select(p => new PerfilPublicoDto(p.PerfilId, p.NombrePerfil, p.DescripcionPerfil,
             p.AspiracionSalarialPesos, p.AspiracionSalarialDolares, p.EsActivo)),
         c.Experiencias.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
@@ -262,7 +267,10 @@ public class PublicCvService : IPublicCvService
             .Select(r => new ReferenciaPublicoDto(r.ReferenciaId, r.TipoReferencia, r.Nombre,
                 r.Apellido, r.Cargo, r.Empresa)),
         c.RedesSociales.Select(r => new RedSocialPublicoDto(r.RedSocialId, r.NombreRed,
-            r.LinkPublico, r.UsuarioContacto))
+            r.LinkPublico, r.UsuarioContacto)),
+        dash.Activo,
+        dash.Metricas,
+        dash.Graficas
     );
     }
 }

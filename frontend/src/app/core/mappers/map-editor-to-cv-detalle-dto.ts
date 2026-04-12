@@ -44,8 +44,6 @@ export function mapEditorToCvDetalleDto(
           pais: personales.pais?.trim() || null,
           celular: personales.celular?.trim() || null,
           email: personales.email?.trim() || null,
-          privacidadEmail: personales.privacidadEmail,
-          privacidadTelefono: personales.privacidadTelefono,
         },
     perfiles: perfiles.map(p => ({
       perfilId: p.perfilId,
@@ -110,5 +108,8 @@ export function mapEditorToCvDetalleDto(
       linkPublico: r.linkPublico,
       usuarioContacto: r.usuarioContacto,
     })),
+    dashboardPublicoActivo: true,
+    dashboardMostrarMetricas: true,
+    dashboardMostrarGraficas: true,
   };
 }

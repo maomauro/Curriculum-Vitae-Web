@@ -156,8 +156,13 @@ export class TopbarComponent implements OnInit {
   }
 
   logout(): void {
+    const mensaje =
+      '¿Seguro que deseas cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu panel.';
+    if (!window.confirm(mensaje)) {
+      return;
+    }
     this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    void this.router.navigate(['/']);
   }
 
   private cargarCargoActual(): void {

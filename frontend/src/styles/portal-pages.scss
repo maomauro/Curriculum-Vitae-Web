@@ -680,12 +680,6 @@
 .cv-prose {
   line-height: 1.75;
 }
-.cv-modal-soft {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
-}
-
 // ── Mi CV (preview) ───────────────────────────────────────────────────────────
 .cv-preview-header {
   background: linear-gradient(135deg, #2c7be5 0%, #1a5fb4 100%);
@@ -1848,6 +1842,34 @@
     max-width: none;
   }
 
+  /* Ficha CV público: igual que Mi CV — solo la plantilla; sin nav, pie ni cromo */
+  body.cv-publico-ficha-activa app-navbar-public,
+  body.cv-publico-ficha-activa app-footer-public,
+  body.cv-publico-ficha-activa app-global-notifications {
+    display: none !important;
+  }
+
+  body.cv-publico-ficha-activa app-auth-modals-host {
+    display: none !important;
+  }
+
+  body.cv-publico-ficha-activa main {
+    padding: 0 !important;
+  }
+
+  body.cv-publico-ficha-activa .public-cv-ficha .cv-publico-print-hide {
+    display: none !important;
+  }
+
+  body.cv-publico-ficha-activa .public-cv-ficha .container {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  body.cv-publico-ficha-activa .public-cv-ficha .portal-modal__backdrop,
+  body.cv-publico-ficha-activa .public-cv-ficha .portal-modal__root {
+    display: none !important;
+  }
 }
 
 // ── Dashboard candidato (público / analítico) ─────────────────────────────────

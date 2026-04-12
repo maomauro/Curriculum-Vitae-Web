@@ -46,10 +46,7 @@ public class Personales
     public string? Direccion { get; set; }
     public string? TipoResidencia { get; set; }
 
-    // Foto y privacidad
     public string? FotoUrl { get; set; }
-    public string PrivacidadEmail { get; set; } = "Publico";
-    public string PrivacidadTelefono { get; set; } = "Publico";
 
     public Curriculum Curriculum { get; set; } = null!;
 }

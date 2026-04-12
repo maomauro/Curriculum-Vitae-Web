@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthModalService } from '../../../core/services/auth/auth-modal.service';
 
 @Component({
   selector: 'app-home',
@@ -91,12 +92,14 @@ import { Router } from '@angular/router';
           <p class="text-muted mb-4">
             Crea tu CV, elige cuándo <strong>publicarlo</strong> y compártelo con reclutadores.
           </p>
-          <a routerLink="/auth/register" class="btn btn-primary btn-lg">
+          <button type="button" class="btn btn-primary btn-lg" (click)="abrirRegistro()">
             <i class="bi bi-person-plus-fill me-2" aria-hidden="true"></i>Crear mi CV gratis
-          </a>
+          </button>
           <p class="small text-muted mt-4 mb-0">
             ¿Ya tienes cuenta?
-            <a routerLink="/auth/login" class="link-primary">Inicia sesión</a>
+            <button type="button" class="btn btn-link link-primary p-0 align-baseline" (click)="abrirLogin()">
+              Inicia sesión
+            </button>
           </p>
         </div>
       </section>
@@ -106,7 +109,16 @@ import { Router } from '@angular/router';
 export class HomeComponent {
   busqueda = '';
 
-  constructor(private router: Router) {}
+  private readonly router = inject(Router);
+  private readonly authModal = inject(AuthModalService);
+
+  abrirLogin(): void {
+    this.authModal.openLogin();
+  }
+
+  abrirRegistro(): void {
+    this.authModal.openRegister();
+  }
 
   buscar(): void {
     const q = this.busqueda.trim();
