@@ -730,6 +730,43 @@
   width: 100%;
 }
 
+.cv-mi-zoom-bar {
+  padding: 6px 8px;
+  margin-bottom: 2px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cv-mi-zoom-stepper {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 2px 4px;
+}
+
+.cv-mi-zoom-pct {
+  min-width: 2.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cv-mi-zoom-btn {
+  padding: 0.2rem 0.45rem;
+  line-height: 1;
+}
+
+.cv-mi-letter-zoom-root {
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cv-mi-letter-zoom-frame {
+  width: fit-content;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .cv-mi-plantilla-bar {
   .cv-mi-plantilla-dots {
     gap: 5px;
@@ -1742,6 +1779,16 @@
     background: #dce1e9;
   }
 
+  /* Ventana con scroll propio: barra vertical/horizontal según contenido y zoom. */
+  .cv-mi-letter-zoom-root {
+    max-height: min(78vh, 920px);
+    overflow: auto;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.04);
+    scrollbar-gutter: stable;
+  }
+
   /* Márgenes interiores ~impresión (alineado a @page 0.45in) */
   .cv-mi-preview .cv-mi-preview-stack {
     margin: clamp(10px, 2.5vw, 0.45in);
@@ -1785,6 +1832,23 @@
     max-width: none;
     background: transparent !important;
     border-radius: 0 !important;
+  }
+
+  .cv-mi-zoom-bar {
+    display: none !important;
+  }
+
+  .cv-mi-letter-zoom-root {
+    overflow: visible !important;
+    max-height: none !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    scrollbar-gutter: auto !important;
+  }
+
+  .cv-mi-letter-zoom-frame {
+    zoom: 1 !important;
   }
 
   .cv-mi-preview {

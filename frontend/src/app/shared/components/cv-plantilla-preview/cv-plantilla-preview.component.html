@@ -1,5 +1,48 @@
 <div class="cv-mi-letter-wrap">
-  <div [class]="previewRootClass">
+  <div
+    *ngIf="mostrarControlesZoom"
+    class="cv-mi-zoom-bar cv-mi-screen-only d-flex flex-wrap align-items-center gap-2"
+    role="toolbar"
+    aria-label="Zoom de la vista previa del CV">
+    <span class="small text-muted text-nowrap mb-0">
+      <i class="bi bi-aspect-ratio me-1" aria-hidden="true"></i>
+      Zoom
+    </span>
+    <div class="d-inline-flex align-items-center gap-1 cv-mi-zoom-stepper">
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm cv-mi-zoom-btn"
+        (click)="alejarZoom()"
+        [disabled]="nivelZoom <= zoomMin"
+        aria-label="Alejar vista">
+        <i class="bi bi-zoom-out" aria-hidden="true"></i>
+      </button>
+      <span class="small cv-mi-zoom-pct text-muted text-center">{{ etiquetaZoom }}</span>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm cv-mi-zoom-btn"
+        (click)="acercarZoom()"
+        [disabled]="nivelZoom >= zoomMax"
+        aria-label="Acercar vista">
+        <i class="bi bi-zoom-in" aria-hidden="true"></i>
+      </button>
+    </div>
+    <button
+      type="button"
+      class="btn btn-link btn-sm py-0 text-decoration-none"
+      (click)="restablecerZoom()"
+      [disabled]="nivelZoom === 1"
+      title="Volver a 100%">
+      Restablecer
+    </button>
+  </div>
+
+  <div
+    class="cv-mi-letter-zoom-root"
+    role="region"
+    aria-label="Vista previa del CV, desplácese para ver todo el contenido">
+    <div class="cv-mi-letter-zoom-frame" [style.zoom]="nivelZoom">
+      <div [class]="previewRootClass">
     <div class="cv-mi-preview-stack">
       <ng-container *ngIf="plantillaCodigo !== 'corporativo'">
         <div
@@ -332,6 +375,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </div>
