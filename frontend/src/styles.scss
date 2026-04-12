@@ -1,4 +1,5 @@
 @use './styles/portal-pages' as *;
+@use './styles/portal-modal-shell';
 
 // ── Paleta Portal CV ─────────────────────────────────────────────────────────
 :root {
@@ -40,6 +41,14 @@
 body {
   font-family: 'Source Sans 3', 'Source Sans Pro', sans-serif;
   background: var(--cv-main-bg);
+}
+
+// Auth embebido en modal público (anula ancho/márgenes de login-box AdminLTE)
+.login-box--embed {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 // ── Avatar circle ─────────────────────────────────────────────────────────────

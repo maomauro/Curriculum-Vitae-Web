@@ -34,7 +34,13 @@ public record CvDetalleDto(
     IEnumerable<HabilidadPublicoDto> Habilidades,
     IEnumerable<ProyectoPublicoDto> Proyectos,
     IEnumerable<ReferenciaPublicoDto> Referencias,
-    IEnumerable<RedSocialPublicoDto> RedesSociales);
+    IEnumerable<RedSocialPublicoDto> RedesSociales,
+    /// <summary>Interruptor maestro (VisibilidadSeccion <c>dashboard.publico</c>). Si es false, no se muestra el dashboard público.</summary>
+    bool DashboardPublicoActivo,
+    /// <summary>Métricas en dashboard público (maestro ∧ <c>dashboard.metricas</c>).</summary>
+    bool DashboardMostrarMetricas,
+    /// <summary>Gráficas en dashboard público (maestro ∧ <c>dashboard.graficas</c>).</summary>
+    bool DashboardMostrarGraficas);
 
 public record PersonalesPublicoDto(
     string? NombreCompleto,
@@ -42,9 +48,7 @@ public record PersonalesPublicoDto(
     string? Ciudad,
     string? Pais,
     string? Celular,
-    string? Email,
-    string PrivacidadEmail,
-    string PrivacidadTelefono);
+    string? Email);
 
 public record PerfilPublicoDto(
     int PerfilId,
