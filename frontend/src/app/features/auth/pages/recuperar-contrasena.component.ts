@@ -31,6 +31,14 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
               <input type="email" class="form-control"
                 placeholder="Correo electrónico"
                 [(ngModel)]="email" name="email" required autocomplete="email">
+              <button
+                *ngIf="email?.trim()"
+                type="button"
+                class="btn btn-outline-secondary auth-input-clear"
+                (click)="email = ''"
+                aria-label="Limpiar correo">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
               <div class="input-group-text"><i class="bi bi-envelope"></i></div>
             </div>
 

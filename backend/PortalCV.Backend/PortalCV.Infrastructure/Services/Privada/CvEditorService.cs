@@ -1,5 +1,8 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PortalCV.Application;
+using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -11,10 +14,17 @@ namespace PortalCV.Infrastructure.Services;
 public class CvEditorService : ICvEditorService
 {
     private readonly PortalCvDbContext _context;
+    private readonly ICvAuditoriaService _auditoriaCv;
+    private readonly IHttpContextAccessor _http;
 
-    public CvEditorService(PortalCvDbContext context)
+    public CvEditorService(
+        PortalCvDbContext context,
+        ICvAuditoriaService auditoriaCv,
+        IHttpContextAccessor http)
     {
         _context = context;
+        _auditoriaCv = auditoriaCv;
+        _http = http;
     }
 
     // --- Personales (1:1) ---
@@ -84,6 +94,8 @@ public class CvEditorService : ICvEditorService
         existing.FotoUrl = r.FotoUrl;
 
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PersonalesUpsert, "Personales", existing.PersonalesId,
+            new Dictionary<string, string> { ["personalesId"] = existing.PersonalesId.ToString() }, ct);
         return MapPersonales(existing);
     }
 
@@ -108,6 +120,8 @@ public class CvEditorService : ICvEditorService
         };
         _context.Perfiles.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilCreate, "Perfil", e.PerfilId,
+            new Dictionary<string, string> { ["nombrePerfil"] = e.NombrePerfil ?? string.Empty }, ct);
         return MapPerfil(e);
     }
 
@@ -121,6 +135,8 @@ public class CvEditorService : ICvEditorService
         e.AspiracionSalarialDolares = r.AspiracionSalarialDolares;
         e.EsActivo = r.EsActivo;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilUpdate, "Perfil", e.PerfilId,
+            new Dictionary<string, string> { ["perfilId"] = e.PerfilId.ToString() }, ct);
         return MapPerfil(e);
     }
 
@@ -129,6 +145,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Perfiles, id, curriculumId, ct);
         _context.Perfiles.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilDelete, "Perfil", id,
+            new Dictionary<string, string> { ["perfilId"] = id.ToString() }, ct);
     }
 
     // --- Experiencia ---
@@ -154,6 +172,12 @@ public class CvEditorService : ICvEditorService
         };
         _context.Experiencias.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaCreate, "Experiencia", e.ExperienciaId,
+            new Dictionary<string, string>
+            {
+                ["empresa"] = e.Empresa ?? string.Empty,
+                ["cargo"] = e.Cargo ?? string.Empty
+            }, ct);
         return MapExperiencia(e);
     }
 
@@ -167,6 +191,8 @@ public class CvEditorService : ICvEditorService
         e.Funciones = r.Funciones; e.EsActual = r.EsActual;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
+            new Dictionary<string, string> { ["experienciaId"] = e.ExperienciaId.ToString() }, ct);
         return MapExperiencia(e);
     }
 
@@ -175,6 +201,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
         _context.Experiencias.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaDelete, "Experiencia", id,
+            new Dictionary<string, string> { ["experienciaId"] = id.ToString() }, ct);
     }
 
     // --- Formación ---
@@ -198,6 +226,12 @@ public class CvEditorService : ICvEditorService
         };
         _context.Formaciones.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionCreate, "Formacion", e.FormacionId,
+            new Dictionary<string, string>
+            {
+                ["titulo"] = e.Titulo ?? string.Empty,
+                ["institucion"] = e.Institucion ?? string.Empty
+            }, ct);
         return MapFormacion(e);
     }
 
@@ -210,6 +244,8 @@ public class CvEditorService : ICvEditorService
         e.AdjuntoSoporte = r.AdjuntoSoporte; e.FechaVigencia = r.FechaVigencia;
         e.DuracionHoras = r.DuracionHoras;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
+            new Dictionary<string, string> { ["formacionId"] = e.FormacionId.ToString() }, ct);
         return MapFormacion(e);
     }
 
@@ -218,6 +254,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
         _context.Formaciones.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionDelete, "Formacion", id,
+            new Dictionary<string, string> { ["formacionId"] = id.ToString() }, ct);
     }
 
     // --- Habilidades ---
@@ -241,6 +279,8 @@ public class CvEditorService : ICvEditorService
         };
         _context.Habilidades.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadCreate, "Habilidad", e.HabilidadId,
+            new Dictionary<string, string> { ["nombre"] = e.Nombre ?? string.Empty }, ct);
         return MapHabilidad(e);
     }
 
@@ -251,6 +291,8 @@ public class CvEditorService : ICvEditorService
         e.NivelLectura = r.NivelLectura; e.NivelEscritura = r.NivelEscritura;
         e.NivelEscucha = r.NivelEscucha; e.NivelHabla = r.NivelHabla;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadUpdate, "Habilidad", e.HabilidadId,
+            new Dictionary<string, string> { ["habilidadId"] = e.HabilidadId.ToString() }, ct);
         return MapHabilidad(e);
     }
 
@@ -259,6 +301,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Habilidades, id, curriculumId, ct);
         _context.Habilidades.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadDelete, "Habilidad", id,
+            new Dictionary<string, string> { ["habilidadId"] = id.ToString() }, ct);
     }
 
     // --- Proyectos ---
@@ -279,6 +323,8 @@ public class CvEditorService : ICvEditorService
         };
         _context.Proyectos.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoCreate, "Proyecto", e.ProyectoId,
+            new Dictionary<string, string> { ["nombreProyecto"] = e.NombreProyecto ?? string.Empty }, ct);
         return MapProyecto(e);
     }
 
@@ -290,6 +336,8 @@ public class CvEditorService : ICvEditorService
         e.StackTecnologico = r.StackTecnologico; e.Aporte = r.Aporte;
         e.Logro = r.Logro; e.Desafio = r.Desafio;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoUpdate, "Proyecto", e.ProyectoId,
+            new Dictionary<string, string> { ["proyectoId"] = e.ProyectoId.ToString() }, ct);
         return MapProyecto(e);
     }
 
@@ -298,6 +346,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Proyectos, id, curriculumId, ct);
         _context.Proyectos.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoDelete, "Proyecto", id,
+            new Dictionary<string, string> { ["proyectoId"] = id.ToString() }, ct);
     }
 
     // --- Referencias ---
@@ -320,6 +370,12 @@ public class CvEditorService : ICvEditorService
         };
         _context.Referencias.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaCreate, "Referencia", e.ReferenciaId,
+            new Dictionary<string, string>
+            {
+                ["tipo"] = e.TipoReferencia ?? string.Empty,
+                ["nombre"] = e.Nombre ?? string.Empty
+            }, ct);
         return MapReferencia(e);
     }
 
@@ -332,6 +388,8 @@ public class CvEditorService : ICvEditorService
         e.Empresa = r.Empresa; e.Relacion = r.Relacion; e.Observaciones = r.Observaciones;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaUpdate, "Referencia", e.ReferenciaId,
+            new Dictionary<string, string> { ["referenciaId"] = e.ReferenciaId.ToString() }, ct);
         return MapReferencia(e);
     }
 
@@ -340,6 +398,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.Referencias, id, curriculumId, ct);
         _context.Referencias.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaDelete, "Referencia", id,
+            new Dictionary<string, string> { ["referenciaId"] = id.ToString() }, ct);
     }
 
     // --- Redes sociales ---
@@ -354,6 +414,8 @@ public class CvEditorService : ICvEditorService
         var e = new RedSocial { CurriculumId = curriculumId, NombreRed = r.NombreRed, LinkPublico = r.LinkPublico, UsuarioContacto = r.UsuarioContacto };
         _context.RedesSociales.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialCreate, "RedSocial", e.RedSocialId,
+            new Dictionary<string, string> { ["nombreRed"] = e.NombreRed ?? string.Empty }, ct);
         return MapRedSocial(e);
     }
 
@@ -362,6 +424,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.RedesSociales, id, curriculumId, ct);
         e.NombreRed = r.NombreRed; e.LinkPublico = r.LinkPublico; e.UsuarioContacto = r.UsuarioContacto;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialUpdate, "RedSocial", e.RedSocialId,
+            new Dictionary<string, string> { ["redSocialId"] = e.RedSocialId.ToString() }, ct);
         return MapRedSocial(e);
     }
 
@@ -370,6 +434,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.RedesSociales, id, curriculumId, ct);
         _context.RedesSociales.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialDelete, "RedSocial", id,
+            new Dictionary<string, string> { ["redSocialId"] = id.ToString() }, ct);
     }
 
     // --- Familiares ---
@@ -389,6 +455,8 @@ public class CvEditorService : ICvEditorService
         };
         _context.FamiliarsContacto.Add(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FamiliarCreate, "FamiliarContacto", e.FamiliarId,
+            new Dictionary<string, string> { ["nombres"] = e.Nombres ?? string.Empty }, ct);
         return MapFamiliar(e);
     }
 
@@ -398,6 +466,8 @@ public class CvEditorService : ICvEditorService
         e.Parentesco = r.Parentesco; e.Nombres = r.Nombres; e.Apellidos = r.Apellidos;
         e.Email = r.Email; e.Telefono = r.Telefono; e.EsContactoPrincipal = r.EsContactoPrincipal;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FamiliarUpdate, "FamiliarContacto", e.FamiliarId,
+            new Dictionary<string, string> { ["familiarId"] = e.FamiliarId.ToString() }, ct);
         return MapFamiliar(e);
     }
 
@@ -406,6 +476,8 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.FamiliarsContacto, id, curriculumId, ct);
         _context.FamiliarsContacto.Remove(e);
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FamiliarDelete, "FamiliarContacto", id,
+            new Dictionary<string, string> { ["familiarId"] = id.ToString() }, ct);
     }
 
     // --- Visibilidad ---
@@ -419,11 +491,12 @@ public class CvEditorService : ICvEditorService
     public async Task<IReadOnlyList<VisibilidadSeccionDto>> UpdateVisibilidadAsync(
         int curriculumId, IEnumerable<UpdateVisibilidadRequest> cambios, CancellationToken ct = default)
     {
+        var listaCambiosIn = cambios.ToList();
         var existentes = await _context.VisibilidadesSeccion
             .Where(v => v.CurriculumId == curriculumId)
             .ToListAsync(ct);
 
-        foreach (var cambio in cambios)
+        foreach (var cambio in listaCambiosIn)
         {
             var existing = existentes.FirstOrDefault(v => v.NombreSeccion == cambio.NombreSeccion);
             if (existing is null)
@@ -442,6 +515,15 @@ public class CvEditorService : ICvEditorService
         }
 
         await _context.SaveChangesAsync(ct);
+        var listaCambios = listaCambiosIn.Select(c => $"{c.NombreSeccion}:{c.EsVisible}").ToList();
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.VisibilidadUpdate, "VisibilidadSeccion", null,
+            listaCambios.Count > 0
+                ? new Dictionary<string, string>
+                {
+                    ["cambios"] = string.Join("|", listaCambios),
+                    ["count"] = listaCambios.Count.ToString()
+                }
+                : null, ct);
         return await GetVisibilidadAsync(curriculumId, ct);
     }
 
@@ -472,6 +554,8 @@ public class CvEditorService : ICvEditorService
         c.PlantillaCodigo = code;
         c.FechaActualizacion = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PresentacionPlantilla, "Curriculum", curriculumId,
+            new Dictionary<string, string> { ["plantillaCodigo"] = code }, ct);
         var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
         var publicado = CurriculumEstados.EsPublicado(c.Estado);
         return new PresentacionCvDto(code, meses, c.UrlPublica ?? string.Empty, publicado);
@@ -489,6 +573,8 @@ public class CvEditorService : ICvEditorService
         c.Estado = publicado ? CurriculumEstados.Publicado : CurriculumEstados.Borrador;
         c.FechaActualizacion = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.CurriculumPublicacion, "Curriculum", curriculumId,
+            new Dictionary<string, string> { ["publicado"] = publicado ? "true" : "false" }, ct);
 
         return await GetPresentacionAsync(curriculumId, ct);
     }
@@ -536,6 +622,24 @@ public class CvEditorService : ICvEditorService
     }
 
     // --- Helpers ---
+
+    private int? TryGetActorUsuarioId()
+    {
+        var user = _http.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            return null;
+        var v = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub");
+        return int.TryParse(v, out var id) && id > 0 ? id : null;
+    }
+
+    private Task RegistrarCvAsync(
+        int curriculumId,
+        string accion,
+        string entidadTipo,
+        int? entidadId,
+        Dictionary<string, string>? detalle,
+        CancellationToken ct)
+        => _auditoriaCv.RegistrarAsync(TryGetActorUsuarioId(), curriculumId, accion, entidadTipo, entidadId, detalle, ct);
 
     private static async Task<T> GetOwnedOrThrowAsync<T>(
         DbSet<T> dbSet, int id, int curriculumId, CancellationToken ct) where T : class

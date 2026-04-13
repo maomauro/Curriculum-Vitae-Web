@@ -23,6 +23,8 @@ public static class DependencyInjection
         services.AddDbContext<PortalCvDbContext>(options =>
             options.UseSqlServer(connectionString));
 
+        services.AddHttpContextAccessor();
+
         // Repositorios genéricos
         services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();
@@ -34,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<ICvEditorService, CvEditorService>();
         services.AddScoped<IAlertaService, AlertaService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAdminAuditoriaService, AdminAuditoriaService>();
+        services.AddScoped<ICvAuditoriaService, CvAuditoriaService>();
 
         return services;
     }

@@ -51,6 +51,13 @@ body {
   padding: 0 !important;
 }
 
+.input-group .btn.auth-input-clear {
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  line-height: 1;
+  border-color: var(--bs-border-color);
+}
+
 // ── Avatar circle ─────────────────────────────────────────────────────────────
 .avatar-circle {
   width: 52px; height: 52px;

@@ -39,6 +39,10 @@
   &--xl {
     max-width: 520px;
   }
+
+  &--500 {
+    max-width: 500px;
+  }
 }
 
 .portal-modal__panel {
@@ -117,6 +121,16 @@
 .portal-modal__body {
   padding: 1.35rem 1.35rem 1.5rem;
   background: #fff;
+}
+
+/** Botón «limpiar» dentro de inputs (p. ej. confirmación VACIAR_AUDITORIA). */
+.portal-modal__body .admin-search-with-clear {
+  display: block;
+  width: 100%;
+}
+
+.portal-modal__body .admin-search-clear {
+  z-index: 10;
 }
 
 .portal-modal__footer {
