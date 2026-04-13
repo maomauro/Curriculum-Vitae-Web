@@ -139,7 +139,7 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 | `PortalCvDbContext.cs` | DbContext principal de EF Core. Registra todos los `DbSet<T>` y aplica las configuraciones |
 | `Configurations/*.cs` | Una clase por entidad. Define mapeo a SQL Server: tabla, columnas, PK, FK, índices y constraints |
 
-> El proyecto **no usa migraciones** de EF Core. El esquema se gestiona con los scripts SQL en `database/`.
+> El proyecto **no usa migraciones** de EF Core. El esquema base y las migraciones incrementales están en la carpeta **`scripts/`** en la raíz del repositorio (y documentación relacionada en `database/`).
 
 ### Repositorios (`Repositories/`)
 
@@ -163,7 +163,7 @@ Services/
 |------------|---------|---------|
 | `Auth/` | `AuthService.cs` | Login (BCrypt + JWT) y registro (crear Usuario, asignar rol Publicador, generar Curriculum vacío con URL pública) |
 | `Privada/` | `CvEditorService.cs` | CRUD completo de las 10 secciones del CV: Personales, Perfil, Experiencia, Formación, Habilidades, Proyectos, Referencias, Redes Sociales, Familiares, Visibilidad |
-| `Privada/` | `AlertaService.cs` | Listar alertas (con opción de solo no leídas), marcar una leída, marcar todas leídas, contar no leídas |
+| `Privada/` | `AlertaService.cs` | Listar alertas (paginado), marcar leída, marcar todas leídas, limpiar leídas, conteo no leídas; alineado con contactos cuando aplica |
 | `Privada/` | `DashboardService.cs` | Estadísticas agregadas del publicador: visitas, contactos y métricas del CV |
 | `Publica/` | `PublicCvService.cs` | Búsqueda paginada, detalle (+ registrar visita), estadísticas, filtros disponibles, formulario de contacto |
 
@@ -233,18 +233,24 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 
 ```json
 {
+  "Cors": {
+    "AllowedOrigins": []
+  },
   "ConnectionStrings": {
-    "DefaultConnection": ""       // Cadena de conexión SQL Server (completar localmente)
+    "DefaultConnection": ""
   },
   "Jwt": {
     "Issuer": "PortalCV.Api",
     "Audience": "PortalCV.Client",
-    "Key": ""                     // Clave secreta JWT (mínimo 32 caracteres)
+    "Key": ""
   }
 }
 ```
 
-> Los valores sensibles **nunca deben commitearse**. Usa `appsettings.Development.json` (ignorado por git) o variables de entorno.
+- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales (`localhost:4200`, contenedor `portalcv-web`, etc.). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
+- **JWT / SQL**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
+
+> Los valores sensibles **nunca deben commitearse**. Usa `appsettings.Development.json` (ignorado por git) o variables de entorno. Ver `.env.example` en la raíz del repo.
 
 ---
 
