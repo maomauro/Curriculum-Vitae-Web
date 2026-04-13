@@ -8,7 +8,8 @@ public class ReferenciaConfiguration : IEntityTypeConfiguration<Referencia>
 {
     public void Configure(EntityTypeBuilder<Referencia> builder)
     {
-        builder.ToTable("Referencia");
+        builder.ToTable("Referencia", t =>
+            t.HasCheckConstraint("CK_Referencia_TipoReferencia", "TipoReferencia IN ('Laboral', 'Personal')"));
 
         builder.HasKey(r => r.ReferenciaId);
 
@@ -24,10 +25,6 @@ public class ReferenciaConfiguration : IEntityTypeConfiguration<Referencia>
         builder.Property(r => r.Observaciones).HasColumnType("nvarchar(max)");
         builder.Property(r => r.AdjuntoSoporte).HasMaxLength(500);
         builder.Property(r => r.FechaRegistro).HasDefaultValueSql("GETDATE()");
-
-        builder.HasCheckConstraint(
-            "CK_Referencia_TipoReferencia",
-            "TipoReferencia IN ('Laboral', 'Personal')");
 
         builder.HasOne(r => r.Curriculum)
             .WithMany(c => c.Referencias)
