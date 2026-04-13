@@ -91,7 +91,15 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    if (!token) return null;
+
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return null;
+    }
+
+    return token;
   }
 
   isLoggedIn(): boolean {
@@ -143,5 +151,16 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private isTokenExpired(token: string): boolean {
+    const payload = this.parseJwt(token);
+    if (!payload) return true;
+
+    const exp = payload['exp'];
+    if (typeof exp !== 'number') return true;
+
+    const now = Math.floor(Date.now() / 1000);
+    return exp <= now;
   }
 }

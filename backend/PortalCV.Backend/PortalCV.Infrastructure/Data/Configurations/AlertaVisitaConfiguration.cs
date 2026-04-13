@@ -8,7 +8,8 @@ public class AlertaVisitaConfiguration : IEntityTypeConfiguration<AlertaVisita>
 {
     public void Configure(EntityTypeBuilder<AlertaVisita> builder)
     {
-        builder.ToTable("AlertaVisita");
+        builder.ToTable("AlertaVisita", t =>
+            t.HasCheckConstraint("CK_AlertaVisita_TipoVisita", "TipoVisita IN ('Vista', 'Contacto', 'Descarga', 'Sistema')"));
 
         builder.HasKey(a => a.AlertaVisitaId);
 
@@ -20,10 +21,6 @@ public class AlertaVisitaConfiguration : IEntityTypeConfiguration<AlertaVisita>
         builder.Property(a => a.Descripcion).HasMaxLength(500);
         builder.Property(a => a.Ciudad).HasMaxLength(80);
         builder.Property(a => a.Pais).HasMaxLength(50);
-
-        builder.HasCheckConstraint(
-            "CK_AlertaVisita_TipoVisita",
-            "TipoVisita IN ('Vista', 'Contacto', 'Descarga', 'Sistema')");
 
         builder.HasOne(a => a.Curriculum)
             .WithMany(c => c.AlertasVisita)

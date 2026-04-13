@@ -18,7 +18,7 @@ public class PublicController : ControllerBase
         _publicCvService = publicCvService;
     }
 
-    /// <summary>Listado paginado de CVs pÃºblicos con filtros opcionales.</summary>
+    /// <summary>Listado paginado de CVs publicos con filtros opcionales.</summary>
     [HttpGet("cvs")]
     public async Task<IActionResult> BuscarCvs(
         [FromQuery] string? ciudad,
@@ -44,7 +44,7 @@ public class PublicController : ControllerBase
         });
     }
 
-    /// <summary>Detalle completo de un CV por su URL pÃºblica.</summary>
+    /// <summary>Detalle completo de un CV por su URL publica.</summary>
     [HttpGet("cvs/{urlPublica}")]
     public async Task<IActionResult> GetDetalle(string urlPublica, CancellationToken ct = default)
     {
@@ -53,7 +53,7 @@ public class PublicController : ControllerBase
         return Ok(detalle);
     }
 
-    /// <summary>EstadÃ­sticas pÃºblicas de un CV (visitas, contactos, Ãºltima visita).</summary>
+    /// <summary>Estadisticas publicas de un CV (visitas, contactos, ultima visita).</summary>
     [HttpGet("cvs/{urlPublica}/stats")]
     public async Task<IActionResult> GetEstadisticas(string urlPublica, CancellationToken ct = default)
     {
