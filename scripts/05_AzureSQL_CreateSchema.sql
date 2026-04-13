@@ -36,7 +36,9 @@ IF OBJECT_ID(N'dbo.Formacion', N'U') IS NOT NULL              DROP TABLE dbo.For
 IF OBJECT_ID(N'dbo.Experiencia', N'U') IS NOT NULL            DROP TABLE dbo.Experiencia;
 IF OBJECT_ID(N'dbo.Perfil', N'U') IS NOT NULL                 DROP TABLE dbo.Perfil;
 IF OBJECT_ID(N'dbo.Personales', N'U') IS NOT NULL             DROP TABLE dbo.Personales;
+IF OBJECT_ID(N'dbo.AuditoriaCv', N'U') IS NOT NULL            DROP TABLE dbo.AuditoriaCv;
 IF OBJECT_ID(N'dbo.Curriculum', N'U') IS NOT NULL             DROP TABLE dbo.Curriculum;
+IF OBJECT_ID(N'dbo.AuditoriaAdmin', N'U') IS NOT NULL       DROP TABLE dbo.AuditoriaAdmin;
 IF OBJECT_ID(N'dbo.Usuario', N'U') IS NOT NULL                DROP TABLE dbo.Usuario;
 IF OBJECT_ID(N'dbo.Rol', N'U') IS NOT NULL                    DROP TABLE dbo.Rol;
 GO
@@ -400,6 +402,43 @@ CREATE TABLE dbo.EstadisticasPublicas (
     CONSTRAINT FK_EstadisticasPublicas_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT UQ_EstadisticasPublicas_CurriculumId UNIQUE (CurriculumId)
 );
+
+-- -----------------------------------------------------------------------------
+-- M. AUDITORÍA (administración y edición de CV)
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE dbo.AuditoriaAdmin (
+    AuditoriaAdminId INT NOT NULL IDENTITY(1,1),
+    FechaUtc         DATETIME2(0) NOT NULL CONSTRAINT DF_AuditoriaAdmin_FechaUtc DEFAULT (SYSUTCDATETIME()),
+    ActorUsuarioId   INT NULL,
+    Accion           NVARCHAR(80)  NOT NULL,
+    EntidadTipo      NVARCHAR(40)  NOT NULL,
+    EntidadId        INT NULL,
+    DetalleJson      NVARCHAR(MAX) NULL,
+    CONSTRAINT PK_AuditoriaAdmin PRIMARY KEY CLUSTERED (AuditoriaAdminId),
+    CONSTRAINT FK_AuditoriaAdmin_Usuario_Actor FOREIGN KEY (ActorUsuarioId)
+        REFERENCES dbo.Usuario (UsuarioId) ON DELETE SET NULL
+);
+
+CREATE NONCLUSTERED INDEX IX_AuditoriaAdmin_FechaUtc ON dbo.AuditoriaAdmin (FechaUtc DESC);
+
+CREATE TABLE dbo.AuditoriaCv (
+    AuditoriaCvId    INT NOT NULL IDENTITY(1,1),
+    FechaUtc         DATETIME2(0) NOT NULL CONSTRAINT DF_AuditoriaCv_FechaUtc DEFAULT (SYSUTCDATETIME()),
+    ActorUsuarioId   INT NULL,
+    CurriculumId     INT NOT NULL,
+    Accion           NVARCHAR(80)  NOT NULL,
+    EntidadTipo      NVARCHAR(40)  NOT NULL,
+    EntidadId        INT NULL,
+    DetalleJson      NVARCHAR(MAX) NULL,
+    CONSTRAINT PK_AuditoriaCv PRIMARY KEY CLUSTERED (AuditoriaCvId),
+    CONSTRAINT FK_AuditoriaCv_Usuario_Actor FOREIGN KEY (ActorUsuarioId)
+        REFERENCES dbo.Usuario (UsuarioId) ON DELETE NO ACTION,
+    CONSTRAINT FK_AuditoriaCv_Curriculum FOREIGN KEY (CurriculumId)
+        REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
+);
+
+CREATE NONCLUSTERED INDEX IX_AuditoriaCv_CurriculumId ON dbo.AuditoriaCv (CurriculumId);
 GO
 
 -- -----------------------------------------------------------------------------

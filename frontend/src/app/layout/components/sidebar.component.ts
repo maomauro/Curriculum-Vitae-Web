@@ -104,9 +104,6 @@ import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
           </ng-container>
 
           <ng-container *ngIf="mostrarMenuAdmin">
-            <li class="nav-item px-3 pt-1 pb-0">
-              <span class="cv-sidebar-section-label text-uppercase">Administración</span>
-            </li>
             <li class="nav-item">
               <a class="nav-link" routerLink="/admin/usuarios" routerLinkActive="active">
                 <i class="nav-icon bi bi-people-fill"></i>

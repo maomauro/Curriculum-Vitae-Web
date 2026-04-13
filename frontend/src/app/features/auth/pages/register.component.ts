@@ -23,16 +23,40 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
             <div class="input-group mb-3">
               <input type="text" class="form-control" placeholder="Nombre completo"
                 [(ngModel)]="name" name="name" required autocomplete="name">
+              <button
+                *ngIf="name?.trim()"
+                type="button"
+                class="btn btn-outline-secondary auth-input-clear"
+                (click)="name = ''"
+                aria-label="Limpiar nombre">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
               <div class="input-group-text"><span class="bi bi-person"></span></div>
             </div>
             <div class="input-group mb-3">
               <input type="email" class="form-control" placeholder="Correo electrónico"
                 [(ngModel)]="email" name="email" required autocomplete="email">
+              <button
+                *ngIf="email?.trim()"
+                type="button"
+                class="btn btn-outline-secondary auth-input-clear"
+                (click)="email = ''"
+                aria-label="Limpiar correo">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
               <div class="input-group-text"><span class="bi bi-envelope"></span></div>
             </div>
             <div class="input-group mb-3">
               <input type="password" class="form-control" placeholder="Contraseña (min. 8 caracteres)"
                 [(ngModel)]="password" name="password" required minlength="8" autocomplete="new-password">
+              <button
+                *ngIf="password.length > 0"
+                type="button"
+                class="btn btn-outline-secondary auth-input-clear"
+                (click)="password = ''"
+                aria-label="Limpiar contraseña">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
               <div class="input-group-text"><span class="bi bi-lock-fill"></span></div>
             </div>
             <div class="d-grid">

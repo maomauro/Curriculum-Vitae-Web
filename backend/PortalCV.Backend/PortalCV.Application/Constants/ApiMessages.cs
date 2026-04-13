@@ -31,6 +31,16 @@ public static class ApiMessages
     /// </summary>
     public static class Admin
     {
+        public const string AuditoriaPurgeConfirmacionInvalida =
+            "Para vaciar toda la tabla escribe exactamente la frase de confirmación indicada en pantalla.";
+
+        public const string AuditoriaPurgeParametrosInvalidos =
+            "Año o mes no válidos para eliminar el período indicado.";
+
+        public const string AuditoriaPurgeTablaInvalida = "Tabla de auditoría no reconocida.";
+
+        public const string AuditoriaPurgeModoInvalido = "Modo de purga no reconocido.";
+
         public const string UsuarioNoEncontrado = "Usuario no encontrado.";
         public const string CurriculumNoEncontradoParaUsuario = "El usuario no tiene un curriculum asociado.";
         public const string RolNoEncontrado = "Rol no encontrado.";

@@ -17,4 +17,8 @@
     <ProjectReference Include="..\PortalCV.Application\PortalCV.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
 </Project>
