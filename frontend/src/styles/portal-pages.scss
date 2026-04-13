@@ -203,13 +203,6 @@
 }
 
 // ── Admin panel ───────────────────────────────────────────────────────────────
-.admin-icon-danger {
-  color: #dc3545;
-}
-.admin-spinner-lg {
-  width: 2.5rem;
-  height: 2.5rem;
-}
 .admin-stat-icon {
   width: 48px;
   height: 48px;
@@ -240,13 +233,15 @@
 .admin-stat-label {
   font-size: 0.8rem;
 }
-.admin-table-head {
-  background: #f8faff;
+/** Contenedor homogéneo para tablas de admin (usuarios, auditoría, roles). */
+.admin-table-wrap {
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
-.admin-th {
-  font-size: 0.8rem;
-  color: #6c757d;
+.admin-table-wrap .table > thead > tr > th {
+  font-size: 0.75rem;
   font-weight: 600;
+  color: #6c757d;
 }
 .admin-td-muted {
   font-size: 0.85rem;
@@ -263,6 +258,62 @@
 }
 .admin-search-input {
   min-width: 200px;
+}
+/** Fila única: select + búsqueda (evita width:100% de .form-control apilando los controles). */
+.admin-usuarios-filtros {
+  flex-shrink: 0;
+  min-width: 0;
+}
+.admin-usuarios-filtros .admin-filter-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 8.5rem;
+}
+.admin-usuarios-filtros .admin-search-with-clear {
+  flex: 1 1 12rem;
+  min-width: 12rem;
+  max-width: 22rem;
+  position: relative;
+}
+.admin-usuarios-filtros .admin-search-with-clear .admin-search-input {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding-right: 2.25rem;
+}
+.admin-search-with-clear {
+  position: relative;
+}
+.admin-search-with-clear .admin-search-input {
+  padding-right: 2.25rem;
+}
+.admin-search-clear {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: #6c757d;
+  line-height: 1;
+  z-index: 2;
+  cursor: pointer;
+}
+.admin-search-clear:hover {
+  color: #212529;
+  background: rgba(0, 0, 0, 0.05);
+}
+.admin-search-clear:focus-visible {
+  outline: 2px solid var(--cv-primary, #2c7be5);
+  outline-offset: 1px;
 }
 .badge-role-admin {
   background: #ede9fe;
@@ -299,10 +350,6 @@
   color: #4b5563;
   font-size: 0.72rem;
   padding: 4px 10px;
-}
-.admin-usuarios-table-wrap {
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 .admin-acciones-cell {
   min-width: 9rem;

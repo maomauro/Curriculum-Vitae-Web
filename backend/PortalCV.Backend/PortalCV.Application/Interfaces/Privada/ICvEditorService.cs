@@ -20,7 +20,7 @@ public interface ICvEditorService
     Task<ExperienciaDto> UpdateExperienciaAsync(int curriculumId, int experienciaId, UpsertExperienciaRequest request, CancellationToken ct = default);
     Task DeleteExperienciaAsync(int curriculumId, int experienciaId, CancellationToken ct = default);
 
-    // FormaciÃ³n
+    // Formación
     Task<IReadOnlyList<FormacionDto>> GetFormacionesAsync(int curriculumId, CancellationToken ct = default);
     Task<FormacionDto> CreateFormacionAsync(int curriculumId, UpsertFormacionRequest request, CancellationToken ct = default);
     Task<FormacionDto> UpdateFormacionAsync(int curriculumId, int formacionId, UpsertFormacionRequest request, CancellationToken ct = default);

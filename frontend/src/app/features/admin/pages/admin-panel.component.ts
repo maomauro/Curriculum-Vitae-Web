@@ -14,7 +14,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
     <div class="page-header">
       <div>
         <h4>
-          <i class="bi bi-people-fill me-2 admin-icon-danger"></i>
+          <i class="bi bi-people-fill me-2 text-primary"></i>
           Usuarios
         </h4>
         <span class="text-muted small">Estado de cuenta, publicación del CV en el portal y roles por cuenta</span>
@@ -23,7 +23,9 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
 
     <!-- Spinner -->
     <div *ngIf="loading" class="text-center py-5">
-      <div class="spinner-border text-primary admin-spinner-lg"></div>
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando usuarios…</span>
+      </div>
     </div>
 
     <ng-container *ngIf="!loading">
@@ -65,9 +67,9 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
       </div>
 
       <div class="seccion-card">
-        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
           <div class="seccion-titulo mb-0">Usuarios del sistema</div>
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
             <select
               class="form-select form-select-sm admin-filter-select"
               [(ngModel)]="filtroEstado"
@@ -76,24 +78,35 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
               <option value="Activo">Activos</option>
               <option value="Inactivo">Inactivos</option>
             </select>
-            <input
-              type="text"
-              class="form-control form-control-sm admin-search-input"
-              placeholder="Buscar por email..."
-              [(ngModel)]="busqueda"
-              (ngModelChange)="onFiltrosChanged()" />
+            <div class="admin-search-with-clear">
+              <input
+                type="text"
+                class="form-control form-control-sm admin-search-input"
+                placeholder="Buscar por email..."
+                [(ngModel)]="busqueda"
+                (ngModelChange)="onFiltrosChanged()" />
+              <button
+                *ngIf="busqueda?.trim()"
+                type="button"
+                class="admin-search-clear"
+                (click)="limpiarBusquedaUsuarios()"
+                aria-label="Limpiar búsqueda">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div *ngIf="usuariosFiltrados.length === 0" class="text-center text-muted py-4">
+        <div *ngIf="usuariosFiltrados.length === 0" class="text-center text-muted py-4 px-2">
           <i class="bi bi-search admin-search-icon"></i>
           <p class="mt-2 mb-0">No se encontraron usuarios con los filtros aplicados.</p>
         </div>
 
-        <div *ngIf="usuariosFiltrados.length > 0" class="table-responsive admin-usuarios-table-wrap">
+        <div *ngIf="usuariosFiltrados.length > 0" class="table-responsive admin-table-wrap">
           <table class="table table-hover align-middle w-100 mb-0">
             <thead class="table-light">
               <tr>
+                <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
                 <th scope="col">USUARIO</th>
                 <th scope="col">REGISTRO</th>
                 <th scope="col">ESTADO</th>
@@ -103,12 +116,10 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let u of usuariosPagina">
+              <tr *ngFor="let u of usuariosPagina; let i = index">
+                <td class="text-end text-muted small">{{ (paginaActual - 1) * pageSize + i + 1 }}</td>
                 <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="avatar-circle avatar-circle-sm blue">{{ inicial(u.email) }}</div>
-                    <span class="fw-semibold admin-email">{{ u.email }}</span>
-                  </div>
+                  <span class="fw-semibold admin-email">{{ u.email }}</span>
                 </td>
                 <td>{{ fmtFecha(u.fechaRegistro) }}</td>
                 <td>
@@ -297,6 +308,11 @@ export class AdminPanelComponent implements OnInit {
     this.ajustarPaginaTrasFiltro();
   }
 
+  limpiarBusquedaUsuarios(): void {
+    this.busqueda = '';
+    this.onFiltrosChanged();
+  }
+
   get totalUsuarios(): number {
     return this.usuarios.length;
   }
@@ -349,10 +365,6 @@ export class AdminPanelComponent implements OnInit {
 
   get rolesParaAsignar(): RolDto[] {
     return this.todoRoles.filter(r => r.nombreRol !== CV_ROL.visitante);
-  }
-
-  inicial(email: string): string {
-    return email.charAt(0).toUpperCase();
   }
 
   tieneRol(u: UsuarioAdminDto, rolId: number): boolean {
