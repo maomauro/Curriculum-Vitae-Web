@@ -66,6 +66,14 @@ public class DashboardService : IDashboardService
             ?? throw new KeyNotFoundException($"Contacto {contactoId} no encontrado.");
 
         contacto.EsLeido = true;
+
+        var alerta = await _context.AlertasVisita
+            .FirstOrDefaultAsync(
+                a => a.VisitanteContactoId == contactoId && a.CurriculumId == curriculumId,
+                ct);
+        if (alerta is not null)
+            alerta.EsLeida = true;
+
         await _context.SaveChangesAsync(ct);
     }
 

@@ -14,23 +14,17 @@ namespace PortalCV.Infrastructure.Services;
 public class PublicCvService : IPublicCvService
 {
     private readonly ICurriculumRepository _curriculumRepo;
-    private readonly IRepository<VisitanteContacto> _contactoRepo;
-    private readonly IRepository<AlertaVisita> _alertaRepo;
     private readonly PortalCvDbContext _context;
     private readonly ILogger<PublicCvService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
     public PublicCvService(
         ICurriculumRepository curriculumRepo,
-        IRepository<VisitanteContacto> contactoRepo,
-        IRepository<AlertaVisita> alertaRepo,
         PortalCvDbContext context,
         ILogger<PublicCvService> logger,
         IServiceScopeFactory scopeFactory)
     {
         _curriculumRepo = curriculumRepo;
-        _contactoRepo = contactoRepo;
-        _alertaRepo = alertaRepo;
         _context = context;
         _logger = logger;
         _scopeFactory = scopeFactory;
@@ -59,7 +53,7 @@ public class PublicCvService : IPublicCvService
         return (items, total);
     }
 
-    public async Task<CvDetalleDto?> GetDetalleAsync(string urlPublica, CancellationToken ct = default)
+    public async Task<CvDetalleDto?> GetDetalleAsync(string urlPublica, string? visitanteAnonimoId = null, CancellationToken ct = default)
     {
         var swTotal = Stopwatch.StartNew();
         var sw = Stopwatch.StartNew();
@@ -67,7 +61,7 @@ public class PublicCvService : IPublicCvService
         var msQuery = sw.ElapsedMilliseconds;
         if (cv is null) return null;
 
-        EncolarRegistroVista(cv.CurriculumId, urlPublica);
+        EncolarRegistroVista(cv.CurriculumId, urlPublica, visitanteAnonimoId);
 
         var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
             cv.Experiencias.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
@@ -144,6 +138,7 @@ public class PublicCvService : IPublicCvService
             ?? throw new KeyNotFoundException($"CV '{urlPublica}' no encontrado.");
         var curriculumId = cv.CurriculumId;
 
+        var ahora = DateTime.UtcNow;
         var contacto = new VisitanteContacto
         {
             CurriculumId = curriculumId,
@@ -154,32 +149,71 @@ public class PublicCvService : IPublicCvService
             Asunto = request.Asunto,
             ComoMeEncontraste = request.ComoMeEncontraste,
             Mensaje = request.Mensaje,
-            FechaContacto = DateTime.UtcNow
+            FechaContacto = ahora
         };
-        await _contactoRepo.AddAsync(contacto, ct);
 
         var alerta = new AlertaVisita
         {
             CurriculumId = curriculumId,
-            FechaVisita = DateTime.UtcNow,
+            FechaVisita = ahora,
             TipoVisita = "Contacto",
             EsLeida = false,
             Titulo = $"Nuevo contacto de {request.Nombre ?? request.Correo}",
             Descripcion = request.Asunto ?? request.MotivoContacto,
-            Origen = request.ComoMeEncontraste
+            Origen = request.ComoMeEncontraste,
+            VisitanteContacto = contacto
         };
-        await _alertaRepo.AddAsync(alerta, ct);
 
-        // Actualizar contador en Curriculum
-        var curriculum = await _context.Curriculums.FindAsync(new object[] { curriculumId }, ct);
-        if (curriculum is not null)
+        _context.AlertasVisita.Add(alerta);
+
+        // Contadores y EstadisticasPublicas: triggers trg_*_SyncEstadisticas.
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task RegistrarImpresionPdfAsync(string urlPublica, string? visitanteAnonimoId = null, CancellationToken ct = default)
+    {
+        var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct)
+            ?? throw new KeyNotFoundException($"CV '{urlPublica}' no encontrado.");
+
+        var curriculumId = cv.CurriculumId;
+
+        if (string.IsNullOrWhiteSpace(visitanteAnonimoId))
+            return;
+
+        var vid = visitanteAnonimoId.Trim();
+        if (vid.Length > 36 || !Guid.TryParse(vid, out _))
+            return;
+
+        var existing = await _context.AlertasVisita
+            .FirstOrDefaultAsync(a =>
+                a.CurriculumId == curriculumId &&
+                a.TipoVisita == "Descarga" &&
+                a.VisitanteAnonimoId == vid, ct);
+
+        if (existing is null)
         {
-            curriculum.ContadorContactos++;
-            curriculum.FechaActualizacion = DateTime.UtcNow;
+            await _context.AlertasVisita.AddAsync(new AlertaVisita
+            {
+                CurriculumId = curriculumId,
+                FechaVisita = DateTime.UtcNow,
+                TipoVisita = "Descarga",
+                VisitanteAnonimoId = vid,
+                VistasAcumuladas = 1,
+                EsLeida = false,
+                Titulo = "Impresión o guardado en PDF",
+                Descripcion = "Impreso o PDF 1 vez"
+            }, ct);
         }
-
-        // Actualizar estadÃ­sticas
-        await EstadisticasPublicasUpdater.ActualizarAsync(_context, curriculumId, esContacto: true, ct);
+        else
+        {
+            existing.FechaVisita = DateTime.UtcNow;
+            existing.VistasAcumuladas++;
+            existing.Descripcion = existing.VistasAcumuladas == 1
+                ? "Impreso o PDF 1 vez"
+                : $"Impreso o PDF {existing.VistasAcumuladas} veces";
+            existing.Titulo = "Impresión o guardado en PDF";
+            existing.EsLeida = false;
+        }
 
         await _context.SaveChangesAsync(ct);
     }
@@ -187,19 +221,19 @@ public class PublicCvService : IPublicCvService
     /// <summary>
     /// No bloquea la respuesta HTTP: nuevo scope + DbContext para persistir visita tras devolver el detalle.
     /// </summary>
-    private void EncolarRegistroVista(int curriculumId, string urlPublica)
+    private void EncolarRegistroVista(int curriculumId, string urlPublica, string? visitanteAnonimoId)
     {
-        _ = RegistrarVistaEnSegundoPlanoAsync(curriculumId, urlPublica);
+        _ = RegistrarVistaEnSegundoPlanoAsync(curriculumId, urlPublica, visitanteAnonimoId);
     }
 
-    private async Task RegistrarVistaEnSegundoPlanoAsync(int curriculumId, string urlPublica)
+    private async Task RegistrarVistaEnSegundoPlanoAsync(int curriculumId, string urlPublica, string? visitanteAnonimoId)
     {
         await Task.Yield();
         try
         {
             await using var scope = _scopeFactory.CreateAsyncScope();
             var registro = scope.ServiceProvider.GetRequiredService<IPublicCvVisitaRegistroService>();
-            await registro.RegistrarVistaAsync(curriculumId, CancellationToken.None);
+            await registro.RegistrarVistaAsync(curriculumId, visitanteAnonimoId, CancellationToken.None);
         }
         catch (Exception ex)
         {

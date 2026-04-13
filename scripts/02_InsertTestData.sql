@@ -174,13 +174,13 @@ VALUES
     (2, N'Carlos Rivera', N'carlos.rivera@startup.com', N'StartupLab', N'Consulta de portafolio', N'Dribbble', N'Buen día María, quiero conversar sobre una posible colaboración.');
 GO
 
--- Alertas de visita
-INSERT INTO dbo.AlertaVisita (CurriculumId, FechaVisita, Origen, TipoVisita, EsLeida, Titulo, Descripcion, Ciudad, Pais)
+-- Alertas de visita (Contacto curriculum 1 enlazado a VisitanteContactoId 1)
+INSERT INTO dbo.AlertaVisita (CurriculumId, FechaVisita, Origen, TipoVisita, EsLeida, Titulo, Descripcion, Ciudad, Pais, VisitanteContactoId)
 VALUES
-    (1, GETDATE(),                    N'Página pública', N'Contacto', 0, N'Nuevo mensaje de contacto recibido',  N'Andrea López de Empresa S.A. te envió un mensaje.',           N'Bogotá',      N'Colombia'),
-    (2, DATEADD(DAY, -3, GETDATE()),  N'Página pública', N'Vista',    1, N'Nueva visita a tu CV',                N'Alguien ha consultado tu perfil desde Barranquilla.',         N'Barranquilla', N'Colombia'),
-    (1, DATEADD(DAY, -1, GETDATE()),  N'Google',         N'Descarga', 0, N'Descarga de tu CV',                   N'Un visitante descargó tu CV en formato PDF.',                 N'Medellín',    N'Colombia'),
-    (1, DATEADD(DAY, -7, GETDATE()),  NULL,              N'Sistema',  1, N'Tu CV fue publicado exitosamente',    N'Tu perfil ya es visible al público.',                         NULL,           NULL);
+    (1, GETDATE(),                    N'Página pública', N'Contacto', 0, N'Nuevo mensaje de contacto recibido',  N'Andrea López de Empresa S.A. te envió un mensaje.',           N'Bogotá',      N'Colombia', 1),
+    (2, DATEADD(DAY, -3, GETDATE()),  N'Página pública', N'Vista',    1, N'Nueva visita a tu CV',                N'Alguien ha consultado tu perfil desde Barranquilla.',         N'Barranquilla', N'Colombia', NULL),
+    (1, DATEADD(DAY, -1, GETDATE()),  N'Google',         N'Descarga', 0, N'Descarga de tu CV',                   N'Un visitante descargó tu CV en formato PDF.',                 N'Medellín',    N'Colombia', NULL),
+    (1, DATEADD(DAY, -7, GETDATE()),  NULL,              N'Sistema',  1, N'Tu CV fue publicado exitosamente',    N'Tu perfil ya es visible al público.',                         NULL,           NULL, NULL);
 GO
 
 -- Visibilidad de secciones

@@ -122,6 +122,9 @@ public record ContactarCvRequest(
     string? ComoMeEncontraste,
     string? Mensaje);
 
+/// <summary>Registro de impresión / PDF del CV público (mismo UUID anónimo que en <c>vid</c> del detalle).</summary>
+public record RegistrarImpresionCvRequest(string? UrlPublica, string? VisitanteAnonimoId = null);
+
 public record CvEstadisticasDto(
     int CurriculumId,
     string UrlPublica,

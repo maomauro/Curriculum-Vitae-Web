@@ -8,34 +8,52 @@ namespace PortalCV.Infrastructure.Services;
 public class PublicCvVisitaRegistroService : IPublicCvVisitaRegistroService
 {
     private readonly PortalCvDbContext _context;
-    private readonly IRepository<AlertaVisita> _alertaRepo;
 
-    public PublicCvVisitaRegistroService(PortalCvDbContext context, IRepository<AlertaVisita> alertaRepo)
+    public PublicCvVisitaRegistroService(PortalCvDbContext context)
     {
         _context = context;
-        _alertaRepo = alertaRepo;
     }
 
-    public async Task RegistrarVistaAsync(int curriculumId, CancellationToken ct = default)
+    public async Task RegistrarVistaAsync(int curriculumId, string? visitanteAnonimoId, CancellationToken ct = default)
     {
-        var alerta = new AlertaVisita
-        {
-            CurriculumId = curriculumId,
-            FechaVisita = DateTime.UtcNow,
-            TipoVisita = "Vista",
-            EsLeida = false,
-            Titulo = "Nueva visita a tu CV"
-        };
-        await _alertaRepo.AddAsync(alerta, ct);
+        if (string.IsNullOrWhiteSpace(visitanteAnonimoId))
+            return;
 
-        var curriculum = await _context.Curriculums.FindAsync(new object[] { curriculumId }, ct);
-        if (curriculum is not null)
+        var vid = visitanteAnonimoId.Trim();
+        if (vid.Length > 36 || !Guid.TryParse(vid, out _))
+            return;
+
+        var existing = await _context.AlertasVisita
+            .FirstOrDefaultAsync(a =>
+                a.CurriculumId == curriculumId &&
+                a.TipoVisita == "Vista" &&
+                a.VisitanteAnonimoId == vid, ct);
+
+        if (existing is null)
         {
-            curriculum.ContadorVisitas++;
-            curriculum.FechaActualizacion = DateTime.UtcNow;
+            await _context.AlertasVisita.AddAsync(new AlertaVisita
+            {
+                CurriculumId = curriculumId,
+                FechaVisita = DateTime.UtcNow,
+                TipoVisita = "Vista",
+                VisitanteAnonimoId = vid,
+                VistasAcumuladas = 1,
+                EsLeida = false,
+                Titulo = "Nueva visita a tu CV",
+                Descripcion = "Visto 1 vez"
+            }, ct);
+        }
+        else
+        {
+            existing.FechaVisita = DateTime.UtcNow;
+            existing.VistasAcumuladas++;
+            existing.Descripcion = existing.VistasAcumuladas == 1
+                ? "Visto 1 vez"
+                : $"Visto {existing.VistasAcumuladas} veces";
+            existing.Titulo = "Nueva visita a tu CV";
+            existing.EsLeida = false;
         }
 
-        await EstadisticasPublicasUpdater.ActualizarAsync(_context, curriculumId, esContacto: false, ct);
         await _context.SaveChangesAsync(ct);
     }
 }

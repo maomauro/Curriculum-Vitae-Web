@@ -353,6 +353,7 @@ CREATE TABLE dbo.VisitanteContacto (
     ComoMeEncontraste   NVARCHAR(255) NULL,
     Mensaje             NVARCHAR(MAX) NULL,
     FechaContacto       DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    EsLeida             BIT           NOT NULL DEFAULT 0,
     CONSTRAINT PK_VisitanteContacto PRIMARY KEY CLUSTERED (VisitanteContactoId),
     CONSTRAINT FK_VisitanteContacto_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
@@ -371,13 +372,26 @@ CREATE TABLE dbo.AlertaVisita (
     Descripcion    NVARCHAR(MAX) NULL,
     Ciudad         NVARCHAR(100) NULL,
     Pais           NVARCHAR(100) NULL,
+    VisitanteAnonimoId NVARCHAR(36) NULL,
+    VistasAcumuladas   INT        NOT NULL DEFAULT 1,
+    VisitanteContactoId INT NULL,
     CONSTRAINT PK_AlertaVisita PRIMARY KEY CLUSTERED (AlertaVisitaId),
     CONSTRAINT FK_AlertaVisita_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
+    CONSTRAINT FK_AlertaVisita_VisitanteContacto FOREIGN KEY (VisitanteContactoId) REFERENCES dbo.VisitanteContacto (VisitanteContactoId) ON DELETE NO ACTION,
     CONSTRAINT CK_AlertaVisita_TipoVisita CHECK (TipoVisita IN (N'Vista', N'Contacto', N'Descarga', N'Sistema'))
 );
 
 CREATE NONCLUSTERED INDEX IX_AlertaVisita_CurriculumId ON dbo.AlertaVisita (CurriculumId);
 CREATE NONCLUSTERED INDEX IX_AlertaVisita_FechaVisita ON dbo.AlertaVisita (FechaVisita);
+CREATE UNIQUE NONCLUSTERED INDEX UQ_AlertaVisita_Curriculum_Visitante_Vista
+    ON dbo.AlertaVisita (CurriculumId, VisitanteAnonimoId)
+    WHERE TipoVisita = N'Vista' AND VisitanteAnonimoId IS NOT NULL;
+CREATE UNIQUE NONCLUSTERED INDEX UQ_AlertaVisita_Curriculum_Visitante_Descarga
+    ON dbo.AlertaVisita (CurriculumId, VisitanteAnonimoId)
+    WHERE TipoVisita = N'Descarga' AND VisitanteAnonimoId IS NOT NULL;
+CREATE UNIQUE NONCLUSTERED INDEX UQ_AlertaVisita_VisitanteContacto_Contacto
+    ON dbo.AlertaVisita (VisitanteContactoId)
+    WHERE VisitanteContactoId IS NOT NULL AND TipoVisita = N'Contacto';
 
 -- -----------------------------------------------------------------------------
 -- K. CONFIGURACIÓN (Visibilidad de secciones)
@@ -526,7 +540,12 @@ BEGIN
 
     INSERT INTO @AlertCounts (CurriculumId, VisitCount, LatestVisit)
     SELECT CurriculumId,
-           COUNT(*) AS VisitCount,
+           SUM(
+               CASE
+                   WHEN TipoVisita IN (N'Vista', N'Descarga') THEN COALESCE(VistasAcumuladas, 1)
+                   ELSE 1
+               END
+           ) AS VisitCount,
            MAX(FechaVisita) AS LatestVisit
     FROM dbo.AlertaVisita
     WHERE CurriculumId IN (SELECT CurriculumId FROM @Curriculos)
