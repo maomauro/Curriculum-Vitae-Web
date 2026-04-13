@@ -26,13 +26,42 @@ namespace PortalCV.Api
 
             builder.Services.AddInfrastructure(builder.Configuration);
 
-            // Configurar CORS para permitir requests del frontend
+            // CORS: en producción hay que definir Cors:AllowedOrigins (p. ej. URL del SPA).
+            // Variables de entorno: Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, …
+            // En Development, si la lista está vacía se usan orígenes locales y el contenedor portalcv-web.
+            var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+            var corsOrigins = configuredOrigins?
+                .Where(static o => !string.IsNullOrWhiteSpace(o))
+                .Select(static o => o.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray() ?? [];
+
+            if (corsOrigins.Length == 0)
+            {
+                if (builder.Environment.IsDevelopment())
+                {
+                    corsOrigins =
+                    [
+                        "http://localhost:4200",
+                        "http://localhost:3000",
+                        "http://portalcv-web",
+                    ];
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Cors:AllowedOrigins debe contener al menos un origen HTTPS en producción " +
+                        "(por ejemplo la URL pública del frontend). " +
+                        "Use variables Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, etc.");
+                }
+            }
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", corsBuilder =>
                 {
                     corsBuilder
-                        .WithOrigins("http://localhost:4200", "http://localhost:3000", "http://portalcv-web")
+                        .WithOrigins(corsOrigins)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials();

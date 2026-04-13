@@ -1,8 +1,31 @@
-# PortalcvWeb
+# Frontend — PortalCV (`portalcv-web`)
+
+Aplicación **Angular 20** del portal (zona pública, autenticación y panel privado). Los servicios HTTP usan rutas relativas **`/api/...`**; en local, `proxy.conf.json` reenvía al backend (puerto configurado allí).
+
+## Requisitos
+
+- Node.js **22** (alineado con CI; ver [`.github/workflows/ci.yml`](../.github/workflows/ci.yml))
+- `npm ci` para instalar dependencias reproducibles
+
+## Servidor de desarrollo
+
+```bash
+cd frontend
+npm ci
+ng serve
+```
+
+Abre `http://localhost:4200/`. Los cambios recargan en caliente.
+
+**Producción:** `npm run build -- --configuration production` (salida en `dist/`). El hosting debe servir el SPA y resolver `/api` hacia la API (proxy inverso, Static Web Apps con API enlazada, etc.).
+
+---
+
+## Plantilla Angular CLI (referencia)
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.1.
 
-## Development server
+### Development server (genérico)
 
 To start a local development server, run:
 

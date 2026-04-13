@@ -11,7 +11,7 @@ Scripts y modelo de base de datos del portal. El modelo está alineado con `docs
 | `Diagrama ER.jpeg` | Diagrama entidad-relación exportado. |
 
 > Los scripts DDL ejecutables están en la carpeta [`scripts/`](../scripts/) del repositorio:
-> `01_CreateSchema.sql`, `02_InsertTestData.sql`, `05_AzureSQL_CreateSchema.sql`, `06_AzureSQL_SeedRoles.sql`.
+> esquema base (`01`, `02`, `05`, `06`, …) y **migraciones incrementales** numeradas (`16_`, `17_`, …) según el estado del servidor.
 
 ## Cómo visualizar el modelo DBML
 

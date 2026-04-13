@@ -501,7 +501,8 @@ export class DatosPersonalesComponent implements OnInit {
         this.guardando = false;
         const message = extractApiErrorMessage(error);
         this.notificationService.error(message || NOTIFICATION_MESSAGES.saveError);
-        console.error('Error guardando datos personales', { payload, error });
+        // No registrar el payload en consola (datos personales); el usuario ya ve el error en pantalla.
+        console.error('Error guardando datos personales', error);
       }
     });
   }

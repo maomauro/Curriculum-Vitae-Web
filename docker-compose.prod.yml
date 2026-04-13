@@ -33,7 +33,8 @@ services:
   backend:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      SWAGGER_ENABLED: "false"
+      # Swagger solo se habilita con IsDevelopment() en Program.cs; no hace falta variable extra.
+      # CORS: definir en el orquestador real (p. ej. Azure Container Apps) Cors__AllowedOrigins__0 = URL del SPA.
     deploy:
       resources:
         limits:
