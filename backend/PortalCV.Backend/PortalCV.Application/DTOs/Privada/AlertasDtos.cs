@@ -10,5 +10,13 @@ public record AlertaVisitaDto(
     string? Titulo,
     string? Descripcion,
     string? Ciudad,
-    string? Pais);
+    string? Pais,
+    int? VistasAcumuladas = null);
+
+public record AlertasPageDto(
+    IReadOnlyList<AlertaVisitaDto> Items,
+    int Total,
+    int Page,
+    int PageSize,
+    int TotalPages);
 

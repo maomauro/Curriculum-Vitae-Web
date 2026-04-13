@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AlertasConteoRefreshService } from '../../../core/services/private/alertas-conteo-refresh.service';
 import { DashboardService, ContactoDto } from '../../../core/services/private/dashboard.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
@@ -14,6 +15,11 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
       <div>
         <h4><i class="bi bi-envelope-fill me-2 text-primary"></i>Contactos recibidos</h4>
         <span class="text-muted small">Mensajes de reclutadores y profesionales interesados en tu perfil</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" routerLink="/alertas">
+          <i class="bi bi-bell me-1"></i>Volver a alertas
+        </button>
       </div>
     </div>
 
@@ -130,7 +136,8 @@ export class ContactosComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private alertasConteoRefresh: AlertasConteoRefreshService
   ) {}
 
   ngOnInit(): void {
@@ -150,7 +157,10 @@ export class ContactosComponent implements OnInit {
 
   marcarLeido(c: ContactoDto): void {
     this.dashboardService.marcarContactoLeido(c.visitanteContactoId).subscribe({
-      next: () => { c.esLeido = true; },
+      next: () => {
+        c.esLeido = true;
+        this.alertasConteoRefresh.requestRefresh();
+      },
       error: (error: HttpErrorResponse) =>
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError)
     });

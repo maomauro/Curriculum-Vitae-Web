@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PortalCV.Api.Json;
 using PortalCV.Api.Middleware;
 using PortalCV.Infrastructure;
 using Serilog;
@@ -38,7 +39,12 @@ namespace PortalCV.Api
                 });
             });
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(o =>
+                {
+                    o.JsonSerializerOptions.Converters.Add(new UtcDateTimeJsonConverter());
+                    o.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeJsonConverter());
+                });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {

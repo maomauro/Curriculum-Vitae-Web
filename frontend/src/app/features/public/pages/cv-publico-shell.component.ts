@@ -4,8 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TimeoutError } from 'rxjs';
-import { catchError, distinctUntilChanged, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
+import { catchError, distinctUntilChanged, finalize, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
 import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
+import { getOrCreatePortalCvVisitorId } from '../../../core/utils/portal-cv-visitor-id.util';
 import { CvAnaliticasDetalleService } from '../../../core/services/cv/cv-analiticas-detalle.service';
 import { CvDetalleVistaContext } from '../../../shared/contexts/cv-detalle-vista.context';
 import {
@@ -257,7 +258,19 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
   }
 
   imprimirCv(): void {
-    window.print();
+    const slug = this.ctx.cv?.urlPublica ?? this.urlPublica;
+    const vid = getOrCreatePortalCvVisitorId();
+    if (!slug || !vid) {
+      window.print();
+      return;
+    }
+    this.publicService
+      .registrarImpresionPdf(slug, vid)
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => window.print())
+      )
+      .subscribe();
   }
 
   abrirModalContacto(): void {

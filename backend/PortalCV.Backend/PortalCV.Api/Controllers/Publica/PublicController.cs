@@ -45,10 +45,14 @@ public class PublicController : ControllerBase
     }
 
     /// <summary>Detalle completo de un CV por su URL publica.</summary>
+    /// <param name="vid">UUID anónimo del navegador (localStorage) para deduplicar vistas del mismo visitante.</param>
     [HttpGet("cvs/{urlPublica}")]
-    public async Task<IActionResult> GetDetalle(string urlPublica, CancellationToken ct = default)
+    public async Task<IActionResult> GetDetalle(
+        string urlPublica,
+        [FromQuery] string? vid = null,
+        CancellationToken ct = default)
     {
-        var detalle = await _publicCvService.GetDetalleAsync(urlPublica, ct);
+        var detalle = await _publicCvService.GetDetalleAsync(urlPublica, vid, ct);
         if (detalle is null) return NotFound();
         return Ok(detalle);
     }
@@ -76,6 +80,31 @@ public class PublicController : ControllerBase
     {
         await _publicCvService.ContactarAsync(urlPublica, request, ct);
         return Ok(new { message = ApiMessages.Publico.MensajeEnviadoCorrectamente });
+    }
+
+    /// <summary>Registra que un visitante abrió el diálogo de impresión o guardó PDF del CV público.</summary>
+    [HttpPost("cvs/{urlPublica}/imprimir")]
+    public async Task<IActionResult> RegistrarImpresion(
+        string urlPublica,
+        [FromQuery] string? vid = null,
+        CancellationToken ct = default)
+    {
+        await _publicCvService.RegistrarImpresionPdfAsync(urlPublica, vid, ct);
+        return NoContent();
+    }
+
+    /// <summary>Registra impresión/PDF (misma lógica que POST cvs/slug/imprimir). Ruta estable para el cliente.</summary>
+    [HttpPost("acciones/imprimir-cv")]
+    public async Task<IActionResult> RegistrarImpresionPorCuerpo(
+        [FromBody] RegistrarImpresionCvRequest? body,
+        CancellationToken ct = default)
+    {
+        var slug = body?.UrlPublica?.Trim();
+        if (string.IsNullOrEmpty(slug))
+            return BadRequest(new { message = "urlPublica es obligatoria." });
+
+        await _publicCvService.RegistrarImpresionPdfAsync(slug, body?.VisitanteAnonimoId, ct);
+        return NoContent();
     }
 }
 
