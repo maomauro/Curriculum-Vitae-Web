@@ -3,6 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { CV_ROL } from '../../core/constants/cv-roles';
 import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
+import { AlertasConteoRefreshService } from '../../core/services/private/alertas-conteo-refresh.service';
 import { DashboardService, NotificacionItemDto } from '../../core/services/private/dashboard.service';
 import { CvEditorService } from '../../core/services/private/cv-editor.service';
 import { PrivateLayoutSidebarService } from '../services/private-layout-sidebar.service';
@@ -122,6 +123,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   /** Ruta bajo `/admin` (contexto administración en topbar). */
   enRutaAdmin = false;
   private routeSub?: Subscription;
+  private alertasRefreshSub?: Subscription;
 
   get mostrarCampanaNotificaciones(): boolean {
     return this.authService.hasRol(CV_ROL.publicador);
@@ -151,7 +153,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private router: Router,
     private dashboardService: DashboardService,
     private cvEditorService: CvEditorService,
-    private sidebarNav: PrivateLayoutSidebarService
+    private sidebarNav: PrivateLayoutSidebarService,
+    private alertasConteoRefresh: AlertasConteoRefreshService
   ) {}
 
   alternarSidebar(ev: Event): void {
@@ -180,10 +183,17 @@ export class TopbarComponent implements OnInit, OnDestroy {
         this.cargoActual = 'Perfil profesional';
       }
     });
+
+    this.alertasRefreshSub = this.alertasConteoRefresh.refreshRequested$.subscribe(() => {
+      if (!this.authService.hasRol(CV_ROL.publicador)) return;
+      this.cargarConteo();
+      this.notifCargadas = false;
+    });
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.alertasRefreshSub?.unsubscribe();
   }
 
   private syncRutaAdmin(): void {

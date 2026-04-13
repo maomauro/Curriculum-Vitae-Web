@@ -5,5 +5,6 @@ namespace PortalCV.Application.Interfaces;
 /// </summary>
 public interface IPublicCvVisitaRegistroService
 {
-    Task RegistrarVistaAsync(int curriculumId, CancellationToken ct = default);
+    /// <param name="visitanteAnonimoId">UUID del navegador (query <c>vid</c>). Si falta o no es válido, no se registra vista.</param>
+    Task RegistrarVistaAsync(int curriculumId, string? visitanteAnonimoId, CancellationToken ct = default);
 }

@@ -16,8 +16,12 @@ public class AlertasController : CvControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] bool soloNoLeidas = false,
+        [FromQuery] string? tipo = null,
+        [FromQuery] string? periodo = "mes",
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken ct = default)
-        => Ok(await _alertaService.GetAlertasAsync(GetCurriculumId(), soloNoLeidas, ct));
+        => Ok(await _alertaService.GetAlertasAsync(GetCurriculumId(), soloNoLeidas, tipo, periodo, page, pageSize, ct));
 
     [HttpPut("{id:int}/leer")]
     public async Task<IActionResult> MarcarLeida(int id, CancellationToken ct = default)
@@ -32,6 +36,10 @@ public class AlertasController : CvControllerBase
         await _alertaService.MarcarTodasLeidasAsync(GetCurriculumId(), ct);
         return NoContent();
     }
+
+    [HttpDelete("leidas")]
+    public async Task<IActionResult> LimpiarLeidas(CancellationToken ct = default)
+        => Ok(new { eliminadas = await _alertaService.LimpiarLeidasAsync(GetCurriculumId(), ct) });
 
     [HttpGet("no-leidas/conteo")]
     public async Task<IActionResult> GetConteoNoLeidas(CancellationToken ct = default)

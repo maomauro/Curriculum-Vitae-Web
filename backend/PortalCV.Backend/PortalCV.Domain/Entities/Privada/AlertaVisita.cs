@@ -12,6 +12,15 @@ public class AlertaVisita
     public string? Descripcion { get; set; }
     public string? Ciudad { get; set; }
     public string? Pais { get; set; }
+    /// <summary>Identificador anónimo del navegador (UUID) para deduplicar vistas públicas del mismo visitante.</summary>
+    public string? VisitanteAnonimoId { get; set; }
+    /// <summary>
+    /// Para <see cref="TipoVisita"/> Vista o Descarga con <see cref="VisitanteAnonimoId"/>: veces que ese visitante repitió la acción (cargas / imprimir-PDF).
+    /// </summary>
+    public int VistasAcumuladas { get; set; } = 1;
+    /// <summary>Solo <see cref="TipoVisita"/> Contacto: fila en <c>VisitanteContacto</c> que originó la alerta.</summary>
+    public int? VisitanteContactoId { get; set; }
+    public VisitanteContacto? VisitanteContacto { get; set; }
 
     public Curriculum Curriculum { get; set; } = null!;
 }

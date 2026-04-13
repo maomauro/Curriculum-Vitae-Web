@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
 
 /** Alinea respuestas JSON en PascalCase (p. ej. algunos proxies) con los DTOs camelCase del front. */
 function deepToCamel(value: unknown): unknown {
@@ -185,8 +186,13 @@ export class PublicService {
   }
 
   getDetalle(urlPublica: string): Observable<CvDetalleDto> {
+    const vid = getOrCreatePortalCvVisitorId();
+    let params = new HttpParams();
+    if (vid) {
+      params = params.set('vid', vid);
+    }
     return this.http
-      .get<unknown>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}`)
+      .get<unknown>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}`, { params })
       .pipe(map(raw => deepToCamel(raw) as CvDetalleDto));
   }
 
@@ -198,5 +204,13 @@ export class PublicService {
 
   contactar(urlPublica: string, dto: ContactarDto): Observable<void> {
     return this.http.post<void>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}/contactar`, dto);
+  }
+
+  /** Notifica al backend Imprimir / PDF (alerta Descarga deduplicada por visitante anónimo). */
+  registrarImpresionPdf(urlPublica: string, visitanteAnonimoId: string): Observable<void> {
+    return this.http.post<void>(`${this.BASE}/acciones/imprimir-cv`, {
+      urlPublica,
+      visitanteAnonimoId: visitanteAnonimoId || undefined,
+    });
   }
 }
