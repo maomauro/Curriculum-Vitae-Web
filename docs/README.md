@@ -51,6 +51,7 @@ Infraestructura, despliegue y políticas de mantenimiento.
 | [Despliegue.md](./devops/Despliegue.md) | Instrucciones de deploy |
 | [Plan-Backup-Mantenimiento.md](./devops/Plan-Backup-Mantenimiento.md) | Plan de backup y mantenimiento |
 | [Politica-Proteccion-Ramas.md](./devops/Politica-Proteccion-Ramas.md) | Reglas de protección de ramas Git |
+| [Checklist-Produccion.md](./devops/Checklist-Produccion.md) | Verificación previa a publicar en producción |
 
 ---
 

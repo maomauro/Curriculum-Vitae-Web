@@ -93,7 +93,7 @@ main      --PR---> CI (build + test + package + deploy)
 
 ### Archivo .github/workflows/ci.yml (actual)
 
-El pipeline en produccion esta en [../.github/workflows/ci.yml](../.github/workflows/ci.yml).
+El pipeline de CI esta en [../../.github/workflows/ci.yml](../../.github/workflows/ci.yml).
 
 **Jobs actuales:**
 
