@@ -171,7 +171,7 @@ Copiar `.env.example` a `.env` y ajustar si es necesario. La cadena de conexion 
 ### Local
 
 - Logs de Serilog en consola (docker compose logs backend)
-- Swagger UI: http://localhost:5000/swagger (Docker Compose) / http://localhost:5083/swagger (dotnet run directo)
+- Swagger UI: http://localhost:5000/swagger (Docker Compose) / http://localhost:5005/swagger (dotnet run directo)
 
 ### Produccion (Azure)
 
@@ -202,7 +202,13 @@ npm test                         # modo watch (desarrollo)
 npm run test -- --configuration ci  # modo CI (headless, una sola ejecucion)
 ```
 
-El modo CI usa `ChromeHeadlessCI` configurado en `karma.conf.js`.
+El modo CI usa `ChromeHeadless` y está configurado en `frontend/angular.json` (`architect.test.configurations.ci`).
+
+También puede ejecutarse directamente con:
+
+```bash
+npx ng test --configuration ci
+```
 
 ---
 

@@ -179,10 +179,10 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | ID | Tipo | Título | Descripción | Endpoints | Story Points |
 |----|------|--------|-------------|-----------|--------------|
 | **HS-09** | Historia Técnica | API: Listado de CVs públicos | Endpoint paginado con filtros básicos | `GET /api/public/cvs` | 5 |
-| **HS-10** | Historia Técnica | API: Búsqueda por palabras clave | Endpoint con autocompletado | `GET /api/public/search?q=` | 3 |
+| **HS-10** | Historia Técnica | API: Búsqueda por palabras clave | Búsqueda por término en el listado público (query param `q`) | `GET /api/public/cvs?q=` | 3 |
 | **HS-11** | Historia Técnica | API: Detalle de CV por URL | Obtener CV completo por slug | `GET /api/public/cvs/{urlPublica}` | 5 |
 | **HS-12** | Historia Técnica | API: Estadísticas públicas | Métricas de visitas y contactos | `GET /api/public/cvs/{urlPublica}/stats` | 3 |
-| **HS-13** | Historia Técnica | API: Formulario de contacto | Guardar contacto y generar alerta | `POST /api/public/contact/{cvId}` | 5 |
+| **HS-13** | Historia Técnica | API: Formulario de contacto | Guardar contacto y generar alerta | `POST /api/public/cvs/{urlPublica}/contactar` | 5 |
 | **HS-14** | Historia Técnica | API: Categorías y filtros | Ciudades, habilidades populares | `GET /api/public/filters` | 2 |
 | **HS-15** | Historia Técnica | Sistema de rate limiting | Controlar spam en formularios | Middleware | 3 |
 | **HS-16** | Historia Técnica | Sistema de caché | IMemoryCache (.NET in-process) para performance | Middleware | 3 |
