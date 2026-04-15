@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Candidato — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    body { font-family: 'Source Sans 3', sans-serif; background: #F4F6F9; }
+
+    /* ── Navbar ── */
+    .navbar-brand { color: #2C7BE5 !important; font-weight: 700; font-size: 1.3rem; }
+
+    /* ── Cabecera candidato ── */
+    .candidate-header {
+      background: #fff; border-radius: 12px;
+      padding: 22px 28px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+      margin-bottom: 20px;
+    }
+    .avatar-circle {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: #2C7BE5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45rem; font-weight: 700; flex-shrink: 0;
+    }
+    .candidate-tabs .nav-link {
+      color: #6C757D; font-weight: 600; font-size: .88rem;
+      padding: 7px 18px; border-radius: 8px; transition: background .15s;
+    }
+    .candidate-tabs .nav-link:hover { background: #F4F6F9; }
+    .candidate-tabs .nav-link.active { background: #EEF3FB; color: #2C7BE5; }
+
+    /* ── Page header card ── */
+    .page-header-card {
+      background: #fff; border-radius: 12px;
+      padding: 20px 26px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .page-header-card .ph-icon {
+      width: 50px; height: 50px; border-radius: 10px;
+      background: #EEF3FB; color: #2C7BE5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.55rem; flex-shrink: 0;
+    }
+
+    /* ── Metric cards ── */
+    .metric-card {
+      border: none; border-radius: 12px;
+      color: #fff; padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.13);
+      height: 100%;
+    }
+    .metric-card .mc-label  { font-size: .75rem; opacity: .88; font-weight: 600; margin-bottom: 6px; line-height: 1.3; }
+    .metric-card .mc-value  { font-size: 2rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+    .metric-card .mc-sub    { font-size: .72rem; opacity: .78; line-height: 1.35; }
+    .metric-card .mc-icon   { font-size: 2.6rem; opacity: .20; }
+
+    /* ── Chart cards ── */
+    .chart-card {
+      background: #fff; border-radius: 12px;
+      padding: 22px 24px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+      height: 100%;
+    }
+    .chart-card .ct-title    { font-weight: 700; font-size: .95rem; color: #212529; margin-bottom: 2px; }
+    .chart-card .ct-subtitle { font-size: .8rem; color: #6C757D; margin-bottom: 18px; }
+
+    /* ── Footer ── */
+    footer { background: #343A40; color: #ADB5BD; font-size: .85rem; }
+    footer a { color: #ADB5BD; text-decoration: none; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAVBAR ═══════════ -->
+  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="home.html">PortalCV</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav me-auto ms-3 gap-1">
+          <li class="nav-item"><a class="nav-link" href="home.html">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="buscar-cvs.html">Buscar CVs</a></li>
+        </ul>
+        <div class="d-flex gap-2">
+          <a href="../auth/login.html" class="btn btn-outline-primary btn-sm px-3">Iniciar sesión</a>
+          <a href="../auth/register.html" class="btn btn-primary btn-sm px-3">Registrarse</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ CONTENIDO ═══════════ -->
+  <div class="container py-4">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="buscar-cvs.html" class="text-decoration-none">Buscar CVs</a></li>
+        <li class="breadcrumb-item"><a href="detalle-cv.html" class="text-decoration-none">Ana García</a></li>
+        <li class="breadcrumb-item active">Dashboard analítico</li>
+      </ol>
+    </nav>
+
+    <!-- ── Cabecera candidato + tabs ── -->
+    <div class="candidate-header">
+      <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+        <div class="avatar-circle">AG</div>
+        <div>
+          <h4 class="fw-bold mb-0">Ana García</h4>
+          <span class="text-muted">Frontend Developer · <i class="bi bi-geo-alt-fill text-primary small"></i> Madrid, España</span>
+        </div>
+        <div class="ms-auto d-none d-md-flex gap-2">
+          <a href="detalle-cv.html" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-file-earmark-person me-1"></i>Ver CV completo
+          </a>
+          <button class="btn btn-primary btn-sm">
+            <i class="bi bi-envelope-fill me-1"></i>Contactar
+          </button>
+        </div>
+      </div>
+      <!-- Tabs -->
+      <ul class="nav candidate-tabs gap-1 mb-0">
+        <li class="nav-item">
+          <a class="nav-link" href="detalle-cv.html">
+            <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="#">
+            <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Page header card ── -->
+    <div class="page-header-card">
+      <div class="ph-icon">
+        <i class="bi bi-bar-chart-steps"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0">Dashboard de Hoja de Vida</h5>
+        <p class="text-muted mb-0" style="font-size:.9rem;">
+          Visualiza y analiza la información personal, profesional y académica.
+        </p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         MÉTRICAS — 6 tarjetas de colores
+    ══════════════════════════════════════════════ -->
+    <div class="row g-3 mb-4">
+
+      <!-- 1. Experiencia TI -->
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="metric-card" style="background: linear-gradient(135deg, #22C55E 0%, #15803D 100%);">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="mc-label">Experiencia en TI</div>
+              <div class="mc-value">12</div>
+              <div class="mc-sub">Años en desarrollo<br>y gestión</div>
+            </div>
+            <i class="bi bi-graph-up-arrow mc-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Empleos -->
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="metric-card" style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="mc-label">Empleos en Desarrollo y Gestión</div>
+              <div class="mc-value">5</div>
+              <div class="mc-sub">Total empleos en tecnología</div>
+            </div>
+            <i class="bi bi-buildings mc-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Títulos -->
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="metric-card" style="background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%);">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="mc-label">Títulos académicos</div>
+              <div class="mc-value">12</div>
+              <div class="mc-sub">Total títulos</div>
+            </div>
+            <i class="bi bi-mortarboard-fill mc-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Habilidades -->
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="metric-card" style="background: linear-gradient(135deg, #F97316 0%, #C2410C 100%);">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="mc-label">Habilidades</div>
+              <div class="mc-value">33</div>
+              <div class="mc-sub">Total habilidades</div>
+            </div>
+            <i class="bi bi-tools mc-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Perfiles -->
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="metric-card" style="background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%);">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="mc-label">Perfiles</div>
+              <div class="mc-value">1</div>
+              <div class="mc-sub">Total perfiles</div>
+            </div>
+            <i class="bi bi-person-badge-fill mc-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Completitud -->
+      <div class="col-6 col-md-4 col-xl-2">
+        <div class="metric-card" style="background: linear-gradient(135deg, #06B6D4 0%, #0E7490 100%);">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="mc-label">Completitud</div>
+              <div class="mc-value">100%</div>
+              <div class="mc-sub">Completitud del perfil</div>
+            </div>
+            <i class="bi bi-check-square-fill mc-icon"></i>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         FILA 1: Barra horizontal + Línea de tiempo
+    ══════════════════════════════════════════════ -->
+    <div class="row g-3 mb-4">
+
+      <!-- Experiencia laboral por empresa -->
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="ct-title">Experiencia laboral por empresa</div>
+          <div class="ct-subtitle">Duración aproximada en meses por empleador.</div>
+          <canvas id="chartExp"></canvas>
+        </div>
+      </div>
+
+      <!-- Línea de tiempo: Educación y experiencia -->
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="ct-title">Línea de tiempo: Educación y experiencia</div>
+          <div class="ct-subtitle">Eventos académicos y laborales por año.</div>
+          <canvas id="chartTimeline"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         FILA 2: Pie + Radar
+    ══════════════════════════════════════════════ -->
+    <div class="row g-3 mb-5">
+
+      <!-- Cantidad de habilidades por tipo -->
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="ct-title">Cantidad de habilidades por tipo</div>
+          <div class="ct-subtitle">Muestra cuántas habilidades tienes en cada categoría.</div>
+          <div style="max-width: 300px; margin: 0 auto;">
+            <canvas id="chartPie"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nivel promedio de habilidades por tipo -->
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="ct-title">Nivel promedio de habilidades por tipo</div>
+          <div class="ct-subtitle">Evalúa el nivel promedio en cada tipo de habilidad (de 1 a 4).</div>
+          <div style="max-width: 340px; margin: 0 auto;">
+            <canvas id="chartRadar"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="py-3 border-top">
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <small>&copy; 2026 PortalCV — Todos los derechos reservados</small>
+      <a href="home.html" class="small">Inicio</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Paleta compartida
+    const colorVerde   = '#6EE7B7';
+    const colorPurple  = '#818CF8';
+    const colorDoradi  = '#D4A017';
+    const colorBarras  = '#7C6FCD';
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. Experiencia laboral por empresa — barra horizontal
+    // ─────────────────────────────────────────────────────────────
+    new Chart(document.getElementById('chartExp'), {
+      type: 'bar',
+      data: {
+        labels: ['Agruppa', 'Mibanco', 'Bancamía', 'Entelgy', 'DGSM'],
+        datasets: [{
+          label: 'Meses',
+          data: [6, 24, 96, 30, 28],
+          backgroundColor: colorBarras,
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { color: '#F0F0F0' },
+            ticks: { callback: v => v + 'm' }
+          },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. Línea de tiempo: Educación y experiencia — barras agrupadas
+    // ─────────────────────────────────────────────────────────────
+    new Chart(document.getElementById('chartTimeline'), {
+      type: 'bar',
+      data: {
+        labels: [
+          '2005','2006','2007','2008','2009','2010','2011','2012',
+          '2013','2014','2015','2016','2017','2018','2019','2020',
+          '2021','2022','2023','2024','2025'
+        ],
+        datasets: [
+          {
+            label: 'Educación',
+            data: [1,1,0,0,1,1,0,0,1,1,0,0,2,0,0,0,1,1,0,0,2],
+            backgroundColor: colorVerde,
+            borderRadius: 2
+          },
+          {
+            label: 'Experiencia',
+            data: [0,0,1,1,0,0,1,1,1,1,2,1,1,1,1,1,2,1,1,2,6],
+            backgroundColor: colorPurple,
+            borderRadius: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 14, font: { size: 12 } }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 10 } }
+          },
+          y: {
+            grid: { color: '#F0F0F0' },
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. Habilidades por tipo — pie
+    // ─────────────────────────────────────────────────────────────
+    new Chart(document.getElementById('chartPie'), {
+      type: 'pie',
+      data: {
+        labels: ['Blanda', 'Idioma', 'Técnica'],
+        datasets: [{
+          data: [17, 1, 15],
+          backgroundColor: [colorVerde, colorDoradi, colorPurple],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 14, padding: 16, font: { size: 12 } }
+          }
+        }
+      }
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. Nivel promedio por tipo — radar
+    // ─────────────────────────────────────────────────────────────
+    new Chart(document.getElementById('chartRadar'), {
+      type: 'radar',
+      data: {
+        labels: ['Blanda', 'Técnica', 'Idioma'],
+        datasets: [{
+          label: 'Nivel promedio',
+          data: [3.2, 3.5, 2.0],
+          backgroundColor: 'rgba(129,140,248,.30)',
+          borderColor: colorPurple,
+          borderWidth: 2,
+          pointBackgroundColor: colorPurple,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            min: 0, max: 4,
+            ticks: { stepSize: 1, font: { size: 10 }, backdropColor: 'transparent' },
+            pointLabels: { font: { size: 13 } },
+            grid: { color: '#E5E7EB' },
+            angleLines: { color: '#E5E7EB' }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 14, padding: 16, font: { size: 12 } }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

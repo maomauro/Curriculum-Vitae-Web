@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formación Académica — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Source Sans 3', sans-serif; background: #F4F6F9; margin: 0; }
+    .topbar { background: #343A40; height: 56px; display: flex; align-items: center; padding: 0 20px; gap: 12px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
+    .topbar .btn-hamburger { background: none; border: none; color: #ADB5BD; font-size: 1.2rem; cursor: pointer; padding: 6px 8px; border-radius: 6px; }
+    .topbar .btn-hamburger:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .topbar .brand { color: #fff; font-size: 1.15rem; font-weight: 700; text-decoration: none; letter-spacing: -.2px; margin-right: auto; }
+    .topbar .brand span { color: #2C7BE5; }
+    .topbar .user-menu { display: flex; align-items: center; gap: 8px; color: #fff; font-size: .875rem; cursor: pointer; }
+    .topbar .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #2C7BE5; color: #fff; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; }
+    .sidebar { background: #2D3748; width: 220px; min-height: calc(100vh - 56px); position: fixed; top: 56px; left: 0; padding: 20px 0; transition: width .25s; overflow: hidden; }
+    .sidebar.collapsed { width: 60px; }
+    .sidebar-user { padding: 0 16px 20px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; }
+    .sidebar-avatar { width: 72px; height: 72px; border-radius: 50%; background: #2C7BE5; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px; }
+    .sidebar-username { color: #fff; font-weight: 700; font-size: .95rem; text-align: center; white-space: nowrap; }
+    .sidebar-role { color: #A0AEC0; font-size: .78rem; text-align: center; white-space: nowrap; }
+    .nav-item-sidebar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #A0AEC0; text-decoration: none; font-size: .875rem; white-space: nowrap; transition: background .2s, color .2s; }
+    .nav-item-sidebar:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-item-sidebar.active { background: rgba(44,123,229,.2); color: #fff; border-left: 3px solid #2C7BE5; }
+    .nav-item-sidebar i { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge { background: #E63946; color: #fff; font-size: .65rem; font-weight: 700; border-radius: 10px; padding: 1px 6px; margin-left: auto; }
+    .main-content { margin-left: 220px; margin-top: 56px; padding: 28px; transition: margin-left .25s; }
+    .page-header { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .page-header h4 { font-weight: 700; color: #212529; margin-bottom: 2px; }
+    .page-header p { color: #6C757D; font-size: .9rem; margin: 0; }
+
+    /* TIPO TABS */
+    .edu-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 24px; }
+    .edu-tab { background: #fff; border: 1.5px solid #DEE2E6; border-radius: 8px; padding: 8px 16px; font-size: .83rem; font-weight: 600; color: #6C757D; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .2s; }
+    .edu-tab:hover { border-color: #2C7BE5; color: #2C7BE5; }
+    .edu-tab.active { background: #2C7BE5; border-color: #2C7BE5; color: #fff; }
+    .edu-tab .tab-count { background: rgba(255,255,255,.25); border-radius: 10px; padding: 1px 7px; font-size: .72rem; }
+    .edu-tab.active .tab-count { background: rgba(255,255,255,.25); }
+    .edu-tab:not(.active) .tab-count { background: #F1F3F5; color: #495057; }
+
+    /* EDU CARD */
+    .edu-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 16px; overflow: hidden; }
+    .edu-card-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; user-select: none; }
+    .edu-card-header:hover { background: #F8FAFC; }
+    .edu-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .edu-icon.posgrado { background: #EDE9FE; color: #7C3AED; }
+    .edu-icon.pregrado { background: #DBEAFE; color: #1D4ED8; }
+    .edu-icon.tecnico { background: #D1FAE5; color: #047857; }
+    .edu-icon.certificacion { background: #FEF3C7; color: #B45309; }
+    .edu-title { font-weight: 700; font-size: .93rem; color: #212529; }
+    .edu-inst { font-size: .83rem; color: #2C7BE5; font-weight: 600; }
+    .edu-dates { font-size: .78rem; color: #6C757D; white-space: nowrap; }
+    .chevron { margin-left: auto; color: #ADB5BD; transition: transform .25s; }
+    .edu-card.expanded .chevron { transform: rotate(180deg); }
+    .edu-card-body { display: none; padding: 0 20px 20px; border-top: 1px solid #F0F0F0; }
+    .edu-card.expanded .edu-card-body { display: block; padding-top: 18px; }
+    .action-row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #F0F0F0; }
+
+    /* SECTION PANELS */
+    .edu-section { display: none; }
+    .edu-section.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="btn-hamburger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+    <a href="#" class="brand"><span>Portal</span>CV</a>
+    <div class="user-menu ms-auto">
+      <div class="user-avatar">AG</div>
+      <span class="d-none d-md-inline">Ana García</span>
+      <i class="bi bi-chevron-down small"></i>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">AG</div>
+      <div class="sidebar-username">Ana García</div>
+      <div class="sidebar-role">Frontend Developer</div>
+    </div>
+    <nav>
+      <a href="dashboard.html" class="nav-item-sidebar"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+      <a href="alertas.html" class="nav-item-sidebar"><i class="bi bi-bell-fill"></i><span>Alertas</span><span class="nav-badge">5</span></a>
+      <a href="mi-cv.html" class="nav-item-sidebar"><i class="bi bi-file-earmark-person-fill"></i><span>Mi CV</span></a>
+      <a href="datos-personales.html" class="nav-item-sidebar"><i class="bi bi-person-lines-fill"></i><span>Datos Personales</span></a>
+      <a href="perfil.html" class="nav-item-sidebar"><i class="bi bi-person-badge-fill"></i><span>Perfil</span></a>
+      <a href="experiencia.html" class="nav-item-sidebar"><i class="bi bi-briefcase-fill"></i><span>Experiencia</span></a>
+      <a href="educacion.html" class="nav-item-sidebar active"><i class="bi bi-mortarboard-fill"></i><span>Educación</span></a>
+      <a href="habilidades.html" class="nav-item-sidebar"><i class="bi bi-stars"></i><span>Habilidades</span></a>
+      <a href="proyectos.html" class="nav-item-sidebar"><i class="bi bi-kanban-fill"></i><span>Proyectos</span></a>
+      <a href="configuracion.html" class="nav-item-sidebar"><i class="bi bi-gear-fill"></i><span>Configuración</span></a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+
+    <div class="page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h4><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Formación Académica</h4>
+        <p>Organizada por tipo de formación. Selecciona una categoría para ver o agregar registros.</p>
+      </div>
+      <button class="btn btn-primary" id="btnAgregar" onclick="agregarNuevo()">
+        <i class="bi bi-plus-circle me-2"></i>Agregar formación
+      </button>
+    </div>
+
+    <!-- TIPO TABS -->
+    <div class="edu-tabs">
+      <div class="edu-tab active" onclick="showSection('posgrado', this)">
+        <i class="bi bi-award-fill"></i>Maestría / Especialización<span class="tab-count">1</span>
+      </div>
+      <div class="edu-tab" onclick="showSection('pregrado', this)">
+        <i class="bi bi-mortarboard-fill"></i>Pregrado<span class="tab-count">1</span>
+      </div>
+      <div class="edu-tab" onclick="showSection('tecnologo', this)">
+        <i class="bi bi-tools"></i>Tecnólogo / Técnico<span class="tab-count">0</span>
+      </div>
+      <div class="edu-tab" onclick="showSection('diplomado', this)">
+        <i class="bi bi-journal-richtext"></i>Diplomado<span class="tab-count">0</span>
+      </div>
+      <div class="edu-tab" onclick="showSection('certificacion', this)">
+        <i class="bi bi-patch-check-fill"></i>Certificaciones<span class="tab-count">2</span>
+      </div>
+    </div>
+
+    <!-- POSGRADO -->
+    <div class="edu-section active" id="sec-posgrado">
+      <div class="edu-card expanded" id="edu1">
+        <div class="edu-card-header" onclick="toggleEdu('edu1')">
+          <div class="edu-icon posgrado"><i class="bi bi-award-fill"></i></div>
+          <div class="flex-grow-1">
+            <div class="edu-title">Especialización en Ingeniería de Software</div>
+            <div class="edu-inst">Universidad de los Andes</div>
+          </div>
+          <div class="edu-dates">2020 — 2021</div>
+          <i class="bi bi-chevron-down chevron"></i>
+        </div>
+        <div class="edu-card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Tipo de formación</label>
+              <select class="form-select">
+                <option>Maestría</option>
+                <option selected>Especialización</option>
+                <option>Pregrado</option>
+                <option>Tecnólogo</option>
+                <option>Técnico</option>
+                <option>Diplomado</option>
+                <option>Certificación</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Título obtenido <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" value="Especialización en Ingeniería de Software">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Institución <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" value="Universidad de los Andes">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Área de estudio</label>
+              <input type="text" class="form-control" value="Ingeniería de Software">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fecha inicio</label>
+              <input type="date" class="form-control" value="2020-01-15">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fecha fin</label>
+              <input type="date" class="form-control" value="2021-11-30">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Soporte / Diploma</label>
+              <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Descripción adicional</label>
+              <textarea class="form-control" rows="2">Énfasis en arquitecturas de software modernas, microservicios y prácticas de DevOps. Trabajo de grado: "Métricas de accesibilidad en SPAs modernas".</textarea>
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1"></i>Eliminar</button>
+            <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREGRADO -->
+    <div class="edu-section" id="sec-pregrado">
+      <div class="edu-card" id="edu2">
+        <div class="edu-card-header" onclick="toggleEdu('edu2')">
+          <div class="edu-icon pregrado"><i class="bi bi-mortarboard-fill"></i></div>
+          <div class="flex-grow-1">
+            <div class="edu-title">Ingeniería de Sistemas y Computación</div>
+            <div class="edu-inst">Universidad Nacional de Colombia</div>
+          </div>
+          <div class="edu-dates">2010 — 2016</div>
+          <i class="bi bi-chevron-down chevron"></i>
+        </div>
+        <div class="edu-card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Tipo de formación</label>
+              <select class="form-select"><option selected>Pregrado</option></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Título obtenido</label>
+              <input type="text" class="form-control" value="Ingeniería de Sistemas y Computación">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Institución</label>
+              <input type="text" class="form-control" value="Universidad Nacional de Colombia">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Área de estudio</label>
+              <input type="text" class="form-control" value="Sistemas e Informática">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fecha inicio</label>
+              <input type="date" class="form-control" value="2010-02-01">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fecha fin</label>
+              <input type="date" class="form-control" value="2016-05-30">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Soporte / Diploma</label>
+              <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Descripción adicional</label>
+              <textarea class="form-control" rows="2" placeholder="Información adicional sobre tu formación..."></textarea>
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1"></i>Eliminar</button>
+            <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TECNOLOGO / TÉCNICO -->
+    <div class="edu-section" id="sec-tecnologo">
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-tools" style="font-size: 2.5rem; opacity:.3;"></i>
+        <p class="mt-3 mb-0">No tienes registros de Tecnólogo o Técnico</p>
+        <button class="btn btn-outline-primary btn-sm mt-3" onclick="agregarNuevo()"><i class="bi bi-plus me-1"></i>Agregar</button>
+      </div>
+    </div>
+
+    <!-- DIPLOMADO -->
+    <div class="edu-section" id="sec-diplomado">
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-journal-richtext" style="font-size: 2.5rem; opacity:.3;"></i>
+        <p class="mt-3 mb-0">No tienes diplomados registrados</p>
+        <button class="btn btn-outline-primary btn-sm mt-3" onclick="agregarNuevo()"><i class="bi bi-plus me-1"></i>Agregar</button>
+      </div>
+    </div>
+
+    <!-- CERTIFICACIONES -->
+    <div class="edu-section" id="sec-certificacion">
+      <div class="edu-card" id="edu3">
+        <div class="edu-card-header" onclick="toggleEdu('edu3')">
+          <div class="edu-icon certificacion"><i class="bi bi-patch-check-fill"></i></div>
+          <div class="flex-grow-1">
+            <div class="edu-title">AWS Certified Developer – Associate</div>
+            <div class="edu-inst">Amazon Web Services</div>
+          </div>
+          <div class="edu-dates">2023</div>
+          <i class="bi bi-chevron-down chevron"></i>
+        </div>
+        <div class="edu-card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Tipo de formación</label>
+              <select class="form-select"><option selected>Certificación</option></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Nombre del certificado</label>
+              <input type="text" class="form-control" value="AWS Certified Developer – Associate">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Entidad certificadora</label>
+              <input type="text" class="form-control" value="Amazon Web Services">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fecha de obtención</label>
+              <input type="date" class="form-control" value="2023-05-18">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Vigencia hasta</label>
+              <input type="date" class="form-control" value="2026-05-18">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Archivo del certificado</label>
+              <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1"></i>Eliminar</button>
+            <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="edu-card" id="edu4">
+        <div class="edu-card-header" onclick="toggleEdu('edu4')">
+          <div class="edu-icon certificacion"><i class="bi bi-patch-check-fill"></i></div>
+          <div class="flex-grow-1">
+            <div class="edu-title">Professional Scrum Master I (PSM I)</div>
+            <div class="edu-inst">Scrum.org</div>
+          </div>
+          <div class="edu-dates">2021</div>
+          <i class="bi bi-chevron-down chevron"></i>
+        </div>
+        <div class="edu-card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Tipo de formación</label>
+              <select class="form-select"><option selected>Certificación</option></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Nombre del certificado</label>
+              <input type="text" class="form-control" value="Professional Scrum Master I (PSM I)">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Entidad certificadora</label>
+              <input type="text" class="form-control" value="Scrum.org">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Fecha de obtención</label>
+              <input type="date" class="form-control" value="2021-09-12">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Archivo del certificado</label>
+              <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+            </div>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1"></i>Eliminar</button>
+            <button class="btn btn-primary px-4"><i class="bi bi-floppy-fill me-2"></i>Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULARIO NUEVA FORMACIÓN (oculto, se mueve a la sección activa) -->
+    <div class="edu-card" id="newEduForm" style="display:none; border: 2px dashed #2C7BE5;">
+      <div class="edu-card-header" style="cursor:default;">
+        <div class="edu-icon" style="background:#EEF3FB;color:#2C7BE5;"><i class="bi bi-plus"></i></div>
+        <div class="flex-grow-1">
+          <div class="edu-title">Nueva formación</div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="cancelarNuevo()">
+          <i class="bi bi-x me-1"></i>Cancelar
+        </button>
+      </div>
+      <div class="edu-card-body" style="display:block; padding-top:18px;">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Tipo de formación <span class="text-danger">*</span></label>
+            <select class="form-select" id="newEduTipo">
+              <option value="posgrado">Maestría</option>
+              <option value="posgrado">Especialización</option>
+              <option value="pregrado">Pregrado</option>
+              <option value="tecnologo">Tecnólogo</option>
+              <option value="tecnologo">Técnico</option>
+              <option value="diplomado">Diplomado</option>
+              <option value="certificacion">Certificación</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Título obtenido <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Ej: Ingeniería de Sistemas">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Institución <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Universidad, instituto, plataforma...">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Área de estudio</label>
+            <input type="text" class="form-control" placeholder="Ej: Ingeniería de Software">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Fecha inicio</label>
+            <input type="date" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Fecha fin</label>
+            <input type="date" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Soporte / Diploma <small class="text-muted fw-normal">PDF / JPG / PNG</small></label>
+            <input type="file" class="form-control" accept=".pdf,.jpg,.png">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Descripción adicional</label>
+            <textarea class="form-control" rows="2" placeholder="Menciona énfasis, proyecto de grado, logros..."></textarea>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-outline-secondary btn-sm" onclick="cancelarNuevo()">
+            <i class="bi bi-x me-1"></i>Cancelar
+          </button>
+          <button class="btn btn-primary px-4">
+            <i class="bi bi-floppy-fill me-2"></i>Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      sidebar.classList.toggle('collapsed');
+      main.style.marginLeft = sidebar.classList.contains('collapsed') ? '60px' : '220px';
+    }
+    function showSection(key, tab) {
+      document.querySelectorAll('.edu-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.edu-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('sec-' + key).classList.add('active');
+      tab.classList.add('active');
+    }
+    function toggleEdu(id) {
+      document.getElementById(id).classList.toggle('expanded');
+    }
+    // Mapa: clave de sección → índice de option en #newEduTipo
+    const tipoOptionIndex = { posgrado: 0, pregrado: 2, tecnologo: 3, diplomado: 5, certificacion: 6 };
+
+    function agregarNuevo() {
+      const activeSection = document.querySelector('.edu-section.active');
+      if (!activeSection) return;
+      const key = activeSection.id.replace('sec-', '');
+
+      // Pre-seleccionar el tipo según la sección activa
+      const sel = document.getElementById('newEduTipo');
+      if (tipoOptionIndex[key] !== undefined) sel.selectedIndex = tipoOptionIndex[key];
+
+      // Mover el formulario al final de la sección activa y mostrarlo
+      const form = document.getElementById('newEduForm');
+      activeSection.appendChild(form);
+      form.style.display = 'block';
+
+      // Scroll suave al formulario
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelarNuevo() {
+      const form = document.getElementById('newEduForm');
+      form.style.display = 'none';
+      // Limpiar campos
+      form.querySelectorAll('input[type=text], input[type=date], textarea').forEach(el => el.value = '');
+      form.querySelector('input[type=file]').value = '';
+    }
+  </script>
+</body>
+</html>
