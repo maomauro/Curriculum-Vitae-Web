@@ -9,7 +9,7 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 | Capa | Herramienta | Version | Rol |
 |------|-------------|---------|-----|
 | Control de versiones | GitHub | SaaS | Repositorio central |
-| CI/CD | GitHub Actions | 2000 min/mes gratis | Build, test y deploy |
+| CI/CD | GitHub Actions | 2000 min/mes gratis | Build, test y validación de calidad |
 | Registro de contenedores | GHCR (GitHub Container Registry) | Gratuito | Almacena imagenes Docker |
 | Backend | .NET 10 | LTS | API REST (Clean Architecture) |
 | Frontend | Angular | 20.1.1 | SPA servida como estatico |
@@ -30,13 +30,13 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 ## 2. Flujo Git
 
 ```
-feature/* --push--> CI passes
+feat/* --push--> CI passes
               |
               v PR aprobado
            develop ---> CI passes
               |
               v PR aprobado
-             main ---> CI + deploy a produccion
+             main ---> CI + calidad en verde
 ```
 
 ### Reglas de ramas
@@ -44,7 +44,7 @@ feature/* --push--> CI passes
 | Rama | Descripcion | Merge via | CI obligatorio |
 |------|-------------|-----------|----------------|
 | `main` | Codigo desplegado en produccion | PR desde develop | Si |
-| `develop` | Integracion de features aprobados | PR desde feature/* | Si |
+| `develop` | Integracion de features aprobados | PR desde feat/* | Si |
 | `feat/*` | Nueva historia de usuario o tecnica | push directo | Si |
 | `bugfix/*` | Correccion de error en develop | push directo | Si |
 | `hotfix/*` | Parche critico de produccion | PR a main y develop | Si |
@@ -62,7 +62,7 @@ feature/* --push--> CI passes
 |-----|---------|-------|
 | `backend` | Todo push y PR | dotnet restore, dotnet build Release |
 | `frontend` | Todo push y PR | npm ci, ng build production, ng test --configuration ci |
-| `package-and-deploy` | Solo push a main | docker build/push GHCR, az containerapp update, az staticwebapp deploy |
+| `sonarcloud` | Todo push y PR | Sonar scan (si hay configuración disponible) |
 
 ### Configuracion del job deploy (pendiente implementar)
 
@@ -112,7 +112,7 @@ package-and-deploy:
 | Servicio | Imagen | Puerto | Descripcion |
 |----------|--------|--------|-------------|
 | `db` | mcr.microsoft.com/mssql/server:2022-latest | 1433 | SQL Server local |
-| `db-init` | (script bash) | -- | Ejecuta `scripts/init-db.sh` (`manual/01_CreateSchema.sql` + opcional seed) |
+| `db-init` | (script bash) | -- | Inicializa esquema SQL local según scripts en `scripts/manual/` |
 | `backend` | Dockerfile del proyecto .NET | 5000:8080 | API REST |
 | `frontend` | Dockerfile Angular + Nginx | 4200:80 | SPA Angular |
 

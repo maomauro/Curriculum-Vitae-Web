@@ -133,8 +133,8 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 - Direccion
 - TipoResidencia
 - FotoUrl
-- PrivacidadEmail (Publico | SoloFormulario | Oculto)
-- PrivacidadTelefono (Publico | Parcial | Oculto)
+> Nota de implementación actual: la privacidad de contacto se controla en `VisibilidadSeccion`.
+> En el DDL actual no existen columnas `PrivacidadEmail` ni `PrivacidadTelefono` en `Personales`.
 
 ---
 
@@ -306,13 +306,13 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 
 # 🎯 **¿Qué logramos con este modelo?**
 
-- Está **completo**, **coherente** y **normalizado**.
+- Está **completo**, **coherente** y **normalizado** a nivel conceptual.
 - Respeta la regla: **un usuario = un CV**.
 - **Referencia** en una sola tabla (TipoReferencia: Laboral | Personal), vinculada a Curriculum; ExperienciaId opcional para referencias laborales.
 - Separa correctamente: Familiares, Redes sociales, Visitantes y alertas, Visibilidad.
 - Vista **EstadisticasPublicas** para métricas de visitas y contactos.
 - Permite escalar sin romper nada.
-- Alineado con la documentación base del proyecto (Documentacion.md).
+- Alineado con la documentación base del proyecto (Documentacion.md) y requiere validación contra DDL al introducir nuevos campos conceptuales.
 
 ---
 

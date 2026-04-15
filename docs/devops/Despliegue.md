@@ -82,27 +82,28 @@
 ### Flujo completo
 
 ```
-feature/* --push--> CI (build + test)
+feat/* --push--> CI (build + test + sonar)
                           |  aprobado
 develop   --PR---> CI (build + test)
                           |  merge a develop
-main      --PR---> CI (build + test + package + deploy)
+main      --PR---> CI (build + test + sonar)
                           |  merge a main
-                   PRODUCCION ACTUALIZADA
+                   PROMOCION DE CODIGO ESTABLE
 ```
 
 ### Archivo .github/workflows/ci.yml (actual)
 
 El pipeline de CI esta en [../../.github/workflows/ci.yml](../../.github/workflows/ci.yml).
 
-**Jobs actuales:**
+**Jobs actuales (implementados):**
 
 | Job | Trigger | Acciones |
 |-----|---------|----------|
 | `backend` | Todo push y PR | `dotnet restore` --> `dotnet build --configuration Release` |
 | `frontend` | Todo push y PR | `npm ci` --> `ng build --configuration production` --> `ng test --configuration ci` |
+| `sonarcloud` | Todo push y PR | `sonarqube-scan-action@v6` (si hay secretos/variables configurados) |
 
-**Jobs a agregar (HS-deploy -- pendiente):**
+**Jobs de despliegue (pendiente por implementar):**
 
 ```yaml
 # Solo en push a main
@@ -194,12 +195,11 @@ package-and-deploy:
 | Output location | `dist/portalcv-web/browser` |
 | API location | -- (API separada en Container Apps) |
 
-> Angular es una SPA compilada: los archivos resultantes son HTML + JS + CSS estaticos sin capacidad
-> de leer variables de entorno en runtime. La URL del backend se inyecta en TIEMPO DE BUILD
-> a traves de `src/environments/environment.prod.ts` y el mecanismo `fileReplacements` de Angular CLI.
-> Azure Static Web Apps solo sirve esos archivos estaticos + maneja el enrutamiento SPA.
+> Estado actual: el frontend usa rutas relativas `/api` en los servicios activos.
+> Si se adopta una URL absoluta por entorno (`environment.prod.ts`), debe implementarse y versionarse
+> explícitamente en la rama correspondiente antes de usar esta estrategia en producción.
 
-**Archivo requerido: `frontend/public/staticwebapp.config.json`**
+**Archivo recomendado (si se usa Azure Static Web Apps): `frontend/public/staticwebapp.config.json`**
 
 Este archivo le indica a Azure Static Web Apps que redirija todas las rutas a `index.html`
 (necesario para que el router de Angular funcione correctamente):
@@ -217,15 +217,14 @@ Este archivo le indica a Azure Static Web Apps que redirija todas las rutas a `i
 }
 ```
 
-> Sin este archivo, navegar directamente a `/auth/login` o recargar la pagina
-> devuelve 404 en Azure Static Web Apps.
+> Sin este archivo, navegar directamente a rutas internas del SPA puede devolver 404 en Azure Static Web Apps.
 
-**Archivos de environments requeridos en el codigo Angular:**
+**Archivos de environments (opcional, pendiente en este repo):**
 
-| Archivo | Entorno | `apiUrl` apunta a |
-|---------|---------|-------------------|
-| `src/environments/environment.ts` | Desarrollo local | `http://localhost:5000/api` |
-| `src/environments/environment.prod.ts` | Produccion | `https://portalcv-api.azurecontainerapps.io/api` |
+| Archivo | Entorno | Estado |
+|---------|---------|--------|
+| `src/environments/environment.ts` | Desarrollo local | Pendiente (si se migra a URL absoluta) |
+| `src/environments/environment.prod.ts` | Produccion | Pendiente (si se migra a URL absoluta) |
 
 ### Configuracion de Azure SQL (ya existente)
 
@@ -263,7 +262,7 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 
 | Entorno | Scripts | Como ejecutar |
 |---------|---------|---------------|
-| Local (Docker) | `scripts/manual/01_CreateSchema.sql`, `scripts/manual/02_InsertTestData.sql` | Automatico al levantar `docker compose up` (via `init-db.sh`) |
+| Local (Docker) | `scripts/manual/01_CreateSchema.sql`, `scripts/manual/02_InsertTestData.sql` | Según flujo local documentado en `README.md` y `database/README.md` |
 | Azure SQL (prod) | `scripts/production/05_AzureSQL_CreateSchema.sql` | Ejecutar una sola vez desde Azure Data Studio o portal (incluye roles base al final) |
 
 > El script `05_` NO incluye `USE [PortalCV]` -- conectar directamente a la BD destino.
@@ -278,7 +277,7 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
    git checkout -b feat/nombre-historia
    # ... commits de trabajo ...
    git push origin feat/nombre-historia
-   # CI valida build + tests en la feature branch
+   # CI valida build + tests en la rama feat/*
 
 2. INTEGRACION
    PR: feat/nombre-historia --> develop
@@ -287,8 +286,8 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 
 3. RELEASE
    PR: develop --> main
-   # CI build + test + package + deploy
-   # merge aprobado --> produccion actualizada automaticamente
+   # CI build + test + sonar
+   # merge aprobado --> promoción de código estable
 ```
 
 ---
