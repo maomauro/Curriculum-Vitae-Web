@@ -33,3 +33,7 @@ Thumbs.db
 .idea/
 *.suo
 *.user
+
+# ── Documentación y scripts locales ──────────────────────────────────────────
+docs/
+scripts/
