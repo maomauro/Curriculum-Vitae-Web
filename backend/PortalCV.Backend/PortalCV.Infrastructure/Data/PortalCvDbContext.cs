@@ -27,6 +27,8 @@ public class PortalCvDbContext : DbContext
     public DbSet<AlertaVisita> AlertasVisita => Set<AlertaVisita>();
     public DbSet<VisibilidadSeccion> VisibilidadesSeccion => Set<VisibilidadSeccion>();
     public DbSet<EstadisticasPublicas> EstadisticasPublicas => Set<EstadisticasPublicas>();
+    public DbSet<AuditoriaAdmin> AuditoriasAdmin => Set<AuditoriaAdmin>();
+    public DbSet<AuditoriaCv> AuditoriasCv => Set<AuditoriaCv>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +49,8 @@ public class PortalCvDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AlertaVisitaConfiguration());
         modelBuilder.ApplyConfiguration(new VisibilidadSeccionConfiguration());
         modelBuilder.ApplyConfiguration(new EstadisticasPublicasConfiguration());
+        modelBuilder.ApplyConfiguration(new AuditoriaAdminConfiguration());
+        modelBuilder.ApplyConfiguration(new AuditoriaCvConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

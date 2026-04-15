@@ -41,7 +41,17 @@
               }
             ],
             "styles": [
+              "node_modules/admin-lte/dist/css/adminlte.min.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
+              "node_modules/overlayscrollbars/styles/overlayscrollbars.min.css",
+              "node_modules/@fontsource/source-sans-3/index.css",
+              "node_modules/@fontsource/merriweather/index.css",
+              "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css",
+              "node_modules/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css",
               "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/admin-lte/dist/js/adminlte.min.js"
             ]
           },
           "configurations": {
@@ -49,8 +59,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "800kB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -70,6 +80,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "portalcv-web:build:production"
@@ -99,8 +112,25 @@
               }
             ],
             "styles": [
+              "node_modules/admin-lte/dist/css/adminlte.min.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
+              "node_modules/overlayscrollbars/styles/overlayscrollbars.min.css",
+              "node_modules/@fontsource/source-sans-3/index.css",
+              "node_modules/@fontsource/merriweather/index.css",
+              "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css",
+              "node_modules/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css",
               "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/admin-lte/dist/js/adminlte.min.js"
             ]
+          },
+          "configurations": {
+            "ci": {
+              "watch": false,
+              "progress": false,
+              "browsers": "ChromeHeadless"
+            }
           }
         }
       }

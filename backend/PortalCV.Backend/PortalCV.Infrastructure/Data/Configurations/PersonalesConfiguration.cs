@@ -43,24 +43,6 @@ public class PersonalesConfiguration : IEntityTypeConfiguration<Personales>
         builder.Property(p => p.TipoResidencia).HasMaxLength(30);
         builder.Property(p => p.FotoUrl).HasMaxLength(500);
 
-        builder.Property(p => p.PrivacidadEmail)
-            .IsRequired()
-            .HasMaxLength(20)
-            .HasDefaultValue("Publico");
-
-        builder.Property(p => p.PrivacidadTelefono)
-            .IsRequired()
-            .HasMaxLength(20)
-            .HasDefaultValue("Publico");
-
-        builder.HasCheckConstraint(
-            "CK_Personales_PrivacidadEmail",
-            "PrivacidadEmail IN ('Publico', 'SoloFormulario', 'Oculto')");
-
-        builder.HasCheckConstraint(
-            "CK_Personales_PrivacidadTelefono",
-            "PrivacidadTelefono IN ('Publico', 'Parcial', 'Oculto')");
-
         builder.HasOne(p => p.Curriculum)
             .WithOne(c => c.Personales)
             .HasForeignKey<Personales>(p => p.CurriculumId)

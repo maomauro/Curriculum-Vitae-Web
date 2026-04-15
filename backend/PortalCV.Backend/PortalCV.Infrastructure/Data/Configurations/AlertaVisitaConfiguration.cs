@@ -8,11 +8,15 @@ public class AlertaVisitaConfiguration : IEntityTypeConfiguration<AlertaVisita>
 {
     public void Configure(EntityTypeBuilder<AlertaVisita> builder)
     {
-        builder.ToTable("AlertaVisita");
+        builder.ToTable("AlertaVisita", t =>
+        {
+            t.HasCheckConstraint("CK_AlertaVisita_TipoVisita", "TipoVisita IN ('Vista', 'Contacto', 'Descarga', 'Sistema')");
+            t.HasTrigger("trg_AlertaVisita_SyncEstadisticas");
+        });
 
         builder.HasKey(a => a.AlertaVisitaId);
 
-        builder.Property(a => a.FechaVisita).HasDefaultValueSql("GETDATE()");
+        builder.Property(a => a.FechaVisita).HasDefaultValueSql("GETUTCDATE()");
         builder.Property(a => a.Origen).HasMaxLength(100);
         builder.Property(a => a.TipoVisita).HasMaxLength(20);
         builder.Property(a => a.EsLeida).HasDefaultValue(false);
@@ -20,14 +24,33 @@ public class AlertaVisitaConfiguration : IEntityTypeConfiguration<AlertaVisita>
         builder.Property(a => a.Descripcion).HasMaxLength(500);
         builder.Property(a => a.Ciudad).HasMaxLength(80);
         builder.Property(a => a.Pais).HasMaxLength(50);
+        builder.Property(a => a.VisitanteAnonimoId).HasMaxLength(36);
+        builder.Property(a => a.VistasAcumuladas).HasDefaultValue(1);
 
-        builder.HasCheckConstraint(
-            "CK_AlertaVisita_TipoVisita",
-            "TipoVisita IN ('Vista', 'Contacto', 'Descarga', 'Sistema')");
+        builder.HasIndex(a => new { a.CurriculumId, a.VisitanteAnonimoId })
+            .IsUnique()
+            .HasDatabaseName("UQ_AlertaVisita_Curriculum_Visitante_Vista")
+            .HasFilter("[TipoVisita] = N'Vista' AND [VisitanteAnonimoId] IS NOT NULL");
+
+        builder.HasIndex(a => new { a.CurriculumId, a.VisitanteAnonimoId })
+            .IsUnique()
+            .HasDatabaseName("UQ_AlertaVisita_Curriculum_Visitante_Descarga")
+            .HasFilter("[TipoVisita] = N'Descarga' AND [VisitanteAnonimoId] IS NOT NULL");
+
+        builder.HasIndex(a => a.VisitanteContactoId)
+            .IsUnique()
+            .HasDatabaseName("UQ_AlertaVisita_VisitanteContacto_Contacto")
+            .HasFilter("[VisitanteContactoId] IS NOT NULL AND [TipoVisita] = N'Contacto'");
 
         builder.HasOne(a => a.Curriculum)
             .WithMany(c => c.AlertasVisita)
             .HasForeignKey(a => a.CurriculumId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // NO ACTION en SQL Server: CASCADE aquí choca con CASCADE Curriculum→Alerta y Curriculum→Contacto (múltiples rutas).
+        builder.HasOne(a => a.VisitanteContacto)
+            .WithMany()
+            .HasForeignKey(a => a.VisitanteContactoId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -10,8 +10,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 | `DiccionarioDeDatos.md` | Diccionario de datos con descripción y reglas de cada columna. |
 | `Diagrama ER.jpeg` | Diagrama entidad-relación exportado. |
 
-> Los scripts DDL ejecutables están en la carpeta [`scripts/`](../scripts/) del repositorio:
-> `01_CreateSchema.sql`, `02_InsertTestData.sql`, `05_AzureSQL_CreateSchema.sql`, `06_AzureSQL_SeedRoles.sql`.
+> Los scripts DDL ejecutables están en [`scripts/manual/`](../scripts/manual/) (local) y [`scripts/production/`](../scripts/production/) (Azure). Esquema completo: `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql` (este último incluye roles base al final). Datos de prueba local: `manual/02_InsertTestData.sql`.
 
 ## Cómo visualizar el modelo DBML
 
@@ -36,7 +35,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 
 - La tabla **Referencia** agrupa referencias laborales y personales (`TipoReferencia`: `Laboral` | `Personal`). Si es laboral, `ExperienciaId` puede apuntar a la experiencia que avala.
 - **EstadisticasPublicas** es una tabla de resumen; puede mantenerse sincronizada con `Curriculum` (ContadorVisitas, ContadorContactos) mediante trigger o job.
-- **Personales** incluye `FotoUrl` para la foto de perfil y campos de privacidad de contacto: `PrivacidadEmail` (`Publico` | `SoloFormulario` | `Oculto`) y `PrivacidadTelefono` (`Publico` | `Parcial` | `Oculto`).
+- **Personales** incluye `FotoUrl` para la foto de perfil. La visibilidad de correo y teléfono en el CV público se controla con **VisibilidadSeccion** (no columnas `Privacidad*` en el DDL actual).
 - **Perfil** tiene `EsActivo` para habilitar/deshabilitar cada perfil profesional de forma individual.
 - **Experiencia** tiene `EsActual` (checkbox «trabajo actual», deshabilita `FechaFin`) y `AdjuntoSoporte` para adjuntar soportes laborales.
 - **Formacion** tiene `FechaVigencia` (expiración de certificados, distinto de `FechaFin`) y `DuracionHoras` (para cursos con `TipoFormacion='Curso'`).

@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PortalCV.Api.Json;
 using PortalCV.Api.Middleware;
 using PortalCV.Infrastructure;
 using Serilog;
@@ -25,23 +26,60 @@ namespace PortalCV.Api
 
             builder.Services.AddInfrastructure(builder.Configuration);
 
-            // Configurar CORS para permitir requests del frontend
+            // CORS: en producción hay que definir Cors:AllowedOrigins (p. ej. URL del SPA).
+            // Variables de entorno: Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, …
+            // En Development, si la lista está vacía se usan orígenes locales y el contenedor portalcv-web.
+            var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+            var corsOrigins = configuredOrigins?
+                .Where(static o => !string.IsNullOrWhiteSpace(o))
+                .Select(static o => o.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray() ?? [];
+
+            if (corsOrigins.Length == 0)
+            {
+                if (builder.Environment.IsDevelopment())
+                {
+                    corsOrigins =
+                    [
+                        "http://localhost:4200",
+                        "http://localhost:3000",
+                        "http://portalcv-web",
+                    ];
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "Cors:AllowedOrigins debe contener al menos un origen HTTPS en producción " +
+                        "(por ejemplo la URL pública del frontend). " +
+                        "Use variables Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, etc.");
+                }
+            }
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", corsBuilder =>
                 {
                     corsBuilder
-                        .WithOrigins("http://localhost:4200", "http://localhost:3000", "http://portalcv-web")
+                        .WithOrigins(corsOrigins)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials();
                 });
             });
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(o =>
+                {
+                    o.JsonSerializerOptions.Converters.Add(new UtcDateTimeJsonConverter());
+                    o.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeJsonConverter());
+                });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
+                // Evita colisiones de nombres de esquema (varios DTOs con el mismo nombre corto).
+                options.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
+
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "PortalCV API",
@@ -119,13 +157,34 @@ namespace PortalCV.Api
 
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                // Swagger 2.0: máxima compatibilidad con Swagger UI (evita "valid version field" por caché o parsers viejos).
+                app.UseSwagger(options =>
+                {
+                    options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi2_0;
+                });
+                app.UseSwaggerUI(options =>
+                {
+                    // Query string para invalidar caché del swagger.json en el navegador.
+                    options.SwaggerEndpoint("v1/swagger.json?api=v2", "PortalCV API v1");
+                });
             }
 
-            app.UseHttpsRedirection();
+            // En desarrollo suele usarse el perfil "http" (solo :5005). UseHttpsRedirection()
+            // redirige a HTTPS y el navegador puede terminar en un puerto sin listener, o el
+            // usuario abre https:// en un puerto que solo sirve HTTP → "invalid response".
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
+
             app.UseAuthentication();
             app.UseAuthorization();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+            }
+
             app.MapControllers();
 
             app.Run();

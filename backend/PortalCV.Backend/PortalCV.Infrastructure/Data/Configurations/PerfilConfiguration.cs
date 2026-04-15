@@ -14,6 +14,7 @@ public class PerfilConfiguration : IEntityTypeConfiguration<Perfil>
 
         builder.Property(p => p.NombrePerfil).HasMaxLength(100);
         builder.Property(p => p.DescripcionPerfil).HasColumnType("nvarchar(max)");
+        builder.Property(p => p.ExperienciaPerfilAnios).HasColumnType("decimal(5,2)");
         builder.Property(p => p.AspiracionSalarialPesos).HasColumnType("decimal(18,2)");
         builder.Property(p => p.AspiracionSalarialDolares).HasColumnType("decimal(18,2)");
         builder.Property(p => p.EsActivo).HasDefaultValue(true);

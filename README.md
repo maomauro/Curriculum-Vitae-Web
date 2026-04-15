@@ -1,6 +1,6 @@
 # Curriculum-Vitae-Web
 
-Portal web para conectar profesionales (publicadores de CV) con reclutadores. Los CVs son 100% públicos; solo publicadores y administradores requieren registro y autenticación.
+Portal web para conectar profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda y detalle público) o en **borrador** (solo edición en el portal privado). Solo publicadores y administradores requieren registro y autenticación.
 
 ## Documentación
 
@@ -9,6 +9,7 @@ Portal web para conectar profesionales (publicadores de CV) con reclutadores. Lo
 | [docs/produccion/Plan-Trabajo-Produccion.md](docs/produccion/Plan-Trabajo-Produccion.md) | Plan operativo para salida a producción (fases, criterios y riesgos) |
 | [docs/produccion/Integracion-SonarCloud.md](docs/produccion/Integracion-SonarCloud.md) | Integración SonarCloud y configuración en GitHub Actions |
 | [docs/guias/Guia-git.md](docs/guias/Guia-git.md) | Buenas prácticas Git (ramas, commits, flujo) |
+| [docs/devops/Checklist-Produccion.md](docs/devops/Checklist-Produccion.md) | Checklist antes de publicar en producción |
 | [database/README.md](database/README.md) | Scripts SQL Server y creación de la base de datos |
 | [database/01_CreateSchema.dbml](database/01_CreateSchema.dbml) | Modelo DBML del esquema de base de datos |
 | [database/DiccionarioDeDatos.md](database/DiccionarioDeDatos.md) | Diccionario de datos completo (tablas, columnas, tipos y reglas) |

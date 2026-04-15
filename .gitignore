@@ -12,6 +12,8 @@ backend/**/bin/
 backend/**/obj/
 backend/**/*.user
 **/.vs/
+# Salidas locales de pruebas de compilación (no versionar)
+backend/_build_out*/
 
 # Configuración local con credenciales — nunca commitear
 **/appsettings.Development.json
@@ -31,3 +33,7 @@ Thumbs.db
 .idea/
 *.suo
 *.user
+
+# ── Documentación y scripts locales ──────────────────────────────────────────
+docs/
+scripts/

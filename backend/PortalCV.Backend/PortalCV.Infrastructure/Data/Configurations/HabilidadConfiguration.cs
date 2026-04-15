@@ -8,7 +8,8 @@ public class HabilidadConfiguration : IEntityTypeConfiguration<Habilidad>
 {
     public void Configure(EntityTypeBuilder<Habilidad> builder)
     {
-        builder.ToTable("Habilidad");
+        builder.ToTable("Habilidad", t =>
+            t.HasCheckConstraint("CK_Habilidad_Tipo", "Tipo IN ('Tecnica', 'Blanda', 'Idioma', 'Otra')"));
 
         builder.HasKey(h => h.HabilidadId);
 
@@ -22,10 +23,6 @@ public class HabilidadConfiguration : IEntityTypeConfiguration<Habilidad>
         builder.Property(h => h.NivelEscritura).HasMaxLength(5);
         builder.Property(h => h.NivelEscucha).HasMaxLength(5);
         builder.Property(h => h.NivelHabla).HasMaxLength(5);
-
-        builder.HasCheckConstraint(
-            "CK_Habilidad_Tipo",
-            "Tipo IN ('Tecnica', 'Blanda', 'Idioma', 'Otra')");
 
         builder.HasOne(h => h.Curriculum)
             .WithMany(c => c.Habilidades)
