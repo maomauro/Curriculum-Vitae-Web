@@ -16,7 +16,7 @@ Lista orientativa antes de exponer el portal a usuarios reales. Complementa [Des
 
 ## Base de datos
 
-- [ ] Ejecutar scripts de migración en orden (`scripts/16_*.sql` … `19_*.sql` según el estado del servidor) además del esquema base si la BD ya existía.
+- [ ] **Base nueva (recomendado):** ejecutar `scripts/production/05_AzureSQL_CreateSchema.sql` una vez en Azure SQL (incluye esquema completo y roles base). **Local/Docker:** queda cubierto por `scripts/init-db.sh` + `scripts/manual/01_CreateSchema.sql` (y opcionalmente `02_InsertTestData.sql` si `SEED_TEST_DATA=true`).
 - [ ] Revisar backups y retención según [Plan-Backup-Mantenimiento.md](./Plan-Backup-Mantenimiento.md).
 
 ---

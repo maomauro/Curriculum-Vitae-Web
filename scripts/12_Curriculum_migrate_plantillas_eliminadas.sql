@@ -1,2 +1,0 @@
--- Desarrollo local (sin retrocompatibilidad): no se requiere migración histórica.
--- Se conserva este script como marcador de versión.

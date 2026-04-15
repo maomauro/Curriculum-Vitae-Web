@@ -16,7 +16,7 @@ public class AlertaVisitaConfiguration : IEntityTypeConfiguration<AlertaVisita>
 
         builder.HasKey(a => a.AlertaVisitaId);
 
-        builder.Property(a => a.FechaVisita).HasDefaultValueSql("GETDATE()");
+        builder.Property(a => a.FechaVisita).HasDefaultValueSql("GETUTCDATE()");
         builder.Property(a => a.Origen).HasMaxLength(100);
         builder.Property(a => a.TipoVisita).HasMaxLength(20);
         builder.Property(a => a.EsLeida).HasDefaultValue(false);

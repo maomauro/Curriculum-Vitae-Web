@@ -23,6 +23,7 @@ services:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: ${SA_PASSWORD}
       MSSQL_PID: ${MSSQL_PID}
+      TZ: UTC  # Recomendado para consistencia total en desarrollo
     ports:
       - "${PORT_DB}:1433"
     volumes:
@@ -51,6 +52,7 @@ services:
       DB_NAME: ${DB_NAME}
       APP_DB_USER: ${APP_DB_USER}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      TZ: UTC
     volumes:
       # Monta la carpeta scripts/ local → /scripts dentro del contenedor
       - ./scripts:/scripts
@@ -77,6 +79,7 @@ services:
       ASPNETCORE_URLS: "http://+:8080"
       Jwt__Issuer: ${Jwt__Issuer}
       Jwt__Audience: ${Jwt__Audience}
+      TZ: UTC
       Jwt__Key: ${Jwt__Key}
       Auth__DemoUser__Email: ${Auth__DemoUser__Email}
       Auth__DemoUser__Password: ${Auth__DemoUser__Password}

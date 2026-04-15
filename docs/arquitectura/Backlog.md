@@ -2,7 +2,7 @@
 
 - **Documentación del producto:** [Documentacion.md](Documentacion.md)  
 - **Modelo de datos:** [Modelo.md](Modelo.md)  
-- **Script BD SQL Server:** [../../scripts/01_CreateSchema.sql](../../scripts/01_CreateSchema.sql)  
+- **Script BD SQL Server (local):** [../../scripts/manual/01_CreateSchema.sql](../../scripts/manual/01_CreateSchema.sql) · **Azure:** [../../scripts/production/05_AzureSQL_CreateSchema.sql](../../scripts/production/05_AzureSQL_CreateSchema.sql)  
 - **Despliegue / CI-CD:** [../devops/Despliegue.md](../devops/Despliegue.md)  
 - **Git (ramas, commits, flujo):** [../guias/Guia-git.md](../guias/Guia-git.md)
 
@@ -83,7 +83,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Definir constraints y reglas | PK, FK, UNIQUE, CHECK (estados, tipos); reglas de negocio en BD. |
 | Diseñar estrategia de particionamiento | (Opcional) Si se prevé mucho volumen, definir particionamiento por fechas o rangos. |
 | Crear diagrama físico | Diagrama ER o físico con tablas, columnas y relaciones para documentación. |
-| Crear script DDL completo | Script ejecutable que cree todas las tablas (ver `database/01_CreateSchema.sql`). |
+| Crear script DDL completo | Script ejecutable que cree todas las tablas (ver `scripts/manual/01_CreateSchema.sql` y modelo `database/01_CreateSchema.dbml`). |
 | Crear índices optimizados | Incluir en el script los índices definidos en el diseño. |
 | Triggers para sincronizar estadísticas | (Opcional) Triggers que actualicen EstadisticasPublicas o contadores al insertar/actualizar. |
 | Crear vistas para consultas frecuentes | (Opcional) Vistas que simplifiquen consultas complejas o reportes. |
@@ -141,7 +141,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
 | **HS-01** | Historia Técnica | Modelado de base de datos | [ ] Refinar modelo entidad-relación<br>[ ] Definir tipos de datos SQL Server<br>[ ] Diseñar índices estratégicos<br>[ ] Definir constraints y reglas<br>[ ] Diseñar estrategia de particionamiento<br>[ ] Crear diagrama físico | DBA | 8 |
-| **HS-02** | Historia Técnica | Implementación de base de datos | [ ] Crear script DDL completo (ver `database/01_CreateSchema.sql`)<br>[ ] Crear índices optimizados<br>[ ] (Opcional) Triggers para sincronizar estadísticas<br>[ ] (Opcional) Vistas para consultas frecuentes | Backend | 8 |
+| **HS-02** | Historia Técnica | Implementación de base de datos | [ ] Crear script DDL completo (ver `scripts/manual/01_CreateSchema.sql` / `scripts/production/05_AzureSQL_CreateSchema.sql`)<br>[ ] Crear índices optimizados<br>[ ] (Opcional) Triggers para sincronizar estadísticas<br>[ ] (Opcional) Vistas para consultas frecuentes | Backend | 8 |
 | **HS-03** | Historia Técnica | Datos de prueba y documentación | [ ] Crear datos de prueba ofuscados (10+ CVs)<br>[ ] Pruebas de rendimiento<br>[ ] Crear diccionario de datos completo<br>[ ] Plan de backup y mantenimiento | DBA | 5 |
 
 ---

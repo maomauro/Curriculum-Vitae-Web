@@ -263,10 +263,10 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 
 | Entorno | Scripts | Como ejecutar |
 |---------|---------|---------------|
-| Local (Docker) | `01_CreateSchema.sql`, `02_InsertTestData.sql` | Automatico al levantar `docker compose up` |
-| Azure SQL (prod) | `05_AzureSQL_CreateSchema.sql`, `06_AzureSQL_SeedRoles.sql` | Ejecutar una sola vez desde Azure Data Studio o portal |
+| Local (Docker) | `scripts/manual/01_CreateSchema.sql`, `scripts/manual/02_InsertTestData.sql` | Automatico al levantar `docker compose up` (via `init-db.sh`) |
+| Azure SQL (prod) | `scripts/production/05_AzureSQL_CreateSchema.sql` | Ejecutar una sola vez desde Azure Data Studio o portal (incluye roles base al final) |
 
-> Los scripts `05_` y `06_` NO incluyen `USE [PortalCV]` -- conectar directamente a la BD destino.
+> El script `05_` NO incluye `USE [PortalCV]` -- conectar directamente a la BD destino.
 > Los scripts de produccion son idempotentes y ya fueron ejecutados.
 
 ---

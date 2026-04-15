@@ -5,8 +5,8 @@
 #
 # Flujo:
 #   1. Crea la base de datos PortalCV si no existe
-#   2. Ejecuta 01_CreateSchema.sql  (tablas, triggers, vistas, índices)
-#   3. Ejecuta 02_InsertTestData.sql (datos de prueba)
+#   2. Ejecuta manual/01_CreateSchema.sql  (tablas, triggers, vistas, índices)
+#   3. (Opcional) Ejecuta manual/02_InsertTestData.sql (datos de prueba)
 #   4. Crea usuario de aplicación con permisos mínimos
 # =============================================================================
 
@@ -18,6 +18,7 @@ SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
 DB_NAME="${DB_NAME:-PortalCV}"
 APP_DB_USER="${APP_DB_USER}"
 APP_DB_PASSWORD="${APP_DB_PASSWORD}"
+SEED_TEST_DATA="${SEED_TEST_DATA:-false}"
 
 if [ -z "$APP_DB_USER" ] || [ -z "$APP_DB_PASSWORD" ]; then
   echo "[ERROR] APP_DB_USER y APP_DB_PASSWORD son obligatorios."
@@ -34,7 +35,7 @@ echo " PortalCV - Inicialización de base de datos"
 echo "========================================================"
 
 # ── PASO 1: Crear la base de datos ──────────────────────────────────────────
-# El script 01_CreateSchema.sql usa USE [PortalCV], por eso la creamos primero.
+# El script manual/01_CreateSchema.sql usa USE [PortalCV], por eso la creamos primero.
 echo "[1/4] Creando base de datos ${DB_NAME}..."
 
 $SQLCMD -S "$SERVER" -U "$ADMIN_DB_USER" -P "$ADMIN_DB_PASSWORD" -No -b -d master -Q "
@@ -55,28 +56,32 @@ if [ $? -ne 0 ]; then
 fi
 
 # ── PASO 2: Ejecutar schema ──────────────────────────────────────────────────
-echo "[2/4] Ejecutando 01_CreateSchema.sql (tablas, triggers, vistas, indices)..."
+echo "[2/4] Ejecutando manual/01_CreateSchema.sql (tablas, triggers, vistas, indices)..."
 
-$SQLCMD -S "$SERVER" -U "$ADMIN_DB_USER" -P "$ADMIN_DB_PASSWORD" -No -b -d "$DB_NAME" -i /scripts/01_CreateSchema.sql
+$SQLCMD -S "$SERVER" -U "$ADMIN_DB_USER" -P "$ADMIN_DB_PASSWORD" -No -b -d "$DB_NAME" -i /scripts/manual/01_CreateSchema.sql
 
 if [ $? -ne 0 ]; then
-  echo "[ERROR] Fallo en 01_CreateSchema.sql. Abortando."
+  echo "[ERROR] Fallo en manual/01_CreateSchema.sql. Abortando."
   exit 1
 fi
 
 echo "[OK] Schema creado correctamente."
 
-# ── PASO 3: Insertar datos de prueba ────────────────────────────────────────
-echo "[3/4] Ejecutando 02_InsertTestData.sql (datos de prueba)..."
+# ── PASO 3: Insertar datos de prueba (opcional) ─────────────────────────────
+if [ "$SEED_TEST_DATA" = "true" ] || [ "$SEED_TEST_DATA" = "1" ]; then
+  echo "[3/4] Ejecutando manual/02_InsertTestData.sql (datos de prueba)..."
 
-$SQLCMD -S "$SERVER" -U "$ADMIN_DB_USER" -P "$ADMIN_DB_PASSWORD" -No -b -d "$DB_NAME" -i /scripts/02_InsertTestData.sql
+  $SQLCMD -S "$SERVER" -U "$ADMIN_DB_USER" -P "$ADMIN_DB_PASSWORD" -No -b -d "$DB_NAME" -i /scripts/manual/02_InsertTestData.sql
 
-if [ $? -ne 0 ]; then
-  echo "[ERROR] Fallo en 02_InsertTestData.sql. Abortando."
-  exit 1
+  if [ $? -ne 0 ]; then
+    echo "[ERROR] Fallo en manual/02_InsertTestData.sql. Abortando."
+    exit 1
+  fi
+
+  echo "[OK] Datos de prueba insertados correctamente."
+else
+  echo "[3/4] Omitiendo manual/02_InsertTestData.sql (SEED_TEST_DATA=${SEED_TEST_DATA})."
 fi
-
-echo "[OK] Datos de prueba insertados correctamente."
 
 # ── PASO 4: Crear usuario de aplicación con privilegios mínimos ────────────
 echo "[4/4] Creando usuario de aplicación y permisos mínimos..."

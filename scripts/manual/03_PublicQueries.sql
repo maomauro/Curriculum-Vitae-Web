@@ -297,7 +297,7 @@ INSERT INTO dbo.AlertaVisita (
 )
 VALUES (
     @CvId,
-    SYSDATETIME(),
+    SYSUTCDATETIME(),
     N'Formulario público',
     N'Contacto',
     N'Nuevo mensaje de contacto recibido',
