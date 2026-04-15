@@ -62,10 +62,14 @@ public class AuthController : ControllerBase
     public IActionResult Me()
     {
         var email        = User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? User.Identity?.Name;
-        var roles        = User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        var roles        = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
         var curriculumId = User.FindFirstValue("curriculum_id");
 
-        return Ok(new { email, roles, curriculumId });
+        return Ok(new AppDto.UserMeResponse(
+            email ?? string.Empty,
+            roles,
+            int.TryParse(curriculumId, out var id) ? id : null
+        ));
     }
 
     /// <summary>

@@ -24,7 +24,7 @@ public class ReferenciaConfiguration : IEntityTypeConfiguration<Referencia>
         builder.Property(r => r.Relacion).HasMaxLength(80);
         builder.Property(r => r.Observaciones).HasColumnType("nvarchar(max)");
         builder.Property(r => r.AdjuntoSoporte).HasMaxLength(500);
-        builder.Property(r => r.FechaRegistro).HasDefaultValueSql("GETDATE()");
+        builder.Property(r => r.FechaRegistro).HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(r => r.Curriculum)
             .WithMany(c => c.Referencias)

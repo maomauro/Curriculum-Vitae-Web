@@ -5,7 +5,7 @@
 --   1. Conectarse directamente a la base de datos "PortalCV" en Azure SQL.
 --      (NO ejecutar desde master; Azure SQL no admite USE [database])
 --   2. Ejecutar este script completo como sqladmin o un usuario con permisos DDL.
---   3. Ejecutar 06_AzureSQL_SeedRoles.sql después para insertar los roles base.
+--   3. Al final de este script se insertan los roles base en dbo.Rol (si no existen).
 -- =============================================================================
 
 SET NOCOUNT ON;
@@ -64,7 +64,7 @@ CREATE TABLE dbo.Usuario (
     Email           NVARCHAR(100) NOT NULL,
     PasswordHash    NVARCHAR(255) NOT NULL,
     Estado          NVARCHAR(20)  NOT NULL DEFAULT N'Activo',
-    FechaRegistro   DATETIME2(0)  NOT NULL DEFAULT SYSDATETIME(),
+    FechaRegistro   DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Usuario PRIMARY KEY CLUSTERED (UsuarioId),
     CONSTRAINT UQ_Usuario_Email UNIQUE (Email),
     CONSTRAINT CK_Usuario_Estado CHECK (Estado IN (N'Activo', N'Inactivo', N'Bloqueado'))
@@ -92,8 +92,8 @@ CREATE TABLE dbo.Curriculum (
     ContadorVisitas   INT NOT NULL DEFAULT 0,
     ContadorContactos INT NOT NULL DEFAULT 0,
     PlantillaCodigo   NVARCHAR(32)  NOT NULL DEFAULT N'clasico',
-    FechaCreacion     DATETIME2(0)  NOT NULL DEFAULT SYSDATETIME(),
-    FechaActualizacion DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    FechaCreacion     DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaActualizacion DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Curriculum PRIMARY KEY CLUSTERED (CurriculumId),
     CONSTRAINT FK_Curriculum_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuario (UsuarioId) ON DELETE CASCADE,
     CONSTRAINT UQ_Curriculum_UsuarioId UNIQUE (UsuarioId),
@@ -178,7 +178,7 @@ CREATE TABLE dbo.Referencia (
     Relacion         NVARCHAR(100) NULL,
     Observaciones    NVARCHAR(500) NULL,
     AdjuntoSoporte   NVARCHAR(500) NULL,
-    FechaRegistro    DATETIME2(0)  NOT NULL DEFAULT SYSDATETIME(),
+    FechaRegistro    DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Referencia PRIMARY KEY CLUSTERED (ReferenciaId),
     CONSTRAINT FK_Referencia_Curriculum  FOREIGN KEY (CurriculumId)  REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT CK_Referencia_TipoReferencia CHECK (TipoReferencia IN (N'Laboral', N'Personal'))
@@ -244,7 +244,7 @@ CREATE TABLE dbo.Experiencia (
     Funciones      NVARCHAR(MAX) NULL,
     EsActual       BIT           NOT NULL DEFAULT 0,
     AdjuntoSoporte NVARCHAR(500) NULL,
-    FechaRegistro  DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    FechaRegistro  DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Experiencia PRIMARY KEY CLUSTERED (ExperienciaId),
     CONSTRAINT FK_Experiencia_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
@@ -344,7 +344,7 @@ CREATE TABLE dbo.VisitanteContacto (
     Asunto              NVARCHAR(255) NULL,
     ComoMeEncontraste   NVARCHAR(255) NULL,
     Mensaje             NVARCHAR(MAX) NULL,
-    FechaContacto       DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    FechaContacto       DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     EsLeida             BIT           NOT NULL DEFAULT 0,
     CONSTRAINT PK_VisitanteContacto PRIMARY KEY CLUSTERED (VisitanteContactoId),
     CONSTRAINT FK_VisitanteContacto_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
@@ -356,7 +356,7 @@ CREATE NONCLUSTERED INDEX IX_VisitanteContacto_FechaContacto ON dbo.VisitanteCon
 CREATE TABLE dbo.AlertaVisita (
     AlertaVisitaId INT NOT NULL IDENTITY(1,1),
     CurriculumId   INT NOT NULL,
-    FechaVisita    DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    FechaVisita    DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     Origen         NVARCHAR(255) NULL,
     TipoVisita     NVARCHAR(20)  NULL,
     EsLeida        BIT           NOT NULL DEFAULT 0,
@@ -411,7 +411,7 @@ CREATE TABLE dbo.EstadisticasPublicas (
     TotalVisitas      INT NOT NULL DEFAULT 0,
     TotalContactos    INT NOT NULL DEFAULT 0,
     UltimaVisita      DATETIME2(0) NULL,
-    FechaActualizacion DATETIME2(0) NOT NULL DEFAULT SYSDATETIME(),
+    FechaActualizacion DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_EstadisticasPublicas PRIMARY KEY CLUSTERED (EstadisticasId),
     CONSTRAINT FK_EstadisticasPublicas_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT UQ_EstadisticasPublicas_CurriculumId UNIQUE (CurriculumId)
@@ -466,7 +466,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @Now DATETIME2(0) = SYSDATETIME();
+    DECLARE @Now DATETIME2(0) = SYSUTCDATETIME();
 
     DECLARE @Curriculos TABLE (CurriculumId INT PRIMARY KEY);
     DECLARE @ContactCounts TABLE (CurriculumId INT PRIMARY KEY, ContactCount INT NOT NULL);
@@ -511,7 +511,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @Now DATETIME2(0) = SYSDATETIME();
+    DECLARE @Now DATETIME2(0) = SYSUTCDATETIME();
 
     DECLARE @Curriculos TABLE (CurriculumId INT PRIMARY KEY);
     DECLARE @AlertCounts TABLE (
@@ -635,6 +635,20 @@ SELECT
     ep.UltimaVisita
 FROM dbo.Curriculum c
 LEFT JOIN dbo.EstadisticasPublicas ep ON ep.CurriculumId = c.CurriculumId;
+GO
+
+-- -----------------------------------------------------------------------------
+-- Roles base (idempotente)
+-- -----------------------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM dbo.Rol WHERE RolId = 1)
+BEGIN
+    SET IDENTITY_INSERT dbo.Rol ON;
+    INSERT INTO dbo.Rol (RolId, NombreRol, Descripcion) VALUES
+        (1, N'Visitante',  N'Usuario no autenticado que consulta información pública'),
+        (2, N'Publicador', N'Profesional dueño de un CV'),
+        (3, N'Admin',      N'Administrador del sistema');
+    SET IDENTITY_INSERT dbo.Rol OFF;
+END
 GO
 
 PRINT N'Script 05_AzureSQL_CreateSchema.sql ejecutado correctamente.';
