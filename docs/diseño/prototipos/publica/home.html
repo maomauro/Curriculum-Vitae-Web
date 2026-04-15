@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home — PortalCV</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css">
+  <style>
+    body { font-family: 'Source Sans 3', sans-serif; background: #fff; }
+
+    /* Navbar */
+    .navbar { background: #fff; border-bottom: 1px solid #DEE2E6; }
+    .navbar-brand { color: #2C7BE5 !important; font-weight: 700; font-size: 1.4rem; letter-spacing: -.3px; }
+    .nav-link { color: #495057 !important; font-weight: 500; }
+    .nav-link:hover { color: #2C7BE5 !important; }
+
+    /* Hero */
+    .hero {
+      background: #F8F9FA;
+      padding: 96px 0 80px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 2.6rem; font-weight: 700;
+      color: #2C7BE5; margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 1.1rem; color: #6C757D;
+      max-width: 560px; margin: 0 auto 36px;
+    }
+    .hero .search-bar {
+      display: flex; gap: 8px;
+      max-width: 520px; margin: 0 auto;
+    }
+    .hero .search-bar .form-control {
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 1rem; border: 1px solid #DEE2E6;
+    }
+    .hero .search-bar .btn {
+      padding: 12px 28px; border-radius: 8px;
+      background: #2C7BE5; border: none;
+      font-weight: 600; white-space: nowrap;
+    }
+
+    /* CTA */
+    .cta-section {
+      background: #fff;
+      padding: 80px 0;
+      text-align: center;
+    }
+    .cta-section h2 { font-size: 1.9rem; font-weight: 700; color: #212529; margin-bottom: 12px; }
+    .cta-section p { color: #6C757D; font-size: 1rem; margin-bottom: 28px; }
+    .cta-section .btn {
+      padding: 14px 40px; border-radius: 8px;
+      background: #2C7BE5; border: none; font-size: 1rem; font-weight: 600;
+    }
+
+    /* Footer */
+    footer { background: #343A40; color: #ADB5BD; padding: 28px 0; font-size: .9rem; }
+    footer a { color: #ADB5BD; text-decoration: none; margin-left: 20px; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="bi bi-file-earmark-person-fill me-1"></i>PortalCV
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav me-auto ms-3 gap-1">
+          <li class="nav-item"><a class="nav-link active fw-semibold" href="#">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="buscar-cvs.html">Buscar CVs</a></li>
+        </ul>
+        <div class="d-flex gap-2">
+          <a href="../auth/login.html" class="btn btn-outline-primary btn-sm px-3">Iniciar sesión</a>
+          <a href="../auth/register.html" class="btn btn-primary btn-sm px-3">Registrarse</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <h1>Encuentra el talento que necesitas</h1>
+      <p>Explora currículums de profesionales y conecta con el candidato ideal para tu empresa.</p>
+      <div class="search-bar">
+        <input type="text" class="form-control" placeholder="Buscar por nombre, cargo o tecnología...">
+        <button class="btn btn-primary text-white">
+          <i class="bi bi-search me-1"></i>Buscar
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>¿Eres un profesional?</h2>
+      <p>Crea tu CV online y compártelo con reclutadores de todo el mundo.</p>
+      <a href="../auth/register.html" class="btn btn-primary text-white">
+        <i class="bi bi-person-plus-fill me-2"></i>Crear mi CV gratis
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span>© 2026 PortalCV. All rights reserved.</span>
+      <div>
+        <a href="#">Privacidad</a>
+        <a href="#">Términos</a>
+        <a href="#">Contacto</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

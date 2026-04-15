@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prototipo CV — Minimal ejecutivo</title>
+  <!--
+    Referencia de mercado: síntesis y jerarquía tipográfica para perfiles senior.
+    Muchas guías (y coaches de carrera en LinkedIn) sugieren poco ruido visual,
+    márgenes amplios y frases cortas para roles directivos o consultoría.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text: #111;
+      --muted: #555;
+      --rule: #222;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2.25rem clamp(1.25rem, 5vw, 3rem);
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: var(--text);
+      max-width: 7.2in;
+      margin-inline: auto;
+    }
+    h1 {
+      font-family: Merriweather, Georgia, serif;
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.2rem;
+    }
+    .tagline {
+      font-family: Merriweather, Georgia, serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--muted);
+      font-style: italic;
+      margin: 0 0 1.5rem;
+    }
+    .rule {
+      border: 0;
+      border-top: 1px solid var(--rule);
+      margin: 0 0 1.5rem;
+    }
+    .meta {
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-family: Merriweather, Georgia, serif;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      margin: 2rem 0 0.75rem;
+    }
+    h2:first-of-type { margin-top: 0; }
+    p { margin: 0 0 0.75rem; color: var(--muted); }
+    .entry-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.25rem 1.5rem;
+      margin-bottom: 0.35rem;
+    }
+    .entry-head strong { font-weight: 600; color: var(--text); }
+    .entry-head span { color: var(--muted); font-size: 0.9rem; }
+    ul { margin: 0 0 1rem; padding-left: 1.15rem; color: var(--muted); }
+    li { margin-bottom: 0.4rem; }
+    @media print {
+      body { padding: 0.5in; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ricardo Soto Méndez</h1>
+    <p class="tagline">Director financiero · transformación y control en empresas en crecimiento</p>
+    <hr class="rule">
+    <p class="meta">
+      Santiago de Chile · rsoto@email.com · +56 9 0000 0000 · linkedin.com/in/ricardosoto
+    </p>
+  </header>
+
+  <section aria-labelledby="s1">
+    <h2 id="s1">Síntesis</h2>
+    <p>
+      14 años en dirección financiera y relación con inversionistas. Experiencia en series A–C,
+      reestructuración de costos y reporting bajo IFRS. Enfoque en claridad para directorios y equipos no financieros.
+    </p>
+  </section>
+
+  <section aria-labelledby="s2">
+    <h2 id="s2">Experiencia</h2>
+
+    <div class="entry-head">
+      <strong>CFO — Grupo Andes Tecnología</strong>
+      <span>2019 — presente</span>
+    </div>
+    <ul>
+      <li>Cierre de ronda Serie B (USD 22M); modelo financiero y data room ante fondos regionales.</li>
+      <li>Política de cash que extendió runway en 8 meses sin recortes de producto.</li>
+    </ul>
+
+    <div class="entry-head">
+      <strong>Controller regional — NovaRetail</strong>
+      <span>2014 — 2019</span>
+    </div>
+    <ul>
+      <li>Unificación de reporting en 5 países; reducción de discrepancias intercompañía.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="s3">
+    <h2 id="s3">Formación</h2>
+    <div class="entry-head">
+      <strong>MBA — Universidad Adolfo Ibáñez</strong>
+      <span>2012 — 2013</span>
+    </div>
+    <div class="entry-head" style="margin-top:0.75rem;">
+      <strong>Contador público — Universidad de Chile</strong>
+      <span>2005 — 2010</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4">
+    <h2 id="s4">Idiomas</h2>
+    <p style="margin:0;">Español nativo · Inglés avanzado (negociación y reporting)</p>
+  </section>
+
+  <p style="margin-top:2.5rem;font-size:0.78rem;color:#888;">
+    Prototipo PortalCV — plantilla 04 minimal ejecutivo · <a href="index.html">Índice</a>
+  </p>
+</body>
+</html>
