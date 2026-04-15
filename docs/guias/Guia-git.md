@@ -1,6 +1,6 @@
 # Guía de Buenas Prácticas de Git
 
-Ramas, commits y flujo de trabajo para el proyecto. Alineada con el [Backlog](../arquitectura/Backlog.md) (HS-04) y el flujo CI/CD del [Despliegue](../devops/Despliegue.md) (feature → develop → main).
+Ramas, commits y flujo de trabajo para el proyecto. Alineada con la estrategia actual de integración `feature -> develop -> main` y las validaciones de CI activas en GitHub Actions.
 
 ---
 
@@ -78,27 +78,12 @@ git checkout develop
 git pull origin develop
 ```
 
-### Estado actual de las ramas (post-limpieza)
+### Estado de ramas (referencia estable)
 
-```
-main       ─────────────────────────────────── producción
-              ↑ PR
-develop    ──────────────────────────────────── integración
-              ↑ PR       ↑ PR         ↑ PR         ↑ PR       ↑ PR
-feat/docs  feat/infra  feat/frontend  feat/backend  feat/database
-(docs)      (CI/CD)     (CORS+JWT)    (nueva)       (nueva)
-```
+El estado puntual de PRs y ramas cambia cada semana. Para evitar desactualización, esta guía mantiene solo la regla permanente:
 
-**PRs pendientes de abrir en GitHub:**
-
-| Rama | Destino | Contenido |
-|------|---------|-----------|
-| `feat/docs` | `develop` | Documentación: reorganización de carpetas, links, devops |
-| `feat/infra` | `develop` | CI/CD GitHub Actions + karma headless |
-| `feat/frontend` | `develop` | CORS backend + variables JWT + limpieza scaffold |
-
-> `feat/backend` lista para trabajo .NET.  
-> `feat/database` lista para scripts SQL, migraciones y datos de prueba.
+- Ramas auxiliares (`feat/*`, `bugfix/*`, `hotfix/*`) integran en `develop`.
+- Promoción a producción solo por PR `develop -> main`.
 
 ---
 
@@ -160,7 +145,7 @@ Este proyecto puede trabajar en modo gratuito manteniendo calidad de PR con GitH
 [ ] Protección de ramas en `develop` y `main`
 [ ] PR obligatorio para merge (sin push directo)
 [ ] Al menos 1 aprobación para merge
-[ ] Status check obligatorio: workflow `CI`
+[ ] Status checks obligatorios en ramas protegidas (`Backend (.NET 10)`, `Frontend (Angular 20)`, `SonarCloud (quality gate)`)
 [ ] SonarCloud configurado con `SONAR_TOKEN`, `SONAR_ORGANIZATION`, `SONAR_PROJECT_KEY`
 [ ] Ramas de trabajo activas (`feat/*`) siempre con destino a `develop`
 ```
@@ -171,7 +156,7 @@ Este proyecto puede trabajar en modo gratuito manteniendo calidad de PR con GitH
    - Ir a `Settings > Branches > Add branch protection rule`.
    - Crear regla para `develop` y otra para `main`.
    - Activar: `Require a pull request before merging` y `Require status checks to pass before merging`.
-   - Seleccionar el check `CI`.
+   - Seleccionar checks obligatorios del flujo actual: `Backend (.NET 10)`, `Frontend (Angular 20)` y `SonarCloud (quality gate)`.
 
 2. **Trabajar con flujo de ramas**
    - Crear/usar rama de trabajo desde `develop` (`feat/frontend`, `feat/backend`, etc.).
@@ -192,12 +177,11 @@ Este proyecto puede trabajar en modo gratuito manteniendo calidad de PR con GitH
    - Si CI verde, solicitar review.
    - Merge a `develop`.
    - Repetir y luego promover `develop -> main`.
-
 ### Plantillas disponibles
 
 | Plantilla | Cuándo usarla |
 |-----------|--------------|
-| `.github/PULL_REQUEST_TEMPLATE.md` | Cambios de código con impacto medio/alto (`feat`, `fix`, `refactor`) |
+| `.github/PULL_REQUEST_TEMPLATE/standard.md` | Cambios de código con impacto medio/alto (`feat`, `fix`, `refactor`) |
 | `.github/PULL_REQUEST_TEMPLATE/hotfix-short.md` | Cambios rápidos y de bajo riesgo (`docs`, `chore`, `hotfix`) |
 
 ---
@@ -290,9 +274,8 @@ git restore <archivo>                      # descartar cambios no staged de un a
 
 | Documento | Relación con esta guía |
 |-----------|------------------------|
-| [Backlog.md](../arquitectura/Backlog.md) | HS-04: configuración de repositorio, ramas, protección de ramas, PR/MR |
-| [Despliegue.md](../devops/Despliegue.md) | Flujo CI/CD: push a feature dispara CI; merge a main despliega a producción |
-| [DevOps.md](../devops/DevOps.md) | Stack tecnológico, convenciones de commits, pipeline detallado |
+| [Checklist-Produccion.md](../devops/Checklist-Produccion.md) | Validaciones mínimas previas a salida y operación |
+| [Integracion-SonarCloud.md](../produccion/Integracion-SonarCloud.md) | Configuración SonarCloud, secretos/variables y alcance en plan free |
 
 ---
 
