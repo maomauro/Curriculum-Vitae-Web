@@ -139,7 +139,7 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 | `PortalCvDbContext.cs` | DbContext principal de EF Core. Registra todos los `DbSet<T>` y aplica las configuraciones |
 | `Configurations/*.cs` | Una clase por entidad. Define mapeo a SQL Server: tabla, columnas, PK, FK, índices y constraints |
 
-> El proyecto **no usa migraciones** de EF Core. El esquema base y las migraciones incrementales están en la carpeta **`scripts/`** en la raíz del repositorio (y documentación relacionada en `database/`).
+> El proyecto **no usa migraciones** de EF Core. El DDL ejecutable está en **`scripts/manual/`** (local) y **`scripts/production/`** (Azure); ver `scripts/README_ProductionScripts.md` y `database/README.md`.
 
 ### Repositorios (`Repositories/`)
 

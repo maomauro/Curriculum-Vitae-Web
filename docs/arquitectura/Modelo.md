@@ -316,7 +316,7 @@ A continuación te dejo **todas las tablas**, organizadas por categoría.
 
 ---
 
-**Ver también:** [Documentacion.md](Documentacion.md) (visión y modelo de alto nivel) · [Backlog.md](Backlog.md) · [scripts/01_CreateSchema.sql](../../scripts/01_CreateSchema.sql) (script DDL)
+**Ver también:** [Documentacion.md](Documentacion.md) (visión y modelo de alto nivel) · [Backlog.md](Backlog.md) · DDL local [scripts/manual/01_CreateSchema.sql](../../scripts/manual/01_CreateSchema.sql) · DDL Azure [scripts/production/05_AzureSQL_CreateSchema.sql](../../scripts/production/05_AzureSQL_CreateSchema.sql)
 
 ---
 

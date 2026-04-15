@@ -20,7 +20,7 @@ public class ExperienciaConfiguration : IEntityTypeConfiguration<Experiencia>
         builder.Property(e => e.Funciones).HasColumnType("nvarchar(max)");
         builder.Property(e => e.AdjuntoSoporte).HasMaxLength(500);
         builder.Property(e => e.EsActual).HasDefaultValue(false);
-        builder.Property(e => e.FechaRegistro).HasDefaultValueSql("GETDATE()");
+        builder.Property(e => e.FechaRegistro).HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(e => e.Curriculum)
             .WithMany(c => c.Experiencias)

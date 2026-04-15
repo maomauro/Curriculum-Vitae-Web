@@ -112,7 +112,7 @@ package-and-deploy:
 | Servicio | Imagen | Puerto | Descripcion |
 |----------|--------|--------|-------------|
 | `db` | mcr.microsoft.com/mssql/server:2022-latest | 1433 | SQL Server local |
-| `db-init` | (script bash) | -- | Ejecuta 01_CreateSchema.sql al iniciar |
+| `db-init` | (script bash) | -- | Ejecuta `scripts/init-db.sh` (`manual/01_CreateSchema.sql` + opcional seed) |
 | `backend` | Dockerfile del proyecto .NET | 5000:8080 | API REST |
 | `frontend` | Dockerfile Angular + Nginx | 4200:80 | SPA Angular |
 
@@ -232,9 +232,8 @@ Seguir Conventional Commits (ver [Guia-git.md](../guias/Guia-git.md)):
 
 | Script | Entorno | Descripcion |
 |--------|---------|-------------|
-| `scripts/01_CreateSchema.sql` | Local | Esquema completo SQL Server |
-| `scripts/02_InsertTestData.sql` | Local | Datos de prueba |
-| `scripts/05_AzureSQL_CreateSchema.sql` | Azure SQL | DDL sin USE [DB] -- ejecutar 1 vez |
-| `scripts/06_AzureSQL_SeedRoles.sql` | Azure SQL | Roles base -- idempotente |
+| `scripts/manual/01_CreateSchema.sql` | Local | Esquema completo SQL Server |
+| `scripts/manual/02_InsertTestData.sql` | Local | Datos de prueba |
+| `scripts/production/05_AzureSQL_CreateSchema.sql` | Azure SQL | DDL sin USE [DB] + roles base al final -- ejecutar 1 vez |
 
 > Los scripts de Azure SQL ya fueron ejecutados en el servidor de produccion.

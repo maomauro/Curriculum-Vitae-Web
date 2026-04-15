@@ -14,7 +14,7 @@ public class EstadisticasPublicasConfiguration : IEntityTypeConfiguration<Estadi
 
         builder.Property(e => e.TotalVisitas).HasDefaultValue(0);
         builder.Property(e => e.TotalContactos).HasDefaultValue(0);
-        builder.Property(e => e.FechaActualizacion).HasDefaultValueSql("GETDATE()");
+        builder.Property(e => e.FechaActualizacion).HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(e => e.Curriculum)
             .WithOne(c => c.EstadisticasPublicas)
