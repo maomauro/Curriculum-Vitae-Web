@@ -42,7 +42,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 - **Habilidad** incluye cuatro columnas CEFR cuando `Tipo='Idioma'`: `NivelLectura`, `NivelEscritura`, `NivelEscucha`, `NivelHabla` (valores `A1`–`C2` o `NULL`).
 - **VisitanteContacto** tiene `Asunto` para el asunto del formulario de contacto público.
 - **AlertaVisita** tiene `TipoVisita` con cuatro valores (`Vista` | `Contacto` | `Descarga` | `Sistema`), campos `EsLeida`, `Titulo`, `Descripcion`, `Ciudad` y `Pais`.
-- Para **Docker** (SQL Server en contenedor), usa la cadena definida en `.env` y aplicada por `docker-compose.yml`.
+- Para **SQL Server local** (instalación en Windows), define `ConnectionStrings:DefaultConnection` en `dotnet user-secrets` o variables de entorno locales (no versionar secretos).
 
 ## Ver también
 

@@ -25,6 +25,13 @@
 | **Cache** | IMemoryCache (.NET in-process) | Integrado en .NET, $0; suficiente para la escala inicial |
 | **Almacenamiento de archivos** | -- | Pospuesto a Epica 3 (adjuntos/soportes) |
 
+### Docker: que aplica y que no (para evitar confusion)
+
+- **Azure Static Web Apps (frontend)**: se publica el **build estatico** (`ng build`) como artefactos web (no hay contenedor Nginx del repo en este flujo).
+- **Azure Container Apps (backend)**: SI usa **imagen Docker** construida desde `backend/Dockerfile`, publicada en **GHCR** y referenciada por el Container App.
+- **Azure SQL Database**: NO corre en Docker; es un servicio administrado en Azure.
+- **Desarrollo local en este repositorio**: el camino documentado es **SQL Server local + `dotnet run` + `ng serve`** (sin `docker-compose` en el repo). Docker queda como herramienta **opcional** para construir/validar la imagen del backend.
+
 ### Por que no otras opciones
 
 | Descartado | Motivo |
@@ -40,10 +47,10 @@
 ```
 +-----------------------------------------------------+
 |                  DESARROLLO LOCAL                   |
-|  Docker Compose                                     |
-|  +-- portalcv-db      (SQL Server 2022)             |
-|  +-- portalcv-api     (.NET 10 --> puerto 5000)     |
-|  +-- portalcv-web     (Angular+Nginx --> puerto 4200)|
+|  SQL Server (instalacion local)                    |
+|  +-- scripts/manual (schema + datos de prueba)     |
+|  Backend: dotnet run (PortalCV.Api)                 |
+|  Frontend: ng serve (proxy /api -> backend)        |
 +-----------------------------------------------------+
                         |  git push / PR
                         v
@@ -348,8 +355,7 @@ NO puede leer variables de entorno del servidor en runtime. La URL del API se fi
 
 ```
 DESARROLLO LOCAL
-  environment.ts           --> apiUrl = http://localhost:5000/api   (Docker Compose: PORT_BACKEND=5000)
-                                           http://localhost:5083/api   (dotnet run directo: launchSettings.json)
+  environment.ts           --> apiUrl = http://localhost:<puerto-backend>/api   (segun launchSettings / dotnet run)
   ng serve                 --> usa este archivo
   Angular DevServer        --> proxy al backend
 

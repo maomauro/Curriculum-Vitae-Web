@@ -16,12 +16,18 @@ Portal web para conectar profesionales (publicadores de CV) con reclutadores. Ca
 
 ## Inicio rápido (desarrollo local)
 
-1. **Clonar** el repositorio y copiar variables de entorno:
-   - Unix/macOS: `cp .env.example .env`
-   - PowerShell: `Copy-Item .env.example .env`
-   - Luego ajustar contraseñas y JWT.
-2. **Base de datos**: con Docker, `docker-compose up -d db db-init` y luego el perfil `app` si usas contenedores para API y front; o bien SQL Server local y ejecutar los scripts en [scripts/](scripts/) según [database/README.md](database/README.md).
-3. **Backend**: `cd backend/PortalCV.Backend/PortalCV.Api` → configurar `appsettings.Development.json` (no versionado) o variables → `dotnet run`.
+1. **Clonar** el repositorio.
+2. **Base de datos (SQL Server local)**: crear/apuntar la base y ejecutar los scripts en [scripts/](scripts/) según [database/README.md](database/README.md).
+3. **Backend**: `cd backend/PortalCV.Backend/PortalCV.Api` → configurar secretos locales (`dotnet user-secrets`) y/o variables de entorno → `dotnet run`.
 4. **Frontend**: `cd frontend` → `npm ci` → `ng serve` (el proxy en `proxy.conf.json` reenvía `/api` al backend).
 
 Antes de **producción**, revisar [docs/devops/Checklist-Produccion.md](docs/devops/Checklist-Produccion.md) (CORS, JWT, SQL, build del SPA).
+
+### Docker (solo lo necesario para Azure Container Apps)
+
+El despliegue de backend en **Azure Container Apps** usa una **imagen Docker** construida desde `backend/Dockerfile` y publicada en **GHCR**.
+Para validar localmente la imagen (opcional):
+
+```bash
+docker build -f backend/Dockerfile -t portalcv-backend:local ./backend
+```

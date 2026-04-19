@@ -16,7 +16,7 @@ Lista orientativa antes de exponer el portal a usuarios reales. Complementa [Int
 
 ## Base de datos
 
-- [ ] **Base nueva (recomendado):** ejecutar `scripts/production/05_AzureSQL_CreateSchema.sql` una vez en Azure SQL (incluye esquema completo y roles base). **Local/Docker:** queda cubierto por `scripts/init-db.sh` + `scripts/manual/01_CreateSchema.sql` (y opcionalmente `02_InsertTestData.sql` si `SEED_TEST_DATA=true`).
+- [ ] **Base nueva (recomendado):** ejecutar `scripts/production/05_AzureSQL_CreateSchema.sql` una vez en Azure SQL (incluye esquema completo y roles base). **Local (SQL Server instalado):** ejecutar `scripts/manual/01_CreateSchema.sql` (y opcionalmente `02_InsertTestData.sql`) según `database/README.md`.
 - [ ] Revisar política de backups y retención definida por el equipo (documentar responsable, periodicidad y restauración).
 
 ---
