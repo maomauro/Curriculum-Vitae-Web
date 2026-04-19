@@ -31,3 +31,11 @@ Para validar localmente la imagen (opcional):
 ```bash
 docker build -f backend/Dockerfile -t portalcv-backend:local ./backend
 ```
+
+Variables del contenedor (local): usa la plantilla `docker/backend.local.env.example` → copia a `docker/backend.local.env` (ignorado por git) y ejecuta:
+
+```bash
+docker run --rm -p 5005:8080 --env-file docker/backend.local.env --name portalcv-api-local portalcv-backend:local
+```
+
+> `dotnet user-secrets` aplica a `dotnet run` en tu PC; para Docker usa `--env-file` o `-e`.

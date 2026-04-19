@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Variables reales para docker run (ver docker/backend.local.env.example)
+docker/backend.local.env
+
 # ── .NET / Backend ───────────────────────────────────────────────────────────
 backend/**/bin/
 backend/**/obj/
