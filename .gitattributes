@@ -11,7 +11,6 @@
 
 # Archivos de configuración Docker: LF
 Dockerfile text eol=lf
-docker-compose*.yml text eol=lf
 nginx.conf text eol=lf
 
 # Windows: CRLF para estos archivos

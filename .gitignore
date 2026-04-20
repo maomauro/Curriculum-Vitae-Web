@@ -3,9 +3,8 @@
 .env.local
 .env.*.local
 
-# ── Docker ───────────────────────────────────────────────────────────────────
-# override se ignora porque puede tener ajustes locales personales
-docker-compose.override.yml
+# Variables reales para docker run (ver docker/backend.local.env.example)
+docker/backend.local.env
 
 # ── .NET / Backend ───────────────────────────────────────────────────────────
 backend/**/bin/
@@ -34,6 +33,3 @@ Thumbs.db
 *.suo
 *.user
 
-# ── Documentación y scripts locales ──────────────────────────────────────────
-docs/
-scripts/

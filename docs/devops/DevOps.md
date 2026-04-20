@@ -14,9 +14,9 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 | Backend | .NET 10 | LTS | API REST (Clean Architecture) |
 | Frontend | Angular | 20.1.1 | SPA servida como estatico |
 | ORM | Entity Framework Core | 10 | Acceso a datos |
-| Base de datos (local) | SQL Server 2022 | via Docker | Desarrollo |
+| Base de datos (local) | SQL Server (instalación local) | según entorno | Desarrollo |
 | Base de datos (prod) | Azure SQL Database Free Tier | -- | Produccion |
-| Contenedores (local) | Docker Compose | -- | dev: db + backend + frontend |
+| Contenedores (build) | Docker (opcional) | -- | Solo para construir/pushear imagen backend hacia GHCR |
 | Hosting backend | Azure Container Apps | Free tier | scale-to-zero, imagen GHCR |
 | Hosting frontend | Azure Static Web Apps | Free | CDN global, Angular SPA |
 | Cache | IMemoryCache (.NET in-process) | -- | Sin dependencia externa; $0 |
@@ -105,37 +105,22 @@ package-and-deploy:
 
 ---
 
-## 4. Entorno local (Docker Compose)
+## 4. Entorno local (sin Docker obligatorio)
 
-### Servicios
+### Flujo recomendado
 
-| Servicio | Imagen | Puerto | Descripcion |
-|----------|--------|--------|-------------|
-| `db` | mcr.microsoft.com/mssql/server:2022-latest | 1433 | SQL Server local |
-| `db-init` | (script bash) | -- | Inicializa esquema SQL local según scripts en `scripts/manual/` |
-| `backend` | Dockerfile del proyecto .NET | 5000:8080 | API REST |
-| `frontend` | Dockerfile Angular + Nginx | 4200:80 | SPA Angular |
+1. **Base de datos**: SQL Server local + scripts en `scripts/manual/` (ver `database/README.md`).
+2. **Backend**: `dotnet run` desde `backend/PortalCV.Backend/PortalCV.Api` con secretos locales (`dotnet user-secrets`).
+3. **Frontend**: `npm ci` + `ng serve` desde `frontend/` (proxy `/api` hacia el backend local).
 
-### Comandos frecuentes
+### Docker (solo para imagen backend / paridad con ACA)
+
+El runtime productivo del backend en Azure Container Apps se basa en **imagen Docker** desde `backend/Dockerfile`.
+Para validar localmente la imagen (opcional):
 
 ```bash
-# Levantar todo
-docker compose --profile app up -d
-
-# Ver logs del backend
-docker compose logs backend --tail 50 -f
-
-# Reiniciar solo el backend
-docker compose restart backend
-
-# Destruir y recrear (limpia estado)
-docker compose down -v
-docker compose --profile app up -d
+docker build -f backend/Dockerfile -t portalcv-backend:local ./backend
 ```
-
-### Variables de entorno locales
-
-Copiar `.env.example` a `.env` y ajustar si es necesario. La cadena de conexion apunta al servicio `db` en Docker Compose.
 
 ---
 
@@ -170,8 +155,8 @@ Copiar `.env.example` a `.env` y ajustar si es necesario. La cadena de conexion 
 
 ### Local
 
-- Logs de Serilog en consola (docker compose logs backend)
-- Swagger UI: http://localhost:5000/swagger (Docker Compose) / http://localhost:5005/swagger (dotnet run directo)
+- Logs de Serilog en consola (salida del proceso `dotnet run`)
+- Swagger UI: revisar `backend/PortalCV.Backend/PortalCV.Api/Properties/launchSettings.json` (típico `http://localhost:5005/swagger`)
 
 ### Produccion (Azure)
 
