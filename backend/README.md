@@ -250,7 +250,39 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 - **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
 - **JWT / SQL**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
 
-> Los valores sensibles **nunca deben commitearse**. Usa `appsettings.Development.json` (ignorado por git) o variables de entorno. Ver `.env.example` en la raíz del repo.
+### Secretos locales
+
+`appsettings.json` y `launchSettings.json` **no contienen secretos** (solo valores públicos o cadenas vacías como placeholder). Los secretos se inyectan en runtime según cómo ejecutes la API:
+
+| Forma de ejecución | Dónde viven los secretos | Archivo ignorado por git |
+|---|---|---|
+| **Docker local** (`docker run --env-file`) | `docker/backend.local.env` | Sí |
+| **Nativo** (`dotnet run` / F5 en Visual Studio o Rider) | `dotnet user-secrets` (perfil del usuario del SO) | Sí (no está en el repo) |
+| **CI / Azure Container Apps** | Variables de entorno del runtime / Key Vault | N/A |
+
+Variables sensibles que debes configurar localmente:
+
+- `ConnectionStrings__DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
+- `Jwt__Key` (mínimo 32 caracteres)
+- `Auth__DemoUser__Email`, `Auth__DemoUser__Password` (si usas el demo user)
+
+Para el flujo nativo, inicializa `user-secrets` una sola vez:
+
+```bash
+cd backend/PortalCV.Backend/PortalCV.Api
+dotnet user-secrets init
+dotnet user-secrets set "Jwt__Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
+dotnet user-secrets set "Auth__DemoUser__Email" "demo@local.test"
+dotnet user-secrets set "Auth__DemoUser__Password" "TU_PASSWORD_DEMO"
+```
+
+Para el flujo Docker, copia la plantilla y completa valores reales:
+
+```bash
+Copy-Item docker/backend.local.env.example docker/backend.local.env
+```
+
+> Los valores sensibles **nunca** deben commitearse en `launchSettings.json`, `appsettings.*.json` ni en código fuente.
 
 ---
 
