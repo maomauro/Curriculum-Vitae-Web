@@ -28,7 +28,7 @@ namespace PortalCV.Api
 
             // CORS: en producción hay que definir Cors:AllowedOrigins (p. ej. URL del SPA).
             // Variables de entorno: Cors__AllowedOrigins__0, Cors__AllowedOrigins__1, …
-            // En Development, si la lista está vacía se usan orígenes locales y el contenedor portalcv-web.
+            // En Development, si la lista está vacía se usan orígenes locales típicos (ng serve / puertos locales).
             var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
             var corsOrigins = configuredOrigins?
                 .Where(static o => !string.IsNullOrWhiteSpace(o))
@@ -44,7 +44,6 @@ namespace PortalCV.Api
                     [
                         "http://localhost:4200",
                         "http://localhost:3000",
-                        "http://portalcv-web",
                     ];
                 }
                 else

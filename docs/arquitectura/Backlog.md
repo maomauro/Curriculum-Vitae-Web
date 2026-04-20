@@ -49,7 +49,7 @@ Además:
      │    └── Tarea: Configurar tablero ágil (boards, milestones)
      │
      ├── 📝 Historia Técnica: Entorno de desarrollo local
-     │    ├── Tarea: Configurar Docker y docker-compose con SQL Server
+     │    ├── Tarea: Configurar toolchain local (.NET SDK, Node.js, SQL Server local)
      │    ├── Tarea: Conectar proyectos a BD existente
      │    └── Tarea: Verificar datos de prueba
      │
@@ -100,9 +100,9 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Proteger ramas principales | Reglas: no push directo a main/develop; PR/MR obligatorio. |
 | Configurar templates para PR/MR | Plantillas de descripción, checklist (tests, documentación). |
 | Configurar tablero ágil | Boards, milestones, labels para épicas, features e historias. |
-| Configurar Docker y docker-compose | Instalar Docker; definir servicios (SQL Server, backend, frontend). |
-| Crear docker-compose.yml con SQL Server | Archivo con servicios, redes, volúmenes y variables de entorno. |
-| Conectar proyectos a BD existente | Connection string en backend; verificar conectividad desde contenedor/host. |
+| Configurar entorno local (sin Docker obligatorio) | Instalar .NET SDK + Node.js + SQL Server local; scripts SQL en `scripts/manual/`. |
+| Validar imagen Docker del backend (opcional) | `docker build -f backend/Dockerfile ...` para alinear con Azure Container Apps. |
+| Conectar proyectos a BD existente | Connection string en backend; verificar conectividad desde el host. |
 | Verificar datos de prueba funcionando | Ejecutar script de BD y comprobar que backend/frontend lean datos. |
 | Crear solución .NET con arquitectura por capas | Proyectos: API, dominio, aplicación, infraestructura (o similar). |
 | Configurar Entity Framework | DbContext, mapeos a tablas, migraciones o script DDL. |
@@ -148,12 +148,12 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 #### FEATURE 0.2: CONFIGURACIÓN DE ENTORNOS
 
-**Descripción:** Configuración del repositorio (GitHub), ramas y tablero ágil; entorno local con Docker y SQL Server; solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
+**Descripción:** Configuración del repositorio (GitHub), ramas y tablero ágil; entorno local con SQL Server instalado (sin Docker obligatorio); solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
 | **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio (GitHub)<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para PR/MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
-| **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar Docker y docker-compose<br>[ ] Crear docker-compose.yml con SQL Server<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
+| **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar toolchain local (.NET SDK, Node.js, SQL Server)<br>[ ] Ejecutar scripts SQL locales (`scripts/manual/`)<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
 | **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones)<br>[ ] Eliminar scaffold WeatherForecast (WeatherForecast.cs + WeatherForecastController.cs) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
 | **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |

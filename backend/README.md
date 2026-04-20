@@ -247,7 +247,7 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 }
 ```
 
-- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales (`localhost:4200`, contenedor `portalcv-web`, etc.). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
+- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
 - **JWT / SQL**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
 
 > Los valores sensibles **nunca deben commitearse**. Usa `appsettings.Development.json` (ignorado por git) o variables de entorno. Ver `.env.example` en la raíz del repo.
