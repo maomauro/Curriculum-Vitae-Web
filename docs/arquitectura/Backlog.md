@@ -105,7 +105,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Conectar proyectos a BD existente | Connection string en backend; verificar conectividad desde el host. |
 | Verificar datos de prueba funcionando | Ejecutar script de BD y comprobar que backend/frontend lean datos. |
 | Crear solución .NET con arquitectura por capas | Proyectos: API, dominio, aplicación, infraestructura (o similar). |
-| Configurar Entity Framework | DbContext, mapeos a tablas, migraciones o script DDL. |
+| Configurar Entity Framework | DbContext y mapeos a tablas. El DDL se gestiona por scripts SQL versionados en `scripts/` (no migraciones EF). |
 | Configurar autenticación JWT base | Generación y validación de tokens; refresh token opcional. |
 | Configurar Swagger/OpenAPI | Documentación de endpoints y pruebas desde Swagger UI. |
 | Implementar middleware básico | Logging de requests; manejo global de excepciones y respuestas de error. |
@@ -128,7 +128,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 **Prioridad:** MUST HAVE  
 **Dependencia:** Ninguna (es la base del proyecto).
 
-**Descripción:** Cubre el diseño e implementación de la base de datos SQL Server, el control de versiones, el entorno de desarrollo local (Docker, backend .NET, frontend Angular) y el pipeline CI/CD inicial. Sin esta épica no puede arrancar el desarrollo funcional del portal.
+**Descripción:** Cubre el diseño e implementación de la base de datos SQL Server, el control de versiones, el entorno de desarrollo local (SQL Server nativo + .NET SDK + Node.js; Docker solo opcional para validar la imagen del backend) y el pipeline CI/CD inicial. Sin esta épica no puede arrancar el desarrollo funcional del portal.
 
 ---
 

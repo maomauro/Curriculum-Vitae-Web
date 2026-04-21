@@ -22,8 +22,8 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 | Cache | IMemoryCache (.NET in-process) | -- | Sin dependencia externa; $0 |
 | Logging | Serilog | -- | Structured logs en consola y archivo |
 | Auth | JWT Bearer | -- | Tokens de acceso (15 min) |
-| Pruebas backend | xUnit | -- | Unitarias e integracion |
-| Pruebas frontend | Karma + Jasmine | -- | Unit tests Angular con ChromeHeadlessCI |
+| Pruebas backend | xUnit | -- | **Pendiente** — aun no existe proyecto de tests (`TODO` en CI) |
+| Pruebas frontend | Karma + Jasmine | -- | Unit tests Angular con ChromeHeadless + cobertura LCOV hacia Sonar |
 
 ---
 
@@ -60,9 +60,19 @@ feat/* --push--> CI passes
 
 | Job | Trigger | Pasos |
 |-----|---------|-------|
-| `backend` | Todo push y PR | dotnet restore, dotnet build Release |
-| `frontend` | Todo push y PR | npm ci, ng build production, ng test --configuration ci |
-| `sonarcloud` | Todo push y PR | Sonar scan (si hay configuración disponible) |
+| `backend` | Todo push y PR | `dotnet restore`, `dotnet build --configuration Release`. Los tests estan comentados hasta que exista proyecto de tests. |
+| `frontend` | Todo push y PR | `npm ci`, `ng build --configuration production`, `ng test --configuration ci` (con cobertura). Sube artifact `frontend-coverage` con `lcov.info`. |
+| `sonarcloud` | Todo push y PR (depende de `backend` y `frontend`) | Descarga el artifact `frontend-coverage` y corre `SonarSource/sonarqube-scan-action@v6` pasando `sonar.javascript.lcov.reportPaths`, `sonar.tests`, `sonar.test.inclusions` y exclusiones de cobertura. |
+
+### Variables / secretos de CI requeridos
+
+| Tipo | Nombre | Proposito |
+|------|--------|-----------|
+| Secret | `SONAR_TOKEN` | Token de analisis de SonarCloud. |
+| Variable | `SONAR_ORGANIZATION` | Organization key en SonarCloud. |
+| Variable | `SONAR_PROJECT_KEY` | Project key en SonarCloud. |
+
+> Si alguno falta, el job `sonarcloud` emite un warning informativo pero **no rompe** el pipeline.
 
 ### Configuracion del job deploy (pendiente implementar)
 

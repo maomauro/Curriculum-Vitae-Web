@@ -10,12 +10,19 @@ Workflow actualizado: [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
 
 Incluye:
 
-- Ajuste de tests frontend en CI:
-  - `npm run test -- --configuration=ci`
-- Job nuevo `sonarcloud`:
-  - Corre despues de `backend` y `frontend`
-  - Ejecuta scan con `SonarSource/sonarqube-scan-action@v6`
-  - Si faltan variables/secrets, no rompe el pipeline y deja mensaje de configuracion pendiente
+- **Tests frontend en CI con cobertura**:
+  - `npm run test -- --configuration=ci` ejecuta Karma en modo headless con `codeCoverage: true`.
+  - `frontend/karma.conf.js` genera el reporte `lcov.info` bajo `frontend/coverage/portalcv-web/`.
+  - El job `frontend` sube ese archivo como artifact `frontend-coverage` via `actions/upload-artifact@v4`.
+- **Job `sonarcloud`**:
+  - Corre despues de `backend` y `frontend` (`needs: [backend, frontend]`).
+  - **Descarga** el artifact `frontend-coverage` con `actions/download-artifact@v4`.
+  - Ejecuta `SonarSource/sonarqube-scan-action@v6` pasando:
+    - `sonar.javascript.lcov.reportPaths=frontend/coverage/portalcv-web/lcov.info`
+    - `sonar.tests=frontend/src`
+    - `sonar.test.inclusions=**/*.spec.ts`
+    - `sonar.coverage.exclusions=**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts`
+  - Si faltan variables/secrets, no rompe el pipeline y deja un warning informativo.
 
 ---
 
@@ -51,11 +58,11 @@ Settings -> Secrets and variables -> Actions
 
 El flujo CI queda:
 
-1. Build backend
-2. Build + tests frontend
-3. Sonar scan
+1. **Job `backend`**: build .NET Release (sin tests hasta que exista proyecto de tests backend).
+2. **Job `frontend`**: build Angular production + tests Karma en headless con cobertura → sube artifact `frontend-coverage`.
+3. **Job `sonarcloud`**: descarga `frontend-coverage` → Sonar scan (quality gate visible en dashboard).
 
-Nota: en la configuración actual no se usa un paso separado de `quality-gate-action`; el análisis se ejecuta en el paso de scan.
+Nota: en la configuración actual no se usa un paso separado de `quality-gate-action`; el análisis se ejecuta en el paso de scan y el resultado se consulta en el dashboard de SonarCloud.
 
 Recomendacion: proteger ramas `develop` y `main` para exigir CI en verde.
 

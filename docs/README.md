@@ -56,8 +56,22 @@ Infraestructura, despliegue y políticas de mantenimiento.
 ---
 
 ## 📖 guias/
-Guías de trabajo y convenciones del equipo.
+Guías de trabajo, convenciones del equipo y gestión de secretos.
 
 | Archivo | Contenido |
 |---|---|
 | [Guia-git.md](./guias/Guia-git.md) | Convenciones de ramas, commits y flujo de trabajo Git |
+| [Guia-secrets-y-credenciales.md](./guias/Guia-secrets-y-credenciales.md) | Política de secretos: dónde viven según entorno (local / CI / Azure) |
+| [Guia-inventario-secrets-por-ambiente.md](./guias/Guia-inventario-secrets-por-ambiente.md) | Plantilla de inventario de secretos por entorno (sin valores reales) |
+| [Inventario-minimo-local.md](./guias/Inventario-minimo-local.md) | Identidades y secretos mínimos para arrancar el proyecto localmente |
+| [Plantilla-herramientas-por-ambiente.md](./guias/Plantilla-herramientas-por-ambiente.md) | Catálogo de herramientas por ambiente (SDK, Node, Docker, Azure) |
+
+---
+
+## 🚀 produccion/
+Plan de salida a producción y configuración de calidad continua.
+
+| Archivo | Contenido |
+|---|---|
+| [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live en Azure (ACA + SWA + Azure SQL) |
+| [Integracion-SonarCloud.md](./produccion/Integracion-SonarCloud.md) | Configuración de SonarCloud en CI, cobertura LCOV y variables requeridas |
