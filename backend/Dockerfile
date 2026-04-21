@@ -22,14 +22,19 @@ RUN dotnet publish "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Releas
 
 # ─── ETAPA 2: Ejecución ─────────────────────────────────────────────────────
 # Usamos la imagen de runtime (más liviana, sin el SDK de compilación).
+# Esta imagen oficial trae un usuario no-root llamado `app` (UID 1654).
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 
-# Copiamos solo los archivos publicados desde la etapa de build
-COPY --from=build /app/publish .
+# Copiamos solo los archivos publicados desde la etapa de build,
+# asignandolos al usuario no-root que ejecutara el proceso.
+COPY --from=build --chown=app:app /app/publish .
 
-# Puerto en el que escucha la API dentro del contenedor
+# Cambiamos al usuario no-root antes de ejecutar la API (defensa en profundidad).
+USER app
+
+# Puerto en el que escucha la API dentro del contenedor (no privilegiado).
 EXPOSE 8080
 
 # Comando que se ejecuta cuando arranca el contenedor.
