@@ -8,13 +8,30 @@ export function getTodayDateString(): string {
   return `${year}-${month}-${day}`;
 }
 
-/** Comprueba formato de correo (no vacío tras trim). */
+const MAX_EMAIL_LENGTH = 254; // RFC 5321: longitud máxima total de un email.
+
+/**
+ * Comprueba formato basico de correo sin usar regex con cuantificadores
+ * sobre clases de caracteres (evita ReDoS / backtracking superlineal).
+ */
 export function isValidEmail(value: string | null | undefined): boolean {
   const s = (value ?? '').trim();
-  if (!s) {
+  if (!s || s.length > MAX_EMAIL_LENGTH) {
     return false;
   }
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+  if (/\s/.test(s)) {
+    return false;
+  }
+
+  const atIndex = s.indexOf('@');
+  if (atIndex <= 0 || atIndex !== s.lastIndexOf('@') || atIndex === s.length - 1) {
+    return false;
+  }
+
+  const domain = s.slice(atIndex + 1);
+  const dotIndex = domain.indexOf('.');
+  return dotIndex > 0 && dotIndex < domain.length - 1;
 }
 
 export function normalizeDateOrNull(value: string | null | undefined): string | null {
