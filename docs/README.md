@@ -48,7 +48,8 @@ Infraestructura, despliegue y políticas de mantenimiento.
 | Archivo | Contenido |
 |---|---|
 | [DevOps.md](./devops/DevOps.md) | Pipelines, CI/CD, configuración Docker |
-| [Despliegue.md](./devops/Despliegue.md) | Instrucciones de deploy |
+| [Despliegue.md](./devops/Despliegue.md) | Decisiones de infraestructura y arquitectura de despliegue |
+| [Runbook-Azure.md](./devops/Runbook-Azure.md) | Runbook ejecutable con comandos `az` para provisionar Azure desde cero |
 | [Plan-Backup-Mantenimiento.md](./devops/Plan-Backup-Mantenimiento.md) | Plan de backup y mantenimiento |
 | [Politica-Proteccion-Ramas.md](./devops/Politica-Proteccion-Ramas.md) | Reglas de protección de ramas Git |
 | [Checklist-Produccion.md](./devops/Checklist-Produccion.md) | Verificación previa a publicar en producción |
@@ -75,3 +76,17 @@ Plan de salida a producción y configuración de calidad continua.
 |---|---|
 | [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live en Azure (ACA + SWA + Azure SQL) |
 | [Integracion-SonarCloud.md](./produccion/Integracion-SonarCloud.md) | Configuración de SonarCloud en CI, cobertura LCOV y variables requeridas |
+
+---
+
+## 📦 README de componentes (fuera de `docs/`)
+Documentación específica de cada carpeta del monorepo. Se mantienen junto al código para que sean el primer punto de entrada de quien trabaja en ese componente.
+
+| Archivo | Contenido |
+|---|---|
+| [../README.md](../README.md) | README raíz del repositorio: visión general, inicio rápido y estructura |
+| [../backend/README.md](../backend/README.md) | Build/run de la API .NET, configuración de secretos locales (user-secrets / Docker) |
+| [../frontend/README.md](../frontend/README.md) | Build/run del frontend Angular, scripts de test y cobertura |
+| [../database/README.md](../database/README.md) | Scripts SQL Server locales (`scripts/manual/`) y su orden de ejecución |
+| [../scripts/README_ProductionScripts.md](../scripts/README_ProductionScripts.md) | Scripts SQL para Azure SQL (`scripts/production/`) |
+| [../.github/PULL_REQUEST_TEMPLATE/README.md](../.github/PULL_REQUEST_TEMPLATE/README.md) | Plantillas de descripción para Pull Requests |
