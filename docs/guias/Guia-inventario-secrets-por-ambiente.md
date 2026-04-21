@@ -5,9 +5,9 @@ Mantener un inventario unico de credenciales y secretos requeridos por el proyec
 
 ## Alcance
 Esta guia cubre:
-- Desarrollo local.
-- Integracion (`develop`).
-- Produccion (`main` / release).
+- Desarrollo local (maquina del dev: `dotnet user-secrets` o `docker/backend.local.env`).
+- CI (GitHub Actions a nivel de repositorio; no hay GitHub Environment separado hoy).
+- Produccion (`main` / release en Azure Container Apps + Azure Static Web Apps + Azure SQL).
 - Herramientas: GitHub, SonarCloud, Azure, base de datos, servicios externos.
 
 ## Reglas obligatorias
@@ -82,52 +82,63 @@ Usar esta plantilla por cada secreto:
 ## 3) Matriz por ambiente
 
 ## Local (Developer)
-**Ubicacion recomendada:** `dotnet user-secrets` y variables locales fuera de git.
+**Ubicacion recomendada:** `dotnet user-secrets` (flujo nativo) o `docker/backend.local.env` (flujo Docker). Ambos fuera de git.
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si |  |  |
-| `Jwt__Key` | Si |  |  |
-| `Auth__DemoUser__Email` | Opcional |  |  |
-| `Auth__DemoUser__Password` | Opcional |  |  |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Activo — nativo via `Trusted_Connection=true` (ver `launchSettings.json`); Docker via `docker/backend.local.env` con `portalcv_app` |
+| `Jwt__Key` | Si | maomauro | Activo en `docker/backend.local.env`; Pendiente en `dotnet user-secrets` |
+| `Jwt__Issuer` | Si (no sensible) | maomauro | Activo (`PortalCV.Api`) |
+| `Jwt__Audience` | Si (no sensible) | maomauro | Activo (`PortalCV.Client`) |
+| `Auth__DemoUser__Email` | Opcional | maomauro | No configurado |
+| `Auth__DemoUser__Password` | Opcional | maomauro | No configurado |
 
 Checklist:
-- [ ] `launchSettings.json` sin secretos reales.
-- [ ] `.env` local excluido de git.
-- [ ] User-secrets configurados en la maquina de cada dev.
+- [x] `launchSettings.json` sin secretos reales (solo cadena a `SQLEXPRESS` con `Trusted_Connection`).
+- [x] `docker/backend.local.env` excluido de git (`.gitignore`).
+- [x] Plantilla `docker/backend.local.env.example` versionada con placeholders.
+- [ ] User-secrets configurados para el flujo nativo `dotnet run`.
 
-## Develop
-**Ubicacion recomendada:** GitHub Environment `develop` + runtime env vars.
+## CI (GitHub Actions a nivel de repositorio)
+**Ubicacion recomendada:** `Settings -> Secrets and variables -> Actions` del repositorio.
+
+> Nota: actualmente no existe GitHub Environment `develop` separado; los secrets/vars del CI viven a nivel de repositorio y aplican a todos los jobs del pipeline.
+
+| Nombre tecnico | Tipo | Requerido | Owner | Estado |
+|---|---|---|---|---|
+| `SONAR_TOKEN` | Secret | Si | maomauro | Activo |
+| `SONAR_ORGANIZATION` | Variable | Si | maomauro | Activo |
+| `SONAR_PROJECT_KEY` | Variable | Si | maomauro | Activo |
+| `AZURE_CREDENTIALS` | Secret | Para deploy | maomauro | Pendiente (workflow de deploy aun no existe) |
+| `AZURE_STATIC_WEB_APPS_TOKEN` | Secret | Para deploy SWA | maomauro | Pendiente |
+| `JWT_KEY_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
+| `AZURE_SQL_CONN_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
+
+Checklist:
+- [x] Secret `SONAR_TOKEN` y variables `SONAR_*` cargados.
+- [x] Quality Gate de SonarCloud "Passed" en `main`.
+- [ ] Secrets de Azure creados cuando se implemente el job de deploy.
+- [ ] Evaluar migracion a OIDC (sin password estatico) para `AZURE_CREDENTIALS`.
+
+## Production (Azure)
+**Ubicacion recomendada:** variables de entorno de Azure Container Apps (y Azure Key Vault si se decide centralizar).
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si |  |  |
-| `Jwt__Key` | Si |  |  |
-| `SONAR_TOKEN` | Si |  |  |
-| `SONAR_ORGANIZATION` | Si |  |  |
-| `SONAR_PROJECT_KEY` | Si |  |  |
-| Credencial deploy Azure develop | Segun pipeline |  |  |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a `sql-portalcv-mao.database.windows.net` con `portalcv_app_prod` |
+| `Jwt__Key` | Si | maomauro | Pendiente — clave distinta a la de local/develop (≥ 32 chars) |
+| `Jwt__Issuer` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Api` |
+| `Jwt__Audience` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Client` |
+| `ASPNETCORE_ENVIRONMENT` | Si (no sensible) | maomauro | Pendiente — valor: `Production` |
+| `Cors__AllowedOrigins__0` | Si (no sensible) | maomauro | Pendiente — URL final del Static Web App |
 
 Checklist:
-- [ ] Secretos separados de `production`.
-- [ ] Permisos minimos en recursos de Azure.
-- [ ] Logs y monitoreo sin exponer secretos.
-
-## Production
-**Ubicacion recomendada:** GitHub Environment `production` + Azure Key Vault/env vars.
-
-| Nombre tecnico | Requerido | Owner | Estado |
-|---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si |  |  |
-| `Jwt__Key` | Si |  |  |
-| Credenciales de servicios externos productivos | Segun uso |  |  |
-| Credencial deploy Azure production | Segun pipeline |  |  |
-
-Checklist:
-- [ ] Secrets de produccion distintos a develop.
-- [ ] Aprobacion para despliegues a `production`.
-- [ ] Politica de rotacion activa.
+- [ ] Secrets de produccion distintos a los de local y CI.
+- [ ] Aprobacion para despliegues a `production` (GitHub Environment con reviewers).
+- [ ] Politica de rotacion activa (90 dias para criticos).
 - [ ] Plan de respuesta ante exposicion validado.
+- [ ] Firewall Azure SQL: `Allow Azure services ON`.
+- [ ] `portalcv_app_prod` con permisos minimos (SELECT/INSERT/UPDATE/DELETE/EXECUTE sobre `dbo`).
 
 ---
 
