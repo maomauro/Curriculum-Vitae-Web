@@ -408,11 +408,14 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      API GATEWAY                            │
+│                  API ASP.NET Core (.NET 10)                 │
+│  Middlewares transversales integrados en el pipeline de     │
+│  la API (no hay API Gateway separado):                      │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  • Rate Limiting      • Autenticación JWT             │  │
-│  │  • Caché (IMemoryCache) • Logging Centralizado        │  │
-│  │  • Compresión         • Enrutamiento                  │  │
+│  │  • Autenticación JWT  • Autorización por rol          │  │
+│  │  • Caché (IMemoryCache) • Logging (Serilog)           │  │
+│  │  • Manejo global de errores • CORS                    │  │
+│  │  • Rate limiting (pendiente, HS-15)                   │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -447,7 +450,8 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 │  │  └─────────────┘  └──────────────────────────────────┘  │  │
 │  │                                                      │  │
 │  │  • Entity Framework (ORM)                            │  │
-│  │  • Migraciones automáticas                           │  │
+│  │  • Scripts DDL versionados (no migraciones EF)       │  │
+│  │    → scripts/manual/ (local) · scripts/production/   │  │
 │  │  • Vistas materializadas para estadísticas           │  │
 │  │  • Índices optimizados para búsqueda                 │  │
 │  └──────────────────────────────────────────────────────┘  │

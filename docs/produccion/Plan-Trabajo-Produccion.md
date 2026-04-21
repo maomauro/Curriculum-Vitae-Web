@@ -1,8 +1,8 @@
 # Plan de Trabajo para Salida a Produccion — PortalCV
 
 Estado del plan: En ejecucion
-Fecha de corte: 13-04-2026
-Rama de trabajo actual: feat/frontend
+Fecha de corte: 20-04-2026
+Rama de trabajo actual: feat/docs-align (seguimiento operativo en `feat/frontend` y `feat/backend`)
 
 ---
 
@@ -19,10 +19,15 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - Build backend Release OK
   - Build frontend produccion OK
   - Swagger y rutas principales alineadas
+  - Secretos retirados de `launchSettings.json` (flujo con `dotnet user-secrets` y `docker/backend.local.env`)
+  - Tests frontend en CI con `--configuration=ci` (headless) y cobertura LCOV subida a SonarCloud
+  - SonarCloud Quality Gate en verde en `main`; 6 security hotspots resueltos
+  - Docker Compose retirado del repo; Dockerfile del backend endurecido (usuario `app`, binarios read-only)
 - Pendiente critico:
-  - Hardening de seguridad en desarrollo/CI
+  - Workflow de publicacion a GHCR (build + push imagen backend)
   - Provision de Azure Container Apps
   - Provision de Azure Static Web Apps
+  - Proyecto de tests backend (xUnit) y descomentar su paso en CI
   - Cierre de checklist de despliegue
 
 ---
@@ -31,10 +36,10 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 
 ### Fase 1 — Hardening tecnico minimo (bloqueante)
 
-- [ ] Mover secretos hardcodeados de launchSettings a user-secrets o configuracion local no versionada
-  - Criterio de cierre: launchSettings sin valores sensibles reales
-- [ ] Corregir comando de tests frontend en CI
-  - Criterio de cierre: job frontend ejecuta tests en modo CI de forma deterministica
+- [x] Mover secretos hardcodeados de launchSettings a user-secrets o configuracion local no versionada
+  - Criterio de cierre: launchSettings sin valores sensibles reales ✅
+- [x] Corregir comando de tests frontend en CI
+  - Criterio de cierre: job frontend ejecuta tests en modo CI de forma deterministica ✅ (`--configuration=ci` + cobertura hacia Sonar)
 - [ ] Definir puerta minima de pruebas backend
   - Criterio de cierre: existe al menos 1 proyecto de test backend y CI lo ejecuta
 - [ ] Endurecer manejo de errores en frontend (status 0, 4xx, 5xx)
