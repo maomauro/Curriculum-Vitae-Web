@@ -2,7 +2,7 @@
 
 Estado del plan: En ejecucion
 Fecha de corte: 20-04-2026
-Rama de trabajo actual: feat/docs-align (seguimiento operativo en `feat/frontend` y `feat/backend`)
+Rama de trabajo actual: `feat/docs` (documentacion); operativo en `feat/frontend` y `feat/backend`
 
 ---
 
