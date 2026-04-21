@@ -6,6 +6,7 @@
 
 - [Documentacion.md](../arquitectura/Documentacion.md) -- Vision del producto y arquitectura
 - [Backlog.md](../arquitectura/Backlog.md) -- Epicas, historias y plan de sprints
+- [Runbook-Azure.md](./Runbook-Azure.md) -- Runbook ejecutable con comandos `az` para provisionar Azure
 - [database/README.md](../../database/README.md) -- Scripts SQL Server
 
 ---
