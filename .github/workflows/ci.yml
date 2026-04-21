@@ -70,8 +70,16 @@ jobs:
       - name: Build (producción)
         run: npm run build -- --configuration production
 
-      - name: Tests unitarios (headless)
+      - name: Tests unitarios (headless + coverage)
         run: npm run test -- --configuration=ci
+
+      - name: Subir reporte de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/portalcv-web/lcov.info
+          if-no-files-found: error
+          retention-days: 7
 
   # ─────────────────────────────────────────────────────────────────────────────
   sonarcloud:
@@ -84,6 +92,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Descargar reporte de cobertura del frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/portalcv-web
 
       - name: Validate SonarCloud config
         id: sonar-config
@@ -110,4 +124,8 @@ jobs:
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.sources=backend,frontend
-            -Dsonar.exclusions=**/bin/**,**/obj/**,**/node_modules/**,**/dist/**,**/.angular/**
+            -Dsonar.exclusions=**/bin/**,**/obj/**,**/node_modules/**,**/dist/**,**/.angular/**,**/*.spec.ts
+            -Dsonar.tests=frontend/src
+            -Dsonar.test.inclusions=**/*.spec.ts
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/portalcv-web/lcov.info
+            -Dsonar.coverage.exclusions=**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts
