@@ -31,6 +31,7 @@
 - **Azure Container Apps (backend)**: SI usa **imagen Docker** construida desde `backend/Dockerfile`, publicada en **GHCR** y referenciada por el Container App.
 - **Azure SQL Database**: NO corre en Docker; es un servicio administrado en Azure.
 - **Desarrollo local en este repositorio**: el camino documentado es **SQL Server local + `dotnet run` + `ng serve`** (sin `docker-compose` en el repo). Docker queda como herramienta **opcional** para construir/validar la imagen del backend.
+- **Si se ejecuta el backend en Docker contra el SQL Server del host**: el cliente de SQL en .NET puede intentar resolver `host.docker.internal` por IPv6 y fallar con `Network is unreachable`. Forzar IPv4 agregando `IPAddressPreference=IPv4First;` en la cadena de conexion (ver plantilla `docker/backend.local.env.example`) y arrancar el contenedor con `--add-host=host.docker.internal:host-gateway`.
 
 ### Por que no otras opciones
 
@@ -55,13 +56,20 @@
                         |  git push / PR
                         v
 +-----------------------------------------------------+
-|              CI -- GitHub Actions                   |
+|              CI -- GitHub Actions (actual)          |
 |  +-- Job backend:  dotnet restore + build           |
 |  +-- Job frontend: npm ci + ng build + ng test      |
-|  +-- Job deploy (solo push a main):                 |
-|       +-- docker build + push --> GHCR              |
-|       +-- az containerapp update (backend)          |
-|           az staticwebapp deploy (frontend)         |
+|  |                 (sube artifact lcov.info)        |
+|  +-- Job sonarcloud: descarga cobertura + scan      |
++-----------------------------------------------------+
+                        |
+                        v
++-----------------------------------------------------+
+|     CI -- Job deploy (PENDIENTE de implementar)     |
+|  (solo en push a main, ver seccion 2 mas abajo)     |
+|  +-- docker build + push --> GHCR                   |
+|  +-- az containerapp update (backend)               |
+|  +-- az staticwebapp deploy (frontend)              |
 +-----------------------------------------------------+
                         |
                         v
@@ -81,6 +89,8 @@
 |       +-- usuario: portalcv_app_prod                |
 +-----------------------------------------------------+
 ```
+
+> El bloque de deploy es un **diseño futuro**; el unico workflow real hoy es build + test + Sonar (`.github/workflows/ci.yml`). Ver seccion 2 para el YAML propuesto.
 
 ---
 
@@ -106,9 +116,11 @@ El pipeline de CI esta en [../../.github/workflows/ci.yml](../../.github/workflo
 
 | Job | Trigger | Acciones |
 |-----|---------|----------|
-| `backend` | Todo push y PR | `dotnet restore` --> `dotnet build --configuration Release` |
-| `frontend` | Todo push y PR | `npm ci` --> `ng build --configuration production` --> `ng test --configuration ci` |
-| `sonarcloud` | Todo push y PR | `sonarqube-scan-action@v6` (si hay secretos/variables configurados) |
+| `backend` | Todo push y PR | `dotnet restore` --> `dotnet build --configuration Release` (sin tests; aun no existe proyecto de tests) |
+| `frontend` | Todo push y PR | `npm ci` --> `ng build --configuration production` --> `ng test --configuration ci` (con cobertura) --> sube artifact `frontend-coverage` (`lcov.info`) |
+| `sonarcloud` | Todo push y PR | Descarga el artifact `frontend-coverage` y ejecuta `SonarSource/sonarqube-scan-action@v6` con `sonar.javascript.lcov.reportPaths` apuntando al `lcov.info` |
+
+> Variables GitHub necesarias para que Sonar corra: secret `SONAR_TOKEN`; variables `SONAR_ORGANIZATION` y `SONAR_PROJECT_KEY`. Si faltan, el job de Sonar deja un mensaje informativo sin romper el pipeline.
 
 **Jobs de despliegue (pendiente por implementar):**
 
@@ -255,7 +267,7 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 | `AZURE_CREDENTIALS` | JSON del Service Principal de Azure | `az ad sp create-for-rbac --role contributor --scopes /subscriptions/.../resourceGroups/rg-portalcv --json-auth` |
 | `AZURE_STATIC_WEB_APPS_TOKEN` | Token del Static Web App | Portal Azure --> Static Web App --> Manage token |
 | `JWT_KEY_PROD` | Clave de firma JWT produccion | Generar string aleatorio >= 32 chars |
-| `AZURE_SQL_CONN_PROD` | Cadena de conexion Azure SQL con portalcv_app_prod | Ver `.env` comentado (linea Azure) |
+| `AZURE_SQL_CONN_PROD` | Cadena de conexion Azure SQL con `portalcv_app_prod` | Construir con: `Server=tcp:sql-portalcv-mao.database.windows.net,1433;Initial Catalog=PortalCV;User ID=portalcv_app_prod;Password=***;Encrypt=True;TrustServerCertificate=False;` |
 
 > `GITHUB_TOKEN` es automatico -- no requiere creacion manual.
 
@@ -269,7 +281,7 @@ Ir a **Settings --> Secrets and variables --> Actions** del repositorio y crear:
 
 | Entorno | Scripts | Como ejecutar |
 |---------|---------|---------------|
-| Local (Docker) | `scripts/manual/01_CreateSchema.sql`, `scripts/manual/02_InsertTestData.sql` | Según flujo local documentado en `README.md` y `database/README.md` |
+| Local (SQL Server instalado) | `scripts/manual/01_CreateSchema.sql`, `scripts/manual/02_InsertTestData.sql` | Ejecutar desde SSMS contra `localhost\SQLEXPRESS` segun `database/README.md` |
 | Azure SQL (prod) | `scripts/production/05_AzureSQL_CreateSchema.sql` | Ejecutar una sola vez desde Azure Data Studio o portal (incluye roles base al final) |
 
 > El script `05_` NO incluye `USE [PortalCV]` -- conectar directamente a la BD destino.

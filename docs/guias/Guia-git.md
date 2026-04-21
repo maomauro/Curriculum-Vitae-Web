@@ -23,7 +23,7 @@ En lugar de crear una rama por historia técnica, se mantienen **cuatro ramas de
 |------|------|-------------|
 | `feat/frontend` | Frontend Angular | Layouts, AdminLTE, páginas, componentes, services, environments |
 | `feat/backend` | Backend .NET | Endpoints, CRUDs, middleware, servicios de aplicación |
-| `feat/database` | Base de datos | Scripts SQL Server, migraciones, datos de prueba, scripts Azure SQL |
+| `feat/database` | Base de datos | Scripts SQL Server (DDL + datos de prueba) y scripts Azure SQL |
 | `feat/infra` | Infraestructura | Docker, GitHub Actions, configuración Azure |
 | `feat/docs` | Documentación | Cambios en `/docs`, `README.md`, `database/README.md` |
 

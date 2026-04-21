@@ -1,59 +1,112 @@
 # Plan Basico de Backup y Mantenimiento
 
 ## Objetivo
-Definir una politica minima para proteger la base de datos PortalCV y mantener un rendimiento estable.
+
+Definir una politica minima para proteger la base de datos `PortalCV` y mantener un rendimiento estable, diferenciando claramente produccion (servicio administrado en Azure) de desarrollo local (instancia propia).
 
 ## Alcance
-- Base de datos: PortalCV
-- Motor: SQL Server 2022 (imagen Docker: mcr.microsoft.com/mssql/server:2022-latest)
-- Entorno: aplicar en desarrollo y produccion con la misma logica
 
-## Frecuencia de Backups
-1. Backup Full: diario a las 02:00 AM.
-2. Backup Log: cada 30 minutos (solo si la base esta en Recovery Model FULL).
+| Aspecto | Produccion | Desarrollo local |
+|---------|------------|------------------|
+| **Motor** | Azure SQL Database Free Tier (`sql-portalcv-mao.database.windows.net`) | SQL Server instalado nativo (instancia `SQLEXPRESS`) |
+| **Backups** | Automaticos (PITR administrado por Azure) | Manual u opcional |
+| **Mantenimiento** | Aplicado por el equipo via T-SQL | Aplicado por el equipo via T-SQL |
 
-## Retencion
-1. Conservar backups por 14 dias.
-2. Eliminar automaticamente archivos mas antiguos a 14 dias.
+> Produccion es un servicio administrado: Azure gestiona los backups automaticamente y permite restaurar a un punto en el tiempo (PITR). En local el respaldo es responsabilidad del desarrollador y solo es critico si existe informacion que no se pueda regenerar.
 
-## Mantenimiento de Indices
-1. Ejecutar 1 vez por semana (domingo 03:00 AM).
-2. Regla simple:
-   - Fragmentacion entre 5% y 30%: REORGANIZE.
-   - Fragmentacion mayor a 30%: REBUILD.
+---
 
-## Mantenimiento de Estadisticas
-1. Ejecutar 1 vez por semana (domingo 04:00 AM).
-2. Actualizar estadisticas de tablas principales:
-   - Curriculum
-   - Personales
-   - Perfil
-   - Experiencia
-   - Formacion
-   - Habilidad
-   - Proyecto
-   - AlertaVisita
-   - EstadisticasPublicas
+## 1. Backups
 
-## Validacion de Recuperacion
-1. Realizar una prueba de restauracion 1 vez al mes en ambiente no productivo.
-2. Verificar que la base restaura y que las consultas principales responden.
+### Produccion (Azure SQL)
 
-## Calendario Sugerido
-- Diario 02:00 AM: Backup Full.
-- Cada 30 min: Backup Log (si FULL).
-- Domingo 03:00 AM: Mantenimiento de indices.
-- Domingo 04:00 AM: Actualizacion de estadisticas.
-- Primer lunes de cada mes: prueba de restauracion.
+- **Backups automaticos:** Azure SQL realiza backups completos, diferenciales y de log de forma continua.
+- **Point-in-Time Restore (PITR):** retencion minima de 7 dias en el tier Free.
+- **Restore geografico:** depende del tier; verificar en portal Azure antes de asumirlo.
+- **Responsable de restauracion:** el lider tecnico es quien autoriza una restauracion.
+- **No se requiere ejecutar jobs manuales de backup.**
 
-## Responsables
-- Ejecucion tecnica: DevOps / DBA.
-- Revision mensual: lider tecnico del proyecto.
+### Desarrollo local (SQL Server instalado)
 
-## Checklist Minimo
-- Job de backup full creado.
-- Job de backup log creado (si aplica).
-- Politica de retencion configurada.
-- Job de indices creado.
-- Job de estadisticas creado.
-- Evidencia de restauracion mensual registrada.
+- Backups solo son necesarios si se almacenan datos valiosos que no se regeneren con `scripts/manual/02_InsertTestData.sql`.
+- Si se requieren, ejecutar manualmente con SSMS o `BACKUP DATABASE PortalCV TO DISK = '...'`.
+- **Retencion sugerida:** los ultimos 3 backups manuales, si es que se crean.
+
+---
+
+## 2. Mantenimiento de indices
+
+Aplica tanto a produccion como a local.
+
+- **Frecuencia:** semanal (domingo 03:00 AM en produccion; en local, cuando se observe degradacion).
+- **Regla simple:**
+  - Fragmentacion entre 5% y 30%: `ALTER INDEX ... REORGANIZE`.
+  - Fragmentacion mayor a 30%: `ALTER INDEX ... REBUILD`.
+- **Como ejecutar en Azure SQL:** script T-SQL planificado con Elastic Jobs o una ejecucion manual desde Azure Data Studio/Portal.
+- **Como ejecutar en local:** ejecutar el mismo script en SSMS.
+
+---
+
+## 3. Mantenimiento de estadisticas
+
+- **Frecuencia:** semanal (domingo 04:00 AM en produccion).
+- **Alcance:** actualizar estadisticas de las tablas con mayor rotacion:
+  - `Curriculum`
+  - `Personales`
+  - `Perfil`
+  - `Experiencia`
+  - `Formacion`
+  - `Habilidad`
+  - `Proyecto`
+  - `AlertaVisita`
+  - `EstadisticasPublicas`
+- **Comando:** `UPDATE STATISTICS <tabla>` o `EXEC sp_updatestats`.
+
+---
+
+## 4. Validacion de recuperacion
+
+### Produccion
+
+- **Una vez al mes** realizar una prueba de PITR a una base temporal (`PortalCV-restore-test`) y verificar que las consultas principales respondan.
+- **Eliminar** la base de prueba despues de validar.
+
+### Local
+
+- Opcional. Si se mantienen backups manuales, restaurar al menos 1 vez al trimestre para verificar integridad del archivo `.bak`.
+
+---
+
+## 5. Calendario sugerido (produccion)
+
+| Tarea | Frecuencia | Ventana |
+|-------|------------|---------|
+| PITR automatico | Continuo | Administrado por Azure |
+| Mantenimiento de indices | Semanal | Domingo 03:00 AM |
+| Actualizacion de estadisticas | Semanal | Domingo 04:00 AM |
+| Prueba de restauracion | Mensual | Primer lunes del mes |
+
+---
+
+## 6. Responsables
+
+- **Ejecucion tecnica** (scripts de mantenimiento, pruebas de restauracion): lider tecnico / DBA.
+- **Revision mensual**: lider tecnico del proyecto.
+- **Definicion y revision del plan**: lider tecnico.
+
+---
+
+## 7. Checklist minimo
+
+### Produccion
+
+- [ ] PITR activo en Azure SQL (por defecto lo esta; verificar en el portal).
+- [ ] Retencion de PITR configurada segun el tier.
+- [ ] Script de mantenimiento de indices documentado.
+- [ ] Script de actualizacion de estadisticas documentado.
+- [ ] Evidencia de prueba de restauracion mensual registrada.
+
+### Local
+
+- [ ] Script de backup manual conocido por el desarrollador (si aplica).
+- [ ] Repoblacion desde `scripts/manual/` validada como alternativa rapida a restaurar.
