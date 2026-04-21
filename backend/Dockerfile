@@ -13,8 +13,8 @@ COPY ["PortalCV.Backend/PortalCV.Domain/PortalCV.Domain.csproj", "PortalCV.Backe
 COPY ["PortalCV.Backend/PortalCV.Infrastructure/PortalCV.Infrastructure.csproj", "PortalCV.Backend/PortalCV.Infrastructure/"]
 RUN dotnet restore "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj"
 
-# Copiamos el resto del código fuente
-COPY . .
+# Copiamos solo el codigo fuente del backend (evita copia recursiva del context).
+COPY PortalCV.Backend/ PortalCV.Backend/
 
 # Compilamos y publicamos en modo Release en la carpeta /app/publish
 RUN dotnet publish "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false

@@ -1,12 +1,34 @@
 # Archivos que Docker NO debe copiar al construir la imagen del backend.
-# Esto hace el build más rápido y la imagen más pequeña.
+# Esto hace el build mas rapido, la imagen mas pequena y evita filtrar secretos.
 
+# --- Build artifacts ---
 bin/
 obj/
+TestResults/
 *.user
 *.suo
+
+# --- IDE / VCS ---
 .vs/
 .vscode/
+.idea/
 .git/
 .gitignore
+
+# --- Docs ---
 README.md
+
+# --- Secrets / configs locales (defensa en profundidad) ---
+*.env
+.env
+.env.*
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/secrets.json
+**/*.pfx
+**/*.pem
+**/*.key
+**/*.crt
+
+# --- Logs ---
+*.log
