@@ -27,9 +27,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 
-# Copiamos solo los archivos publicados desde la etapa de build,
-# asignandolos al usuario no-root que ejecutara el proceso.
-COPY --from=build --chown=app:app /app/publish .
+# Copiamos los archivos publicados desde la etapa de build.
+# Los mantenemos con owner=root para que el usuario `app` que ejecuta la API
+# pueda leerlos y ejecutarlos, pero NO modificarlos (defensa ante RCE).
+COPY --from=build /app/publish .
 
 # Cambiamos al usuario no-root antes de ejecutar la API (defensa en profundidad).
 USER app
