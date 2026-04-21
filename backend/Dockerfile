@@ -13,8 +13,8 @@ COPY ["PortalCV.Backend/PortalCV.Domain/PortalCV.Domain.csproj", "PortalCV.Backe
 COPY ["PortalCV.Backend/PortalCV.Infrastructure/PortalCV.Infrastructure.csproj", "PortalCV.Backend/PortalCV.Infrastructure/"]
 RUN dotnet restore "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj"
 
-# Copiamos el resto del código fuente
-COPY . .
+# Copiamos solo el codigo fuente del backend (evita copia recursiva del context).
+COPY PortalCV.Backend/ PortalCV.Backend/
 
 # Compilamos y publicamos en modo Release en la carpeta /app/publish
 RUN dotnet publish "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
@@ -22,14 +22,20 @@ RUN dotnet publish "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Releas
 
 # ─── ETAPA 2: Ejecución ─────────────────────────────────────────────────────
 # Usamos la imagen de runtime (más liviana, sin el SDK de compilación).
+# Esta imagen oficial trae un usuario no-root llamado `app` (UID 1654).
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 
-# Copiamos solo los archivos publicados desde la etapa de build
+# Copiamos los archivos publicados desde la etapa de build.
+# Los mantenemos con owner=root para que el usuario `app` que ejecuta la API
+# pueda leerlos y ejecutarlos, pero NO modificarlos (defensa ante RCE).
 COPY --from=build /app/publish .
 
-# Puerto en el que escucha la API dentro del contenedor
+# Cambiamos al usuario no-root antes de ejecutar la API (defensa en profundidad).
+USER app
+
+# Puerto en el que escucha la API dentro del contenedor (no privilegiado).
 EXPOSE 8080
 
 # Comando que se ejecuta cuando arranca el contenedor.

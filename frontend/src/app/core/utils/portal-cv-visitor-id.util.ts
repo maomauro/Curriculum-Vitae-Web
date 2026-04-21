@@ -7,14 +7,10 @@ function isLikelyUuid(value: string): boolean {
 }
 
 function newUuidV4(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  // Angular 20 soporta solo navegadores modernos: crypto.randomUUID()
+  // esta disponible (Chrome 92+, Firefox 95+, Safari 15.4+). No hace
+  // falta fallback con Math.random (ReDoS/PRNG inseguro).
+  return crypto.randomUUID();
 }
 
 /**

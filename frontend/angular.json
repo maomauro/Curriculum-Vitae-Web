@@ -99,6 +99,7 @@
         "test": {
           "builder": "@angular/build:karma",
           "options": {
+            "karmaConfig": "karma.conf.js",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
@@ -129,7 +130,15 @@
             "ci": {
               "watch": false,
               "progress": false,
-              "browsers": "ChromeHeadless"
+              "browsers": "ChromeHeadless",
+              "codeCoverage": true,
+              "codeCoverageExclude": [
+                "src/**/*.spec.ts",
+                "src/main.ts",
+                "src/test.ts",
+                "src/environments/**",
+                "src/polyfills.ts"
+              ]
             }
           }
         }
