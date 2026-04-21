@@ -476,7 +476,7 @@ export class ExperienciaComponent implements OnInit {
 
   agregarBorradorLaboral(exp: ExperienciaUI): void {
     this.borradoresLaborales.push({
-      clientKey: `n-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      clientKey: `n-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`,
       experienciaId: exp.experienciaId,
       expanded: true,
       committed: exp.experienciaId === 0 ? false : undefined,
