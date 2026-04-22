@@ -47,4 +47,18 @@ public class PublicEndpointsTests : IClassFixture<TestWebApplicationFactory>
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Health_SinAutenticacion_Retorna200YHealthy()
+    {
+        // /health lo consume Azure Container Apps como liveness probe.
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/health");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Equal("Healthy", body);
+    }
 }

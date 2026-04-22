@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "//": "Configuracion para Azure Static Web Apps. Se copia a dist/portalcv-web/browser/ en build por el glob de 'public' en angular.json.",
+
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/api/*",
+      "/assets/*",
+      "/*.{css,scss,js,mjs,map,ico,png,jpg,jpeg,gif,svg,webp,avif,woff,woff2,ttf,eot,otf,json,webmanifest,txt,xml}"
+    ]
+  },
+
+  "mimeTypes": {
+    ".json": "application/json",
+    ".webmanifest": "application/manifest+json",
+    ".woff2": "font/woff2"
+  },
+
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
+  },
+
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  }
+}
