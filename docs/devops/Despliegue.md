@@ -66,9 +66,16 @@
                         |
                         v
 +-----------------------------------------------------+
-|     CI -- Job deploy (PENDIENTE de implementar)     |
-|  (solo en push a main, ver seccion 2 mas abajo)     |
-|  +-- docker build + push --> GHCR                   |
+|        publish-backend-image.yml (activo)           |
+|  (solo en push a main o workflow_dispatch)          |
+|  +-- docker build + push --> GHCR (activo)          |
+|      ghcr.io/<owner>/portalcv-backend:latest        |
+|      ghcr.io/<owner>/portalcv-backend:sha-<short>   |
++-----------------------------------------------------+
+                        |
+                        v
++-----------------------------------------------------+
+|       CD -- Deploy Azure (PENDIENTE)                |
 |  +-- az containerapp update (backend)               |
 |  +-- az staticwebapp deploy (frontend)              |
 +-----------------------------------------------------+
