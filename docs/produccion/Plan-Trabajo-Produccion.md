@@ -23,10 +23,11 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - Tests frontend en CI con `--configuration=ci` (headless) y cobertura LCOV subida a SonarCloud
   - SonarCloud Quality Gate en verde en `main`; 6 security hotspots resueltos
   - Docker Compose retirado del repo; Dockerfile del backend endurecido (usuario `app`, binarios read-only)
+  - Runbook de despliegue en Azure con comandos `az` ejecutables (`docs/devops/Runbook-Azure.md`)
+  - Workflow de publicacion a GHCR (`.github/workflows/publish-backend-image.yml`): publica `ghcr.io/<owner>/portalcv-backend:latest` + `sha-<short>` en cada merge a `main`
 - Pendiente critico:
-  - Workflow de publicacion a GHCR (build + push imagen backend)
-  - Provision de Azure Container Apps
-  - Provision de Azure Static Web Apps
+  - Provision de Azure Container Apps (seguir Runbook §3)
+  - Provision de Azure Static Web Apps (seguir Runbook §4)
   - Proyecto de tests backend (xUnit) y descomentar su paso en CI
   - Cierre de checklist de despliegue
 
@@ -51,10 +52,11 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 
 ### Fase 2 — Preparacion CI/CD para despliegue
 
-- [ ] Definir estrategia de versionado de imagen backend (latest + sha)
-  - Criterio de cierre: tags claros y trazables
-- [ ] Agregar job de package/deploy para main
-  - Criterio de cierre: workflow listo para desplegar backend y frontend
+- [x] Definir estrategia de versionado de imagen backend (latest + sha) ✅
+  - Criterio de cierre: tags claros y trazables → `latest` (solo en `main`) + `sha-<short>` (trazabilidad del commit)
+- [x] Agregar job de package/deploy para main ✅ (parcial — fase build+push a GHCR)
+  - Criterio de cierre: workflow listo para publicar imagen backend a GHCR (`.github/workflows/publish-backend-image.yml`)
+  - Pendiente: pasos `az containerapp update` y `az staticwebapp deploy` — se implementan cuando existan los recursos Azure (Fases 3 y 4)
 - [ ] Ajustar salida y rutas de artefactos frontend para SWA
   - Criterio de cierre: output_location validado en pipeline
 
