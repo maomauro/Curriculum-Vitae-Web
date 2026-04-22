@@ -122,8 +122,11 @@ az containerapp create `
   --env-vars `
     ASPNETCORE_ENVIRONMENT=Production `
     Jwt__Issuer=PortalCV.Api `
-    Jwt__Audience=PortalCV.Client
+    Jwt__Audience=PortalCV.Client `
+    Cors__AllowedOrigins__0=https://placeholder.invalid
 ```
+
+> **Nota sobre CORS**: `Program.cs` valida en arranque que `Cors:AllowedOrigins` tenga al menos un origen cuando `ASPNETCORE_ENVIRONMENT=Production`. Por eso se pasa `https://placeholder.invalid` como valor temporal: permite que la API arranque y el endpoint `/health` responda, aunque el SPA todavía no pueda consumirla. En el **paso 5** se reemplaza por el `defaultHostname` del Static Web App real.
 
 ### 3.3 Configurar secretos y variables sensibles
 
@@ -169,11 +172,21 @@ az containerapp show `
   --query "properties.configuration.ingress.fqdn" -o tsv
 ```
 
-**Criterio de éxito:** `curl https://{fqdn}/health` (u otro endpoint público) responde `200 OK`.
+**Criterio de éxito:** `curl https://{fqdn}/health` responde `200 OK` con body `Healthy` (endpoint provisto por `Microsoft.Extensions.Diagnostics.HealthChecks` desde la versión actual del backend).
 
 ---
 
 ## 4. Azure Static Web Apps (frontend)
+
+### 4.0 `staticwebapp.config.json` (ya versionado)
+
+El archivo `frontend/public/staticwebapp.config.json` ya está versionado en el repo y se copia automáticamente a la raíz del bundle gracias al glob `public` configurado en `angular.json`. Define:
+
+- `navigationFallback` → cualquier ruta que no sea un asset se reescribe a `/index.html` (Angular controla la ruta). Esto evita 404 al refrescar en `/auth/login`, `/public/cvs/{slug}`, etc.
+- Exclusiones explícitas para `/api/*` y assets típicos.
+- `globalHeaders` con `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy`.
+
+No requiere acción manual; solo verificar que tras el primer deploy de SWA una ruta directa responde 200 (ver §4.3).
 
 ### 4.1 Crear el recurso conectado al repo
 
@@ -255,11 +268,12 @@ Después de que backend y frontend estén desplegados:
 $BACKEND = "https://{fqdn-del-container-app}"
 $FRONTEND = "https://{defaultHostname-swa}"
 
-# Health del backend (si existe endpoint)
+# Health del backend
 curl.exe "$BACKEND/health"
 
 # Endpoints publicos (sin auth)
-curl.exe "$BACKEND/api/publico/cvs"
+curl.exe "$BACKEND/api/public/cvs"
+curl.exe "$BACKEND/api/public/filters"
 
 # Frontend carga
 curl.exe -I "$FRONTEND"

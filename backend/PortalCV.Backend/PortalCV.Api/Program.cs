@@ -147,6 +147,11 @@ namespace PortalCV.Api
 
             builder.Services.AddAuthorization();
 
+            // Health checks: endpoint /health para smoke tests y liveness probe de
+            // Azure Container Apps. Por ahora es un liveness basico (la API responde);
+            // mas adelante se puede extender con checks contra SQL / dependencias.
+            builder.Services.AddHealthChecks();
+
             var app = builder.Build();
 
             app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -183,6 +188,10 @@ namespace PortalCV.Api
             {
                 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
             }
+
+            // Endpoint de health publico (no requiere JWT). Azure Container Apps lo
+            // usa como liveness probe y curl lo usa como smoke test post-deploy.
+            app.MapHealthChecks("/health").AllowAnonymous();
 
             app.MapControllers();
 
