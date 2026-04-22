@@ -22,7 +22,7 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 | Cache | IMemoryCache (.NET in-process) | -- | Sin dependencia externa; $0 |
 | Logging | Serilog | -- | Structured logs en consola y archivo |
 | Auth | JWT Bearer | -- | Tokens de acceso (15 min) |
-| Pruebas backend | xUnit | -- | **Pendiente** — aun no existe proyecto de tests (`TODO` en CI) |
+| Pruebas backend | xUnit | -- | Tests de integracion sobre `PortalCV.Api.Tests` (WebApplicationFactory + EF InMemory). Se extenderan con tests unitarios de servicios en Fase 2. |
 | Pruebas frontend | Karma + Jasmine | -- | Unit tests Angular con ChromeHeadless + cobertura LCOV hacia Sonar |
 
 ---
@@ -67,7 +67,7 @@ Existen dos workflows:
 
 | Job | Trigger | Pasos |
 |-----|---------|-------|
-| `backend` | Todo push y PR | `dotnet restore`, `dotnet build --configuration Release`. Los tests estan comentados hasta que exista proyecto de tests. |
+| `backend` | Todo push y PR | `dotnet restore`, `dotnet build --configuration Release`, `dotnet test` sobre `PortalCV.Api.Tests` (xUnit) y subida del `.trx` como artifact. |
 | `frontend` | Todo push y PR | `npm ci`, `ng build --configuration production`, `ng test --configuration ci` (con cobertura). Sube artifact `frontend-coverage` con `lcov.info`. |
 | `sonarcloud` | Todo push y PR (depende de `backend` y `frontend`) | Descarga el artifact `frontend-coverage` y corre `SonarSource/sonarqube-scan-action@v6` pasando `sonar.javascript.lcov.reportPaths`, `sonar.tests`, `sonar.test.inclusions` y exclusiones de cobertura. |
 

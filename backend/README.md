@@ -1,6 +1,6 @@
 # Backend — PortalCV
 
-API REST construida con **.NET 10** siguiendo **Arquitectura Limpia** (Clean Architecture). El backend está dividido en 4 proyectos dentro de la solución `PortalCV.Backend.slnx`.
+API REST construida con **.NET 10** siguiendo **Arquitectura Limpia** (Clean Architecture). El backend está dividido en 4 proyectos de producción + 1 proyecto de tests dentro de la solución `PortalCV.Backend.slnx`.
 
 ---
 
@@ -13,7 +13,8 @@ backend/
     ├── PortalCV.Domain/              ← Capa 1: Entidades del negocio
     ├── PortalCV.Application/         ← Capa 2: Contratos e interfaces
     ├── PortalCV.Infrastructure/      ← Capa 3: Implementación (DB, servicios)
-    └── PortalCV.Api/                 ← Capa 4: Controladores HTTP (API)
+    ├── PortalCV.Api/                 ← Capa 4: Controladores HTTP (API)
+    └── PortalCV.Api.Tests/           ← Tests de integración (xUnit + WebApplicationFactory + EF InMemory)
 ```
 
 Las capas **solo pueden depender hacia adentro**:
@@ -321,6 +322,28 @@ HTTP Response (DTO serializado como JSON)
 
 ---
 
+## Tests (`PortalCV.Api.Tests`)
+
+Proyecto **xUnit** con tests de integración que arrancan el host de la API en memoria usando `WebApplicationFactory<Program>` y sustituyen SQL Server por **EF Core InMemory** (sin dependencia de base de datos real).
+
+Cobertura actual (mínima, se irá extendiendo):
+
+| Archivo | Qué valida |
+|---|---|
+| `PublicEndpointsTests.cs` | Endpoints públicos (`/api/public/cvs`, `/filters`, detalle 404) responden sin JWT |
+| `AuthEndpointsTests.cs` | Endpoints protegidos devuelven 401 sin token; forgot-password responde genérico |
+| `TestWebApplicationFactory.cs` | Fixture compartida: aísla el provider interno de EF para evitar choque SqlServer/InMemory |
+
+Ejecutar en local:
+
+```bash
+dotnet test backend/PortalCV.Backend/PortalCV.Api.Tests/PortalCV.Api.Tests.csproj --configuration Release
+```
+
+En CI (`ci.yml`, job `backend`) se ejecuta tras el build y publica los resultados `.trx` como artifact `backend-test-results`.
+
+---
+
 ## Comandos útiles
 
 ```bash
@@ -331,6 +354,9 @@ dotnet build
 # Ejecutar la API (requiere appsettings configurado)
 cd PortalCV.Api
 dotnet run
+
+# Ejecutar tests
+dotnet test backend/PortalCV.Backend/PortalCV.Api.Tests/PortalCV.Api.Tests.csproj
 
 # Swagger UI disponible en:
 # http://localhost:{puerto}/swagger

@@ -25,10 +25,10 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - Docker Compose retirado del repo; Dockerfile del backend endurecido (usuario `app`, binarios read-only)
   - Runbook de despliegue en Azure con comandos `az` ejecutables (`docs/devops/Runbook-Azure.md`)
   - Workflow de publicacion a GHCR (`.github/workflows/publish-backend-image.yml`): publica `ghcr.io/<owner>/portalcv-backend:latest` + `sha-<short>` en cada merge a `main`
+  - Proyecto de tests backend `PortalCV.Api.Tests` (xUnit + WebApplicationFactory + EF InMemory) ejecutandose en CI (job `backend`)
 - Pendiente critico:
   - Provision de Azure Container Apps (seguir Runbook §3)
   - Provision de Azure Static Web Apps (seguir Runbook §4)
-  - Proyecto de tests backend (xUnit) y descomentar su paso en CI
   - Cierre de checklist de despliegue
 
 ---
@@ -41,8 +41,8 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - Criterio de cierre: launchSettings sin valores sensibles reales ✅
 - [x] Corregir comando de tests frontend en CI
   - Criterio de cierre: job frontend ejecuta tests en modo CI de forma deterministica ✅ (`--configuration=ci` + cobertura hacia Sonar)
-- [ ] Definir puerta minima de pruebas backend
-  - Criterio de cierre: existe al menos 1 proyecto de test backend y CI lo ejecuta
+- [x] Definir puerta minima de pruebas backend ✅
+  - Criterio de cierre: existe al menos 1 proyecto de test backend y CI lo ejecuta — `PortalCV.Api.Tests` con 5 tests de integracion (WebApplicationFactory + EF InMemory); ejecutado en job `backend` y con artifact `backend-test-results`
 - [ ] Endurecer manejo de errores en frontend (status 0, 4xx, 5xx)
   - Criterio de cierre: notificacion centralizada y flujo de sesion coherente
 - [ ] Validar expiracion de token antes de adjuntar Authorization
