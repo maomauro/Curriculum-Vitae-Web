@@ -14,6 +14,10 @@ backend/**/*.user
 # Salidas locales de pruebas de compilación (no versionar)
 backend/_build_out*/
 
+# Resultados de `dotnet test` (TRX, cobertura local, etc.)
+backend/TestResults/
+backend/**/TestResults/
+
 # Configuración local con credenciales — nunca commitear
 **/appsettings.Development.json
 **/appsettings.Local.json

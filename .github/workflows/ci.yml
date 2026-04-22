@@ -30,19 +30,21 @@ jobs:
           --no-restore
           --configuration Release
 
-      # TODO (HS-XX): agregar proyecto de tests cuando esté disponible
-      # - name: Tests
-      #   run: >
-      #     dotnet test backend/PortalCV.Backend/PortalCV.Backend.slnx
-      #     --no-build --configuration Release
-      #     --logger "trx;LogFileName=results.trx"
-      # - name: Publicar resultados
-      #   uses: dorny/test-reporter@v1
-      #   if: always()
-      #   with:
-      #     name: Backend Tests
-      #     path: "**/*.trx"
-      #     reporter: dotnet-trx
+      - name: Tests unitarios e integración
+        run: >
+          dotnet test backend/PortalCV.Backend/PortalCV.Api.Tests/PortalCV.Api.Tests.csproj
+          --no-build --configuration Release
+          --logger "trx;LogFileName=backend-tests.trx"
+          --results-directory backend/TestResults
+
+      - name: Subir resultados de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/TestResults/*.trx
+          if-no-files-found: ignore
+          retention-days: 7
 
   # ─────────────────────────────────────────────────────────────────────────────
   frontend:

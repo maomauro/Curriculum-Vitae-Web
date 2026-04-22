@@ -124,7 +124,7 @@ El pipeline de CI esta en [../../.github/workflows/ci.yml](../../.github/workflo
 
 | Job | Trigger | Acciones |
 |-----|---------|----------|
-| `backend` | Todo push y PR | `dotnet restore` --> `dotnet build --configuration Release` (sin tests; aun no existe proyecto de tests) |
+| `backend` | Todo push y PR | `dotnet restore` --> `dotnet build --configuration Release` --> `dotnet test` sobre `PortalCV.Api.Tests` (xUnit + WebApplicationFactory + EF InMemory); publica resultados `.trx` como artifact `backend-test-results` |
 | `frontend` | Todo push y PR | `npm ci` --> `ng build --configuration production` --> `ng test --configuration ci` (con cobertura) --> sube artifact `frontend-coverage` (`lcov.info`) |
 | `sonarcloud` | Todo push y PR | Descarga el artifact `frontend-coverage` y ejecuta `SonarSource/sonarqube-scan-action@v6` con `sonar.javascript.lcov.reportPaths` apuntando al `lcov.info` |
 

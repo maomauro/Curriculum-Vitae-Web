@@ -42,8 +42,8 @@ Registrar, de forma ordenada, las herramientas que usa el proyecto por ambiente 
 - [x] Workflow `ci.yml` corriendo en push y PR hacia `develop`/`main`.
 - [x] SonarCloud configurado (`SONAR_TOKEN` secret; `SONAR_ORGANIZATION` y `SONAR_PROJECT_KEY` variables).
 - [x] Cobertura frontend reportada a Sonar via artifact `frontend-coverage` (`lcov.info`).
-- [ ] Workflow de build + push de imagen backend a GHCR (pendiente).
-- [ ] Proyecto de tests backend (xUnit) y su paso en CI (pendiente).
+- [x] Workflow de build + push de imagen backend a GHCR (`.github/workflows/publish-backend-image.yml`).
+- [x] Proyecto de tests backend (`PortalCV.Api.Tests` con xUnit) y su paso en CI (job `backend`).
 
 ### Produccion (Azure)
 - [x] Azure SQL Database Free Tier operativa (`sql-portalcv-mao.database.windows.net/PortalCV`).
