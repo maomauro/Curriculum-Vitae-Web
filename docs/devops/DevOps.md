@@ -58,11 +58,26 @@ feat/* --push--> CI passes
 
 ### Archivo: .github/workflows/ci.yml
 
+Existen dos workflows:
+
+- `.github/workflows/ci.yml` — validación continua (build + test + Sonar) en **todo push y PR**.
+- `.github/workflows/publish-backend-image.yml` — publicación de imagen Docker del backend a GHCR en **merge a `main`** (o disparo manual).
+
+#### ci.yml
+
 | Job | Trigger | Pasos |
 |-----|---------|-------|
 | `backend` | Todo push y PR | `dotnet restore`, `dotnet build --configuration Release`. Los tests estan comentados hasta que exista proyecto de tests. |
 | `frontend` | Todo push y PR | `npm ci`, `ng build --configuration production`, `ng test --configuration ci` (con cobertura). Sube artifact `frontend-coverage` con `lcov.info`. |
 | `sonarcloud` | Todo push y PR (depende de `backend` y `frontend`) | Descarga el artifact `frontend-coverage` y corre `SonarSource/sonarqube-scan-action@v6` pasando `sonar.javascript.lcov.reportPaths`, `sonar.tests`, `sonar.test.inclusions` y exclusiones de cobertura. |
+
+#### publish-backend-image.yml
+
+| Job | Trigger | Pasos |
+|-----|---------|-------|
+| `publish` | `push` a `main` con cambios en `backend/**` o en el propio workflow, y `workflow_dispatch` | Login a GHCR con `GITHUB_TOKEN`, extrae tags con `docker/metadata-action` (`latest` solo en `main` + `sha-<short>`), `docker/build-push-action` con cache GHA, publica `ghcr.io/<owner>/portalcv-backend:<tags>` |
+
+Esta imagen es la que consume Azure Container Apps según [Runbook-Azure.md](./Runbook-Azure.md).
 
 ### Variables / secretos de CI requeridos
 
