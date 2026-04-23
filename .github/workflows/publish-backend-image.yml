@@ -10,6 +10,9 @@ name: Publish backend image to GHCR
 #
 # Los comandos `az` del runbook (docs/devops/Runbook-Azure.md) apuntan a
 # `ghcr.io/<owner>/portalcv-backend:latest`.
+#
+# Tras un push exitoso a `main`, el job `deploy-aca` actualiza Azure Container Apps
+# con el digest exacto de la imagen recien publicada (evita imagen obsoleta en ACA).
 
 on:
   push:
@@ -29,11 +32,16 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/portalcv-backend
+  # Azure Container Apps (ajustar si el RG o nombre de app cambian; ver Runbook-Azure.md)
+  ACA_RESOURCE_GROUP: CV-Mao
+  ACA_APP_NAME: portalcv-api
 
 jobs:
   publish:
     name: Build & push backend image
     runs-on: ubuntu-latest
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
 
     permissions:
       contents: read
@@ -87,3 +95,49 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Digest: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
+  deploy-aca:
+    name: Deploy backend to Azure Container Apps
+    needs: publish
+    runs-on: ubuntu-latest
+    if: >
+      github.ref == 'refs/heads/main' &&
+      needs.publish.outputs.image_digest != ''
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Azure Container Apps extension
+        run: az extension add --name containerapp --upgrade --yes
+
+      - name: Update Container App (imagen por digest)
+        env:
+          DIGEST: ${{ needs.publish.outputs.image_digest }}
+        run: |
+          set -euo pipefail
+          IMAGE_REF="${REGISTRY}/${IMAGE_NAME}@${DIGEST}"
+          echo "Actualizando ACA con imagen: ${IMAGE_REF}"
+          az containerapp update \
+            --name "${ACA_APP_NAME}" \
+            --resource-group "${ACA_RESOURCE_GROUP}" \
+            --image "${IMAGE_REF}"
+
+      - name: Resumen despliegue ACA
+        if: success()
+        run: |
+          {
+            echo "## Despliegue Azure Container Apps"
+            echo ""
+            echo "Imagen desplegada: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.publish.outputs.image_digest }}\`"
+            echo ""
+            echo "| Recurso | Valor |"
+            echo "|---------|-------|"
+            echo "| Container App | \`${{ env.ACA_APP_NAME }}\` |"
+            echo "| Resource group | \`${{ env.ACA_RESOURCE_GROUP }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
