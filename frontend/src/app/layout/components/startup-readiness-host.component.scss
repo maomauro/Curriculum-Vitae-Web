@@ -1,0 +1,41 @@
+:host {
+  display: contents;
+}
+
+.startup-readiness__label {
+  color: #f1f5f9;
+}
+
+.startup-readiness__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.55);
+  color: #f8fafc;
+}
+
+.startup-readiness__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #adb5bd;
+}
+
+.startup-readiness__pill--pending .startup-readiness__dot {
+  background: #ffc107;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.35);
+}
+
+.startup-readiness__pill--ok .startup-readiness__dot {
+  background: #20c997;
+  box-shadow: 0 0 0 2px rgba(32, 201, 151, 0.35);
+}
+
+.startup-readiness__pill--warn .startup-readiness__dot {
+  background: #fd7e14;
+  box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.35);
+}

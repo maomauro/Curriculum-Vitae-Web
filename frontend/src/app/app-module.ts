@@ -4,6 +4,7 @@ import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
+import { StartupReadinessHostComponent } from './layout/components/startup-readiness-host.component';
 import { CoreModule } from './core/core-module';
 import { LayoutModule } from './layout/layout-module';
 import { SharedModule } from './shared/shared-module';
@@ -18,6 +19,7 @@ import { ErrorInterceptor } from './core/interceptors/error.interceptor';
   imports: [
     BrowserModule,
     HttpClientModule,
+    StartupReadinessHostComponent,
     AppRoutingModule,
     CoreModule,
     SharedModule,
