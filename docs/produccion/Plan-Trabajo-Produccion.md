@@ -1,8 +1,8 @@
 # Plan de Trabajo para Salida a Produccion — PortalCV
 
 Estado del plan: En ejecucion
-Fecha de corte: 20-04-2026
-Rama de trabajo actual: `feat/docs` (documentacion); operativo en `feat/frontend` y `feat/backend`
+Fecha de corte: 23-04-2026
+Rama de trabajo actual: `feat/backend` (operativo)
 
 ---
 
@@ -25,10 +25,14 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - Docker Compose retirado del repo; Dockerfile del backend endurecido (usuario `app`, binarios read-only)
   - Runbook de despliegue en Azure con comandos `az` ejecutables (`docs/devops/Runbook-Azure.md`)
   - Workflow de publicacion a GHCR (`.github/workflows/publish-backend-image.yml`): publica `ghcr.io/<owner>/portalcv-backend:latest` + `sha-<short>` en cada merge a `main`
+  - CD backend a Azure Container Apps en el workflow (`deploy-aca`) con login por service principal usando `AZURE_CREDENTIALS`
   - Proyecto de tests backend `PortalCV.Api.Tests` (xUnit + WebApplicationFactory + EF InMemory) ejecutandose en CI (job `backend`)
+  - Endpoint `/health` habilitado y respondiendo `200` en produccion
+  - ACA operativo en `CV-Mao`: `env-portalcv` + `portalcv-api` con ingress publico y variables/sensibles cargados
+  - Conectividad SQL validada en runtime con `portalcv_app_prod` (incluye correccion de permisos `dbo` y prueba de endpoint publico)
 - Pendiente critico:
-  - Provision de Azure Container Apps (seguir Runbook §3)
   - Provision de Azure Static Web Apps (seguir Runbook §4)
+  - Actualizar CORS con `defaultHostname` real del SWA (Runbook §5)
   - Cierre de checklist de despliegue
 
 ---
@@ -56,17 +60,17 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - Criterio de cierre: tags claros y trazables → `latest` (solo en `main`) + `sha-<short>` (trazabilidad del commit)
 - [x] Agregar job de package/deploy para main ✅ (parcial — fase build+push a GHCR)
   - Criterio de cierre: workflow listo para publicar imagen backend a GHCR (`.github/workflows/publish-backend-image.yml`)
-  - Pendiente: pasos `az containerapp update` y `az staticwebapp deploy` — se implementan cuando existan los recursos Azure (Fases 3 y 4)
+  - Estado actual: incluye `az containerapp update` por digest en ACA; queda pendiente `staticwebapp deploy` al crear SWA
 - [ ] Ajustar salida y rutas de artefactos frontend para SWA
   - Criterio de cierre: output_location validado en pipeline
 
 ### Fase 3 — Provision de Azure Container Apps
 
-- [ ] Crear Container Apps Environment
+- [x] Crear Container Apps Environment
   - Criterio de cierre: entorno creado en el resource group correcto
-- [ ] Crear Container App portalcv-api
+- [x] Crear Container App portalcv-api
   - Criterio de cierre: ingress externo y puerto 8080 funcional
-- [ ] Configurar secretos y variables de entorno en Container App
+- [x] Configurar secretos y variables de entorno en Container App
   - Variables minimas esperadas:
     - ConnectionStrings__DefaultConnection
     - ASPNETCORE_ENVIRONMENT=Production
@@ -74,7 +78,7 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
     - Jwt__Audience
     - Jwt__Key
     - Cors__AllowedOrigins__0
-- [ ] Publicar imagen backend en GHCR y desplegar en ACA
+- [x] Publicar imagen backend en GHCR y desplegar en ACA
   - Criterio de cierre: API responde endpoints principales
 
 ### Fase 4 — Provision de Azure Static Web Apps
@@ -104,17 +108,17 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 ### Azure SQL Database (ya creado)
 
 - [x] Recurso existente
-- [ ] Verificar conectividad desde ACA usando portalcv_app_prod
-- [ ] Verificar reglas de firewall necesarias para runtime
-- [ ] Verificar estado de esquema/scripts aplicados en produccion
+- [x] Verificar conectividad desde ACA usando portalcv_app_prod
+- [x] Verificar reglas de firewall necesarias para runtime
+- [x] Verificar estado de esquema/scripts aplicados en produccion
 
-### Azure Container Apps (pendiente)
+### Azure Container Apps (operativo)
 
-- [ ] Crear env-portalcv
-- [ ] Crear portalcv-api
-- [ ] Configurar variables y secretos
-- [ ] Configurar escalado minimo/maximo
-- [ ] Probar endpoint base y endpoints de auth/public
+- [x] Crear env-portalcv
+- [x] Crear portalcv-api
+- [x] Configurar variables y secretos
+- [x] Configurar escalado minimo/maximo
+- [x] Probar endpoint base y endpoints de auth/public
 
 ### Azure Static Web Apps (pendiente)
 
@@ -123,6 +127,11 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 - [ ] Confirmar app_location y output_location
 - [ ] Confirmar enrutamiento SPA
 - [ ] Validar llamadas a API en dominio de produccion
+
+### Corte actual (23-04-2026)
+
+- Bloqueante actual: provisionar SWA y enlazar dominio real del frontend en `Cors__AllowedOrigins__0`.
+- Verificacion final pendiente: smoke test E2E (frontend + backend) y rollback documentado/probado.
 
 ---
 
