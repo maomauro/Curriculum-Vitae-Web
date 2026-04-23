@@ -11,15 +11,16 @@ import { StartupReadinessService, type DbReadinessState } from '../../core/servi
     <ng-container *ngIf="visible()">
       <div class="portal-modal__backdrop" aria-hidden="true"></div>
       <div
-        class="modal show d-block portal-modal__root"
+        class="modal show d-block portal-modal__root portal-modal__root--startup-readiness"
         tabindex="-1"
         role="dialog"
         aria-modal="true"
         [attr.aria-labelledby]="tituloId">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog">
-          <div class="modal-content portal-modal__panel">
+        <div
+          class="modal-dialog modal-dialog-centered portal-modal__dialog portal-modal__dialog--startup-readiness">
+          <div class="modal-content portal-modal__panel portal-modal__panel--startup-readiness">
             <div class="modal-header portal-modal__header">
-              <div class="portal-modal__title-row w-100">
+              <div class="portal-modal__title-row w-100 flex-wrap gap-2 align-items-start">
                 <span class="portal-modal__icon" aria-hidden="true">
                   <i class="bi bi-hand-thumbs-up"></i>
                 </span>
@@ -41,18 +42,26 @@ import { StartupReadinessService, type DbReadinessState } from '../../core/servi
               </div>
             </div>
             <div class="modal-body portal-modal__body">
-              <p class="mb-3">
-                PortalCV es un espacio para explorar CVs públicos y, si creas cuenta, administrar tu perfil profesional.
-                Mientras el servicio termina de despertar, puedes leer este instructivo breve:
-              </p>
-              <ul class="small mb-3">
-                <li><strong>Explorar:</strong> usa el buscador para ver CVs publicados.</li>
-                <li><strong>Registrarte:</strong> crea una cuenta para acceder al panel privado.</li>
-                <li><strong>Privacidad:</strong> no compartas tu contraseña; cierra sesión en equipos compartidos.</li>
-              </ul>
-              <div class="alert alert-info border-0 border-start border-4 border-primary mb-0" role="note">
-                <strong>Nota.</strong> Si el indicador pasa a “En espera” o “Revisar”, espera unos segundos y reintenta;
-                en planes gratuitos de Azure SQL es normal un arranque lento tras inactividad.
+              <div class="row g-2 g-md-3 align-items-stretch">
+                <div class="col-12 col-md-7">
+                  <p class="small mb-2 mb-md-3">
+                    PortalCV es un espacio para explorar CVs públicos y, si creas cuenta, administrar tu perfil profesional.
+                    Mientras el servicio termina de despertar, puedes leer este instructivo breve:
+                  </p>
+                  <ul class="small mb-0 ps-3">
+                    <li class="mb-1"><strong>Explorar:</strong> usa el buscador para ver CVs publicados.</li>
+                    <li class="mb-1"><strong>Registrarte:</strong> crea una cuenta para acceder al panel privado.</li>
+                    <li><strong>Privacidad:</strong> no compartas tu contraseña; cierra sesión en equipos compartidos.</li>
+                  </ul>
+                </div>
+                <div class="col-12 col-md-5 d-flex">
+                  <div
+                    class="alert alert-info border-0 border-start border-4 border-primary mb-0 align-self-stretch flex-grow-1"
+                    role="note">
+                    <strong>Nota.</strong> Si el indicador pasa a “En espera” o “Revisar”, espera unos segundos y reintenta;
+                    en planes gratuitos de Azure SQL es normal un arranque lento tras inactividad.
+                  </div>
+                </div>
               </div>
             </div>
             <div class="modal-footer portal-modal__footer d-flex flex-wrap gap-2 justify-content-between">
