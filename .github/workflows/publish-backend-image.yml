@@ -63,6 +63,9 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-,format=short
 
+      # Sin cache remota GHA: evita imagenes "latest" con DLL antiguos cuando el
+      # cache de Buildx reutiliza capas de `dotnet publish` de un commit anterior
+      # (sintoma: /health 404 en ACA aunque main ya tenga MapHealthChecks).
       - name: Build & push
         id: build
         uses: docker/build-push-action@v6
@@ -72,8 +75,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
       - name: Resumen de la publicacion
         run: |
