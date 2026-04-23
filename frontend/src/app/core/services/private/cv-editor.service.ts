@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { API_BASE_URL } from '../../constants/api-base-url';
 
 // ── DTOs — Personales ─────────────────────────────────────────────────────────
 
@@ -211,7 +212,7 @@ export interface UpdatePresentacionCvRequest {
 
 @Injectable({ providedIn: 'root' })
 export class CvEditorService {
-  private readonly BASE = '/api/cv';
+  private readonly BASE = `${API_BASE_URL}/api/cv`;
 
   constructor(private http: HttpClient) {}
 

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
+import { API_BASE_URL } from '../../constants/api-base-url';
 
 /** Alinea respuestas JSON en PascalCase (p. ej. algunos proxies) con los DTOs camelCase del front. */
 function deepToCamel(value: unknown): unknown {
@@ -170,7 +171,7 @@ export interface BuscarCvsParams {
 
 @Injectable({ providedIn: 'root' })
 export class PublicService {
-  private readonly BASE = '/api/public';
+  private readonly BASE = `${API_BASE_URL}/api/public`;
 
   constructor(private http: HttpClient) {}
 
