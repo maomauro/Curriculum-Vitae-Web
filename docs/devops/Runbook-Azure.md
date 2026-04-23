@@ -306,6 +306,8 @@ curl.exe -I "$FRONTEND/auth/login"
 az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 ```
 
+> Nota operativa: en Azure SQL Free/Serverless puede aparecer un `500` transitorio en el primer request tras inactividad (reactivación de la base). Reintentar después de 10-30 segundos; si persiste, revisar logs de ACA y estado de SQL.
+
 ---
 
 ## 8. Rollback rápido
@@ -348,14 +350,14 @@ az staticwebapp delete --name $SWA_APP --resource-group $RG --yes
 
 ## Checklist final
 
-- [ ] RG `rg-portalcv` creado.
-- [ ] Firewall Azure SQL con "Allow Azure services" activo.
-- [ ] Container App Environment `env-portalcv` creado.
-- [ ] Container App `portalcv-api` desplegado con imagen de GHCR.
-- [ ] Secrets `jwt-key` y `sql-conn` cargados en el Container App.
-- [ ] Static Web App `portalcv-web` conectado al repo.
-- [ ] `frontend/public/staticwebapp.config.json` versionado con `navigationFallback`.
-- [ ] CORS del backend apuntando al `defaultHostname` del SWA.
-- [ ] GitHub Secrets (`AZURE_CREDENTIALS`, `AZURE_STATIC_WEB_APPS_TOKEN`, `JWT_KEY_PROD`, `AZURE_SQL_CONN_PROD`) creados.
-- [ ] Smoke test end-to-end OK.
+- [x] RG `CV-Mao` creado.
+- [x] Firewall Azure SQL con "Allow Azure services" activo.
+- [x] Container App Environment `env-portalcv` creado.
+- [x] Container App `portalcv-api` desplegado con imagen de GHCR.
+- [x] Secrets `jwt-key` y `sql-conn` cargados en el Container App.
+- [x] Static Web App `portalcv-web` conectado al repo.
+- [x] `frontend/public/staticwebapp.config.json` versionado con `navigationFallback`.
+- [x] CORS del backend apuntando al `defaultHostname` del SWA.
+- [x] GitHub Secrets (`AZURE_CREDENTIALS`, `AZURE_STATIC_WEB_APPS_TOKEN`, `JWT_KEY_PROD`, `AZURE_SQL_CONN_PROD`) creados.
+- [x] Smoke test end-to-end técnico OK (`/health`, SPA raíz, ruta directa y endpoint público).
 - [ ] Procedimiento de rollback probado al menos una vez.

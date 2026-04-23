@@ -31,9 +31,7 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
   - ACA operativo en `CV-Mao`: `env-portalcv` + `portalcv-api` con ingress publico y variables/sensibles cargados
   - Conectividad SQL validada en runtime con `portalcv_app_prod` (incluye correccion de permisos `dbo` y prueba de endpoint publico)
 - Pendiente critico:
-  - Provision de Azure Static Web Apps (seguir Runbook §4)
-  - Actualizar CORS con `defaultHostname` real del SWA (Runbook §5)
-  - Cierre de checklist de despliegue
+  - Cierre de checklist de despliegue (smoke funcional completo + rollback probado)
 
 ---
 
@@ -61,7 +59,7 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 - [x] Agregar job de package/deploy para main ✅ (parcial — fase build+push a GHCR)
   - Criterio de cierre: workflow listo para publicar imagen backend a GHCR (`.github/workflows/publish-backend-image.yml`)
   - Estado actual: incluye `az containerapp update` por digest en ACA; queda pendiente `staticwebapp deploy` al crear SWA
-- [ ] Ajustar salida y rutas de artefactos frontend para SWA
+- [x] Ajustar salida y rutas de artefactos frontend para SWA
   - Criterio de cierre: output_location validado en pipeline
 
 ### Fase 3 — Provision de Azure Container Apps
@@ -83,11 +81,11 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 
 ### Fase 4 — Provision de Azure Static Web Apps
 
-- [ ] Crear recurso portalcv-web conectado al repo (rama main)
+- [x] Crear recurso portalcv-web conectado al repo (rama main)
   - Criterio de cierre: build/deploy inicial exitoso
-- [ ] Validar configuracion SPA (navigation fallback)
+- [x] Validar configuracion SPA (navigation fallback)
   - Criterio de cierre: rutas directas como /auth/login no retornan 404
-- [ ] Validar conectividad SWA -> ACA
+- [x] Validar conectividad SWA -> ACA
   - Criterio de cierre: frontend consume /api sin errores CORS
 
 ### Fase 5 — Validacion de salida y go-live
@@ -120,18 +118,19 @@ Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI
 - [x] Configurar escalado minimo/maximo
 - [x] Probar endpoint base y endpoints de auth/public
 
-### Azure Static Web Apps (pendiente)
+### Azure Static Web Apps (operativo)
 
-- [ ] Crear portalcv-web
-- [ ] Conectar repo y rama main
-- [ ] Confirmar app_location y output_location
-- [ ] Confirmar enrutamiento SPA
-- [ ] Validar llamadas a API en dominio de produccion
+- [x] Crear portalcv-web
+- [x] Conectar repo y rama main
+- [x] Confirmar app_location y output_location
+- [x] Confirmar enrutamiento SPA
+- [x] Validar llamadas a API en dominio de produccion
 
 ### Corte actual (23-04-2026)
 
-- Bloqueante actual: provisionar SWA y enlazar dominio real del frontend en `Cors__AllowedOrigins__0`.
-- Verificacion final pendiente: smoke test E2E (frontend + backend) y rollback documentado/probado.
+- SWA operativo con workflow de deploy en `main` y dominio `*.azurestaticapps.net`.
+- CORS enlazado al dominio real del frontend; registro web validado desde UI.
+- Verificacion final pendiente: smoke funcional completo y rollback documentado/probado.
 
 ---
 
