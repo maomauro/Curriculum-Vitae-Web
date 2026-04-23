@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../../constants/api-base-url';
 
 // ── DTOs (espejo de DashboardDtos.cs) ────────────────────────────────────────
 
@@ -43,7 +44,7 @@ export interface NotificacionesResumenDto {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private readonly BASE = '/api';
+  private readonly BASE = `${API_BASE_URL}/api`;
 
   constructor(private http: HttpClient) {}
 

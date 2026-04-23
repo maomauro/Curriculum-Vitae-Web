@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../../constants/api-base-url';
 
-const BASE = '/api/admin';
+const BASE = `${API_BASE_URL}/api/admin`;
 
 // ── DTOs (espejo de AdminDtos.cs) ────────────────────────────────────────────
 

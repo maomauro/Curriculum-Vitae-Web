@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { API_BASE_URL } from '../../constants/api-base-url';
 
 export interface AlertaVisitaDto {
   alertaVisitaId: number;
@@ -28,7 +29,7 @@ export interface AlertasPageDto {
 
 @Injectable({ providedIn: 'root' })
 export class AlertasService {
-  private readonly BASE = '/api/alertas';
+  private readonly BASE = `${API_BASE_URL}/api/alertas`;
 
   constructor(private http: HttpClient) {}
 

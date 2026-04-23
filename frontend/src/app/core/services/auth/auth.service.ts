@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { CV_ROL } from '../../constants/cv-roles';
+import { API_BASE_URL } from '../../constants/api-base-url';
 
 export interface UserInfo {
   id: number;
@@ -39,7 +40,7 @@ const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly API_URL = '/api/auth';
+  private readonly API_URL = `${API_BASE_URL}/api/auth`;
   private readonly TOKEN_KEY = 'portalcv_token';
 
   private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
