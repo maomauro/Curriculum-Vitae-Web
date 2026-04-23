@@ -289,6 +289,9 @@ $FRONTEND = "https://{defaultHostname-swa}"
 # Health del backend
 curl.exe "$BACKEND/health"
 
+# Readiness con base de datos (puede fallar brevemente mientras Azure SQL despierta)
+curl.exe "$BACKEND/health/ready"
+
 # Endpoints publicos (sin auth)
 curl.exe "$BACKEND/api/public/cvs"
 curl.exe "$BACKEND/api/public/filters"
