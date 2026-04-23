@@ -108,15 +108,35 @@ jobs:
       contents: read
 
     steps:
-      # `creds` como JSON unico a veces falla en azure/login@v2 ("client-id and tenant-id
-      # not supplied"). Se expande el JSON de create-for-rbac --json-auth con fromJSON.
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-          tenant-id: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          subscription-id: ${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}
-          client-secret: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+      # No usar fromJSON(secrets...) en `with:` del action: GitHub puede validar el
+      # workflow con el secret vacio y falla con "Error reading JToken... line 0".
+      # El JSON se parsea en runtime con Python (mismo formato --json-auth de az cli).
+      - name: Azure CLI login (service principal)
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          set -euo pipefail
+          python3 << 'EOF'
+          import json, os, subprocess
+          raw = os.environ.get("AZURE_CREDENTIALS", "").strip()
+          if not raw:
+              raise SystemExit("AZURE_CREDENTIALS vacio: crea el secret en Settings > Secrets > Actions")
+          c = json.loads(raw)
+          subprocess.run(
+              [
+                  "az", "login", "--service-principal",
+                  "-u", c["clientId"],
+                  "-p", c["clientSecret"],
+                  "--tenant", c["tenantId"],
+              ],
+              check=True,
+          )
+          subprocess.run(
+              ["az", "account", "set", "--subscription", c["subscriptionId"]],
+              check=True,
+          )
+          print("Azure login OK")
+          EOF
 
       - name: Install Azure Container Apps extension
         run: az extension add --name containerapp --upgrade --yes

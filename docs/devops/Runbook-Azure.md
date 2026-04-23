@@ -267,6 +267,8 @@ Ir a **Settings → Secrets and variables → Actions** del repo:
 
 El workflow **`.github/workflows/publish-backend-image.yml`** incluye, tras publicar la imagen en GHCR, el job **`deploy-aca`**, que ejecuta `az containerapp update` con la referencia **`ghcr.io/<owner>/portalcv-backend@<digest>`** del build (mismo digest que aparece en el resumen del job *Build & push*).
 
+El login en Azure usa **`az login --service-principal`** leyendo el JSON del secret en runtime (no `fromJSON(...)` en el YAML, para evitar errores de plantilla si el secret no esta disponible en la fase de validacion).
+
 **Requisitos:**
 
 - Secret **`AZURE_CREDENTIALS`** configurado en el repo (JSON del service principal con permisos suficientes sobre el RG `CV-Mao` y el Container App `portalcv-api`).
