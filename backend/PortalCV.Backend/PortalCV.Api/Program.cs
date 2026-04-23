@@ -1,10 +1,12 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using PortalCV.Api.Json;
 using PortalCV.Api.Middleware;
 using PortalCV.Infrastructure;
+using PortalCV.Infrastructure.Data;
 using Serilog;
 
 namespace PortalCV.Api
@@ -147,10 +149,12 @@ namespace PortalCV.Api
 
             builder.Services.AddAuthorization();
 
-            // Health checks: endpoint /health para smoke tests y liveness probe de
-            // Azure Container Apps. Por ahora es un liveness basico (la API responde);
-            // mas adelante se puede extender con checks contra SQL / dependencias.
-            builder.Services.AddHealthChecks();
+            // Health checks:
+            // - /health: liveness basico (la API responde; sin dependencias externas).
+            // - /health/ready: readiness con conexion a SQL (Azure SQL puede tardar en despertar).
+            builder.Services
+                .AddHealthChecks()
+                .AddDbContextCheck<PortalCvDbContext>("database");
 
             var app = builder.Build();
 
@@ -192,6 +196,10 @@ namespace PortalCV.Api
             // Endpoint de health publico (no requiere JWT). Azure Container Apps lo
             // usa como liveness probe y curl lo usa como smoke test post-deploy.
             app.MapHealthChecks("/health").AllowAnonymous();
+            app.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = r => r.Name == "database",
+            }).AllowAnonymous();
 
             app.MapControllers();
 
