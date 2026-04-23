@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthModalService } from './core/services/auth/auth-modal.service';
+import { SessionIdleTimeoutService } from './core/services/auth/session-idle-timeout.service';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,8 @@ export class App implements OnInit {
   protected readonly title = signal('portalcv-web');
   private readonly router = inject(Router);
   private readonly authModal = inject(AuthModalService);
+  /** Inactividad → cierre de sesión en cliente (10 min); instancia el servicio `providedIn: 'root'`. */
+  private readonly _sessionIdle = inject(SessionIdleTimeoutService);
 
   ngOnInit(): void {
     this.router.events
