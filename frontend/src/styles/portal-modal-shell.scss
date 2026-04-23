@@ -27,6 +27,25 @@
   opacity: 1 !important;
 }
 
+/** Contenedor del modal de bienvenida: márgenes seguros y más aire lateral en pantallas anchas. */
+.portal-modal__root--startup-readiness {
+  padding: max(0.5rem, env(safe-area-inset-top, 0px)) max(0.65rem, env(safe-area-inset-right, 0px))
+    max(0.65rem, env(safe-area-inset-bottom, 0px)) max(0.65rem, env(safe-area-inset-left, 0px));
+  align-items: center;
+  justify-content: center;
+
+  @media (min-width: 576px) {
+    padding: 0.85rem 1rem;
+    padding-inline: max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-left, 0px));
+  }
+
+  @media (min-width: 992px) {
+    padding-block: 1.1rem;
+    padding-inline: max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-left, 0px))
+      max(clamp(1.25rem, 4vw, 2.5rem), env(safe-area-inset-right, 0px));
+  }
+}
+
 .portal-modal__dialog {
   width: 100%;
   max-width: 400px;
@@ -42,6 +61,84 @@
 
   &--500 {
     max-width: 500px;
+  }
+
+  /**
+   * Modal de bienvenida / readiness: franja horizontal tipo “banner”,
+   * ancho fluido por breakpoint (móvil casi a todo el ancho útil, desktop muy ancho).
+   */
+  &--startup-readiness {
+    width: 100%;
+    max-width: min(100vw - 1.1rem, 560px);
+    margin-inline: auto;
+
+    @media (min-width: 576px) {
+      max-width: min(100vw - 2rem, 680px);
+    }
+
+    @media (min-width: 768px) {
+      max-width: min(100vw - 2.5rem, 820px);
+    }
+
+    @media (min-width: 1200px) {
+      max-width: min(100vw - 3rem, 960px);
+    }
+
+    @media (min-width: 1400px) {
+      max-width: min(100vw - 4rem, 1040px);
+    }
+
+    .portal-modal__header {
+      padding: 1rem 1.2rem 0.85rem;
+    }
+
+    .portal-modal__icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1.1rem;
+    }
+
+    .portal-modal__title {
+      font-size: 1.1rem;
+    }
+
+    .portal-modal__subtitle {
+      font-size: 0.78rem;
+      line-height: 1.32;
+    }
+
+    .portal-modal__body {
+      padding: 1rem 1.2rem 1.1rem;
+    }
+
+    .portal-modal__footer {
+      margin-top: 0.65rem;
+      padding-top: 0.8rem;
+    }
+
+    /** Viewports bajos: el panel no invade toda la altura; solo el cuerpo hace scroll. */
+    @media (max-height: 560px) {
+      max-height: min(94dvh, 100vh - 1rem);
+
+      .portal-modal__panel--startup-readiness {
+        max-height: inherit;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        .portal-modal__header,
+        .modal-footer.portal-modal__footer {
+          flex-shrink: 0;
+        }
+      }
+
+      .portal-modal__body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+    }
   }
 }
 
