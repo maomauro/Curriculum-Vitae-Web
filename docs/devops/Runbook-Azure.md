@@ -32,8 +32,8 @@ az account show --query "{name:name, id:id}" -o table
 ### Variables del runbook
 ```powershell
 # Globales
-$RG            = "rg-portalcv"
-$LOCATION      = "eastus2"            # Ajustar si la suscripcion exige otra region
+$RG            = "CV-Mao"             # RG existente que ya aloja sql-portalcv-mao
+$LOCATION      = "brazilsouth"        # Misma region del servidor SQL existente
 
 # Azure SQL (ya existe, no se crea en este runbook)
 $SQL_SERVER    = "sql-portalcv-mao"
@@ -59,12 +59,17 @@ $REPO_BRANCH   = "main"
 
 ## 1. Resource Group
 
+> El RG `CV-Mao` **ya existe** y aloja el servidor SQL. Se reutiliza en lugar de crear uno nuevo. Solo se valida su existencia y ubicación.
+
 ```powershell
-az group create --name $RG --location $LOCATION
 az group show --name $RG -o table
 ```
 
-**Criterio de éxito:** el RG aparece listado con `provisioningState = Succeeded`.
+**Criterio de éxito:** el RG aparece listado con `provisioningState = Succeeded` y `location = brazilsouth`. Si el comando devolviera `ResourceGroupNotFound`, entonces sí usar:
+
+```powershell
+az group create --name $RG --location $LOCATION
+```
 
 ---
 
@@ -251,12 +256,23 @@ Ir a **Settings → Secrets and variables → Actions** del repo:
 
 | Tipo | Nombre | Cómo obtenerlo |
 |---|---|---|
-| Secret | `AZURE_CREDENTIALS` | `az ad sp create-for-rbac --role contributor --scopes /subscriptions/{sub-id}/resourceGroups/rg-portalcv --json-auth` |
+| Secret | `AZURE_CREDENTIALS` | `az ad sp create-for-rbac --role contributor --scopes /subscriptions/{sub-id}/resourceGroups/CV-Mao --json-auth` (o el RG donde este el Container App) |
 | Secret | `AZURE_STATIC_WEB_APPS_TOKEN` | Portal Azure → Static Web App → Manage deployment token |
 | Secret | `JWT_KEY_PROD` | Generar aleatorio ≥ 32 chars (ver comando en `docs/guias/Inventario-minimo-local.md`) |
 | Secret | `AZURE_SQL_CONN_PROD` | Cadena completa con `portalcv_app_prod` |
 
 > Evaluar migrar `AZURE_CREDENTIALS` a **OIDC federado** (sin password estático) cuando se consolide el flujo. Ver `docs/guias/Guia-secrets-y-credenciales.md`.
+
+### 6.1 CD automatico: GHCR -> Azure Container Apps
+
+El workflow **`.github/workflows/publish-backend-image.yml`** incluye, tras publicar la imagen en GHCR, el job **`deploy-aca`**, que ejecuta `az containerapp update` con la referencia **`ghcr.io/<owner>/portalcv-backend@<digest>`** del build (mismo digest que aparece en el resumen del job *Build & push*).
+
+**Requisitos:**
+
+- Secret **`AZURE_CREDENTIALS`** configurado en el repo (JSON del service principal con permisos suficientes sobre el RG `CV-Mao` y el Container App `portalcv-api`).
+- Nombres de RG y app alineados con el bloque `env:` del workflow (`ACA_RESOURCE_GROUP`, `ACA_APP_NAME`). Si cambian en Azure, actualiza el YAML o usa variables de repositorio en una evolucion futura.
+
+Si el secret no existe o el SP no tiene permisos, el job `deploy-aca` falla en el paso **Azure login** o en **Update Container App**; el job de GHCR (`publish`) igual habra subido la imagen.
 
 ---
 
