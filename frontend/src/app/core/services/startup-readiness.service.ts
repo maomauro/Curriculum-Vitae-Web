@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subscription, timer } from 'rxjs';
-import { switchMap, takeWhile, tap } from 'rxjs/operators';
+import { BehaviorSubject, Subscription, of, timer } from 'rxjs';
+import { catchError, switchMap, takeWhile, tap } from 'rxjs/operators';
 import { API_BASE_URL } from '../constants/api-base-url';
 
 export type DbReadinessState = 'checking' | 'ready' | 'degraded';
@@ -17,10 +17,10 @@ export class StartupReadinessService {
   private readonly healthUrl = `${API_BASE_URL}/health/ready`;
 
   /** Si el usuario cierra el modal antes de que la DB esté lista. */
-  private dismissedSubject = new BehaviorSubject(false);
+  private readonly dismissedSubject = new BehaviorSubject(false);
   readonly dismissed$ = this.dismissedSubject.asObservable();
 
-  private stateSubject = new BehaviorSubject<DbReadinessState>('checking');
+  private readonly stateSubject = new BehaviorSubject<DbReadinessState>('checking');
   readonly state$ = this.stateSubject.asObservable();
 
   private pollSub: Subscription | null = null;
@@ -44,9 +44,10 @@ export class StartupReadinessService {
                   this.stateSubject.next('degraded');
                 }
               },
-              error: () => {
-                this.stateSubject.next('degraded');
-              },
+            }),
+            catchError(() => {
+              this.stateSubject.next('degraded');
+              return of('');
             })
           )
         )

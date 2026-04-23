@@ -1,10 +1,12 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { StartupReadinessService, type DbReadinessState } from '../../core/services/startup-readiness.service';
 
 @Component({
   selector: 'app-startup-readiness-host',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule],
   template: `
     <ng-container *ngIf="visible()">
       <div class="portal-modal__backdrop" aria-hidden="true"></div>
@@ -30,7 +32,7 @@ import { StartupReadinessService, type DbReadinessState } from '../../core/servi
                   </span>
                 </div>
                 <div class="startup-readiness__status ms-2 text-end" [attr.aria-live]="'polite'">
-                  <div class="startup-readiness__label small text-white-50">Base de datos</div>
+                  <div class="startup-readiness__label small">Base de datos</div>
                   <div class="startup-readiness__pill" [ngClass]="pillClass()">
                     <span class="startup-readiness__dot" aria-hidden="true"></span>
                     <span>{{ pillText() }}</span>

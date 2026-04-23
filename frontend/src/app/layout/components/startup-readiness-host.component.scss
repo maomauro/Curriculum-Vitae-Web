@@ -2,6 +2,10 @@
   display: contents;
 }
 
+.startup-readiness__label {
+  color: #f1f5f9;
+}
+
 .startup-readiness__pill {
   display: inline-flex;
   align-items: center;
@@ -10,8 +14,8 @@
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: rgba(15, 23, 42, 0.55);
+  color: #f8fafc;
 }
 
 .startup-readiness__dot {

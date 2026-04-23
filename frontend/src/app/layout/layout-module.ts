@@ -7,7 +7,6 @@ import { AuthLayoutComponent } from './containers/auth-layout.component';
 import { AdminLayoutComponent } from './containers/admin-layout.component';
 import { NavbarPublicComponent } from './components/navbar-public.component';
 import { AuthModalsHostComponent } from './components/auth-modals-host.component';
-import { StartupReadinessHostComponent } from './components/startup-readiness-host.component';
 import { FooterPublicComponent } from './components/footer.component';
 import { AuthSharedModule } from '../features/auth/auth-shared.module';
 import { SidebarComponent } from './components/sidebar.component';
@@ -20,7 +19,6 @@ import { TopbarComponent } from './components/topbar.component';
     AdminLayoutComponent,
     NavbarPublicComponent,
     AuthModalsHostComponent,
-    StartupReadinessHostComponent,
     FooterPublicComponent,
     SidebarComponent,
     TopbarComponent
@@ -31,7 +29,6 @@ import { TopbarComponent } from './components/topbar.component';
     AuthLayoutComponent,
     AdminLayoutComponent,
     AuthModalsHostComponent,
-    StartupReadinessHostComponent,
   ]
 })
 export class LayoutModule { }
