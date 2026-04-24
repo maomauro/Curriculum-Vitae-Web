@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, timeout } from 'rxjs/operators';
 import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
 import { API_BASE_URL } from '../../constants/api-base-url';
 import {
@@ -349,12 +349,17 @@ export class PublicService {
         }
         return snapshot;
       };
+      /** Si el contenedor está despertando, no bloquear la UI: timeout y fallback al JSON estático del SWA. */
+      const snapshotApiTimeoutMs = 5_000;
       this.snapshotCache$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_API_URL).pipe(
+        timeout(snapshotApiTimeoutMs),
         map(normalize),
-        catchError(() => this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_STATIC_URL).pipe(
-          map(normalize),
-          catchError(() => of(null))
-        )),
+        catchError(() =>
+          this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_STATIC_URL).pipe(
+            map(normalize),
+            catchError(() => of(null))
+          )
+        ),
         shareReplay({ bufferSize: 1, refCount: true })
       );
     }
