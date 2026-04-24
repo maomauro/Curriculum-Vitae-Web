@@ -63,6 +63,10 @@ import { PublicService, CvListadoItemDto } from '../../../core/services/public/p
               <ng-container *ngIf="!loading">{{ resumenResultados }}</ng-container>
               <ng-container *ngIf="loading">Buscando…</ng-container>
             </div>
+            <div *ngIf="usandoSnapshot" class="alert alert-warning py-2 px-3 mt-3 mb-0 small" role="status">
+              Mostrando datos temporales mientras el servidor termina de estar listo.
+              <span *ngIf="snapshotActualizadoEn">Última actualización: {{ snapshotActualizadoEn | date:'short' }}.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -157,6 +161,9 @@ export class BuscarCvsComponent implements OnInit {
   pageSize = 12;
   totalPages = 1;
   loading = false;
+  usandoSnapshot = false;
+  snapshotActualizadoEn: string | null = null;
+  private requestId = 0;
 
   private readonly colores = ['blue', 'green', 'purple', 'orange', 'teal', 'red'];
 
@@ -214,7 +221,28 @@ export class BuscarCvsComponent implements OnInit {
   }
 
   cargar(): void {
+    const runId = ++this.requestId;
     this.loading = true;
+    this.usandoSnapshot = false;
+
+    this.publicService
+      .buscarCvsSnapshot({
+        q: this.busqueda || undefined,
+        ciudad: this.ciudad || undefined,
+        page: this.page,
+        pageSize: this.pageSize,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(snapshot => {
+        if (runId !== this.requestId || !snapshot) return;
+        this.cvs = snapshot.items;
+        this.total = snapshot.total;
+        this.totalPages = snapshot.totalPages;
+        this.usandoSnapshot = true;
+        this.snapshotActualizadoEn = snapshot.generatedAtUtc;
+        this.loading = false;
+      });
+
     this.publicService
       .buscarCvs({
         q: this.busqueda || undefined,
@@ -224,9 +252,12 @@ export class BuscarCvsComponent implements OnInit {
       })
       .subscribe({
         next: res => {
+          if (runId !== this.requestId) return;
           this.cvs = res.items;
           this.total = res.total;
           this.totalPages = res.totalPages;
+          this.usandoSnapshot = false;
+          this.snapshotActualizadoEn = null;
           this.loading = false;
 
           const tp = this.totalPages;
@@ -239,6 +270,7 @@ export class BuscarCvsComponent implements OnInit {
           }
         },
         error: () => {
+          if (runId !== this.requestId) return;
           this.loading = false;
         },
       });

@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TimeoutError } from 'rxjs';
-import { catchError, distinctUntilChanged, finalize, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
+import { catchError, concat, distinctUntilChanged, finalize, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
 import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
 import { getOrCreatePortalCvVisitorId } from '../../../core/utils/portal-cv-visitor-id.util';
 import { CvAnaliticasDetalleService } from '../../../core/services/cv/cv-analiticas-detalle.service';
@@ -33,6 +33,10 @@ type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 
       <div class="container py-4" *ngIf="estado === 'listo' && ctx.cv">
         <div class="cv-publico-print-hide">
+          <div *ngIf="usandoSnapshot" class="alert alert-warning py-2 px-3 small" role="status">
+            Vista temporal cargada desde snapshot mientras la base de datos se activa.
+            <span *ngIf="snapshotActualizadoEn">Última actualización: {{ snapshotActualizadoEn | date:'short' }}.</span>
+          </div>
           <a routerLink="/cvs" class="btn btn-sm btn-outline-secondary mb-3">
             <i class="bi bi-arrow-left me-1"></i>Volver al listado
           </a>
@@ -217,6 +221,8 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
 
   estado: ShellEstado = 'cargando';
   urlPublica = '';
+  usandoSnapshot = false;
+  snapshotActualizadoEn: string | null = null;
 
   modalContactoAbierto = false;
   contactoEnviado = false;
@@ -234,6 +240,8 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
           this.urlPublica = slug;
           this.estado = slug ? 'cargando' : 'no_encontrado';
           this.ctx.cv = null;
+          this.usandoSnapshot = false;
+          this.snapshotActualizadoEn = null;
           this.cerrarModalContactoSilencioso();
           this.contactoEnviado = false;
           this.contacto = contactoPublicoVacio();
@@ -347,20 +355,43 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
       this.estado = 'no_encontrado';
       return of(null);
     }
-    return this.cvAnaliticasDetalle.detallePublicoParaAnaliticas$(slug).pipe(
-      timeout(25_000),
-      catchError((err: unknown) => {
-        if (err instanceof TimeoutError) {
-          this.estado = 'error';
-          return of(null);
-        }
-        const httpErr = err as HttpErrorResponse;
-        if (httpErr.status === 404) {
-          this.estado = 'no_encontrado';
-        } else {
-          this.estado = 'error';
-        }
-        return of(null);
+    return this.publicService.getDetalleSnapshot(slug).pipe(
+      switchMap(snapshot => {
+        const snapshot$ = snapshot
+          ? of(snapshot.detalle).pipe(
+              tap(() => {
+                this.usandoSnapshot = true;
+                this.snapshotActualizadoEn = snapshot.generatedAtUtc;
+              })
+            )
+          : of<CvDetalleDto | null>(null);
+
+        const api$ = this.cvAnaliticasDetalle.detallePublicoParaAnaliticas$(slug).pipe(
+          timeout(25_000),
+          tap(() => {
+            this.usandoSnapshot = false;
+            this.snapshotActualizadoEn = null;
+          }),
+          catchError((err: unknown) => {
+            if (snapshot) {
+              this.estado = 'listo';
+              return of(null);
+            }
+            if (err instanceof TimeoutError) {
+              this.estado = 'error';
+              return of(null);
+            }
+            const httpErr = err as HttpErrorResponse;
+            if (httpErr.status === 404) {
+              this.estado = 'no_encontrado';
+            } else {
+              this.estado = 'error';
+            }
+            return of(null);
+          })
+        );
+
+        return snapshot ? concat(snapshot$, api$) : api$;
       })
     );
   }

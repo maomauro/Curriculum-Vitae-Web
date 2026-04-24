@@ -33,6 +33,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPublicCvVisitaRegistroService, PublicCvVisitaRegistroService>();
         services.AddScoped<IPublicCvService, PublicCvService>();
+        services.AddSingleton<IPublicSnapshotService, PublicSnapshotService>();
+        services.AddHostedService(sp => (PublicSnapshotService)sp.GetRequiredService<IPublicSnapshotService>());
         services.AddScoped<ICvEditorService, CvEditorService>();
         services.AddScoped<IAlertaService, AlertaService>();
         services.AddScoped<IDashboardService, DashboardService>();

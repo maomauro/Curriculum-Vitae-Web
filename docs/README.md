@@ -50,6 +50,7 @@ Infraestructura, despliegue y políticas de mantenimiento.
 | [DevOps.md](./devops/DevOps.md) | Pipelines, CI/CD, configuración Docker |
 | [Despliegue.md](./devops/Despliegue.md) | Decisiones de infraestructura y arquitectura de despliegue |
 | [Runbook-Azure.md](./devops/Runbook-Azure.md) | Runbook ejecutable con comandos `az` para provisionar Azure desde cero |
+| [Validacion-Snapshot-ColdStart.md](./devops/Validacion-Snapshot-ColdStart.md) | Pruebas operativas para validar fallback snapshot + conmutación automática tras cold start |
 | [Plan-Backup-Mantenimiento.md](./devops/Plan-Backup-Mantenimiento.md) | Plan de backup y mantenimiento |
 | [Politica-Proteccion-Ramas.md](./devops/Politica-Proteccion-Ramas.md) | Reglas de protección de ramas Git |
 | [Checklist-Produccion.md](./devops/Checklist-Produccion.md) | Verificación previa a publicar en producción |
