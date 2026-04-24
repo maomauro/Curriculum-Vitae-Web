@@ -18,6 +18,11 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PublicSnapshotService> _logger;
     private readonly TimeSpan _refreshInterval;
+    /// <summary>
+    /// Mientras el snapshot siga en estado inicial (sin refresco exitoso desde DB),
+    /// se reintenta con este intervalo en lugar de esperar <see cref="_refreshInterval"/> completo.
+    /// </summary>
+    private readonly TimeSpan _bootstrapPollInterval;
 
     private PublicCvsSnapshotDto _current = new(
         DateTime.UnixEpoch,
@@ -35,6 +40,10 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
         var minutes = configuration.GetValue<int?>("PublicSnapshot:RefreshIntervalMinutes") ?? 10;
         if (minutes < 1) minutes = 1;
         _refreshInterval = TimeSpan.FromMinutes(minutes);
+
+        var bootSec = configuration.GetValue<int?>("PublicSnapshot:BootstrapRetrySeconds") ?? 15;
+        if (bootSec < 5) bootSec = 5;
+        _bootstrapPollInterval = TimeSpan.FromSeconds(bootSec);
     }
 
     public PublicCvsSnapshotDto GetLatest() => _current;
@@ -58,9 +67,16 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
                 _logger.LogWarning(ex, "Error refrescando snapshot público.");
             }
 
+            var stillBootstrap = string.Equals(
+                _current.SourceVersion,
+                "bootstrap-empty",
+                StringComparison.Ordinal);
+
+            var delay = stillBootstrap ? _bootstrapPollInterval : _refreshInterval;
+
             try
             {
-                await Task.Delay(_refreshInterval, stoppingToken);
+                await Task.Delay(delay, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -76,7 +92,8 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
 
         if (!await db.Database.CanConnectAsync(ct))
         {
-            _logger.LogDebug("Snapshot público: DB no disponible, se conserva snapshot anterior.");
+            _logger.LogInformation(
+                "Snapshot público: DB no disponible (CanConnect=false), se conserva snapshot anterior. Reintento en pocos segundos.");
             return;
         }
 
