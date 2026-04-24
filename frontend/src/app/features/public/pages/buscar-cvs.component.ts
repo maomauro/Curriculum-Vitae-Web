@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicService, CvListadoItemDto } from '../../../core/services/public/public.service';
+import { etiquetaOrigenSnapshot } from '../../../core/utils/public-snapshot-source-label';
 
 @Component({
   selector: 'app-buscar-cvs',
@@ -64,8 +65,18 @@ import { PublicService, CvListadoItemDto } from '../../../core/services/public/p
               <ng-container *ngIf="loading">Buscando…</ng-container>
             </div>
             <div *ngIf="usandoSnapshot" class="alert alert-warning py-2 px-3 mt-3 mb-0 small" role="status">
-              Mostrando datos temporales mientras el servidor termina de estar listo.
-              <span *ngIf="snapshotActualizadoEn">Última actualización: {{ snapshotActualizadoEn | date:'short' }}.</span>
+              <strong class="d-block mb-1">Vista temporal (no es la consulta en vivo a la base de datos todavía)</strong>
+              <span class="d-block">{{ etiquetaOrigenSnapshot(snapshotSourceVersion) }}</span>
+              <span *ngIf="snapshotActualizadoEn" class="d-block mt-1">
+                Fecha de última generación del snapshot: {{ snapshotActualizadoEn | date:'medium' }}.
+              </span>
+            </div>
+            <div
+              *ngIf="!loading && !usandoSnapshot"
+              class="mt-2 small text-success"
+              role="status">
+              <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>
+              Datos en directo desde el servidor (base de datos).
             </div>
           </div>
         </div>
@@ -163,6 +174,9 @@ export class BuscarCvsComponent implements OnInit {
   loading = false;
   usandoSnapshot = false;
   snapshotActualizadoEn: string | null = null;
+  /** `sourceVersion` del snapshot (p. ej. `seed-local` vs `api-background-v1`). */
+  snapshotSourceVersion: string | null = null;
+  readonly etiquetaOrigenSnapshot = etiquetaOrigenSnapshot;
   private requestId = 0;
 
   private readonly colores = ['blue', 'green', 'purple', 'orange', 'teal', 'red'];
@@ -224,6 +238,7 @@ export class BuscarCvsComponent implements OnInit {
     const runId = ++this.requestId;
     this.loading = true;
     this.usandoSnapshot = false;
+    this.snapshotSourceVersion = null;
 
     this.publicService
       .buscarCvsSnapshot({
@@ -240,6 +255,7 @@ export class BuscarCvsComponent implements OnInit {
         this.totalPages = snapshot.totalPages;
         this.usandoSnapshot = true;
         this.snapshotActualizadoEn = snapshot.generatedAtUtc;
+        this.snapshotSourceVersion = snapshot.sourceVersion ?? null;
         this.loading = false;
       });
 
@@ -258,6 +274,7 @@ export class BuscarCvsComponent implements OnInit {
           this.totalPages = res.totalPages;
           this.usandoSnapshot = false;
           this.snapshotActualizadoEn = null;
+          this.snapshotSourceVersion = null;
           this.loading = false;
 
           const tp = this.totalPages;
