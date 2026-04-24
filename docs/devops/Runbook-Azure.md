@@ -313,6 +313,52 @@ az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 
 ---
 
+## 7.1 Persistencia automática del snapshot público (Azure Blob)
+
+El API guarda el snapshot en memoria y, si configuras Blob, **lo escribe automáticamente** tras cada refresco exitoso desde la base de datos. Al **arrancar** (nueva réplica o reinicio del contenedor), **lee ese JSON** y rehidrata el snapshot antes de que vuelva a conectar SQL, de modo que `/api/public/snapshot` puede servir la última copia conocida sin depender solo de RAM.
+
+**Variables de entorno en el Container App** (recomendado; no versionar secretos en git):
+
+| Variable | Descripción |
+|----------|-------------|
+| `PublicSnapshot__Blob__ConnectionString` | Cadena del storage account (contenedor privado; solo el API la usa). |
+| `PublicSnapshot__Blob__ContainerName` | Opcional; por defecto `portalcv-snapshots`. |
+| `PublicSnapshot__Blob__BlobName` | Opcional; por defecto `public-cvs-snapshot.json`. |
+
+**Crear cuenta y contenedor (una vez):**
+
+```powershell
+$STORAGE = "stportalcvsnap{suffix-unico}"   # nombre globalmente unico, minusculas y numeros
+az storage account create `
+  --name $STORAGE `
+  --resource-group $RG `
+  --location $LOCATION `
+  --sku Standard_LRS `
+  --allow-blob-public-access false
+
+az storage container create `
+  --account-name $STORAGE `
+  --name portalcv-snapshots `
+  --auth-mode login
+
+$CONN = az storage account show-connection-string `
+  --name $STORAGE `
+  --resource-group $RG `
+  --query connectionString -o tsv
+
+az containerapp update `
+  --name $ACA_APP `
+  --resource-group $RG `
+  --set-env-vars "PublicSnapshot__Blob__ConnectionString=secretref:blob-conn" `
+  --replace-secrets "blob-conn=$CONN"
+```
+
+> Ajusta `--replace-secrets` según la versión de la CLI: si no aplica, usa **Secrets** en el portal del Container App y referencia `secretref:` como en el resto de secretos del runbook.
+
+**Criterio de éxito:** tras un refresco con DB en línea, en logs del API aparece *Snapshot público guardado en Blob*; tras reiniciar o escalar la app, el primer `GET /api/public/snapshot` devuelve `items` con datos sin esperar a que SQL vuelva a estar listo (si ya existía un blob previo).
+
+---
+
 ## 8. Rollback rápido
 
 Estrategia mínima: reapuntar el Container App a una imagen previa de GHCR.
