@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
 import { API_BASE_URL } from '../../constants/api-base-url';
+import { PUBLIC_CVS_SNAPSHOT_URL } from '../../constants/public-snapshot-url';
 
 /** Alinea respuestas JSON en PascalCase (p. ej. algunos proxies) con los DTOs camelCase del front. */
 function deepToCamel(value: unknown): unknown {
@@ -167,11 +168,28 @@ export interface BuscarCvsParams {
   pageSize?: number;
 }
 
+export interface PublicSnapshotItemDto {
+  listado: CvListadoItemDto;
+  detalle: CvDetalleDto;
+  estadisticas?: CvEstadisticasDto;
+}
+
+export interface PublicCvsSnapshotDto {
+  generatedAtUtc: string;
+  sourceVersion?: string | null;
+  items: PublicSnapshotItemDto[];
+}
+
+export interface SnapshotListadoResponse extends CvListadoResponse {
+  generatedAtUtc: string;
+}
+
 // ── Servicio ─────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class PublicService {
   private readonly BASE = `${API_BASE_URL}/api/public`;
+  private snapshotCache$?: Observable<PublicCvsSnapshotDto | null>;
 
   constructor(private http: HttpClient) {}
 
@@ -203,6 +221,86 @@ export class PublicService {
       .pipe(map(raw => deepToCamel(raw) as CvEstadisticasDto));
   }
 
+  getDetalleSnapshot(urlPublica: string): Observable<{ detalle: CvDetalleDto; generatedAtUtc: string } | null> {
+    const slug = (urlPublica ?? '').trim().toLowerCase();
+    if (!slug) return of(null);
+    return this.getSnapshot().pipe(
+      map(snapshot => {
+        if (!snapshot) return null;
+        const hit = snapshot.items.find(i => (i.detalle.urlPublica ?? '').trim().toLowerCase() === slug);
+        return hit ? { detalle: hit.detalle, generatedAtUtc: snapshot.generatedAtUtc } : null;
+      })
+    );
+  }
+
+  getEstadisticasSnapshot(urlPublica: string): Observable<{ stats: CvEstadisticasDto; generatedAtUtc: string } | null> {
+    const slug = (urlPublica ?? '').trim().toLowerCase();
+    if (!slug) return of(null);
+    return this.getSnapshot().pipe(
+      map(snapshot => {
+        if (!snapshot) return null;
+        const hit = snapshot.items.find(i => (i.detalle.urlPublica ?? '').trim().toLowerCase() === slug);
+        if (!hit?.estadisticas) return null;
+        return { stats: hit.estadisticas, generatedAtUtc: snapshot.generatedAtUtc };
+      })
+    );
+  }
+
+  buscarCvsSnapshot(params: BuscarCvsParams = {}): Observable<SnapshotListadoResponse | null> {
+    const page = params.page && params.page > 0 ? params.page : 1;
+    const pageSize = params.pageSize && params.pageSize > 0 ? params.pageSize : 12;
+    const q = (params.q ?? '').trim().toLowerCase();
+    const ciudad = (params.ciudad ?? '').trim().toLowerCase();
+    const habilidad = (params.habilidad ?? '').trim().toLowerCase();
+
+    return this.getSnapshot().pipe(
+      map(snapshot => {
+        if (!snapshot) return null;
+
+        const filtered = snapshot.items
+          .map(i => i.listado)
+          .filter(item => {
+            if (ciudad) {
+              const c = `${item.ciudad ?? ''} ${item.pais ?? ''}`.toLowerCase();
+              if (!c.includes(ciudad)) return false;
+            }
+            if (habilidad) {
+              const hs = (item.habilidades ?? []).map(h => h.toLowerCase());
+              if (!hs.some(h => h.includes(habilidad))) return false;
+            }
+            if (q) {
+              const haystack = [
+                item.nombreCompleto ?? '',
+                item.nombrePerfil ?? '',
+                item.ciudad ?? '',
+                item.pais ?? '',
+                ...(item.habilidades ?? []),
+              ]
+                .join(' ')
+                .toLowerCase();
+              if (!haystack.includes(q)) return false;
+            }
+            return true;
+          });
+
+        const total = filtered.length;
+        const totalPages = total === 0 ? 1 : Math.ceil(total / pageSize);
+        const safePage = Math.min(page, totalPages);
+        const start = (safePage - 1) * pageSize;
+        const items = filtered.slice(start, start + pageSize);
+
+        return {
+          generatedAtUtc: snapshot.generatedAtUtc,
+          items,
+          total,
+          page: safePage,
+          pageSize,
+          totalPages,
+        };
+      })
+    );
+  }
+
   contactar(urlPublica: string, dto: ContactarDto): Observable<void> {
     return this.http.post<void>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}/contactar`, dto);
   }
@@ -213,5 +311,22 @@ export class PublicService {
       urlPublica,
       visitanteAnonimoId: visitanteAnonimoId || undefined,
     });
+  }
+
+  private getSnapshot(): Observable<PublicCvsSnapshotDto | null> {
+    if (!this.snapshotCache$) {
+      this.snapshotCache$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_URL).pipe(
+        map(raw => deepToCamel(raw) as PublicCvsSnapshotDto),
+        map(snapshot => {
+          if (!snapshot || !Array.isArray(snapshot.items) || typeof snapshot.generatedAtUtc !== 'string') {
+            return null;
+          }
+          return snapshot;
+        }),
+        catchError(() => of(null)),
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+    return this.snapshotCache$;
   }
 }
