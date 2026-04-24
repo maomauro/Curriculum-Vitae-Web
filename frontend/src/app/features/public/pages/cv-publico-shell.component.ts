@@ -15,6 +15,7 @@ import {
   primerNombrePublico,
 } from '../cv-publico.utils';
 import { cvPublicoMuestraPestanaDashboard } from '../../../core/utils/cv-dashboard-publico.util';
+import { etiquetaOrigenSnapshot } from '../../../core/utils/public-snapshot-source-label';
 
 type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 
@@ -34,9 +35,19 @@ type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
       <div class="container py-4" *ngIf="estado === 'listo' && ctx.cv">
         <div class="cv-publico-print-hide">
           <div *ngIf="usandoSnapshot" class="alert alert-warning py-2 px-3 small" role="status">
-            Vista temporal cargada desde snapshot mientras la base de datos se activa.
-            <span *ngIf="snapshotActualizadoEn">Última actualización: {{ snapshotActualizadoEn | date:'short' }}.</span>
+            <strong class="d-block mb-1">Vista temporal (no es la consulta en vivo a la base de datos todavía)</strong>
+            <span class="d-block">{{ etiquetaOrigenSnapshot(snapshotSourceVersion) }}</span>
+            <span *ngIf="snapshotActualizadoEn" class="d-block mt-1">
+              Fecha de última generación del snapshot: {{ snapshotActualizadoEn | date:'medium' }}.
+            </span>
           </div>
+          <p
+            *ngIf="!usandoSnapshot && ctx.cv"
+            class="small text-muted mb-3 cv-publico-print-hide"
+            role="status">
+            <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>
+            Datos en directo desde el servidor (base de datos).
+          </p>
           <a routerLink="/cvs" class="btn btn-sm btn-outline-secondary mb-3">
             <i class="bi bi-arrow-left me-1"></i>Volver al listado
           </a>
@@ -223,6 +234,8 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
   urlPublica = '';
   usandoSnapshot = false;
   snapshotActualizadoEn: string | null = null;
+  snapshotSourceVersion: string | null = null;
+  readonly etiquetaOrigenSnapshot = etiquetaOrigenSnapshot;
 
   modalContactoAbierto = false;
   contactoEnviado = false;
@@ -242,6 +255,7 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
           this.ctx.cv = null;
           this.usandoSnapshot = false;
           this.snapshotActualizadoEn = null;
+          this.snapshotSourceVersion = null;
           this.cerrarModalContactoSilencioso();
           this.contactoEnviado = false;
           this.contacto = contactoPublicoVacio();
@@ -362,6 +376,7 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
               tap(() => {
                 this.usandoSnapshot = true;
                 this.snapshotActualizadoEn = snapshot.generatedAtUtc;
+                this.snapshotSourceVersion = snapshot.sourceVersion ?? null;
               })
             )
           : of<CvDetalleDto | null>(null);
@@ -371,6 +386,7 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
           tap(() => {
             this.usandoSnapshot = false;
             this.snapshotActualizadoEn = null;
+            this.snapshotSourceVersion = null;
           }),
           catchError((err: unknown) => {
             if (snapshot) {

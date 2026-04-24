@@ -185,6 +185,15 @@ export interface PublicCvsSnapshotDto {
 
 export interface SnapshotListadoResponse extends CvListadoResponse {
   generatedAtUtc: string;
+  /** Alineado con backend / JSON estático; p. ej. `seed-local` vs `api-background-v1`. */
+  sourceVersion?: string | null;
+}
+
+/** Payload cuando existe detalle en el snapshot cacheado. */
+export interface PublicDetalleSnapshotDto {
+  detalle: CvDetalleDto;
+  generatedAtUtc: string;
+  sourceVersion?: string | null;
 }
 
 // ── Servicio ─────────────────────────────────────────────────────────────────
@@ -224,19 +233,29 @@ export class PublicService {
       .pipe(map(raw => deepToCamel(raw) as CvEstadisticasDto));
   }
 
-  getDetalleSnapshot(urlPublica: string): Observable<{ detalle: CvDetalleDto; generatedAtUtc: string } | null> {
+  getDetalleSnapshot(urlPublica: string): Observable<PublicDetalleSnapshotDto | null> {
     const slug = (urlPublica ?? '').trim().toLowerCase();
     if (!slug) return of(null);
     return this.getSnapshot().pipe(
       map(snapshot => {
         if (!snapshot) return null;
         const hit = snapshot.items.find(i => (i.detalle.urlPublica ?? '').trim().toLowerCase() === slug);
-        return hit ? { detalle: hit.detalle, generatedAtUtc: snapshot.generatedAtUtc } : null;
+        return hit
+          ? {
+              detalle: hit.detalle,
+              generatedAtUtc: snapshot.generatedAtUtc,
+              sourceVersion: snapshot.sourceVersion,
+            }
+          : null;
       })
     );
   }
 
-  getEstadisticasSnapshot(urlPublica: string): Observable<{ stats: CvEstadisticasDto; generatedAtUtc: string } | null> {
+  getEstadisticasSnapshot(urlPublica: string): Observable<{
+    stats: CvEstadisticasDto;
+    generatedAtUtc: string;
+    sourceVersion?: string | null;
+  } | null> {
     const slug = (urlPublica ?? '').trim().toLowerCase();
     if (!slug) return of(null);
     return this.getSnapshot().pipe(
@@ -244,7 +263,11 @@ export class PublicService {
         if (!snapshot) return null;
         const hit = snapshot.items.find(i => (i.detalle.urlPublica ?? '').trim().toLowerCase() === slug);
         if (!hit?.estadisticas) return null;
-        return { stats: hit.estadisticas, generatedAtUtc: snapshot.generatedAtUtc };
+        return {
+          stats: hit.estadisticas,
+          generatedAtUtc: snapshot.generatedAtUtc,
+          sourceVersion: snapshot.sourceVersion,
+        };
       })
     );
   }
@@ -294,6 +317,7 @@ export class PublicService {
 
         return {
           generatedAtUtc: snapshot.generatedAtUtc,
+          sourceVersion: snapshot.sourceVersion,
           items,
           total,
           page: safePage,
