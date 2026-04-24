@@ -415,12 +415,44 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 ---
 
+## ÉPICA 6: RESILIENCIA COLD START (SNAPSHOT JSON)
+
+**Prioridad:** SHOULD HAVE  
+**Dependencia:** Épica 1 (módulo público) + `health/ready` operativo.
+
+**Descripción:** Evitar espera en blanco cuando la DB está en cold start. Frontend muestra CVs públicas desde snapshot temporal y cambia automáticamente a datos oficiales cuando API/DB queda lista.
+
+### Feature 6.1: Generación automática de snapshot
+
+| ID | Tipo | Título | Tareas | Responsable | Story Points |
+|----|------|--------|--------|-------------|--------------|
+| **HS-63** | Historia Técnica | Storage y contrato de snapshot | [ ] Definir esquema JSON v1 (`generatedAtUtc`, `itemsCount`, `items[]`)<br>[ ] Crear Blob/URL estable `public-cvs-snapshot.json`<br>[ ] Definir `Cache-Control` y versionado de contrato | DevOps + Backend | 3 |
+| **HS-64** | Historia Técnica | Proceso automático de actualización | [ ] Crear Function Timer/worker<br>[ ] Consultar `/health/ready`<br>[ ] Si `healthy`: exportar datos públicos desde API/DB<br>[ ] Publicar snapshot atómico en Blob | Backend + DevOps | 8 |
+| **HS-65** | Historia Técnica | Seguridad y observabilidad snapshot | [ ] Restringir datos a campos públicos<br>[ ] Gestionar credenciales con identidad administrada/secretos<br>[ ] Exponer métricas: último éxito, edad snapshot, fallos consecutivos | Backend + DevOps | 5 |
+
+### Feature 6.2: Consumo frontend snapshot-first
+
+| ID | Tipo | Título | Tareas | Responsable | Story Points |
+|----|------|--------|--------|-------------|--------------|
+| **HS-66** | Historia Usuario | Fallback en búsqueda pública | [ ] Cargar snapshot al entrar a `/buscar`<br>[ ] Revalidar en paralelo contra API oficial<br>[ ] Reemplazar resultados cuando API responda | Frontend | 5 |
+| **HS-67** | Historia Usuario | Fallback en detalle público por slug | [ ] Cargar snapshot para `/cv/:slug`<br>[ ] Si API falla y hay snapshot: mostrar temporal<br>[ ] Si API responde: reemplazar por datos oficiales | Frontend | 5 |
+| **HS-68** | Historia Usuario | Fallback en dashboard público | [ ] Mostrar métricas temporales en cold start<br>[ ] Conmutar automáticamente a métricas oficiales cuando API esté lista<br>[ ] Mantener consistencia visual de estados | Frontend | 5 |
+| **HS-69** | Historia Técnica | UX de estado temporal y pruebas | [ ] Badge “Mostrando datos temporales” + timestamp<br>[ ] Pruebas E2E: DB no lista / DB lista / sin snapshot<br>[ ] Criterios de aceptación funcional documentados | Frontend + QA | 3 |
+
+**Criterios de aceptación (resumen):**
+- Visitante ve contenido público aun con DB en arranque.
+- Al activarse DB, UI reemplaza automáticamente snapshot por datos oficiales.
+- No se exponen datos privados en snapshot.
+- Flujo es 100% automático (sin PR/manual para refresco operativo normal).
+
+---
+
 ## 💡 SUGERENCIAS Y MEJORAS OPCIONALES
 
 | Sugerencia | Descripción |
 |------------|-------------|
 | **Definition of Done** | Definir DoD del equipo (ej.: código en main/develop, pruebas pasando, sin deuda en Sonar, documentación actualizada). |
-| **Épica 5 – Auditoría** | Documentacion.md incluye "Auditoría" en el módulo Admin; considerar añadir HS-63: "Vista de auditoría y logs del sistema" (5 SP). |
+| **Épica 5 – Auditoría** | Documentacion.md incluye "Auditoría" en el módulo Admin; considerar añadir HS-70: "Vista de auditoría y logs del sistema" (5 SP). |
 | **Dependencia HS-50** | Vista previa (HS-50) podría depender también de HS-33/34 para datos mínimos; opcional aclarar en la historia. |
 | **Priorización** | Si el tiempo aprieta, Épica 4 (Seguimiento) y Épica 5 (Administración) son SHOULD/COULD HAVE; se puede lanzar MVP sin ellas. |
 

@@ -137,3 +137,13 @@ public record FiltrosPublicosDto(
     IEnumerable<string> Ciudades,
     IEnumerable<string> Habilidades);
 
+public record PublicSnapshotItemDto(
+    CvListadoItemDto Listado,
+    CvDetalleDto Detalle,
+    CvEstadisticasDto? Estadisticas);
+
+public record PublicCvsSnapshotDto(
+    DateTime GeneratedAtUtc,
+    string SourceVersion,
+    IReadOnlyList<PublicSnapshotItemDto> Items);
+
