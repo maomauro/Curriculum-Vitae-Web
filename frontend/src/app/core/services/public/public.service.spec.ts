@@ -14,6 +14,18 @@ describe('PublicService (snapshot)', () => {
   let service: PublicService;
   let httpMock: HttpTestingController;
 
+  const bootstrapEmpty: PublicCvsSnapshotDto = {
+    generatedAtUtc: '1970-01-01T00:00:00Z',
+    sourceVersion: 'bootstrap-empty',
+    items: [],
+  };
+
+  /** forkJoin pide API y estático en paralelo; completar ambas para destrabar getSnapshot. */
+  function flushSnapshotPair(apiBody: object | string | null, staticBody: object | string | null): void {
+    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(apiBody);
+    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_STATIC_URL).flush(staticBody);
+  }
+
   const snapshot: PublicCvsSnapshotDto = {
     generatedAtUtc: '2026-04-24T10:00:00Z',
     sourceVersion: 'test',
@@ -68,7 +80,7 @@ describe('PublicService (snapshot)', () => {
     const holder: { value?: SnapshotListadoResponse | null } = {};
     service.buscarCvsSnapshot({ q: 'angular', page: 1, pageSize: 12 }).subscribe(r => (holder.value = r));
 
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(snapshot);
+    flushSnapshotPair(snapshot, bootstrapEmpty);
 
     const result = holder.value;
     expect(result).not.toBeNull();
@@ -84,8 +96,7 @@ describe('PublicService (snapshot)', () => {
     const holder: { value?: SnapshotListadoResponse | null } = {};
     service.buscarCvsSnapshot({ page: 1, pageSize: 12 }).subscribe(r => (holder.value = r));
 
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush('x', { status: 503, statusText: 'down' });
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_STATIC_URL).flush(snapshot);
+    flushSnapshotPair({ status: 503, statusText: 'down' }, snapshot);
 
     const result = holder.value;
     expect(result).not.toBeNull();
@@ -99,14 +110,14 @@ describe('PublicService (snapshot)', () => {
   it('devuelve detalle snapshot por slug (case-insensitive)', () => {
     const holder: { value?: string | null } = {};
     service.getDetalleSnapshot('ANA-DEV').subscribe(v => (holder.value = v?.detalle.urlPublica ?? null));
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(snapshot);
+    flushSnapshotPair(snapshot, bootstrapEmpty);
     expect(holder.value).toBe('ana-dev');
   });
 
   it('retorna null cuando slug no existe', () => {
     let out: unknown = 'init';
     service.getDetalleSnapshot('slug-no-existe').subscribe(v => (out = v));
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(snapshot);
+    flushSnapshotPair(snapshot, bootstrapEmpty);
     expect(out).toBeNull();
   });
 
@@ -115,6 +126,7 @@ describe('PublicService (snapshot)', () => {
     service.getEstadisticasSnapshot('   ').subscribe(v => (out = v));
     expect(out).toBeNull();
     httpMock.expectNone(PUBLIC_CVS_SNAPSHOT_API_URL);
+    httpMock.expectNone(PUBLIC_CVS_SNAPSHOT_STATIC_URL);
   });
 
   it('retorna estadisticas snapshot cuando existen para slug', () => {
@@ -136,7 +148,7 @@ describe('PublicService (snapshot)', () => {
     };
     let visitas = 0;
     service.getEstadisticasSnapshot('ana-dev').subscribe(v => (visitas = v?.stats.totalVisitas ?? 0));
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(withStats);
+    flushSnapshotPair(withStats, bootstrapEmpty);
     expect(visitas).toBe(10);
   });
 
@@ -168,10 +180,18 @@ describe('PublicService (snapshot)', () => {
     };
     const holder: { value?: SnapshotListadoResponse | null } = {};
     service.buscarCvsSnapshot({ ciudad: 'medellin', habilidad: 'c#', page: 99, pageSize: 1 }).subscribe(r => (holder.value = r));
-    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(more);
+    flushSnapshotPair(more, bootstrapEmpty);
     expect(holder.value?.page).toBe(1);
     expect(holder.value?.total).toBe(1);
     expect(holder.value?.items[0].urlPublica).toBe('juan-back');
+  });
+
+  it('si API devuelve bootstrap vacío pero el estático tiene CVs, usa el estático', () => {
+    const holder: { value?: SnapshotListadoResponse | null } = {};
+    service.buscarCvsSnapshot({ page: 1, pageSize: 12 }).subscribe(r => (holder.value = r));
+    flushSnapshotPair(bootstrapEmpty, snapshot);
+    expect(holder.value?.total).toBe(1);
+    expect(holder.value?.items[0].urlPublica).toBe('ana-dev');
   });
 });
 
