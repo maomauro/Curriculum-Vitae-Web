@@ -1,6 +1,8 @@
-/**
- * URL pública del snapshot de CVs para fallback durante cold start de DB.
- * En v1 se sirve desde Static Web App (carpeta `frontend/public/snapshots`).
- */
-export const PUBLIC_CVS_SNAPSHOT_URL = '/snapshots/public-cvs-snapshot.json';
+import { API_BASE_URL } from './api-base-url';
+
+/** Snapshot dinámico actualizado por backend en memoria (si DB estuvo lista). */
+export const PUBLIC_CVS_SNAPSHOT_API_URL = `${API_BASE_URL}/api/public/snapshot`;
+
+/** Fallback estático si aún no existe snapshot dinámico. */
+export const PUBLIC_CVS_SNAPSHOT_STATIC_URL = '/snapshots/public-cvs-snapshot.json';
 

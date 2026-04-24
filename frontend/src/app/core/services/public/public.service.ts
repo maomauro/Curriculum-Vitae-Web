@@ -4,7 +4,10 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, shareReplay } from 'rxjs/operators';
 import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
 import { API_BASE_URL } from '../../constants/api-base-url';
-import { PUBLIC_CVS_SNAPSHOT_URL } from '../../constants/public-snapshot-url';
+import {
+  PUBLIC_CVS_SNAPSHOT_API_URL,
+  PUBLIC_CVS_SNAPSHOT_STATIC_URL,
+} from '../../constants/public-snapshot-url';
 
 /** Alinea respuestas JSON en PascalCase (p. ej. algunos proxies) con los DTOs camelCase del front. */
 function deepToCamel(value: unknown): unknown {
@@ -315,15 +318,19 @@ export class PublicService {
 
   private getSnapshot(): Observable<PublicCvsSnapshotDto | null> {
     if (!this.snapshotCache$) {
-      this.snapshotCache$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_URL).pipe(
-        map(raw => deepToCamel(raw) as PublicCvsSnapshotDto),
-        map(snapshot => {
-          if (!snapshot || !Array.isArray(snapshot.items) || typeof snapshot.generatedAtUtc !== 'string') {
-            return null;
-          }
-          return snapshot;
-        }),
-        catchError(() => of(null)),
+      const normalize = (raw: unknown): PublicCvsSnapshotDto | null => {
+        const snapshot = deepToCamel(raw) as PublicCvsSnapshotDto;
+        if (!snapshot || !Array.isArray(snapshot.items) || typeof snapshot.generatedAtUtc !== 'string') {
+          return null;
+        }
+        return snapshot;
+      };
+      this.snapshotCache$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_API_URL).pipe(
+        map(normalize),
+        catchError(() => this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_STATIC_URL).pipe(
+          map(normalize),
+          catchError(() => of(null))
+        )),
         shareReplay({ bufferSize: 1, refCount: true })
       );
     }

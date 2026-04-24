@@ -12,10 +12,12 @@ namespace PortalCV.Api.Controllers;
 public class PublicController : ControllerBase
 {
     private readonly IPublicCvService _publicCvService;
+    private readonly IPublicSnapshotService _publicSnapshotService;
 
-    public PublicController(IPublicCvService publicCvService)
+    public PublicController(IPublicCvService publicCvService, IPublicSnapshotService publicSnapshotService)
     {
         _publicCvService = publicCvService;
+        _publicSnapshotService = publicSnapshotService;
     }
 
     /// <summary>Listado paginado de CVs publicos con filtros opcionales.</summary>
@@ -70,6 +72,14 @@ public class PublicController : ControllerBase
     [HttpGet("filters")]
     public async Task<IActionResult> GetFiltros(CancellationToken ct = default)
         => Ok(await _publicCvService.GetFiltrosAsync(ct));
+
+    /// <summary>
+    /// Snapshot público temporal para fallback en frontend durante cold start de DB.
+    /// Lo mantiene un background service y no requiere consultar DB en cada request.
+    /// </summary>
+    [HttpGet("snapshot")]
+    public IActionResult GetSnapshot()
+        => Ok(_publicSnapshotService.GetLatest());
 
     /// <summary>Formulario de contacto para el propietario de un CV.</summary>
     [HttpPost("cvs/{urlPublica}/contactar")]
