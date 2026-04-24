@@ -99,5 +99,11 @@ describe('BuscarCvsComponent', () => {
 
     expect(router.navigate).toHaveBeenCalled();
   });
+
+  it('si falla API finaliza loading manteniendo estado actual', () => {
+    fixture.detectChanges();
+    api$.error(new Error('down'));
+    expect(component.loading).toBeFalse();
+  });
 });
 

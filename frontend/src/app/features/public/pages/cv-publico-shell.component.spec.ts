@@ -91,5 +91,17 @@ describe('CvPublicoShellComponent', () => {
     expect(component.usandoSnapshot).toBeTrue();
     expect(component.ctx.cv?.urlPublica).toBe('ana-dev');
   });
+
+  it('marca no_encontrado cuando API responde 404 sin snapshot', () => {
+    publicServiceMock.getDetalleSnapshot.and.returnValue(of(null));
+    cvAnaliticasMock.detallePublicoParaAnaliticas$.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }))
+    );
+
+    fixture.detectChanges();
+
+    expect(component.estado).toBe('no_encontrado');
+    expect(component.ctx.cv).toBeNull();
+  });
 });
 

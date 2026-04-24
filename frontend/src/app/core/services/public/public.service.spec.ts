@@ -109,5 +109,69 @@ describe('PublicService (snapshot)', () => {
     httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(snapshot);
     expect(out).toBeNull();
   });
+
+  it('retorna null en estadisticas snapshot cuando slug vacío', () => {
+    let out: unknown = 'init';
+    service.getEstadisticasSnapshot('   ').subscribe(v => (out = v));
+    expect(out).toBeNull();
+    httpMock.expectNone(PUBLIC_CVS_SNAPSHOT_API_URL);
+  });
+
+  it('retorna estadisticas snapshot cuando existen para slug', () => {
+    const withStats: PublicCvsSnapshotDto = {
+      ...snapshot,
+      items: [
+        {
+          ...snapshot.items[0],
+          estadisticas: {
+            curriculumId: 1,
+            urlPublica: 'ana-dev',
+            totalVisitas: 10,
+            totalContactos: 2,
+            ultimaVisita: null,
+            fechaActualizacion: '2026-04-24T10:00:00Z',
+          },
+        },
+      ],
+    };
+    let visitas = 0;
+    service.getEstadisticasSnapshot('ana-dev').subscribe(v => (visitas = v?.stats.totalVisitas ?? 0));
+    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(withStats);
+    expect(visitas).toBe(10);
+  });
+
+  it('buscarCvsSnapshot aplica filtros de ciudad, habilidad y pagina segura', () => {
+    const more: PublicCvsSnapshotDto = {
+      ...snapshot,
+      items: [
+        ...snapshot.items,
+        {
+          listado: {
+            curriculumId: 2,
+            urlPublica: 'juan-back',
+            nombreCompleto: 'Juan Back',
+            fotoUrl: null,
+            ciudad: 'Medellin',
+            pais: 'Colombia',
+            nombrePerfil: 'Backend',
+            contadorVisitas: 0,
+            contadorContactos: 0,
+            habilidades: ['C#', 'SQL'],
+          },
+          detalle: {
+            ...snapshot.items[0].detalle,
+            curriculumId: 2,
+            urlPublica: 'juan-back',
+          },
+        },
+      ],
+    };
+    const holder: { value?: SnapshotListadoResponse | null } = {};
+    service.buscarCvsSnapshot({ ciudad: 'medellin', habilidad: 'c#', page: 99, pageSize: 1 }).subscribe(r => (holder.value = r));
+    httpMock.expectOne(PUBLIC_CVS_SNAPSHOT_API_URL).flush(more);
+    expect(holder.value?.page).toBe(1);
+    expect(holder.value?.total).toBe(1);
+    expect(holder.value?.items[0].urlPublica).toBe('juan-back');
+  });
 });
 
