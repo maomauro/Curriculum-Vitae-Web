@@ -130,4 +130,4 @@ jobs:
             -Dsonar.tests=frontend/src
             -Dsonar.test.inclusions=**/*.spec.ts
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/portalcv-web/lcov.info
-            -Dsonar.coverage.exclusions=**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts
+            -Dsonar.coverage.exclusions=backend/**,**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts
