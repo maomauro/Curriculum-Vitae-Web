@@ -10,7 +10,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 | `DiccionarioDeDatos.md` | Diccionario de datos con descripción y reglas de cada columna. |
 | `Diagrama ER.jpeg` | Diagrama entidad-relación exportado. |
 
-> Los scripts DDL ejecutables están en [`scripts/manual/`](../scripts/manual/) (local) y [`scripts/production/`](../scripts/production/) (Azure). Esquema completo: `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql` (este último incluye roles base al final). Datos de prueba local: `manual/02_InsertTestData.sql`.
+> Los scripts DDL ejecutables están en [`scripts/manual/`](../scripts/manual/) (local) y [`scripts/production/`](../scripts/production/) (Azure). Esquema completo: `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql` (incluye `PublicCvSnapshotExport`, `PublicStaticSnapshotState` y roles base al final). Datos de prueba local: `manual/02_InsertTestData.sql`.
 
 ## Cómo visualizar el modelo DBML
 

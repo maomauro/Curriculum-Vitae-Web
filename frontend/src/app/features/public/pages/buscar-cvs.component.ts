@@ -67,16 +67,16 @@ import {
               <ng-container *ngIf="!loading">{{ resumenResultados }}</ng-container>
               <ng-container *ngIf="loading">Buscando…</ng-container>
             </div>
-            <div *ngIf="usandoSnapshot" class="alert alert-warning py-2 px-3 mt-3 mb-0 small" role="status">
-              <strong class="d-block mb-1">Vista temporal (no es la consulta en vivo a la base de datos todavía)</strong>
-              <span class="d-block">{{ etiquetaOrigenSnapshot(snapshotSourceVersion) }}</span>
-              <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)" class="d-block mt-1">
-                Fecha de última generación del snapshot: {{ snapshotActualizadoEn | date:'medium' }}.
+            <div *ngIf="usandoSnapshot" class="mt-2 small public-data-status public-data-status--snapshot" role="status" aria-live="polite">
+              <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+              Mostrando datos temporales del snapshot.
+              <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)">
+                Última actualización: {{ snapshotActualizadoEn | date:'medium' }}.
               </span>
             </div>
             <div
               *ngIf="!loading && !usandoSnapshot"
-              class="mt-2 small text-success"
+              class="mt-2 small public-data-status public-data-status--live"
               role="status">
               <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>
               Datos en directo desde el servidor (base de datos).

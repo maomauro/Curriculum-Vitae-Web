@@ -6,6 +6,8 @@ import { AuthModalService } from '../../../core/services/auth/auth-modal.service
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
+import { StartupReadinessService } from '../../../core/services/startup-readiness.service';
+import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +23,8 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
         <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
 
           <p class="login-box-msg" *ngIf="!embedModal">Inicia sesión para continuar</p>
+
+          <app-auth-readiness-banner [state]="readinessState"></app-auth-readiness-banner>
 
           <div *ngIf="errorMsg" class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
             <i class="bi bi-exclamation-triangle-fill"></i>
@@ -92,7 +96,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
     </div>
   `,
 })
-export class LoginComponent {
+export class LoginComponent extends AuthReadinessLifecycle {
   @Input() embedModal = false;
 
   email = '';
@@ -103,13 +107,20 @@ export class LoginComponent {
   readonly authModal = inject(AuthModalService);
 
   constructor(
-    private authService: AuthService,
-    private router: Router,
-    private notificationService: NotificationService
-  ) {}
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly notificationService: NotificationService,
+    startupReadiness: StartupReadinessService
+  ) {
+    super(startupReadiness);
+  }
 
   onLogin(): void {
     if (!this.email || !this.password) return;
+    if (this.readinessState !== 'ready') {
+      this.errorMsg = 'El servidor aún se está activando. Intenta de nuevo en unos segundos.';
+      return;
+    }
     this.loading = true;
     this.errorMsg = '';
     this.authService.login(this.email, this.password).subscribe({
