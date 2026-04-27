@@ -1,12 +1,12 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { AuthModalService } from '../../../core/services/auth/auth-modal.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
-import { StartupReadinessService, type DbReadinessState } from '../../../core/services/startup-readiness.service';
+import { StartupReadinessService } from '../../../core/services/startup-readiness.service';
+import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
 
 @Component({
   selector: 'app-recuperar-contrasena',
@@ -23,14 +23,7 @@ import { StartupReadinessService, type DbReadinessState } from '../../../core/se
 
           <p class="login-box-msg" *ngIf="!embedModal">Recupera el acceso a tu cuenta</p>
 
-          <div
-            *ngIf="readinessState !== 'ready'"
-            class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2"
-            role="status"
-            aria-live="polite">
-            <i class="bi bi-clock-history"></i>
-            <div>Estamos iniciando servicios. Si una acción falla, espera unos segundos y reintenta.</div>
-          </div>
+          <app-auth-readiness-banner [state]="readinessState"></app-auth-readiness-banner>
 
           <div *ngIf="sent" class="alert alert-success text-center mb-3">
             <i class="bi bi-envelope-check me-1"></i>
@@ -79,35 +72,21 @@ import { StartupReadinessService, type DbReadinessState } from '../../../core/se
     </div>
   `,
 })
-export class RecuperarContrasenaComponent implements OnInit, OnDestroy {
+export class RecuperarContrasenaComponent extends AuthReadinessLifecycle {
   @Input() embedModal = false;
 
   email = '';
   loading = false;
   sent = false;
-  readinessState: DbReadinessState = 'checking';
-  private readinessSub: Subscription | null = null;
 
   readonly authModal = inject(AuthModalService);
 
   constructor(
     private readonly authService: AuthService,
     private readonly notificationService: NotificationService,
-    private readonly startupReadiness: StartupReadinessService
-  ) {}
-
-  ngOnInit(): void {
-    this.startupReadiness.resetDismiss();
-    this.startupReadiness.startPolling();
-    this.readinessSub = this.startupReadiness.state$.subscribe(state => {
-      this.readinessState = state;
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.readinessSub?.unsubscribe();
-    this.readinessSub = null;
-    this.startupReadiness.stop();
+    startupReadiness: StartupReadinessService
+  ) {
+    super(startupReadiness);
   }
 
   onSubmit(): void {

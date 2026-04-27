@@ -193,5 +193,34 @@ describe('PublicService (snapshot)', () => {
     expect(holder.value?.total).toBe(1);
     expect(holder.value?.items[0].urlPublica).toBe('ana-dev');
   });
+
+  it('getDetalleSnapshot con slug vacío no llama HTTP', () => {
+    let out: unknown = 'init';
+    service.getDetalleSnapshot('   ').subscribe(v => (out = v));
+    expect(out).toBeNull();
+    httpMock.expectNone(PUBLIC_CVS_SNAPSHOT_API_URL);
+    httpMock.expectNone(PUBLIC_CVS_SNAPSHOT_STATIC_URL);
+  });
+
+  it('getEstadisticasSnapshot retorna null si el ítem no trae estadisticas', () => {
+    let out: unknown = 'init';
+    service.getEstadisticasSnapshot('ana-dev').subscribe(v => (out = v));
+    flushSnapshotPair(snapshot, bootstrapEmpty);
+    expect(out).toBeNull();
+  });
+
+  it('buscarCvsSnapshot retorna null si API y estático no producen snapshot válido', () => {
+    let out: unknown = 'init';
+    service.buscarCvsSnapshot({ page: 1 }).subscribe(v => (out = v));
+    flushSnapshotPair({}, {});
+    expect(out).toBeNull();
+  });
+
+  it('getDetalleSnapshot retorna null si no hay snapshot válido', () => {
+    let out: unknown = 'init';
+    service.getDetalleSnapshot('ana-dev').subscribe(v => (out = v));
+    flushSnapshotPair({}, {});
+    expect(out).toBeNull();
+  });
 });
 
