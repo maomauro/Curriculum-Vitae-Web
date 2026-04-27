@@ -1,11 +1,13 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { AuthModalService } from '../../../core/services/auth/auth-modal.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
+import { StartupReadinessService, type DbReadinessState } from '../../../core/services/startup-readiness.service';
 
 @Component({
   selector: 'app-register',
@@ -18,6 +20,14 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
       <div class="card" [class.border-0]="embedModal" [class.shadow-none]="embedModal">
         <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
           <p class="login-box-msg" *ngIf="!embedModal">Crea tu cuenta gratuita</p>
+          <div
+            *ngIf="readinessState !== 'ready'"
+            class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2"
+            role="status"
+            aria-live="polite">
+            <i class="bi bi-clock-history"></i>
+            <div>Estamos iniciando servicios. Si una acción falla, espera unos segundos y reintenta.</div>
+          </div>
           <div *ngIf="errorMsg" class="alert alert-danger py-2 mb-3">{{ errorMsg }}</div>
           <form (ngSubmit)="onRegister()">
             <div class="input-group mb-3">
@@ -83,7 +93,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
     </div>
   `,
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit, OnDestroy {
   @Input() embedModal = false;
 
   name = '';
@@ -91,17 +101,38 @@ export class RegisterComponent {
   password = '';
   loading = false;
   errorMsg = '';
+  readinessState: DbReadinessState = 'checking';
+  private readinessSub: Subscription | null = null;
 
   readonly authModal = inject(AuthModalService);
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private startupReadiness: StartupReadinessService
   ) {}
+
+  ngOnInit(): void {
+    this.startupReadiness.resetDismiss();
+    this.startupReadiness.startPolling();
+    this.readinessSub = this.startupReadiness.state$.subscribe(state => {
+      this.readinessState = state;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.readinessSub?.unsubscribe();
+    this.readinessSub = null;
+    this.startupReadiness.stop();
+  }
 
   onRegister(): void {
     if (!this.name || !this.email || !this.password) return;
+    if (this.readinessState !== 'ready') {
+      this.errorMsg = 'El servidor aún se está activando. Intenta de nuevo en unos segundos.';
+      return;
+    }
     this.loading = true;
     this.errorMsg = '';
     this.authService.register(this.name, this.email, this.password).subscribe({

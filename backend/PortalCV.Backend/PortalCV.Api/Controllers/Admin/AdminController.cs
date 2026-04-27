@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PortalCV.Application;
@@ -23,6 +24,7 @@ public class AdminController : ControllerBase
     private readonly ICvEditorService _cvEditor;
     private readonly IAdminAuditoriaService _auditoria;
     private readonly ICvAuditoriaService _auditoriaCv;
+    private readonly IPublicCvSnapshotExportService _snapshotExport;
 
     public AdminController(
         IRepository<Usuario> usuarioRepo,
@@ -31,7 +33,8 @@ public class AdminController : ControllerBase
         ICurriculumRepository curriculumRepo,
         ICvEditorService cvEditor,
         IAdminAuditoriaService auditoria,
-        ICvAuditoriaService auditoriaCv)
+        ICvAuditoriaService auditoriaCv,
+        IPublicCvSnapshotExportService snapshotExport)
     {
         _usuarioRepo = usuarioRepo;
         _rolRepo = rolRepo;
@@ -40,6 +43,7 @@ public class AdminController : ControllerBase
         _cvEditor = cvEditor;
         _auditoria = auditoria;
         _auditoriaCv = auditoriaCv;
+        _snapshotExport = snapshotExport;
     }
 
     private int? GetActorUsuarioId()
@@ -204,6 +208,36 @@ public class AdminController : ControllerBase
             ct);
 
         return Ok(new { usuarioId = id, cvPublicado = dto.Publicado });
+    }
+
+    /// <summary>Indica si el JSON estático del frontend (<c>public-cvs-snapshot.json</c>) debería regenerarse.</summary>
+    [HttpGet("public-cv-snapshot/pending")]
+    public async Task<IActionResult> GetPublicCvSnapshotPending(CancellationToken ct = default)
+        => Ok(new { stale = await _snapshotExport.IsStaticSnapshotStaleAsync(ct) });
+
+    /// <summary>Descarga el snapshot consolidado para reemplazar el archivo en el repositorio.</summary>
+    [HttpGet("public-cv-snapshot/download")]
+    public async Task<IActionResult> DownloadPublicCvSnapshot(CancellationToken ct = default)
+    {
+        var bytes = await _snapshotExport.BuildConsolidatedSnapshotJsonUtf8Async(ct);
+        return File(bytes, "application/json; charset=utf-8", "public-cvs-snapshot.json");
+    }
+
+    /// <summary>Previsualiza el JSON consolidado antes de descargarlo.</summary>
+    [HttpGet("public-cv-snapshot/preview")]
+    public async Task<IActionResult> PreviewPublicCvSnapshot(CancellationToken ct = default)
+    {
+        var bytes = await _snapshotExport.BuildConsolidatedSnapshotJsonUtf8Async(ct);
+        var json = Encoding.UTF8.GetString(bytes);
+        return Content(json, "application/json; charset=utf-8");
+    }
+
+    /// <summary>Marca el snapshot estático como al día (tras commit/deploy del JSON).</summary>
+    [HttpPost("public-cv-snapshot/ack")]
+    public async Task<IActionResult> AckPublicCvSnapshot(CancellationToken ct = default)
+    {
+        await _snapshotExport.AcknowledgeStaticSnapshotPublishedAsync(ct);
+        return NoContent();
     }
 
     /// <summary>Lista todos los roles del sistema.</summary>

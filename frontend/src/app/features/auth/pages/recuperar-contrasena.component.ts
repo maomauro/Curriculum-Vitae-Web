@@ -1,10 +1,12 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { AuthModalService } from '../../../core/services/auth/auth-modal.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
+import { StartupReadinessService, type DbReadinessState } from '../../../core/services/startup-readiness.service';
 
 @Component({
   selector: 'app-recuperar-contrasena',
@@ -20,6 +22,15 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
         <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
 
           <p class="login-box-msg" *ngIf="!embedModal">Recupera el acceso a tu cuenta</p>
+
+          <div
+            *ngIf="readinessState !== 'ready'"
+            class="alert alert-warning d-flex align-items-center gap-2 mb-3 py-2"
+            role="status"
+            aria-live="polite">
+            <i class="bi bi-clock-history"></i>
+            <div>Estamos iniciando servicios. Si una acción falla, espera unos segundos y reintenta.</div>
+          </div>
 
           <div *ngIf="sent" class="alert alert-success text-center mb-3">
             <i class="bi bi-envelope-check me-1"></i>
@@ -68,22 +79,43 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
     </div>
   `,
 })
-export class RecuperarContrasenaComponent {
+export class RecuperarContrasenaComponent implements OnInit, OnDestroy {
   @Input() embedModal = false;
 
   email = '';
   loading = false;
   sent = false;
+  readinessState: DbReadinessState = 'checking';
+  private readinessSub: Subscription | null = null;
 
   readonly authModal = inject(AuthModalService);
 
   constructor(
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private startupReadiness: StartupReadinessService
   ) {}
+
+  ngOnInit(): void {
+    this.startupReadiness.resetDismiss();
+    this.startupReadiness.startPolling();
+    this.readinessSub = this.startupReadiness.state$.subscribe(state => {
+      this.readinessState = state;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.readinessSub?.unsubscribe();
+    this.readinessSub = null;
+    this.startupReadiness.stop();
+  }
 
   onSubmit(): void {
     if (!this.email) return;
+    if (this.readinessState !== 'ready') {
+      this.notificationService.warning('El servidor aún se está activando. Intenta de nuevo en unos segundos.');
+      return;
+    }
     this.loading = true;
     this.authService.forgotPassword(this.email).subscribe({
       next: () => {

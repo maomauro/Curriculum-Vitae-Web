@@ -16,7 +16,6 @@ namespace PortalCV.Infrastructure.Services;
 public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IPublicSnapshotPersistence _persistence;
     private readonly ILogger<PublicSnapshotService> _logger;
     private readonly TimeSpan _refreshInterval;
     /// <summary>
@@ -32,12 +31,10 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
 
     public PublicSnapshotService(
         IServiceScopeFactory scopeFactory,
-        IPublicSnapshotPersistence persistence,
         IConfiguration configuration,
         ILogger<PublicSnapshotService> logger)
     {
         _scopeFactory = scopeFactory;
-        _persistence = persistence;
         _logger = logger;
 
         var minutes = configuration.GetValue<int?>("PublicSnapshot:RefreshIntervalMinutes") ?? 10;
@@ -54,19 +51,6 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("PublicSnapshotService iniciado. Intervalo: {Minutes} min", _refreshInterval.TotalMinutes);
-
-        try
-        {
-            var fromBlob = await _persistence.TryLoadAsync(stoppingToken);
-            if (fromBlob is not null)
-            {
-                _current = fromBlob;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "No se pudo hidratar snapshot desde almacenamiento persistente al iniciar.");
-        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -144,8 +128,5 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
             items);
 
         _logger.LogInformation("Snapshot público actualizado con {ItemsCount} CVs.", items.Count);
-
-        await _persistence.TrySaveAsync(_current, ct);
     }
 }
-

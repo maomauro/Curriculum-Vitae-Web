@@ -313,49 +313,11 @@ az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 
 ---
 
-## 7.1 Persistencia automática del snapshot público (Azure Blob)
+## 7.1 Snapshot público y JSON estático del repo
 
-El API guarda el snapshot en memoria y, si configuras Blob, **lo escribe automáticamente** tras cada refresco exitoso desde la base de datos. Al **arrancar** (nueva réplica o reinicio del contenedor), **lee ese JSON** y rehidrata el snapshot antes de que vuelva a conectar SQL, de modo que `/api/public/snapshot` puede servir la última copia conocida sin depender solo de RAM.
+El API mantiene el snapshot en **memoria** refrescándolo desde la base (`PublicSnapshot:RefreshIntervalMinutes`). No se usa Azure Blob.
 
-**Variables de entorno en el Container App** (recomendado; no versionar secretos en git):
-
-| Variable | Descripción |
-|----------|-------------|
-| `PublicSnapshot__Blob__ConnectionString` | Cadena del storage account (contenedor privado; solo el API la usa). |
-| `PublicSnapshot__Blob__ContainerName` | Opcional; por defecto `portalcv-snapshots`. |
-| `PublicSnapshot__Blob__BlobName` | Opcional; por defecto `public-cvs-snapshot.json`. |
-
-**Crear cuenta y contenedor (una vez):**
-
-```powershell
-$STORAGE = "stportalcvsnap{suffix-unico}"   # nombre globalmente unico, minusculas y numeros
-az storage account create `
-  --name $STORAGE `
-  --resource-group $RG `
-  --location $LOCATION `
-  --sku Standard_LRS `
-  --allow-blob-public-access false
-
-az storage container create `
-  --account-name $STORAGE `
-  --name portalcv-snapshots `
-  --auth-mode login
-
-$CONN = az storage account show-connection-string `
-  --name $STORAGE `
-  --resource-group $RG `
-  --query connectionString -o tsv
-
-az containerapp update `
-  --name $ACA_APP `
-  --resource-group $RG `
-  --set-env-vars "PublicSnapshot__Blob__ConnectionString=secretref:blob-conn" `
-  --replace-secrets "blob-conn=$CONN"
-```
-
-> Ajusta `--replace-secrets` según la versión de la CLI: si no aplica, usa **Secrets** en el portal del Container App y referencia `secretref:` como en el resto de secretos del runbook.
-
-**Criterio de éxito:** tras un refresco con DB en línea, en logs del API aparece *Snapshot público guardado en Blob*; tras reiniciar o escalar la app, el primer `GET /api/public/snapshot` devuelve `items` con datos sin esperar a que SQL vuelva a estar listo (si ya existía un blob previo).
+Para el **cold start del frontend** (`frontend/public/snapshots/public-cvs-snapshot.json`), la base incluye tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` (integradas en `scripts/production/05_AzureSQL_CreateSchema.sql`). Cada cambio en un CV publicado marca el sitio como *stale*; un **admin** puede consultar `GET /api/admin/public-cv-snapshot/pending`, descargar el JSON consolidado con `GET /api/admin/public-cv-snapshot/download` y, tras commitear el archivo, llamar `POST /api/admin/public-cv-snapshot/ack`.
 
 ---
 
