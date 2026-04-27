@@ -15,6 +15,9 @@ import {
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
+type AuditoriaPurgeModo = 'anioMes' | 'anio' | 'todo';
+type AuditoriaPurgeTabla = 'admin' | 'cv';
+
 @Component({
   selector: 'app-admin-auditoria',
   standalone: false,
@@ -759,9 +762,9 @@ export class AdminAuditoriaComponent implements OnInit {
     this.cargarCv();
   }
 
-  purgeAdmin(modo: 'anioMes' | 'anio' | 'todo'): void {
+  purgeAdmin(modo: AuditoriaPurgeModo): void {
     const warningAdmin = this.getPurgeWarningMessage('admin', modo);
-    if (!window.confirm(warningAdmin)) return;
+    if (!globalThis.confirm(warningAdmin)) return;
 
     if (modo === 'todo') {
       if (!this.canVaciarAdminCompleto) {
@@ -794,9 +797,9 @@ export class AdminAuditoriaComponent implements OnInit {
       });
   }
 
-  purgeCv(modo: 'anioMes' | 'anio' | 'todo'): void {
+  purgeCv(modo: AuditoriaPurgeModo): void {
     const warningCv = this.getPurgeWarningMessage('cv', modo);
-    if (!window.confirm(warningCv)) return;
+    if (!globalThis.confirm(warningCv)) return;
 
     if (modo === 'todo') {
       if (!this.canVaciarCvCompleto) {
@@ -856,7 +859,7 @@ export class AdminAuditoriaComponent implements OnInit {
     }
   }
 
-  private getPurgeWarningMessage(tabla: 'admin' | 'cv', modo: 'anioMes' | 'anio' | 'todo'): string {
+  private getPurgeWarningMessage(tabla: AuditoriaPurgeTabla, modo: AuditoriaPurgeModo): string {
     const nombreTabla = tabla === 'admin' ? 'Auditoría administración' : 'Auditoría CV';
     if (modo === 'todo') {
       return `Advertencia: vas a vaciar COMPLETAMENTE la tabla ${nombreTabla}. Esta acción no se puede deshacer. ¿Continuar?`;

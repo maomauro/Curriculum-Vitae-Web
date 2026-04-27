@@ -107,10 +107,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
   readonly authModal = inject(AuthModalService);
 
   constructor(
-    private authService: AuthService,
-    private router: Router,
-    private notificationService: NotificationService,
-    private startupReadiness: StartupReadinessService
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly notificationService: NotificationService,
+    private readonly startupReadiness: StartupReadinessService
   ) {}
 
   ngOnInit(): void {

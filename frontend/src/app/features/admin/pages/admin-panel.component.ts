@@ -400,7 +400,7 @@ export class AdminPanelComponent implements OnInit {
   toggleCvPublicacion(u: UsuarioAdminDto): void {
     const nuevo = !u.cvPublicado;
     if (!nuevo) {
-      const confirmar = window.confirm(
+      const confirmar = globalThis.confirm(
         `Vas a cambiar el CV de ${u.email} a estado Borrador. ` +
         'No se mostrará en el portal público hasta volver a publicarlo. ¿Deseas continuar?'
       );

@@ -96,9 +96,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private renderer: Renderer2,
-    private sidebarNav: PrivateLayoutSidebarService,
-    private adminService: AdminService,
-    private notificationService: NotificationService
+    private readonly sidebarNav: PrivateLayoutSidebarService,
+    private readonly adminService: AdminService,
+    private readonly notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {

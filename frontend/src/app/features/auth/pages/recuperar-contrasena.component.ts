@@ -91,9 +91,9 @@ export class RecuperarContrasenaComponent implements OnInit, OnDestroy {
   readonly authModal = inject(AuthModalService);
 
   constructor(
-    private authService: AuthService,
-    private notificationService: NotificationService,
-    private startupReadiness: StartupReadinessService
+    private readonly authService: AuthService,
+    private readonly notificationService: NotificationService,
+    private readonly startupReadiness: StartupReadinessService
   ) {}
 
   ngOnInit(): void {
