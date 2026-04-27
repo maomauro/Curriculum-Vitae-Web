@@ -313,6 +313,14 @@ az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 
 ---
 
+## 7.1 Snapshot público y JSON estático del repo
+
+El API mantiene el snapshot en **memoria** refrescándolo desde la base (`PublicSnapshot:RefreshIntervalMinutes`). No se usa Azure Blob.
+
+Para el **cold start del frontend** (`frontend/public/snapshots/public-cvs-snapshot.json`), la base incluye tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` (integradas en `scripts/production/05_AzureSQL_CreateSchema.sql`). Cada cambio en un CV publicado marca el sitio como *stale*; un **admin** puede consultar `GET /api/admin/public-cv-snapshot/pending`, descargar el JSON consolidado con `GET /api/admin/public-cv-snapshot/download` y, tras commitear el archivo, llamar `POST /api/admin/public-cv-snapshot/ack`.
+
+---
+
 ## 8. Rollback rápido
 
 Estrategia mínima: reapuntar el Container App a una imagen previa de GHCR.

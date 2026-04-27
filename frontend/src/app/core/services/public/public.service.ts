@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, shareReplay, timeout } from 'rxjs/operators';
 import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
 import { API_BASE_URL } from '../../constants/api-base-url';
@@ -21,6 +21,25 @@ function deepToCamel(value: unknown): unknown {
     out[camel] = deepToCamel(v);
   }
   return out;
+}
+
+/**
+ * El API puede responder 200 con `bootstrap-empty` e `items: []` tras un reinicio de contenedor;
+ * el JSON estático del SWA puede traer última copia publicada. Preferimos quien tenga CVs.
+ */
+function pickPublicSnapshotRicher(
+  api: PublicCvsSnapshotDto | null,
+  st: PublicCvsSnapshotDto | null
+): PublicCvsSnapshotDto | null {
+  const apiCount = api?.items?.length ?? 0;
+  const stCount = st?.items?.length ?? 0;
+  if (apiCount > 0) {
+    return api;
+  }
+  if (stCount > 0) {
+    return st;
+  }
+  return api ?? st;
 }
 
 // ── DTOs (espejo de PublicDtos.cs del backend) ──────────────────────────────
@@ -349,17 +368,19 @@ export class PublicService {
         }
         return snapshot;
       };
-      /** Si el contenedor está despertando, no bloquear la UI: timeout y fallback al JSON estático del SWA. */
+      /** Contenedor lento: timeout en API; siempre pedimos estático en paralelo para poder fusionar. */
       const snapshotApiTimeoutMs = 5_000;
-      this.snapshotCache$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_API_URL).pipe(
+      const api$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_API_URL).pipe(
         timeout(snapshotApiTimeoutMs),
         map(normalize),
-        catchError(() =>
-          this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_STATIC_URL).pipe(
-            map(normalize),
-            catchError(() => of(null))
-          )
-        ),
+        catchError(() => of<PublicCvsSnapshotDto | null>(null))
+      );
+      const static$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_STATIC_URL).pipe(
+        map(normalize),
+        catchError(() => of<PublicCvsSnapshotDto | null>(null))
+      );
+      this.snapshotCache$ = forkJoin({ api: api$, st: static$ }).pipe(
+        map(({ api, st }) => pickPublicSnapshotRicher(api, st)),
         shareReplay({ bufferSize: 1, refCount: true })
       );
     }
