@@ -5,8 +5,6 @@ import { AuthModalService } from '../../../core/services/auth/auth-modal.service
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
-import { StartupReadinessService } from '../../../core/services/startup-readiness.service';
-import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
 
 @Component({
   selector: 'app-recuperar-contrasena',
@@ -22,8 +20,6 @@ import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
         <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
 
           <p class="login-box-msg" *ngIf="!embedModal">Recupera el acceso a tu cuenta</p>
-
-          <app-auth-readiness-banner [state]="readinessState"></app-auth-readiness-banner>
 
           <div *ngIf="sent" class="alert alert-success text-center mb-3">
             <i class="bi bi-envelope-check me-1"></i>
@@ -72,7 +68,7 @@ import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
     </div>
   `,
 })
-export class RecuperarContrasenaComponent extends AuthReadinessLifecycle {
+export class RecuperarContrasenaComponent {
   @Input() embedModal = false;
 
   email = '';
@@ -82,19 +78,12 @@ export class RecuperarContrasenaComponent extends AuthReadinessLifecycle {
   readonly authModal = inject(AuthModalService);
 
   constructor(
-    private readonly authService: AuthService,
-    private readonly notificationService: NotificationService,
-    startupReadiness: StartupReadinessService
-  ) {
-    super(startupReadiness);
-  }
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) {}
 
   onSubmit(): void {
     if (!this.email) return;
-    if (this.readinessState !== 'ready') {
-      this.notificationService.warning('El servidor aún se está activando. Intenta de nuevo en unos segundos.');
-      return;
-    }
     this.loading = true;
     this.authService.forgotPassword(this.email).subscribe({
       next: () => {

@@ -37,16 +37,16 @@ type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 
       <div class="container py-4" *ngIf="estado === 'listo' && ctx.cv">
         <div class="cv-publico-print-hide">
-          <div *ngIf="usandoSnapshot" class="small mb-3 public-data-status public-data-status--snapshot" role="status" aria-live="polite">
-            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-            Mostrando datos temporales del snapshot.
-            <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)">
-              Última actualización: {{ snapshotActualizadoEn | date:'medium' }}.
+          <div *ngIf="usandoSnapshot" class="alert alert-warning py-2 px-3 small" role="status">
+            <strong class="d-block mb-1">Vista temporal (no es la consulta en vivo a la base de datos todavía)</strong>
+            <span class="d-block">{{ etiquetaOrigenSnapshot(snapshotSourceVersion) }}</span>
+            <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)" class="d-block mt-1">
+              Fecha de última generación del snapshot: {{ snapshotActualizadoEn | date:'medium' }}.
             </span>
           </div>
           <p
             *ngIf="!usandoSnapshot && ctx.cv"
-            class="small mb-3 cv-publico-print-hide public-data-status public-data-status--live"
+            class="small text-muted mb-3 cv-publico-print-hide"
             role="status">
             <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>
             Datos en directo desde el servidor (base de datos).

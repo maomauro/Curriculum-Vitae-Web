@@ -52,7 +52,7 @@
 |  SQL Server (instalacion local)                    |
 |  +-- scripts/manual (schema + datos de prueba)     |
 |  Backend: dotnet run (PortalCV.Api)                 |
-|  Frontend: ng serve (proxy /api y /health -> backend) |
+|  Frontend: ng serve (proxy /api -> backend)        |
 +-----------------------------------------------------+
                         |  git push / PR
                         v

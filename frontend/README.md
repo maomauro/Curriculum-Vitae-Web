@@ -1,6 +1,6 @@
 # Frontend — PortalCV (`portalcv-web`)
 
-Aplicación **Angular 20** del portal (zona pública, autenticación y panel privado). Los servicios HTTP usan rutas relativas **`/api/...`** y readiness en **`/health/...`**; en local, `proxy.conf.json` reenvía ambas rutas al backend (puerto configurado allí).
+Aplicación **Angular 20** del portal (zona pública, autenticación y panel privado). Los servicios HTTP usan rutas relativas **`/api/...`**; en local, `proxy.conf.json` reenvía al backend (puerto configurado allí).
 
 ## Requisitos
 
@@ -17,7 +17,7 @@ ng serve
 
 Abre `http://localhost:4200/`. Los cambios recargan en caliente.
 
-**Producción:** `npm run build -- --configuration production` (salida en `dist/`). El hosting debe servir el SPA y resolver `/api` (y, si aplica readiness directo, `/health`) hacia la API (proxy inverso, Static Web Apps con API enlazada, etc.).
+**Producción:** `npm run build -- --configuration production` (salida en `dist/`). El hosting debe servir el SPA y resolver `/api` hacia la API (proxy inverso, Static Web Apps con API enlazada, etc.).
 
 ---
 

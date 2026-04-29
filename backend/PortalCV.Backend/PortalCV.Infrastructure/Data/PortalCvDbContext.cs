@@ -29,8 +29,6 @@ public class PortalCvDbContext : DbContext
     public DbSet<EstadisticasPublicas> EstadisticasPublicas => Set<EstadisticasPublicas>();
     public DbSet<AuditoriaAdmin> AuditoriasAdmin => Set<AuditoriaAdmin>();
     public DbSet<AuditoriaCv> AuditoriasCv => Set<AuditoriaCv>();
-    public DbSet<PublicCvSnapshotExport> PublicCvSnapshotExports => Set<PublicCvSnapshotExport>();
-    public DbSet<PublicStaticSnapshotState> PublicStaticSnapshotState => Set<PublicStaticSnapshotState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,8 +51,6 @@ public class PortalCvDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EstadisticasPublicasConfiguration());
         modelBuilder.ApplyConfiguration(new AuditoriaAdminConfiguration());
         modelBuilder.ApplyConfiguration(new AuditoriaCvConfiguration());
-        modelBuilder.ApplyConfiguration(new PublicCvSnapshotExportConfiguration());
-        modelBuilder.ApplyConfiguration(new PublicStaticSnapshotStateConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

@@ -15,9 +15,6 @@ import {
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
-type AuditoriaPurgeModo = 'anioMes' | 'anio' | 'todo';
-type AuditoriaPurgeTabla = 'admin' | 'cv';
-
 @Component({
   selector: 'app-admin-auditoria',
   standalone: false,
@@ -107,7 +104,9 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
         <div *ngIf="!errorAdmin && !loadingAdmin && totalAdmin === 0">
           <div *ngIf="!hayFiltrosAdmin" class="text-center text-muted py-5 px-2">
             <i class="bi bi-inbox display-6 d-block mb-2"></i>
-            <p class="mb-0">Aún no hay eventos de administración registrados.</p>
+            <p class="mb-0">
+              Aún no hay eventos. Ejecuta el script SQL <code>scripts/14_AuditoriaAdmin.sql</code> si la API falla al guardar.
+            </p>
           </div>
           <div *ngIf="hayFiltrosAdmin" class="text-center text-muted py-5 px-2">
             <i class="bi bi-search admin-search-icon"></i>
@@ -223,7 +222,9 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
         <div *ngIf="!errorCv && !loadingCv && totalCv === 0">
           <div *ngIf="!hayFiltrosCv" class="text-center text-muted py-5 px-2">
             <i class="bi bi-inbox display-6 d-block mb-2"></i>
-            <p class="mb-0">Aún no hay eventos de edición de CV registrados.</p>
+            <p class="mb-0">
+              Aún no hay eventos de edición de CV. Ejecuta <code>scripts/15_AuditoriaCv.sql</code> si la API falla al guardar.
+            </p>
           </div>
           <div *ngIf="hayFiltrosCv" class="text-center text-muted py-5 px-2">
             <i class="bi bi-search admin-search-icon"></i>
@@ -370,7 +371,6 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
                   type="text"
                   class="form-control form-control-sm admin-search-input"
                   [(ngModel)]="confirmVaciarAdmin"
-                  (ngModelChange)="onConfirmVaciarAdminChange()"
                   [ngModelOptions]="{ standalone: true }"
                   [placeholder]="fraseVaciar"
                   autocomplete="off" />
@@ -383,13 +383,10 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
                   <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
               </div>
-              <div *ngIf="showConfirmErrorAdmin" class="alert alert-danger py-2 small mb-2">
-                Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
-              </div>
               <button
                 type="button"
                 class="btn btn-sm btn-danger"
-                [disabled]="purgingAdmin || !canVaciarAdminCompleto"
+                [disabled]="purgingAdmin"
                 (click)="purgeAdmin('todo')">
                 Vaciar tabla completa
               </button>
@@ -476,7 +473,6 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
                   type="text"
                   class="form-control form-control-sm admin-search-input"
                   [(ngModel)]="confirmVaciarCv"
-                  (ngModelChange)="onConfirmVaciarCvChange()"
                   [ngModelOptions]="{ standalone: true }"
                   [placeholder]="fraseVaciar"
                   autocomplete="off" />
@@ -489,13 +485,10 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
                   <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
               </div>
-              <div *ngIf="showConfirmErrorCv" class="alert alert-danger py-2 small mb-2">
-                Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
-              </div>
               <button
                 type="button"
                 class="btn btn-sm btn-danger"
-                [disabled]="purgingCv || !canVaciarCvCompleto"
+                [disabled]="purgingCv"
                 (click)="purgeCv('todo')">
                 Vaciar tabla completa
               </button>
@@ -546,13 +539,11 @@ export class AdminAuditoriaComponent implements OnInit {
   anioPurgeAdmin = new Date().getUTCFullYear();
   mesPurgeAdmin = 1;
   confirmVaciarAdmin = '';
-  showConfirmErrorAdmin = false;
   purgingAdmin = false;
 
   anioPurgeCv = new Date().getUTCFullYear();
   mesPurgeCv = 1;
   confirmVaciarCv = '';
-  showConfirmErrorCv = false;
   purgingCv = false;
 
   loadingAdmin = true;
@@ -636,33 +627,14 @@ export class AdminAuditoriaComponent implements OnInit {
 
   limpiarConfirmVaciarAdmin(): void {
     this.confirmVaciarAdmin = '';
-    this.showConfirmErrorAdmin = false;
   }
 
   limpiarConfirmVaciarCv(): void {
     this.confirmVaciarCv = '';
-    this.showConfirmErrorCv = false;
-  }
-
-  onConfirmVaciarAdminChange(): void {
-    this.showConfirmErrorAdmin = false;
-  }
-
-  onConfirmVaciarCvChange(): void {
-    this.showConfirmErrorCv = false;
-  }
-
-  get canVaciarAdminCompleto(): boolean {
-    return this.confirmVaciarAdmin.trim() === this.fraseVaciar;
-  }
-
-  get canVaciarCvCompleto(): boolean {
-    return this.confirmVaciarCv.trim() === this.fraseVaciar;
   }
 
   abrirModalMantenimientoAdmin(): void {
     this.modalMantenimientoCv = false;
-    this.showConfirmErrorAdmin = false;
     this.modalMantenimientoAdmin = true;
   }
 
@@ -678,7 +650,6 @@ export class AdminAuditoriaComponent implements OnInit {
 
   abrirModalMantenimientoCv(): void {
     this.modalMantenimientoAdmin = false;
-    this.showConfirmErrorCv = false;
     this.modalMantenimientoCv = true;
   }
 
@@ -762,13 +733,9 @@ export class AdminAuditoriaComponent implements OnInit {
     this.cargarCv();
   }
 
-  purgeAdmin(modo: AuditoriaPurgeModo): void {
-    const warningAdmin = this.getPurgeWarningMessage('admin', modo);
-    if (!globalThis.confirm(warningAdmin)) return;
-
+  purgeAdmin(modo: 'anioMes' | 'anio' | 'todo'): void {
     if (modo === 'todo') {
-      if (!this.canVaciarAdminCompleto) {
-        this.showConfirmErrorAdmin = true;
+      if (this.confirmVaciarAdmin.trim() !== this.fraseVaciar) {
         this.notificationService.error('Escribe la frase de confirmación exacta para vaciar la tabla.');
         return;
       }
@@ -797,13 +764,9 @@ export class AdminAuditoriaComponent implements OnInit {
       });
   }
 
-  purgeCv(modo: AuditoriaPurgeModo): void {
-    const warningCv = this.getPurgeWarningMessage('cv', modo);
-    if (!globalThis.confirm(warningCv)) return;
-
+  purgeCv(modo: 'anioMes' | 'anio' | 'todo'): void {
     if (modo === 'todo') {
-      if (!this.canVaciarCvCompleto) {
-        this.showConfirmErrorCv = true;
+      if (this.confirmVaciarCv.trim() !== this.fraseVaciar) {
         this.notificationService.error('Escribe la frase de confirmación exacta para vaciar la tabla.');
         return;
       }
@@ -857,21 +820,5 @@ export class AdminAuditoriaComponent implements OnInit {
     } catch {
       return json.length > 120 ? json.slice(0, 117) + '…' : json;
     }
-  }
-
-  private getPurgeWarningMessage(tabla: AuditoriaPurgeTabla, modo: AuditoriaPurgeModo): string {
-    const nombreTabla = tabla === 'admin' ? 'Auditoría administración' : 'Auditoría CV';
-    if (modo === 'todo') {
-      return `Advertencia: vas a vaciar COMPLETAMENTE la tabla ${nombreTabla}. Esta acción no se puede deshacer. ¿Continuar?`;
-    }
-    if (modo === 'anio') {
-      const anio = tabla === 'admin' ? this.anioPurgeAdmin : this.anioPurgeCv;
-      return `Advertencia: vas a eliminar registros del año ${anio} en ${nombreTabla}. ¿Continuar?`;
-    }
-
-    const anio = tabla === 'admin' ? this.anioPurgeAdmin : this.anioPurgeCv;
-    const mes = tabla === 'admin' ? this.mesPurgeAdmin : this.mesPurgeCv;
-    const mesNombre = this.mesesPurge.find(m => m.v === mes)?.n ?? `mes ${mes}`;
-    return `Advertencia: vas a eliminar registros de ${mesNombre} ${anio} en ${nombreTabla}. ¿Continuar?`;
   }
 }

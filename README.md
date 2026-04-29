@@ -19,7 +19,7 @@ Portal web para conectar profesionales (publicadores de CV) con reclutadores. Ca
 1. **Clonar** el repositorio.
 2. **Base de datos (SQL Server local)**: crear/apuntar la base y ejecutar los scripts en [scripts/](scripts/) según [database/README.md](database/README.md).
 3. **Backend**: `cd backend/PortalCV.Backend/PortalCV.Api` → configurar secretos locales (`dotnet user-secrets`) y/o variables de entorno → `dotnet run`.
-4. **Frontend**: `cd frontend` → `npm ci` → `ng serve` (el proxy en `proxy.conf.json` reenvía `/api` y `/health` al backend).
+4. **Frontend**: `cd frontend` → `npm ci` → `ng serve` (el proxy en `proxy.conf.json` reenvía `/api` al backend).
 
 Antes de **producción**, revisar [docs/devops/Checklist-Produccion.md](docs/devops/Checklist-Produccion.md) (CORS, JWT, SQL, build del SPA).
 

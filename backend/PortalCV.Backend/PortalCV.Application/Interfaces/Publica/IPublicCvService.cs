@@ -9,9 +9,6 @@ public interface IPublicCvService
     Task<CvEstadisticasDto?> GetEstadisticasAsync(string urlPublica, CancellationToken ct = default);
     Task<FiltrosPublicosDto> GetFiltrosAsync(CancellationToken ct = default);
     Task ContactarAsync(string urlPublica, ContactarCvRequest request, CancellationToken ct = default);
-
-    /// <summary>Construye un item de snapshot para export estático, sin registrar visita.</summary>
-    Task<PublicSnapshotItemDto?> TryBuildSnapshotItemDtoAsync(int curriculumId, CancellationToken ct = default);
     /// <summary>Registra uso de Imprimir / PDF (alerta Descarga deduplicada por visitante anónimo).</summary>
     Task RegistrarImpresionPdfAsync(string urlPublica, string? visitanteAnonimoId = null, CancellationToken ct = default);
 }

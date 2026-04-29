@@ -130,3 +130,4 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
         _logger.LogInformation("Snapshot público actualizado con {ItemsCount} CVs.", items.Count);
     }
 }
+

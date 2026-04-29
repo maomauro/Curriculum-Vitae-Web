@@ -151,21 +151,4 @@ export class AdminService {
   purgeAuditoria(body: PurgeAuditoriaRequest): Observable<PurgeAuditoriaResponseDto> {
     return this.http.post<PurgeAuditoriaResponseDto>(`${BASE}/auditoria/purge`, body);
   }
-
-  /** Indica si conviene regenerar y commitear `public-cvs-snapshot.json` en el frontend. */
-  getPublicCvSnapshotPending(): Observable<{ stale: boolean }> {
-    return this.http.get<{ stale: boolean }>(`${BASE}/public-cv-snapshot/pending`);
-  }
-
-  downloadPublicCvSnapshot(): Observable<Blob> {
-    return this.http.get(`${BASE}/public-cv-snapshot/download`, { responseType: 'blob' });
-  }
-
-  previewPublicCvSnapshot(): Observable<string> {
-    return this.http.get(`${BASE}/public-cv-snapshot/preview`, { responseType: 'text' });
-  }
-
-  acknowledgePublicCvSnapshot(): Observable<unknown> {
-    return this.http.post(`${BASE}/public-cv-snapshot/ack`, {}, { responseType: 'text' });
-  }
 }

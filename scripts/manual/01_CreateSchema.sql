@@ -43,8 +43,6 @@ IF OBJECT_ID(N'dbo.Experiencia', N'U') IS NOT NULL            DROP TABLE dbo.Exp
 IF OBJECT_ID(N'dbo.Perfil', N'U') IS NOT NULL                 DROP TABLE dbo.Perfil;
 IF OBJECT_ID(N'dbo.Personales', N'U') IS NOT NULL            DROP TABLE dbo.Personales;
 IF OBJECT_ID(N'dbo.AuditoriaCv', N'U') IS NOT NULL           DROP TABLE dbo.AuditoriaCv;
-IF OBJECT_ID(N'dbo.PublicCvSnapshotExport', N'U') IS NOT NULL DROP TABLE dbo.PublicCvSnapshotExport;
-IF OBJECT_ID(N'dbo.PublicStaticSnapshotState', N'U') IS NOT NULL DROP TABLE dbo.PublicStaticSnapshotState;
 IF OBJECT_ID(N'dbo.Curriculum', N'U') IS NOT NULL              DROP TABLE dbo.Curriculum;
 IF OBJECT_ID(N'dbo.AuditoriaAdmin', N'U') IS NOT NULL        DROP TABLE dbo.AuditoriaAdmin;
 IF OBJECT_ID(N'dbo.Usuario', N'U') IS NOT NULL                DROP TABLE dbo.Usuario;
@@ -112,25 +110,6 @@ CREATE TABLE dbo.Curriculum (
 CREATE NONCLUSTERED INDEX IX_Curriculum_UrlPublica ON dbo.Curriculum (UrlPublica);
 CREATE NONCLUSTERED INDEX IX_Curriculum_Estado_Visitas ON dbo.Curriculum (Estado, ContadorVisitas DESC, CurriculumId)
     INCLUDE (UrlPublica);
-
--- -----------------------------------------------------------------------------
--- B.1 EXPORT SNAPSHOT ESTÁTICO (JSON por CV publicado + flag global stale)
--- -----------------------------------------------------------------------------
-CREATE TABLE dbo.PublicStaticSnapshotState (
-    Id TINYINT NOT NULL CONSTRAINT PK_PublicStaticSnapshotState PRIMARY KEY,
-    SiteSnapshotStale BIT NOT NULL CONSTRAINT DF_PublicStaticSnapshotState_Stale DEFAULT (0),
-    CONSTRAINT CK_PublicStaticSnapshotState_Singleton CHECK (Id = 1)
-);
-
-INSERT INTO dbo.PublicStaticSnapshotState (Id, SiteSnapshotStale) VALUES (1, 0);
-
-CREATE TABLE dbo.PublicCvSnapshotExport (
-    CurriculumId INT NOT NULL CONSTRAINT PK_PublicCvSnapshotExport PRIMARY KEY,
-    ItemJson NVARCHAR(MAX) NOT NULL,
-    UpdatedAtUtc DATETIME2 NOT NULL,
-    CONSTRAINT FK_PublicCvSnapshotExport_Curriculum
-        FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
-);
 
 -- -----------------------------------------------------------------------------
 -- C. INFORMACIÓN PERSONAL (Personales - 1 a 1 con Curriculum)

@@ -83,36 +83,6 @@ public class PublicCvService : IPublicCvService
         return dto;
     }
 
-    public async Task<PublicSnapshotItemDto?> TryBuildSnapshotItemDtoAsync(int curriculumId, CancellationToken ct = default)
-    {
-        var cv = await _curriculumRepo.GetByIdForSnapshotAsync(curriculumId, ct);
-        if (cv is null) return null;
-
-        var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
-            cv.Experiencias.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
-
-        var nombrePerfil =
-            cv.Perfiles.FirstOrDefault(p => p.EsActivo)?.NombrePerfil
-            ?? cv.Perfiles.FirstOrDefault()?.NombrePerfil;
-
-        var listado = new CvListadoItemDto(
-            cv.CurriculumId,
-            cv.UrlPublica,
-            cv.Personales is null ? null
-                : $"{cv.Personales.PrimerNombre} {cv.Personales.PrimerApellido}".Trim(),
-            cv.Personales?.FotoUrl,
-            cv.Personales?.Ciudad,
-            cv.Personales?.Pais,
-            nombrePerfil,
-            cv.ContadorVisitas,
-            cv.ContadorContactos,
-            cv.Habilidades.Select(h => h.Nombre).ToList());
-
-        var detalle = MapToDetalle(cv, mesesAcum);
-        var stats = await GetEstadisticasAsync(cv.UrlPublica, ct);
-        return new PublicSnapshotItemDto(listado, detalle, stats);
-    }
-
     public async Task<CvEstadisticasDto?> GetEstadisticasAsync(string urlPublica, CancellationToken ct = default)
     {
         var cv = await _context.Curriculums

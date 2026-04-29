@@ -31,7 +31,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
     <ng-container *ngIf="!loading">
       <!-- Métricas rápidas -->
       <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl">
+        <div class="col-md-4">
           <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
             <div class="rounded-3 admin-stat-icon admin-stat-icon--blue">
               <i class="bi bi-people-fill"></i>
@@ -42,7 +42,7 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
             </div>
           </div>
         </div>
-        <div class="col-sm-6 col-xl">
+        <div class="col-md-4">
           <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
             <div class="rounded-3 admin-stat-icon admin-stat-icon--green">
               <i class="bi bi-person-check-fill"></i>
@@ -53,25 +53,14 @@ import { extractApiErrorMessage } from '../../../core/utils/form-validation.util
             </div>
           </div>
         </div>
-        <div class="col-sm-6 col-xl">
+        <div class="col-md-4">
           <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
-            <div class="rounded-3 admin-stat-icon admin-stat-icon--amber">
-              <i class="bi bi-eye-fill"></i>
+            <div class="rounded-3 admin-stat-icon admin-stat-icon--red">
+              <i class="bi bi-person-x-fill"></i>
             </div>
             <div>
-              <div class="admin-stat-value">{{ totalCvPublicados }}</div>
-              <div class="text-muted admin-stat-label">CV portal publicados</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-xl">
-          <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
-            <div class="rounded-3 admin-stat-icon admin-stat-icon--violet">
-              <i class="bi bi-person-badge-fill"></i>
-            </div>
-            <div>
-              <div class="admin-stat-value">{{ totalUsuariosConRoles }}</div>
-              <div class="text-muted admin-stat-label">Usuarios con roles asignados</div>
+              <div class="admin-stat-value">{{ totalInactivos }}</div>
+              <div class="text-muted admin-stat-label">Usuarios inactivos</div>
             </div>
           </div>
         </div>
@@ -330,11 +319,8 @@ export class AdminPanelComponent implements OnInit {
   get totalActivos(): number {
     return this.usuarios.filter(u => u.estado === 'Activo').length;
   }
-  get totalCvPublicados(): number {
-    return this.usuarios.filter(u => u.cvPublicado).length;
-  }
-  get totalUsuariosConRoles(): number {
-    return this.usuarios.filter(u => (u.roles?.length ?? 0) > 0).length;
+  get totalInactivos(): number {
+    return this.usuarios.filter(u => u.estado !== 'Activo').length;
   }
 
   get usuariosFiltrados(): UsuarioAdminDto[] {
@@ -399,13 +385,6 @@ export class AdminPanelComponent implements OnInit {
 
   toggleCvPublicacion(u: UsuarioAdminDto): void {
     const nuevo = !u.cvPublicado;
-    if (!nuevo) {
-      const confirmar = globalThis.confirm(
-        `Vas a cambiar el CV de ${u.email} a estado Borrador. ` +
-        'No se mostrará en el portal público hasta volver a publicarlo. ¿Deseas continuar?'
-      );
-      if (!confirmar) return;
-    }
     this.adminService.setCvPublicacion(u.usuarioId, nuevo).subscribe({
       next: res => {
         u.cvPublicado = res.cvPublicado;

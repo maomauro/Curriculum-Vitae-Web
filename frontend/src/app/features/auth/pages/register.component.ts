@@ -6,8 +6,6 @@ import { AuthModalService } from '../../../core/services/auth/auth-modal.service
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
-import { StartupReadinessService } from '../../../core/services/startup-readiness.service';
-import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
 
 @Component({
   selector: 'app-register',
@@ -20,7 +18,6 @@ import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
       <div class="card" [class.border-0]="embedModal" [class.shadow-none]="embedModal">
         <div class="card-body login-card-body" [class.px-0]="embedModal" [class.pt-0]="embedModal">
           <p class="login-box-msg" *ngIf="!embedModal">Crea tu cuenta gratuita</p>
-          <app-auth-readiness-banner [state]="readinessState"></app-auth-readiness-banner>
           <div *ngIf="errorMsg" class="alert alert-danger py-2 mb-3">{{ errorMsg }}</div>
           <form (ngSubmit)="onRegister()">
             <div class="input-group mb-3">
@@ -86,7 +83,7 @@ import { AuthReadinessLifecycle } from '../auth-readiness-lifecycle';
     </div>
   `,
 })
-export class RegisterComponent extends AuthReadinessLifecycle {
+export class RegisterComponent {
   @Input() embedModal = false;
 
   name = '';
@@ -98,20 +95,13 @@ export class RegisterComponent extends AuthReadinessLifecycle {
   readonly authModal = inject(AuthModalService);
 
   constructor(
-    private readonly authService: AuthService,
-    private readonly router: Router,
-    private readonly notificationService: NotificationService,
-    startupReadiness: StartupReadinessService
-  ) {
-    super(startupReadiness);
-  }
+    private authService: AuthService,
+    private router: Router,
+    private notificationService: NotificationService
+  ) {}
 
   onRegister(): void {
     if (!this.name || !this.email || !this.password) return;
-    if (this.readinessState !== 'ready') {
-      this.errorMsg = 'El servidor aún se está activando. Intenta de nuevo en unos segundos.';
-      return;
-    }
     this.loading = true;
     this.errorMsg = '';
     this.authService.register(this.name, this.email, this.password).subscribe({

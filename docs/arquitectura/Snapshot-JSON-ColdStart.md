@@ -2,66 +2,113 @@
 
 ## Objetivo
 
-Evitar pantalla vacía cuando la API/DB está en arranque o no disponible, mostrando contenido público desde `frontend/public/snapshots/public-cvs-snapshot.json` y convergiendo a datos en vivo cuando la API responde.
+Evitar que el visitante espere en blanco cuando Azure SQL esta en arranque (cold start), mostrando CVs publicas desde un snapshot JSON temporal y cambiando a datos oficiales cuando la DB ya responda.
 
 ---
 
-## Estado actual implementado
+## Validacion del flujo propuesto
 
-1. El backend mantiene un export por CV en `PublicCvSnapshotExport` (JSON por `CurriculumId`).
-2. Cada cambio de CV refresca ese export y marca `PublicStaticSnapshotState.SiteSnapshotStale = true`.
-3. El admin revisa `GET /api/admin/public-cv-snapshot/pending`.
-4. El admin descarga consolidado con `GET /api/admin/public-cv-snapshot/download` (o preview).
-5. Se reemplaza `frontend/public/snapshots/public-cvs-snapshot.json` y se hace commit/deploy.
-6. El admin confirma con `POST /api/admin/public-cv-snapshot/ack`.
+El flujo que propones es **coherente** y **tecnicamente viable**:
 
-Notas de negocio:
-- El export por CV puede existir incluso en borrador.
-- El consolidado público filtra solo `Curriculum.Estado = Publicado` y `Usuario.Estado = Activo`.
+1. Visitante entra al portal.
+2. Se muestra el modal de bienvenida/readiness (si la DB aun no esta lista).
+3. El visitante puede continuar navegando hacia `/buscar` o `/cv/:slug`.
+4. Mientras `/health/ready` no este en `Healthy`, frontend muestra datos desde snapshot JSON.
+5. Cuando DB esta activa, un proceso automatico en servidor actualiza el snapshot JSON.
+6. Desde ese momento, frontend usa datos oficiales de API/DB y el snapshot queda como respaldo.
 
 ---
 
-## Flujo de lectura en frontend
+## Diagrama de secuencia (v1 recomendada)
 
 ```mermaid
 sequenceDiagram
     participant V as Visitante
-    participant F as Frontend
-    participant A as API
-    participant D as SQL
-    participant S as Snapshot estático
+    participant F as Frontend (SWA)
+    participant A as API (.NET en ACA)
+    participant D as Azure SQL
+    participant J as Snapshot Updater (Function/Worker)
+    participant B as Blob Storage (snapshot)
 
-    V->>F: Abre /buscar o /cv/:slug
-    F->>A: GET /api/public/snapshot (timeout corto)
-    F->>S: GET /snapshots/public-cvs-snapshot.json (paralelo)
-    alt API disponible
-        A->>D: consulta pública
-        D-->>A: OK
-        A-->>F: snapshot dinámico
-        F-->>V: Datos en vivo
-    else API/DB lenta o caída
-        A-->>F: timeout/error
-        S-->>F: snapshot estático
-        F-->>V: Datos temporales del snapshot
+    V->>F: Abre PortalCV
+    F->>A: GET /health/ready
+    alt DB aun no lista
+        A->>D: intento de conexion
+        D-->>A: timeout / not ready
+        A-->>F: not ready
+        F-->>V: Modal bienvenida + sigue navegacion
+        F->>B: GET snapshot JSON
+        B-->>F: ultimo snapshot valido
+        F-->>V: Mostrar CVs temporales
+    else DB lista
+        A-->>F: healthy
+        F-->>V: Navegacion normal
     end
+
+    J->>A: Poll /health/ready (automatico)
+    A->>D: verifica readiness
+    D-->>A: healthy
+    A-->>J: healthy
+    J->>A: Solicita export de CVs publicas
+    A->>D: Consulta CVs publicas
+    D-->>A: dataset actual
+    A-->>J: payload exportable
+    J->>B: Sobrescribe snapshot JSON
+    B-->>J: OK
+
+    F->>A: Reintenta API oficial
+    A->>D: consulta normal
+    D-->>A: OK
+    A-->>F: datos oficiales
+    F-->>V: Reemplaza snapshot por datos oficiales
 ```
 
 ---
 
-## Implicaciones
+## Aclaracion clave de implementacion
 
-- **Frescura:** el archivo estático depende del ciclo download/commit/deploy.
-- **Consistencia:** la fuente final sigue siendo API/DB.
-- **Seguridad:** solo datos públicos en snapshot.
-- **UX:** mostrar estado discreto:
-  - “Datos en directo desde el servidor (base de datos).”
-  - “Mostrando datos temporales del snapshot.”
+El navegador **no debe** actualizar el JSON directamente en storage.  
+La actualizacion del snapshot debe hacerla un componente con credenciales de servidor:
+
+- Azure Function Timer (recomendado para gratuito/ligero), o
+- Worker en Container Apps.
 
 ---
 
-## Readiness y autenticación
+## Implicaciones (importantes)
 
-- El readiness se consulta en `/health/ready`.
-- En local, el proxy frontend debe reenviar `/api` y `/health`.
-- Para formularios de auth (login/registro/recuperación), se muestra aviso de “servicio iniciando” cuando aún no está `ready`.
+### 1) Frescura de datos
+- El snapshot puede estar desactualizado por minutos/horas.
+- Debe mostrarse badge UX: `Mostrando datos temporales`.
+
+### 2) Consistencia
+- La verdad final sigue siendo DB/API.
+- Frontend debe revalidar y reemplazar snapshot cuando API responda.
+
+### 3) Seguridad
+- Solo datos publicables en snapshot.
+- Nunca incluir campos privados ni datos sensibles.
+
+### 4) Costos (enfoque "sin costo")
+- Con volumen bajo (11-20 CVs), esta estrategia es apta para capa gratuita.
+- Aun asi, "sin costo" exacto depende del consumo real y limites del plan.
+
+---
+
+## Propuesta de operacion automatica (sin pasos manuales)
+
+1. Function Timer corre cada X minutos.
+2. Consulta `/health/ready`.
+3. Si `healthy`, genera snapshot con CVs publicas.
+4. Publica en Blob (`public-cvs-snapshot.json`).
+5. Frontend intenta API; si falla usa snapshot; si API vuelve, reemplaza vista.
+
+---
+
+## Decision recomendada para iniciar
+
+- **Alojamiento:** Blob Storage.
+- **Formato:** Un JSON unico (v1) por simplicidad.
+- **Actualizacion:** automatica por Function Timer + readiness.
+- **Frontend:** snapshot-first + revalidacion contra API.
 

@@ -136,7 +136,7 @@ package-and-deploy:
 
 1. **Base de datos**: SQL Server local + scripts en `scripts/manual/` (ver `database/README.md`).
 2. **Backend**: `dotnet run` desde `backend/PortalCV.Backend/PortalCV.Api` con secretos locales (`dotnet user-secrets`).
-3. **Frontend**: `npm ci` + `ng serve` desde `frontend/` (proxy `/api` y `/health` hacia el backend local).
+3. **Frontend**: `npm ci` + `ng serve` desde `frontend/` (proxy `/api` hacia el backend local).
 
 ### Docker (solo para imagen backend / paridad con ACA)
 

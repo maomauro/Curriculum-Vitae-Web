@@ -202,17 +202,6 @@
   cursor: pointer;
 }
 
-// ── Estado origen datos públicos (snapshot vs live) ─────────────────────────
-.public-data-status {
-  font-weight: 500;
-}
-.public-data-status--live {
-  color: #0b7a4c;
-}
-.public-data-status--snapshot {
-  color: #9a5a00;
-}
-
 // ── Admin panel ───────────────────────────────────────────────────────────────
 .admin-stat-icon {
   width: 48px;
@@ -235,14 +224,6 @@
 .admin-stat-icon--red {
   background: #fee2e2;
   color: #991b1b;
-}
-.admin-stat-icon--amber {
-  background: #fef3c7;
-  color: #92400e;
-}
-.admin-stat-icon--violet {
-  background: #ede9fe;
-  color: #5b21b6;
 }
 .admin-stat-value {
   font-size: 1.4rem;
