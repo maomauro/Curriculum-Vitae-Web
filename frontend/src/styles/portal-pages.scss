@@ -2579,6 +2579,23 @@
   text-align: left;
   white-space: normal;
 }
+.job-metric-visibility {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+}
+.job-metric-visibility-switch .form-check-input {
+  width: 2.1em;
+  height: 1.05em;
+  margin-top: 0.08em;
+  cursor: pointer;
+}
+.job-metric-visibility-switch .form-check-label {
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.2;
+}
 .job-dates {
   font-size: 0.8rem;
   color: #6c757d;

@@ -100,6 +100,16 @@ interface BorradorRefLaboral {
             <span *ngIf="exp.esActual" class="badge bg-success-subtle text-success">Empleo actual</span>
             <span *ngIf="!exp.esActual" class="badge bg-secondary-subtle text-secondary">{{ duracionLabel(exp) }}</span>
           </div>
+          <div class="job-metric-visibility" (click)="$event.stopPropagation()" title="Visible u oculto en Mi CV y CV público">
+            <div class="form-check form-switch job-metric-visibility-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch"
+                     [id]="'exp-hdr-cv-'+i"
+                     [(ngModel)]="exp.form.mostrarEnCv"
+                     (ngModelChange)="onMostrarEnCvChange(exp, $event)"
+                     [disabled]="guardando || guardandoVisibilidadExpId === exp.experienciaId">
+              <label class="form-check-label small text-muted mb-0 ms-1 d-none d-lg-inline" [for]="'exp-hdr-cv-'+i">En CV</label>
+            </div>
+          </div>
         </div>
         <button *ngIf="exp.experienciaId === 0" type="button" class="btn btn-outline-secondary btn-sm"
                 (click)="$event.stopPropagation(); cancelarNuevo(exp)">
@@ -169,15 +179,18 @@ interface BorradorRefLaboral {
                       placeholder="Describe tus principales responsabilidades y logros…"></textarea>
           </div>
           <div class="col-12">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" [id]="'exp-mostrar-cv-'+i"
-                     [(ngModel)]="exp.form.mostrarEnCv">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" [id]="'exp-mostrar-cv-'+i"
+                     [(ngModel)]="exp.form.mostrarEnCv"
+                     (ngModelChange)="onMostrarEnCvChange(exp, $event)"
+                     [disabled]="guardando || (exp.experienciaId !== 0 && guardandoVisibilidadExpId === exp.experienciaId)">
               <label class="form-check-label" [for]="'exp-mostrar-cv-'+i">
                 Mostrar este empleo en Mi CV y en el CV público
               </label>
             </div>
             <p class="text-muted small mb-0 mt-1">
               Puedes registrar muchas experiencias y elegir cuáles destacar. En Mi CV y en público el orden es del empleo más reciente al más antiguo.
+              El interruptor «En CV» junto a las fechas en la cabecera guarda el mismo ajuste sin abrir la ficha.
             </p>
           </div>
           <div class="col-12">
@@ -202,7 +215,8 @@ interface BorradorRefLaboral {
                       (click)="eliminar(exp)" [disabled]="guardando">
                 <i class="bi bi-trash3 me-1"></i>Eliminar empleo
               </button>
-              <button type="button" class="btn btn-primary px-4" (click)="guardar(exp)" [disabled]="guardando">
+              <button type="button" class="btn btn-primary px-4" (click)="guardar(exp)"
+                      [disabled]="guardando || (exp.experienciaId !== 0 && guardandoVisibilidadExpId === exp.experienciaId)">
                 <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
                 <i *ngIf="!guardando" class="bi bi-floppy-fill me-2"></i>
                 {{ exp.experienciaId === 0 ? 'Crear empleo' : 'Guardar empleo' }}
@@ -402,6 +416,8 @@ export class ExperienciaComponent implements OnInit {
   private laborRefUi: Record<number, { expanded: boolean; form: UpsertReferenciaRequest }> = {};
   loading = false;
   guardando = false;
+  /** PUT solo visibilidad desde interruptores (cabecera / formulario). */
+  guardandoVisibilidadExpId: number | null = null;
   guardandoRef = false;
   todayDate = getTodayDateString();
   readonly hintAdjunto =
@@ -736,6 +752,39 @@ export class ExperienciaComponent implements OnInit {
     return { ...rest, mostrarEnCv: rest.mostrarEnCv !== false };
   }
 
+  private buildExperienciaUpsertPayload(exp: ExperienciaUI): UpsertExperienciaRequest {
+    return {
+      ...exp.form,
+      mostrarEnCv: exp.form.mostrarEnCv,
+      fechaInicio: normalizeDateOrNull(exp.form.fechaInicio),
+      fechaFin: normalizeDateOrNull(exp.form.fechaFin),
+    };
+  }
+
+  /** Guarda visibilidad al cambiar interruptor (cabecera o cuerpo). Solo empleos ya persistidos. */
+  onMostrarEnCvChange(exp: ExperienciaUI, nuevo: boolean): void {
+    if (exp.experienciaId === 0) {
+      return;
+    }
+    const prev = !nuevo;
+    if (this.guardandoVisibilidadExpId === exp.experienciaId) {
+      return;
+    }
+    this.guardandoVisibilidadExpId = exp.experienciaId;
+    const payload = this.buildExperienciaUpsertPayload(exp);
+    this.cvEditorService.updateExperiencia(exp.experienciaId, payload).subscribe({
+      next: actualizada => {
+        Object.assign(exp, actualizada, { expanded: exp.expanded, form: this.toForm(actualizada) });
+        this.guardandoVisibilidadExpId = null;
+      },
+      error: (error: HttpErrorResponse) => {
+        exp.form.mostrarEnCv = prev;
+        this.guardandoVisibilidadExpId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
   agregar(): void {
     if (this.experiencias.some(e => e.experienciaId === 0)) {
       this.notificationService.warning(FORM_MESSAGES.experiencia.completeNuevoAntesDeOtro);
@@ -795,11 +844,7 @@ export class ExperienciaComponent implements OnInit {
     exp.form.empresa = emp;
     exp.form.cargo = cargo;
 
-    const payload: UpsertExperienciaRequest = {
-      ...exp.form,
-      fechaInicio: normalizeDateOrNull(exp.form.fechaInicio),
-      fechaFin: normalizeDateOrNull(exp.form.fechaFin),
-    };
+    const payload = this.buildExperienciaUpsertPayload(exp);
 
     if (exp.form.fechaInicio && !payload.fechaInicio) {
       this.notificationService.warning(FORM_MESSAGES.experiencia.invalidDate);
