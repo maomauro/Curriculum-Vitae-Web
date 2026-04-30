@@ -11,6 +11,7 @@ public record ExperienciaDto(
     string? MotivoRetiro,
     string? Funciones,
     bool EsActual,
+    bool MostrarEnCv,
     string? AdjuntoSoporte,
     DateTime FechaRegistro);
 
@@ -24,5 +25,7 @@ public record UpsertExperienciaRequest(
     string? MotivoRetiro,
     string? Funciones,
     bool EsActual = false,
-    string? AdjuntoSoporte = null);
+    string? AdjuntoSoporte = null,
+    /** Si no viene en JSON, se trata como true (retrocompatibilidad). */
+    bool? MostrarEnCv = null);
 

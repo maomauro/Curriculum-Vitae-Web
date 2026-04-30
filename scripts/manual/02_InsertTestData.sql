@@ -103,11 +103,12 @@ INSERT INTO dbo.Experiencia (
     TipoContrato,
     MotivoRetiro,
     Funciones,
-    EsActual
+    EsActual,
+    MostrarEnCv
 )
 VALUES
-    (1, N'Tech Solutions S.A.S.', N'Analista de Desarrollo', N'Tecnología', '2018-06-01', '2022-11-30', N'Termino fijo',       N'Búsqueda de nuevos retos', N'Diseño y desarrollo de APIs REST, optimización de consultas y despliegue continuo.', 0),
-    (2, N'Creative Studio',       N'Diseñadora UX',          N'Diseño',     '2020-03-15', NULL,         N'Contrato indefinido', NULL,                        N'Investigación de usuarios, prototipado y pruebas de usabilidad para apps móviles.',  1);
+    (1, N'Tech Solutions S.A.S.', N'Analista de Desarrollo', N'Tecnología', '2018-06-01', '2022-11-30', N'Termino fijo',       N'Búsqueda de nuevos retos', N'Diseño y desarrollo de APIs REST, optimización de consultas y despliegue continuo.', 0, 1),
+    (2, N'Creative Studio',       N'Diseñadora UX',          N'Diseño',     '2020-03-15', NULL,         N'Contrato indefinido', NULL,                        N'Investigación de usuarios, prototipado y pruebas de usabilidad para apps móviles.',  1, 1);
 GO
 
 -- Referencias

@@ -149,6 +149,7 @@ Table Experiencia {
   MotivoRetiro varchar(255)
   Funciones text
   EsActual boolean [not null, default: 0]
+  MostrarEnCv boolean [not null, default: 1]
   AdjuntoSoporte varchar(500)
   FechaRegistro datetime [not null, default: `now()`]
   indexes {

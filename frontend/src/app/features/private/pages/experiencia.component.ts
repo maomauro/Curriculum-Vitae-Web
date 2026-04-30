@@ -76,6 +76,11 @@ interface BorradorRefLaboral {
           {{ exp.fechaInicio | date:'MMM yyyy' }} —
           {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
         </div>
+        <span *ngIf="exp.experienciaId !== 0 && exp.form.mostrarEnCv === false"
+              class="badge bg-light text-muted border d-none d-sm-inline-flex align-items-center me-1"
+              title="Este empleo no se muestra en Mi CV ni en el CV público">
+          Oculto en CV
+        </span>
         <div *ngIf="exp.experienciaId !== 0" class="job-badge-slot d-none d-md-block">
           <span *ngIf="exp.esActual" class="badge bg-success-subtle text-success">Empleo actual</span>
           <span *ngIf="!exp.esActual" class="badge bg-secondary-subtle text-secondary">{{ duracionLabel(exp) }}</span>
@@ -146,6 +151,18 @@ interface BorradorRefLaboral {
             <label class="form-label">Funciones y logros principales</label>
             <textarea class="form-control" rows="4" [(ngModel)]="exp.form.funciones"
                       placeholder="Describe tus principales responsabilidades y logros…"></textarea>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" [id]="'exp-mostrar-cv-'+i"
+                     [(ngModel)]="exp.form.mostrarEnCv">
+              <label class="form-check-label" [for]="'exp-mostrar-cv-'+i">
+                Mostrar este empleo en Mi CV y en el CV público
+              </label>
+            </div>
+            <p class="text-muted small mb-0 mt-1">
+              Puedes registrar muchas experiencias y elegir cuáles destacar. En Mi CV y en público el orden es del empleo más reciente al más antiguo.
+            </p>
           </div>
           <div class="col-12">
             <label class="form-label">
@@ -700,7 +717,7 @@ export class ExperienciaComponent implements OnInit {
 
   private toForm(e: ExperienciaDto): UpsertExperienciaRequest {
     const { experienciaId, fechaRegistro, ...rest } = e;
-    return { ...rest };
+    return { ...rest, mostrarEnCv: rest.mostrarEnCv !== false };
   }
 
   agregar(): void {
@@ -720,6 +737,7 @@ export class ExperienciaComponent implements OnInit {
       motivoRetiro: null,
       funciones: null,
       esActual: true,
+      mostrarEnCv: true,
       adjuntoSoporte: null,
       expanded: true,
       form: {
@@ -732,6 +750,7 @@ export class ExperienciaComponent implements OnInit {
         motivoRetiro: null,
         funciones: null,
         esActual: true,
+        mostrarEnCv: true,
         adjuntoSoporte: null,
       },
     };

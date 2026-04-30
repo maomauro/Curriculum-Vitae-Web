@@ -63,10 +63,11 @@ public class PublicCvService : IPublicCvService
 
         EncolarRegistroVista(cv.CurriculumId, urlPublica, visitanteAnonimoId);
 
+        var expVisibles = ExperienciasVisiblesOrdenadas(cv.Experiencias);
         var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
-            cv.Experiencias.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
+            expVisibles.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
 
-        var dto = MapToDetalle(cv, mesesAcum);
+        var dto = MapToDetalle(cv, mesesAcum, expVisibles);
         var totalMs = swTotal.ElapsedMilliseconds;
 
         _logger.LogDebug(
@@ -88,8 +89,9 @@ public class PublicCvService : IPublicCvService
         var cv = await _curriculumRepo.GetByIdForSnapshotAsync(curriculumId, ct);
         if (cv is null) return null;
 
+        var expVisibles = ExperienciasVisiblesOrdenadas(cv.Experiencias);
         var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
-            cv.Experiencias.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
+            expVisibles.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
 
         var nombrePerfil =
             cv.Perfiles.FirstOrDefault(p => p.EsActivo)?.NombrePerfil
@@ -108,7 +110,7 @@ public class PublicCvService : IPublicCvService
             cv.ContadorContactos,
             cv.Habilidades.Select(h => h.Nombre).ToList());
 
-        var detalle = MapToDetalle(cv, mesesAcum);
+        var detalle = MapToDetalle(cv, mesesAcum, expVisibles);
         var stats = await GetEstadisticasAsync(cv.UrlPublica, ct);
         return new PublicSnapshotItemDto(listado, detalle, stats);
     }
@@ -293,6 +295,17 @@ public class PublicCvService : IPublicCvService
         return row?.EsVisible ?? defaultVisible;
     }
 
+    /// <summary>Empleos incluidos en Mi CV / público; orden: actual primero, luego más reciente por fechas.</summary>
+    private static List<Experiencia> ExperienciasVisiblesOrdenadas(IEnumerable<Experiencia> experiencias)
+    {
+        return experiencias
+            .Where(e => e.MostrarEnCv)
+            .OrderByDescending(e => e.EsActual)
+            .ThenByDescending(e => e.FechaInicio ?? DateOnly.MinValue)
+            .ThenByDescending(e => e.FechaFin ?? DateOnly.MinValue)
+            .ToList();
+    }
+
     private static (bool Activo, bool Metricas, bool Graficas) ResolverFlagsDashboardPublico(Curriculum c)
     {
         var vis = c.VisibilidadesSeccion ?? Array.Empty<VisibilidadSeccion>();
@@ -306,13 +319,17 @@ public class PublicCvService : IPublicCvService
         return (m, m && me, m && g);
     }
 
-    private static CvDetalleDto MapToDetalle(Curriculum c, int experienciaLaboralMesesAcumulados)
+    private static CvDetalleDto MapToDetalle(
+        Curriculum c,
+        int experienciaLaboralMesesAcumulados,
+        IReadOnlyList<Experiencia> experienciasVisibles)
     {
         var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
         var dash = ResolverFlagsDashboardPublico(c);
         var vis = c.VisibilidadesSeccion;
         var mostrarEmail = VisibilidadAtributoVisible(vis, VisPersonalesEmail);
         var mostrarTelefono = VisibilidadAtributoVisible(vis, VisPersonalesTelefono);
+        var idsExpVisibles = experienciasVisibles.Select(e => e.ExperienciaId).ToHashSet();
         return new CvDetalleDto(
         c.CurriculumId,
         c.UrlPublica,
@@ -329,7 +346,7 @@ public class PublicCvService : IPublicCvService
             mostrarEmail ? c.Personales.Email : null),
         c.Perfiles.Select(p => new PerfilPublicoDto(p.PerfilId, p.NombrePerfil, p.DescripcionPerfil,
             p.AspiracionSalarialPesos, p.AspiracionSalarialDolares, p.EsActivo)),
-        c.Experiencias.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
+        experienciasVisibles.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
             e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones, e.TipoContrato)),
         c.Formaciones.Select(f => new FormacionPublicoDto(f.FormacionId, f.Titulo, f.Institucion,
             f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin)),
@@ -337,7 +354,8 @@ public class PublicCvService : IPublicCvService
             h.NivelLectura, h.NivelEscritura, h.NivelEscucha, h.NivelHabla)),
         c.Proyectos.Select(p => new ProyectoPublicoDto(p.ProyectoId, p.NombreProyecto, p.Rol,
             p.StackTecnologico, p.Aporte, p.Logro, p.EquipoTamano, p.DuracionMeses)),
-        c.Referencias.Where(r => r.TipoReferencia == "Laboral")
+        c.Referencias.Where(r => r.TipoReferencia == "Laboral"
+            && (r.ExperienciaId is null || idsExpVisibles.Contains(r.ExperienciaId.Value)))
             .Select(r => new ReferenciaPublicoDto(r.ReferenciaId, r.TipoReferencia, r.Nombre,
                 r.Apellido, r.Cargo, r.Empresa)),
         c.RedesSociales.Select(r => new RedSocialPublicoDto(r.RedSocialId, r.NombreRed,
