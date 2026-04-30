@@ -2484,14 +2484,24 @@
 
 .job-card-header {
   padding: 18px 22px;
-  cursor: pointer;
+  cursor: default;
   display: flex;
   align-items: center;
   gap: 14px;
   user-select: none;
+  flex-wrap: wrap;
 }
-.job-card:not(.job-card--nuevo) .job-card-header:hover {
+.job-card-header.profile-card-header {
+  margin-bottom: 0;
+  align-items: center;
+}
+.job-card:not(.job-card--nuevo) .job-card-header .profile-name:hover {
   background: #f8fafc;
+}
+.job-card:not(.job-card--nuevo) .job-card-header .profile-name:focus-visible {
+  box-shadow: 0 0 0 2px rgba(44, 123, 229, 0.35);
+  border-radius: 6px;
+  outline: none;
 }
 .job-icon {
   width: 44px;
@@ -2518,6 +2528,47 @@
   color: var(--cv-primary);
   font-weight: 600;
 }
+/** Bloque título + empresa + leyenda visibilidad CV */
+.job-card-title-block {
+  min-width: 0;
+}
+/** Fechas + duración alineadas en columnas fijas (efecto tabulado entre tarjetas) */
+.job-card-metrics {
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 0.75rem;
+  display: flex;
+}
+.job-metric-dates {
+  width: 17.25rem;
+  min-width: 17.25rem;
+  max-width: 17.25rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+  border-right: 1px solid #e9ecef;
+}
+.job-metric-duration {
+  width: 10.5rem;
+  min-width: 10.5rem;
+  max-width: 10.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.job-metric-duration .badge {
+  max-width: 100%;
+  text-align: left;
+  white-space: normal;
+}
 .job-dates {
   font-size: 0.8rem;
   color: #6c757d;
@@ -2525,14 +2576,6 @@
 }
 .job-badge-slot {
   flex-shrink: 0;
-}
-.job-chevron {
-  margin-left: auto;
-  color: #adb5bd;
-  transition: transform 0.25s;
-}
-.job-card--expanded .job-chevron {
-  transform: rotate(180deg);
 }
 .job-body {
   padding: 0 22px 22px;

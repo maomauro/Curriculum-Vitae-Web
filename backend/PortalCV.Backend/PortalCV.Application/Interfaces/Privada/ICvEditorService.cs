@@ -18,12 +18,22 @@ public interface ICvEditorService
     Task<IReadOnlyList<ExperienciaDto>> GetExperienciasAsync(int curriculumId, CancellationToken ct = default);
     Task<ExperienciaDto> CreateExperienciaAsync(int curriculumId, UpsertExperienciaRequest request, CancellationToken ct = default);
     Task<ExperienciaDto> UpdateExperienciaAsync(int curriculumId, int experienciaId, UpsertExperienciaRequest request, CancellationToken ct = default);
+    Task<ExperienciaDto> UpdateExperienciaVisibilidadAsync(
+        int curriculumId,
+        int experienciaId,
+        UpdateExperienciaVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteExperienciaAsync(int curriculumId, int experienciaId, CancellationToken ct = default);
 
     // Formación
     Task<IReadOnlyList<FormacionDto>> GetFormacionesAsync(int curriculumId, CancellationToken ct = default);
     Task<FormacionDto> CreateFormacionAsync(int curriculumId, UpsertFormacionRequest request, CancellationToken ct = default);
     Task<FormacionDto> UpdateFormacionAsync(int curriculumId, int formacionId, UpsertFormacionRequest request, CancellationToken ct = default);
+    Task<FormacionDto> UpdateFormacionVisibilidadAsync(
+        int curriculumId,
+        int formacionId,
+        UpdateFormacionVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteFormacionAsync(int curriculumId, int formacionId, CancellationToken ct = default);
 
     // Habilidades
@@ -36,6 +46,11 @@ public interface ICvEditorService
     Task<IReadOnlyList<ProyectoDto>> GetProyectosAsync(int curriculumId, CancellationToken ct = default);
     Task<ProyectoDto> CreateProyectoAsync(int curriculumId, UpsertProyectoRequest request, CancellationToken ct = default);
     Task<ProyectoDto> UpdateProyectoAsync(int curriculumId, int proyectoId, UpsertProyectoRequest request, CancellationToken ct = default);
+    Task<ProyectoDto> UpdateProyectoVisibilidadAsync(
+        int curriculumId,
+        int proyectoId,
+        UpdateProyectoVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteProyectoAsync(int curriculumId, int proyectoId, CancellationToken ct = default);
 
     // Referencias

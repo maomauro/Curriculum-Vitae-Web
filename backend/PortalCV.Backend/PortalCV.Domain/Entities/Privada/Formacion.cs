@@ -14,6 +14,7 @@ public class Formacion
     public string? AdjuntoSoporte { get; set; }
     public DateOnly? FechaVigencia { get; set; }
     public int? DuracionHoras { get; set; }
+    public bool MostrarEnCv { get; set; } = true;
 
     public Curriculum Curriculum { get; set; } = null!;
 }

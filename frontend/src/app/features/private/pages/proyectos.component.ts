@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CvEditorService, ProyectoDto, UpsertProyectoRequest } from '../../../core/services/private/cv-editor.service';
+import {
+  CvEditorService,
+  ProyectoDto,
+  UpdateProyectoVisibilidadRequest,
+  UpsertProyectoRequest,
+} from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
@@ -86,6 +91,16 @@ interface ProyectoUI extends ProyectoDto {
             <i class="bi bi-people me-1"></i>{{ pillEquipo(p) }}
           </span>
         </div>
+        <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()">
+          <span class="profile-toggle-label">Mostrar en Mi CV</span>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" role="switch"
+                   [id]="'prj-hdr-cv-'+i"
+                   [(ngModel)]="p.form.mostrarEnCv"
+                   (ngModelChange)="onMostrarEnCvChange(p, $event)"
+                   [disabled]="guardando || guardandoVisibilidadProyectoId === p.proyectoId">
+          </div>
+        </div>
         <i class="bi bi-chevron-down project-chevron"></i>
       </div>
       <div class="project-body" (click)="$event.stopPropagation()">
@@ -167,7 +182,7 @@ interface ProyectoUI extends ProyectoDto {
           type="button"
           class="btn btn-primary px-4"
           (click)="guardar(p, esNuevo)"
-          [disabled]="guardando">
+          [disabled]="guardando || (!esNuevo && guardandoVisibilidadProyectoId === p.proyectoId)">
           <i class="bi bi-floppy-fill me-2"></i>{{ esNuevo ? 'Crear proyecto' : 'Guardar' }}
         </button>
       </div>
@@ -179,6 +194,7 @@ export class ProyectosComponent implements OnInit {
   borrador: ProyectoUI | null = null;
   loading = false;
   guardando = false;
+  guardandoVisibilidadProyectoId: number | null = null;
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -226,6 +242,30 @@ export class ProyectosComponent implements OnInit {
 
   toggleExpanded(p: ProyectoUI): void {
     p.expanded = !p.expanded;
+  }
+
+  onMostrarEnCvChange(p: ProyectoUI, visible: boolean): void {
+    if (p.proyectoId === 0) {
+      return;
+    }
+    const prev = !visible;
+    if (this.guardandoVisibilidadProyectoId === p.proyectoId) {
+      return;
+    }
+    this.guardandoVisibilidadProyectoId = p.proyectoId;
+    const payload: UpdateProyectoVisibilidadRequest = { mostrarEnCv: visible };
+    this.cvEditorService.updateProyectoVisibilidad(p.proyectoId, payload).subscribe({
+      next: actualizado => {
+        Object.assign(p, this.dtoToUi(actualizado, p.expanded));
+        this.guardandoVisibilidadProyectoId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        p.form.mostrarEnCv = prev;
+        this.guardandoVisibilidadProyectoId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
   }
 
   agregar(): void {
@@ -279,16 +319,17 @@ export class ProyectosComponent implements OnInit {
       aporte: null,
       logro: null,
       desafio: null,
+      mostrarEnCv: true,
     };
     return this.dtoToUi(base, true);
   }
 
   private dtoToUi(p: ProyectoDto, expanded: boolean): ProyectoUI {
-    const { proyectoId, ...rest } = p;
+    const { proyectoId: _proyectoId, ...rest } = p;
     return {
       ...p,
       expanded,
-      form: { ...rest },
+      form: { ...rest, mostrarEnCv: rest.mostrarEnCv !== false },
       stackTags: this.parseStack(p.stackTecnologico),
       stackDraft: '',
     };

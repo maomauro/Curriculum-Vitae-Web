@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CvEditorService, FormacionDto, UpsertFormacionRequest } from '../../../core/services/private/cv-editor.service';
+import {
+  CvEditorService,
+  FormacionDto,
+  UpdateFormacionVisibilidadRequest,
+  UpsertFormacionRequest,
+} from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
@@ -36,18 +41,17 @@ interface FormacionUI extends FormacionDto {
       <p class="mt-3">No tienes registros de formación. Agrega el primero.</p>
     </div>
 
-    <div *ngFor="let edu of formaciones; trackBy: trackByFormacion">
+    <div *ngFor="let edu of formaciones; let i = index; trackBy: trackByFormacion">
       <div class="edu-formacion-card"
            [class.edu-formacion-card--nuevo]="edu.formacionId === 0">
-        <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
-             (click)="onHeaderClick(edu, $event)">
+        <div class="p-4 d-flex align-items-center gap-3" (click)="onHeaderClick(edu, $event)">
           <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 cv-icon-box"
                [style.background]="iconoBg(tipoParaCabecera(edu))"
                [style.color]="iconoColor(tipoParaCabecera(edu))">
             <i class="bi" [ngClass]="icono(tipoParaCabecera(edu))"></i>
           </div>
           <div class="flex-grow-1 min-w-0">
-            <div class="fw-bold cv-accordion-title">{{ tituloCabecera(edu) }}</div>
+            <div class="fw-bold cv-accordion-title cv-cursor-pointer">{{ tituloCabecera(edu) }}</div>
             <div class="cv-accordion-sub-primary">{{ subtituloCabecera(edu) }}</div>
           </div>
           <span class="text-muted small me-2 d-none d-sm-inline flex-shrink-0 text-nowrap"
@@ -58,6 +62,16 @@ interface FormacionUI extends FormacionDto {
                 [class.cv-badge-neutral]="edu.formacionId !== 0">
             {{ edu.formacionId === 0 ? 'Nueva' : labelTipo(tipoParaCabecera(edu)) }}
           </span>
+          <div *ngIf="edu.formacionId !== 0" class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()">
+            <span class="profile-toggle-label">Mostrar en Mi CV</span>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch"
+                     [id]="'edu-hdr-cv-'+i"
+                     [(ngModel)]="edu.form.mostrarEnCv"
+                     (ngModelChange)="onMostrarEnCvChange(edu, $event)"
+                     [disabled]="guardando || guardandoVisibilidadFormacionId === edu.formacionId">
+            </div>
+          </div>
           <i class="bi ms-2 cv-chevron-muted flex-shrink-0" [class.bi-chevron-down]="!edu.expanded"
              [class.bi-chevron-up]="edu.expanded" aria-hidden="true"></i>
         </div>
@@ -134,7 +148,8 @@ interface FormacionUI extends FormacionDto {
                     (click)="eliminar(edu)">
               <i class="bi bi-trash3 me-1"></i>Eliminar
             </button>
-            <button type="button" class="btn btn-primary btn-sm" (click)="guardar(edu)" [disabled]="guardando">
+            <button type="button" class="btn btn-primary btn-sm" (click)="guardar(edu)"
+                    [disabled]="guardando || (edu.formacionId !== 0 && guardandoVisibilidadFormacionId === edu.formacionId)">
               <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
               <i *ngIf="!guardando" class="bi bi-floppy-fill me-1"></i>Guardar
             </button>
@@ -149,6 +164,7 @@ export class EducacionComponent implements OnInit {
   loading = false;
   guardando = false;
   todayDate = getTodayDateString();
+  guardandoVisibilidadFormacionId: number | null = null;
 
   /** Valores enviados al API (string libre en backend, máx. 50 caracteres). */
   readonly tipoFormacionOptions = [
@@ -285,7 +301,31 @@ export class EducacionComponent implements OnInit {
 
   private toForm(f: FormacionDto): UpsertFormacionRequest {
     const { formacionId: _id, ...rest } = f;
-    return { ...rest };
+    return { ...rest, mostrarEnCv: rest.mostrarEnCv !== false };
+  }
+
+  onMostrarEnCvChange(edu: FormacionUI, visible: boolean): void {
+    if (edu.formacionId === 0) {
+      return;
+    }
+    const prev = !visible;
+    if (this.guardandoVisibilidadFormacionId === edu.formacionId) {
+      return;
+    }
+    this.guardandoVisibilidadFormacionId = edu.formacionId;
+    const payload: UpdateFormacionVisibilidadRequest = { mostrarEnCv: visible };
+    this.cvEditorService.updateFormacionVisibilidad(edu.formacionId, payload).subscribe({
+      next: actualizada => {
+        Object.assign(edu, actualizada, { expanded: edu.expanded, form: this.toForm(actualizada) });
+        this.guardandoVisibilidadFormacionId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        edu.form.mostrarEnCv = prev;
+        this.guardandoVisibilidadFormacionId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
   }
 
   agregar(): void {
@@ -305,6 +345,7 @@ export class EducacionComponent implements OnInit {
       adjuntoSoporte: null,
       fechaVigencia: null,
       duracionHoras: null,
+      mostrarEnCv: true,
       expanded: true,
       form: {
         titulo: null,
@@ -317,6 +358,7 @@ export class EducacionComponent implements OnInit {
         adjuntoSoporte: null,
         fechaVigencia: null,
         duracionHoras: null,
+        mostrarEnCv: true,
       },
     };
     this.formaciones.unshift(nueva);

@@ -9,7 +9,8 @@ public record ProyectoDto(
     string? StackTecnologico,
     string? Aporte,
     string? Logro,
-    string? Desafio);
+    string? Desafio,
+    bool MostrarEnCv);
 
 public record UpsertProyectoRequest(
     string? NombreProyecto,
@@ -19,5 +20,11 @@ public record UpsertProyectoRequest(
     string? StackTecnologico,
     string? Aporte,
     string? Logro,
-    string? Desafio);
+    string? Desafio,
+    bool? MostrarEnCv);
+
+public sealed class UpdateProyectoVisibilidadRequest
+{
+    public bool MostrarEnCv { get; set; }
+}
 

@@ -11,6 +11,8 @@ import { PrivateLayoutSidebarService } from '../services/private-layout-sidebar.
 import { AdminService } from '../../core/services/admin/admin.service';
 import { NotificationService } from '../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../core/utils/form-validation.util';
+import { AuthService } from '../../core/services/auth/auth.service';
+import { CV_ROL } from '../../core/constants/cv-roles';
 
 @Component({
   selector: 'app-admin-layout',
@@ -98,18 +100,21 @@ export class AdminLayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     private renderer: Renderer2,
     private readonly sidebarNav: PrivateLayoutSidebarService,
     private readonly adminService: AdminService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.adminService.getPublicCvSnapshotPending().subscribe({
-      next: r => {
-        this.snapshotStale = r.stale === true;
-      },
-      error: () => {
-        this.snapshotStale = null;
-      },
-    });
+    if (this.authService.hasRol(CV_ROL.admin)) {
+      this.adminService.getPublicCvSnapshotPending().subscribe({
+        next: r => {
+          this.snapshotStale = r.stale === true;
+        },
+        error: () => {
+          this.snapshotStale = null;
+        },
+      });
+    }
     this.renderer.addClass(document.body, 'layout-fixed');
     this.renderer.addClass(document.body, 'sidebar-expand-lg');
     /** Mini sidebar en escritorio: con sidebar-collapse solo quedan iconos + abreviatura (brand logo-xs). */

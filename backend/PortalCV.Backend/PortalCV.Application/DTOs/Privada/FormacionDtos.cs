@@ -11,7 +11,8 @@ public record FormacionDto(
     string? Descripcion,
     string? AdjuntoSoporte,
     DateOnly? FechaVigencia,
-    int? DuracionHoras);
+    int? DuracionHoras,
+    bool MostrarEnCv);
 
 public record UpsertFormacionRequest(
     string? Titulo,
@@ -23,5 +24,11 @@ public record UpsertFormacionRequest(
     string? Descripcion,
     string? AdjuntoSoporte,
     DateOnly? FechaVigencia,
-    int? DuracionHoras);
+    int? DuracionHoras,
+    bool? MostrarEnCv);
+
+public sealed class UpdateFormacionVisibilidadRequest
+{
+    public bool MostrarEnCv { get; set; }
+}
 

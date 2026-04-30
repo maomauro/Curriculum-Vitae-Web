@@ -69,6 +69,12 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Lint estricto (pilotos por zonas)
+        run: npm run lint:pilots
+
       - name: Build (producción)
         run: npm run build -- --configuration production
 
@@ -130,4 +136,4 @@ jobs:
             -Dsonar.tests=frontend/src
             -Dsonar.test.inclusions=**/*.spec.ts
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/portalcv-web/lcov.info
-            -Dsonar.coverage.exclusions=backend/**,frontend/src/app/features/admin/**,frontend/src/app/features/auth/**,frontend/src/app/features/private/**,frontend/src/app/layout/**,frontend/src/styles/**,**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts
+            -Dsonar.coverage.exclusions=backend/**,frontend/eslint.config.js,frontend/proxy.conf.js,frontend/src/app/features/admin/**,frontend/src/app/features/auth/**,frontend/src/app/features/private/**,frontend/src/app/layout/**,frontend/src/styles/**,**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts

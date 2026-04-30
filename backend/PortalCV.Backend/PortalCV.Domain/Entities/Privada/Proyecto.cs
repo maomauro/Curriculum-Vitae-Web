@@ -12,6 +12,7 @@ public class Proyecto
     public string? Aporte { get; set; }
     public string? Logro { get; set; }
     public string? Desafio { get; set; }
+    public bool MostrarEnCv { get; set; } = true;
 
     public Curriculum Curriculum { get; set; } = null!;
 }

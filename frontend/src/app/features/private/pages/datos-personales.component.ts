@@ -420,7 +420,7 @@ export class DatosPersonalesComponent implements OnInit {
     this.loading = true;
     this.cvEditorService.getPersonales().subscribe({
       next: (data: PersonalesDto) => {
-        const { personalesId, curriculumId, ...rest } = data;
+        const { personalesId: _personalesId, curriculumId: _curriculumId, ...rest } = data;
         this.p = rest;
         this.loading = false;
       },
@@ -490,7 +490,7 @@ export class DatosPersonalesComponent implements OnInit {
     this.guardadoOk = false;
     this.cvEditorService.upsertPersonales(payload).subscribe({
       next: (data: PersonalesDto) => {
-        const { personalesId, curriculumId, ...rest } = data;
+        const { personalesId: _personalesId, curriculumId: _curriculumId, ...rest } = data;
         this.p = rest;
         this.guardando = false;
         this.guardadoOk = true;
