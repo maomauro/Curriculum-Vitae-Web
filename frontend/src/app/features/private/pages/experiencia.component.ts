@@ -68,28 +68,44 @@ interface BorradorRefLaboral {
         <div class="job-icon">
           <i class="bi" [class.bi-plus-lg]="exp.experienciaId === 0" [class.bi-building]="exp.experienciaId !== 0"></i>
         </div>
-        <div class="flex-grow-1 min-w-0">
-          <div class="job-title">{{ exp.experienciaId === 0 ? 'Nuevo empleo' : (exp.cargo || 'Sin cargo') }}</div>
+        <div class="flex-grow-1 min-w-0 job-card-title-block">
+          <div class="d-flex align-items-center gap-2 flex-wrap min-w-0">
+            <span
+              *ngIf="exp.experienciaId !== 0"
+              class="job-cv-semaphore flex-shrink-0"
+              [class.job-cv-semaphore--visible]="exp.form.mostrarEnCv"
+              [class.job-cv-semaphore--hidden]="!exp.form.mostrarEnCv"
+              [attr.title]="exp.form.mostrarEnCv ? 'Visible en Mi CV y CV público' : 'Oculto en Mi CV y CV público'"
+              role="img"
+              [attr.aria-label]="exp.form.mostrarEnCv ? 'Visible en CV' : 'Oculto en CV'"></span>
+            <div class="job-title">{{ exp.experienciaId === 0 ? 'Nuevo empleo' : (exp.cargo || 'Sin cargo') }}</div>
+          </div>
           <div *ngIf="exp.experienciaId !== 0" class="job-company">{{ exp.empresa || '—' }}</div>
+          <div *ngIf="exp.experienciaId !== 0" class="job-cv-visibility-caption text-muted small">
+            {{ exp.form.mostrarEnCv ? 'Visible en Mi CV' : 'Oculto en Mi CV' }}
+          </div>
+          <div *ngIf="exp.experienciaId !== 0" class="job-dates-compact d-sm-none small text-muted mt-1">
+            {{ exp.fechaInicio | date:'MMM yyyy' }} —
+            {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
+            <span *ngIf="exp.esActual"> · Empleo actual</span>
+            <span *ngIf="!exp.esActual && duracionLabel(exp)"> · {{ duracionLabel(exp) }}</span>
+          </div>
         </div>
-        <div *ngIf="exp.experienciaId !== 0" class="job-dates d-none d-sm-block">
-          {{ exp.fechaInicio | date:'MMM yyyy' }} —
-          {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
-        </div>
-        <span *ngIf="exp.experienciaId !== 0 && exp.form.mostrarEnCv === false"
-              class="badge bg-light text-muted border d-none d-sm-inline-flex align-items-center me-1"
-              title="Este empleo no se muestra en Mi CV ni en el CV público">
-          Oculto en CV
-        </span>
-        <div *ngIf="exp.experienciaId !== 0" class="job-badge-slot d-none d-md-block">
-          <span *ngIf="exp.esActual" class="badge bg-success-subtle text-success">Empleo actual</span>
-          <span *ngIf="!exp.esActual" class="badge bg-secondary-subtle text-secondary">{{ duracionLabel(exp) }}</span>
+        <div *ngIf="exp.experienciaId !== 0" class="job-card-metrics d-none d-sm-flex">
+          <div class="job-metric-dates text-muted">
+            {{ exp.fechaInicio | date:'MMM yyyy' }} —
+            {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
+          </div>
+          <div class="job-metric-duration">
+            <span *ngIf="exp.esActual" class="badge bg-success-subtle text-success">Empleo actual</span>
+            <span *ngIf="!exp.esActual" class="badge bg-secondary-subtle text-secondary">{{ duracionLabel(exp) }}</span>
+          </div>
         </div>
         <button *ngIf="exp.experienciaId === 0" type="button" class="btn btn-outline-secondary btn-sm"
                 (click)="$event.stopPropagation(); cancelarNuevo(exp)">
           <i class="bi bi-x-lg me-1"></i>Cancelar
         </button>
-        <i *ngIf="exp.experienciaId !== 0" class="bi bi-chevron-down job-chevron" aria-hidden="true"></i>
+        <i *ngIf="exp.experienciaId !== 0" class="bi bi-chevron-down job-chevron flex-shrink-0" aria-hidden="true"></i>
       </div>
 
       <div *ngIf="exp.experienciaId === 0 || exp.expanded" class="job-body">
