@@ -114,7 +114,7 @@ INNER JOIN dbo.Personales p ON p.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Perfil per ON per.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Habilidad h ON h.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Formacion f ON f.CurriculumId = c.CurriculumId
-LEFT JOIN dbo.Experiencia e ON e.CurriculumId = c.CurriculumId
+LEFT JOIN dbo.Experiencia e ON e.CurriculumId = c.CurriculumId AND e.MostrarEnCv = 1
 LEFT JOIN dbo.Referencia r ON r.CurriculumId = c.CurriculumId
 WHERE c.Estado = N'Publicado'
   AND (
@@ -223,7 +223,7 @@ SELECT
 FROM dbo.Curriculum c
 INNER JOIN dbo.Personales p ON p.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Perfil per ON per.CurriculumId = c.CurriculumId
-LEFT JOIN dbo.Experiencia ep ON ep.CurriculumId = c.CurriculumId
+LEFT JOIN dbo.Experiencia ep ON ep.CurriculumId = c.CurriculumId AND ep.MostrarEnCv = 1
 LEFT JOIN dbo.Habilidad h ON h.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Proyecto pr ON pr.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Formacion fo ON fo.CurriculumId = c.CurriculumId

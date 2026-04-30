@@ -161,7 +161,9 @@ public class CvEditorService : ICvEditorService
     public async Task<IReadOnlyList<ExperienciaDto>> GetExperienciasAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Experiencias.AsNoTracking()
             .Where(e => e.CurriculumId == curriculumId)
-            .OrderByDescending(e => e.FechaInicio)
+            .OrderByDescending(e => e.EsActual)
+            .ThenByDescending(e => e.FechaInicio)
+            .ThenByDescending(e => e.FechaFin)
             .Select(e => MapExperiencia(e)).ToListAsync(ct);
 
     public async Task<ExperienciaDto> CreateExperienciaAsync(int curriculumId, UpsertExperienciaRequest r, CancellationToken ct = default)
@@ -174,6 +176,7 @@ public class CvEditorService : ICvEditorService
             FechaInicio = fechaInicio, FechaFin = fechaFin,
             TipoContrato = r.TipoContrato, MotivoRetiro = r.MotivoRetiro,
             Funciones = r.Funciones, EsActual = r.EsActual,
+            MostrarEnCv = r.MostrarEnCv ?? true,
             AdjuntoSoporte = r.AdjuntoSoporte,
             FechaRegistro = DateTime.UtcNow
         };
@@ -197,6 +200,7 @@ public class CvEditorService : ICvEditorService
         e.FechaInicio = fechaInicio; e.FechaFin = fechaFin;
         e.TipoContrato = r.TipoContrato; e.MotivoRetiro = r.MotivoRetiro;
         e.Funciones = r.Funciones; e.EsActual = r.EsActual;
+        e.MostrarEnCv = r.MostrarEnCv ?? true;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
         await _context.SaveChangesAsync(ct);
         await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
@@ -612,7 +616,7 @@ public class CvEditorService : ICvEditorService
     private async Task<int> CalcularExperienciaLaboralMesesAcumuladosAsync(int curriculumId, CancellationToken ct)
     {
         var rows = await _context.Experiencias.AsNoTracking()
-            .Where(e => e.CurriculumId == curriculumId)
+            .Where(e => e.CurriculumId == curriculumId && e.MostrarEnCv)
             .Select(e => new { e.FechaInicio, e.FechaFin, e.EsActual })
             .ToListAsync(ct);
 
@@ -703,7 +707,7 @@ public class CvEditorService : ICvEditorService
 
     private static ExperienciaDto MapExperiencia(Experiencia e) => new(
         e.ExperienciaId, e.Empresa, e.Cargo, e.Sector, e.FechaInicio, e.FechaFin,
-        e.TipoContrato, e.MotivoRetiro, e.Funciones, e.EsActual, e.AdjuntoSoporte, e.FechaRegistro);
+        e.TipoContrato, e.MotivoRetiro, e.Funciones, e.EsActual, e.MostrarEnCv, e.AdjuntoSoporte, e.FechaRegistro);
 
     private static FormacionDto MapFormacion(Formacion e) => new(
         e.FormacionId, e.Titulo, e.Institucion, e.Area, e.FechaInicio, e.FechaFin,

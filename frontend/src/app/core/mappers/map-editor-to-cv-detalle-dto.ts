@@ -23,6 +23,9 @@ export function mapEditorToCvDetalleDto(
   referencias: ReferenciaDto[],
   redes: RedSocialDto[]
 ): CvDetalleDto {
+  const experienciasVisibles = experiencias.filter(e => e.mostrarEnCv !== false);
+  const idsExpCv = new Set(experienciasVisibles.map(e => e.experienciaId));
+
   const nombreCompleto = !personales
     ? null
     : [personales.primerNombre, personales.segundoNombre, personales.primerApellido, personales.segundoApellido]
@@ -53,7 +56,7 @@ export function mapEditorToCvDetalleDto(
       aspiracionSalarialDolares: p.aspiracionSalarialDolares,
       esActivo: p.esActivo,
     })),
-    experiencias: experiencias.map(e => ({
+    experiencias: experienciasVisibles.map(e => ({
       experienciaId: e.experienciaId,
       empresa: e.empresa,
       cargo: e.cargo,
@@ -94,14 +97,21 @@ export function mapEditorToCvDetalleDto(
       equipoTamano: pr.equipoTamano,
       duracionMeses: pr.duracionMeses,
     })),
-    referencias: referencias.map(r => ({
-      referenciaId: r.referenciaId,
-      tipoReferencia: r.tipoReferencia,
-      nombre: r.nombre,
-      apellido: r.apellido,
-      cargo: r.cargo,
-      empresa: r.empresa,
-    })),
+    referencias: referencias
+      .filter(
+        r =>
+          r.tipoReferencia !== 'Laboral' ||
+          r.experienciaId == null ||
+          idsExpCv.has(r.experienciaId)
+      )
+      .map(r => ({
+        referenciaId: r.referenciaId,
+        tipoReferencia: r.tipoReferencia,
+        nombre: r.nombre,
+        apellido: r.apellido,
+        cargo: r.cargo,
+        empresa: r.empresa,
+      })),
     redesSociales: redes.map(r => ({
       redSocialId: r.redSocialId,
       nombreRed: r.nombreRed,

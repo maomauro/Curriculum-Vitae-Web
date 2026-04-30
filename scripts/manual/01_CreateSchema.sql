@@ -271,6 +271,7 @@ CREATE TABLE dbo.Experiencia (
     MotivoRetiro   NVARCHAR(255) NULL,
     Funciones      NVARCHAR(MAX) NULL,
     EsActual       BIT           NOT NULL DEFAULT 0,
+    MostrarEnCv    BIT           NOT NULL DEFAULT 1,
     AdjuntoSoporte NVARCHAR(500) NULL,
     FechaRegistro  DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Experiencia PRIMARY KEY CLUSTERED (ExperienciaId),
