@@ -74,6 +74,8 @@ export interface ExperienciaDto {
   motivoRetiro: string | null;
   funciones: string | null;
   esActual: boolean;
+  /** Incluir en Mi CV y en el CV público (listado ordenado por fechas). */
+  mostrarEnCv: boolean;
   adjuntoSoporte: string | null;
   fechaRegistro: string;
 }

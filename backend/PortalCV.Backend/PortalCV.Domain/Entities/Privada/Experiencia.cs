@@ -13,6 +13,8 @@ public class Experiencia
     public string? MotivoRetiro { get; set; }
     public string? Funciones { get; set; }
     public bool EsActual { get; set; } = false;
+    /** Incluir este empleo en Mi CV y en el detalle público (cuando la sección Experiencia esté visible). */
+    public bool MostrarEnCv { get; set; } = true;
     public string? AdjuntoSoporte { get; set; }
     public DateTime FechaRegistro { get; set; }
 

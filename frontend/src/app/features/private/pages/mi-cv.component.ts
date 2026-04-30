@@ -237,17 +237,19 @@ export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
         aspiracionSalarialDolares: x.aspiracionSalarialDolares,
         experienciaPerfilAnios: x.experienciaPerfilAnios,
       })),
-      experiencias: this.experiencias.map(e => ({
-        experienciaId: e.experienciaId,
-        empresa: e.empresa,
-        cargo: e.cargo,
-        fechaInicio: e.fechaInicio,
-        fechaFin: e.fechaFin,
-        esActual: e.esActual,
-        funciones: e.funciones,
-        tipoContrato: e.tipoContrato,
-        adjuntoSoporte: e.adjuntoSoporte,
-      })),
+      experiencias: this.experiencias
+        .filter(e => e.mostrarEnCv !== false)
+        .map(e => ({
+          experienciaId: e.experienciaId,
+          empresa: e.empresa,
+          cargo: e.cargo,
+          fechaInicio: e.fechaInicio,
+          fechaFin: e.fechaFin,
+          esActual: e.esActual,
+          funciones: e.funciones,
+          tipoContrato: e.tipoContrato,
+          adjuntoSoporte: e.adjuntoSoporte,
+        })),
       formaciones: this.formaciones.map(f => ({
         formacionId: f.formacionId,
         titulo: f.titulo,
