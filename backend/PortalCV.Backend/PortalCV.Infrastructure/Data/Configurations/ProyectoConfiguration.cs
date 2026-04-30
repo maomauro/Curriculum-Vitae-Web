@@ -18,6 +18,7 @@ public class ProyectoConfiguration : IEntityTypeConfiguration<Proyecto>
         builder.Property(p => p.Aporte).HasColumnType("nvarchar(max)");
         builder.Property(p => p.Logro).HasColumnType("nvarchar(max)");
         builder.Property(p => p.Desafio).HasColumnType("nvarchar(max)");
+        builder.Property(p => p.MostrarEnCv).HasDefaultValue(true);
 
         builder.HasOne(p => p.Curriculum)
             .WithMany(c => c.Proyectos)

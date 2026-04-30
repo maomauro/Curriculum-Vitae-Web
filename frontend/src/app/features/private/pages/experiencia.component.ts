@@ -63,59 +63,70 @@ interface BorradorRefLaboral {
          [class.job-card--expanded]="exp.experienciaId === 0 || exp.expanded">
 
       <div class="job-card-header"
-           [style.cursor]="exp.experienciaId === 0 ? 'default' : 'pointer'"
-           (click)="onHeaderClick(exp, $event)">
-        <div class="job-icon">
-          <i class="bi" [class.bi-plus-lg]="exp.experienciaId === 0" [class.bi-building]="exp.experienciaId !== 0"></i>
-        </div>
-        <div class="flex-grow-1 min-w-0 job-card-title-block">
-          <div class="d-flex align-items-center gap-2 flex-wrap min-w-0">
-            <span
-              *ngIf="exp.experienciaId !== 0"
-              class="job-cv-semaphore flex-shrink-0"
-              [class.job-cv-semaphore--visible]="exp.form.mostrarEnCv"
-              [class.job-cv-semaphore--hidden]="!exp.form.mostrarEnCv"
-              [attr.title]="exp.form.mostrarEnCv ? 'Visible en Mi CV y CV público' : 'Oculto en Mi CV y CV público'"
-              role="img"
-              [attr.aria-label]="exp.form.mostrarEnCv ? 'Visible en CV' : 'Oculto en CV'"></span>
-            <div class="job-title">{{ exp.experienciaId === 0 ? 'Nuevo empleo' : (exp.cargo || 'Sin cargo') }}</div>
+           [class.profile-card-header]="exp.experienciaId !== 0">
+        <ng-container *ngIf="exp.experienciaId === 0">
+          <div class="job-icon">
+            <i class="bi bi-plus-lg"></i>
           </div>
-          <div *ngIf="exp.experienciaId !== 0" class="job-company">{{ exp.empresa || '—' }}</div>
-          <div *ngIf="exp.experienciaId !== 0" class="job-cv-visibility-caption text-muted small">
-            {{ exp.form.mostrarEnCv ? 'Visible en Mi CV' : 'Oculto en Mi CV' }}
+          <div class="flex-grow-1 min-w-0 job-card-title-block">
+            <div class="job-title">Nuevo empleo</div>
           </div>
-          <div *ngIf="exp.experienciaId !== 0" class="job-dates-compact d-sm-none small text-muted mt-1">
-            {{ exp.fechaInicio | date:'MMM yyyy' }} —
-            {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
-            <span *ngIf="exp.esActual"> · Empleo actual</span>
-            <span *ngIf="!exp.esActual && duracionLabel(exp)"> · {{ duracionLabel(exp) }}</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm"
+                  (click)="cancelarNuevo(exp)">
+            <i class="bi bi-x-lg me-1"></i>Cancelar
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="exp.experienciaId !== 0">
+          <div class="job-icon">
+            <i class="bi bi-building"></i>
           </div>
-        </div>
-        <div *ngIf="exp.experienciaId !== 0" class="job-card-metrics d-none d-sm-flex">
-          <div class="job-metric-dates text-muted">
-            {{ exp.fechaInicio | date:'MMM yyyy' }} —
-            {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
+          <div class="flex-grow-1 min-w-0 job-card-title-block">
+            <div class="profile-name cv-cursor-pointer min-w-0"
+                 role="button"
+                 tabindex="0"
+                 [attr.aria-expanded]="exp.expanded"
+                 (click)="toggleExpAccordion(exp)"
+                 (keydown.enter)="toggleExpAccordion(exp)"
+                 (keydown.space)="$event.preventDefault(); toggleExpAccordion(exp)">
+              <i class="bi cv-chevron-muted flex-shrink-0" aria-hidden="true"
+                 [class.bi-chevron-down]="!exp.expanded"
+                 [class.bi-chevron-up]="exp.expanded"></i>
+              <span class="job-title mb-0">{{ exp.cargo || 'Sin cargo' }}</span>
+              <span *ngIf="exp.form.mostrarEnCv" class="badge-active">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>En CV
+              </span>
+              <span *ngIf="!exp.form.mostrarEnCv" class="badge-inactive">No visible en CV</span>
+            </div>
+            <div class="job-company">{{ exp.empresa || '—' }}</div>
+            <div class="job-dates-compact d-sm-none small text-muted mt-1">
+              {{ exp.fechaInicio | date:'MMM yyyy' }} —
+              {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
+              <span *ngIf="exp.esActual"> · Empleo actual</span>
+              <span *ngIf="!exp.esActual && duracionLabel(exp)"> · {{ duracionLabel(exp) }}</span>
+            </div>
           </div>
-          <div class="job-metric-duration">
-            <span *ngIf="exp.esActual" class="badge bg-success-subtle text-success">Empleo actual</span>
-            <span *ngIf="!exp.esActual" class="badge bg-secondary-subtle text-secondary">{{ duracionLabel(exp) }}</span>
+          <div class="job-card-metrics d-none d-sm-flex align-items-center flex-shrink-0">
+            <div class="job-metric-dates text-muted">
+              {{ exp.fechaInicio | date:'MMM yyyy' }} —
+              {{ exp.esActual ? 'Actualidad' : (exp.fechaFin ? (exp.fechaFin | date:'MMM yyyy') : '—') }}
+            </div>
+            <div class="job-metric-duration">
+              <span *ngIf="exp.esActual" class="badge bg-success-subtle text-success">Empleo actual</span>
+              <span *ngIf="!exp.esActual" class="badge bg-secondary-subtle text-secondary">{{ duracionLabel(exp) }}</span>
+            </div>
           </div>
-          <div class="job-metric-visibility" (click)="$event.stopPropagation()" title="Visible u oculto en Mi CV y CV público">
-            <div class="form-check form-switch job-metric-visibility-switch m-0">
+          <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()">
+            <span class="profile-toggle-label">Mostrar en Mi CV</span>
+            <div class="form-check form-switch mb-0">
               <input class="form-check-input" type="checkbox" role="switch"
                      [id]="'exp-hdr-cv-'+i"
                      [(ngModel)]="exp.form.mostrarEnCv"
                      (ngModelChange)="onMostrarEnCvChange(exp, $event)"
                      [disabled]="guardando || guardandoVisibilidadExpId === exp.experienciaId">
-              <label class="form-check-label small text-muted mb-0 ms-1 d-none d-lg-inline" [for]="'exp-hdr-cv-'+i">En CV</label>
             </div>
           </div>
-        </div>
-        <button *ngIf="exp.experienciaId === 0" type="button" class="btn btn-outline-secondary btn-sm"
-                (click)="$event.stopPropagation(); cancelarNuevo(exp)">
-          <i class="bi bi-x-lg me-1"></i>Cancelar
-        </button>
-        <i *ngIf="exp.experienciaId !== 0" class="bi bi-chevron-down job-chevron flex-shrink-0" aria-hidden="true"></i>
+        </ng-container>
       </div>
 
       <div *ngIf="exp.experienciaId === 0 || exp.expanded" class="job-body">
@@ -177,21 +188,6 @@ interface BorradorRefLaboral {
             <label class="form-label">Funciones y logros principales</label>
             <textarea class="form-control" rows="4" [(ngModel)]="exp.form.funciones"
                       placeholder="Describe tus principales responsabilidades y logros…"></textarea>
-          </div>
-          <div class="col-12">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" role="switch" [id]="'exp-mostrar-cv-'+i"
-                     [(ngModel)]="exp.form.mostrarEnCv"
-                     (ngModelChange)="onMostrarEnCvChange(exp, $event)"
-                     [disabled]="guardando || (exp.experienciaId !== 0 && guardandoVisibilidadExpId === exp.experienciaId)">
-              <label class="form-check-label" [for]="'exp-mostrar-cv-'+i">
-                Mostrar este empleo en Mi CV y en el CV público
-              </label>
-            </div>
-            <p class="text-muted small mb-0 mt-1">
-              Puedes registrar muchas experiencias y elegir cuáles destacar. En Mi CV y en público el orden es del empleo más reciente al más antiguo.
-              El interruptor «En CV» junto a las fechas en la cabecera guarda el mismo ajuste sin abrir la ficha.
-            </p>
           </div>
           <div class="col-12">
             <label class="form-label">
@@ -416,7 +412,7 @@ export class ExperienciaComponent implements OnInit {
   private laborRefUi: Record<number, { expanded: boolean; form: UpsertReferenciaRequest }> = {};
   loading = false;
   guardando = false;
-  /** PUT solo visibilidad desde interruptores (cabecera / formulario). */
+  /** PUT de visibilidad desde el switch de cabecera. */
   guardandoVisibilidadExpId: number | null = null;
   guardandoRef = false;
   todayDate = getTodayDateString();
@@ -437,12 +433,8 @@ export class ExperienciaComponent implements OnInit {
     return exp.experienciaId;
   }
 
-  onHeaderClick(exp: ExperienciaUI, ev: MouseEvent): void {
+  toggleExpAccordion(exp: ExperienciaUI): void {
     if (exp.experienciaId === 0) {
-      return;
-    }
-    const el = ev.target as HTMLElement;
-    if (el.closest('button')) {
       return;
     }
     exp.expanded = !exp.expanded;
@@ -748,7 +740,7 @@ export class ExperienciaComponent implements OnInit {
   }
 
   private toForm(e: ExperienciaDto): UpsertExperienciaRequest {
-    const { experienciaId, fechaRegistro, ...rest } = e;
+    const { experienciaId: _experienciaId, fechaRegistro: _fechaRegistro, ...rest } = e;
     return { ...rest, mostrarEnCv: rest.mostrarEnCv !== false };
   }
 
@@ -761,7 +753,7 @@ export class ExperienciaComponent implements OnInit {
     };
   }
 
-  /** Guarda visibilidad al cambiar interruptor (cabecera o cuerpo). Solo empleos ya persistidos. */
+  /** Guarda visibilidad al cambiar el switch de cabecera. Solo empleos ya persistidos. */
   onMostrarEnCvChange(exp: ExperienciaUI, nuevo: boolean): void {
     if (exp.experienciaId === 0) {
       return;
@@ -771,11 +763,13 @@ export class ExperienciaComponent implements OnInit {
       return;
     }
     this.guardandoVisibilidadExpId = exp.experienciaId;
-    const payload = this.buildExperienciaUpsertPayload(exp);
-    this.cvEditorService.updateExperiencia(exp.experienciaId, payload).subscribe({
+    this.cvEditorService
+      .updateExperienciaVisibilidad(exp.experienciaId, { mostrarEnCv: nuevo })
+      .subscribe({
       next: actualizada => {
         Object.assign(exp, actualizada, { expanded: exp.expanded, form: this.toForm(actualizada) });
         this.guardandoVisibilidadExpId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
       },
       error: (error: HttpErrorResponse) => {
         exp.form.mostrarEnCv = prev;

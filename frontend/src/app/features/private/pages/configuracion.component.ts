@@ -601,7 +601,7 @@ export class ConfiguracionComponent implements OnInit {
     }
   }
 
-  private guardarVisibilidad(cambios: Array<{ seccion: string; visible: boolean }>): void {
+  private guardarVisibilidad(cambios: { seccion: string; visible: boolean }[]): void {
     this.cvEditorService.updateVisibilidad(cambios).subscribe({
       next: () => {
         this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);

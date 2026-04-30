@@ -113,7 +113,7 @@ FROM dbo.Curriculum c
 INNER JOIN dbo.Personales p ON p.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Perfil per ON per.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Habilidad h ON h.CurriculumId = c.CurriculumId
-LEFT JOIN dbo.Formacion f ON f.CurriculumId = c.CurriculumId
+LEFT JOIN dbo.Formacion f ON f.CurriculumId = c.CurriculumId AND f.MostrarEnCv = 1
 LEFT JOIN dbo.Experiencia e ON e.CurriculumId = c.CurriculumId AND e.MostrarEnCv = 1
 LEFT JOIN dbo.Referencia r ON r.CurriculumId = c.CurriculumId
 WHERE c.Estado = N'Publicado'
@@ -225,8 +225,8 @@ INNER JOIN dbo.Personales p ON p.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Perfil per ON per.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.Experiencia ep ON ep.CurriculumId = c.CurriculumId AND ep.MostrarEnCv = 1
 LEFT JOIN dbo.Habilidad h ON h.CurriculumId = c.CurriculumId
-LEFT JOIN dbo.Proyecto pr ON pr.CurriculumId = c.CurriculumId
-LEFT JOIN dbo.Formacion fo ON fo.CurriculumId = c.CurriculumId
+LEFT JOIN dbo.Proyecto pr ON pr.CurriculumId = c.CurriculumId AND pr.MostrarEnCv = 1
+LEFT JOIN dbo.Formacion fo ON fo.CurriculumId = c.CurriculumId AND fo.MostrarEnCv = 1
 LEFT JOIN dbo.Referencia re ON re.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.RedSocial rs ON rs.CurriculumId = c.CurriculumId
 LEFT JOIN dbo.FamiliarContacto fc ON fc.CurriculumId = c.CurriculumId

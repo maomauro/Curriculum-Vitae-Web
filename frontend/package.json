@@ -7,7 +7,15 @@
     "start:fresh": "ng cache clean && ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "lint": "ng lint",
+    "lint:strict": "ng lint --max-warnings=0",
+    "lint:private:strict": "eslint \"src/app/features/private/pages/**/*.ts\" --max-warnings=0 --rule \"@angular-eslint/template/eqeqeq:off\" --rule \"@angular-eslint/template/click-events-have-key-events:off\" --rule \"@angular-eslint/template/interactive-supports-focus:off\" --rule \"@angular-eslint/template/label-has-associated-control:off\"",
+    "lint:public:strict": "eslint \"src/app/features/public/pages/**/*.ts\" --max-warnings=0 --rule \"@angular-eslint/template/eqeqeq:off\" --rule \"@angular-eslint/template/click-events-have-key-events:off\" --rule \"@angular-eslint/template/interactive-supports-focus:off\" --rule \"@angular-eslint/template/label-has-associated-control:off\"",
+    "lint:layout:strict": "eslint \"src/app/layout/**/*.ts\" --max-warnings=0 --rule \"@angular-eslint/template/eqeqeq:off\" --rule \"@angular-eslint/template/click-events-have-key-events:off\" --rule \"@angular-eslint/template/interactive-supports-focus:off\" --rule \"@angular-eslint/template/label-has-associated-control:off\"",
+    "lint:core-services:strict": "eslint \"src/app/core/services/**/*.ts\" --max-warnings=0 --rule \"@angular-eslint/template/eqeqeq:off\" --rule \"@angular-eslint/template/click-events-have-key-events:off\" --rule \"@angular-eslint/template/interactive-supports-focus:off\" --rule \"@angular-eslint/template/label-has-associated-control:off\"",
+    "lint:admin-pages:strict": "eslint \"src/app/features/admin/pages/**/*.ts\" --max-warnings=0 --rule \"@angular-eslint/template/eqeqeq:off\" --rule \"@angular-eslint/template/click-events-have-key-events:off\" --rule \"@angular-eslint/template/interactive-supports-focus:off\" --rule \"@angular-eslint/template/label-has-associated-control:off\"",
+    "lint:pilots": "npm run lint:private:strict && npm run lint:public:strict && npm run lint:layout:strict && npm run lint:core-services:strict && npm run lint:admin-pages:strict"
   },
   "prettier": {
     "overrides": [
@@ -47,12 +55,15 @@
     "@types/bootstrap": "^5.2.10",
     "@types/jasmine": "~5.1.0",
     "@types/jquery": "^4.0.0",
+    "angular-eslint": "21.0.1",
+    "eslint": "^9.39.1",
     "jasmine-core": "~5.8.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "typescript-eslint": "8.46.4"
   }
 }

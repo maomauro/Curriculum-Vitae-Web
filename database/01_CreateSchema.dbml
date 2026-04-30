@@ -170,6 +170,7 @@ Table Formacion {
   AdjuntoSoporte varchar(500)
   FechaVigencia date
   DuracionHoras int
+  MostrarEnCv boolean [not null, default: 1]
 }
 
 Table Habilidad {
@@ -200,6 +201,7 @@ Table Proyecto {
   Aporte text
   Logro text
   Desafio text
+  MostrarEnCv boolean [not null, default: 1]
 }
 
 Table VisitanteContacto {

@@ -146,10 +146,10 @@ VALUES
 GO
 
 -- Formación académica
-INSERT INTO dbo.Formacion (CurriculumId, Titulo, Institucion, Area, FechaInicio, FechaFin, TipoFormacion, Descripcion)
+INSERT INTO dbo.Formacion (CurriculumId, Titulo, Institucion, Area, FechaInicio, FechaFin, TipoFormacion, Descripcion, MostrarEnCv)
 VALUES
-    (1, N'Ingeniería de Sistemas', N'Universidad Nacional', N'Tecnología', '2007-02-15', '2012-12-18', N'Pregrado', N'Proyecto de grado en arquitectura de software escalable.'),
-    (2, N'Maestría en Diseño de Interacción', N'Universidad Javeriana', N'Diseño', '2019-08-01', '2021-06-30', N'Maestría', N'Tesis sobre experiencia de usuario móvil para servicios financieros.');
+    (1, N'Ingeniería de Sistemas', N'Universidad Nacional', N'Tecnología', '2007-02-15', '2012-12-18', N'Pregrado', N'Proyecto de grado en arquitectura de software escalable.', 1),
+    (2, N'Maestría en Diseño de Interacción', N'Universidad Javeriana', N'Diseño', '2019-08-01', '2021-06-30', N'Maestría', N'Tesis sobre experiencia de usuario móvil para servicios financieros.', 1);
 GO
 
 -- Habilidades
@@ -162,10 +162,10 @@ VALUES
 GO
 
 -- Proyectos
-INSERT INTO dbo.Proyecto (CurriculumId, NombreProyecto, Rol, EquipoTamano, DuracionMeses, StackTecnologico, Aporte, Logro, Desafio)
+INSERT INTO dbo.Proyecto (CurriculumId, NombreProyecto, Rol, EquipoTamano, DuracionMeses, StackTecnologico, Aporte, Logro, Desafio, MostrarEnCv)
 VALUES
-    (1, N'Sistema de gestión de inventarios', N'Líder técnico', 5, 10, N'.NET, SQL Server, Azure', N'Diseño de la arquitectura de backend y coordinación del equipo.', N'Reducción del 30% en tiempos de consulta.', N'Integrar múltiples orígenes de datos con alta disponibilidad.'),
-    (2, N'Plataforma de e-commerce móvil', N'Diseñadora UX', 4, 8, N'Figma, Adobe XD, React Native', N'Diseño de flujos de compra y prototipos interactivos.', N'Aumento del 20% en la conversión de usuarios.', N'Crear una experiencia de pago simple y confiable.');
+    (1, N'Sistema de gestión de inventarios', N'Líder técnico', 5, 10, N'.NET, SQL Server, Azure', N'Diseño de la arquitectura de backend y coordinación del equipo.', N'Reducción del 30% en tiempos de consulta.', N'Integrar múltiples orígenes de datos con alta disponibilidad.', 1),
+    (2, N'Plataforma de e-commerce móvil', N'Diseñadora UX', 4, 8, N'Figma, Adobe XD, React Native', N'Diseño de flujos de compra y prototipos interactivos.', N'Aumento del 20% en la conversión de usuarios.', N'Crear una experiencia de pago simple y confiable.', 1);
 GO
 
 -- Visitantes de contacto

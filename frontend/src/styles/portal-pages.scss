@@ -2484,15 +2484,24 @@
 
 .job-card-header {
   padding: 18px 22px;
-  cursor: pointer;
+  cursor: default;
   display: flex;
   align-items: center;
   gap: 14px;
   user-select: none;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
-.job-card:not(.job-card--nuevo) .job-card-header:hover {
+.job-card-header.profile-card-header {
+  margin-bottom: 0;
+  align-items: center;
+}
+.job-card:not(.job-card--nuevo) .job-card-header .profile-name:hover {
   background: #f8fafc;
+}
+.job-card:not(.job-card--nuevo) .job-card-header .profile-name:focus-visible {
+  box-shadow: 0 0 0 2px rgba(44, 123, 229, 0.35);
+  border-radius: 6px;
+  outline: none;
 }
 .job-icon {
   width: 44px;
@@ -2522,25 +2531,6 @@
 /** Bloque título + empresa + leyenda visibilidad CV */
 .job-card-title-block {
   min-width: 0;
-}
-/** Semáforo: verde = visible en CV, rojo = oculto */
-.job-cv-semaphore {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.job-cv-semaphore--visible {
-  background: #198754;
-  box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.28);
-}
-.job-cv-semaphore--hidden {
-  background: #dc3545;
-  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.22);
-}
-.job-cv-visibility-caption {
-  margin-top: 2px;
-  line-height: 1.2;
 }
 /** Fechas + duración alineadas en columnas fijas (efecto tabulado entre tarjetas) */
 .job-card-metrics {
@@ -2579,23 +2569,6 @@
   text-align: left;
   white-space: normal;
 }
-.job-metric-visibility {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding-left: 2px;
-}
-.job-metric-visibility-switch .form-check-input {
-  width: 2.1em;
-  height: 1.05em;
-  margin-top: 0.08em;
-  cursor: pointer;
-}
-.job-metric-visibility-switch .form-check-label {
-  cursor: pointer;
-  user-select: none;
-  line-height: 1.2;
-}
 .job-dates {
   font-size: 0.8rem;
   color: #6c757d;
@@ -2603,14 +2576,6 @@
 }
 .job-badge-slot {
   flex-shrink: 0;
-}
-.job-chevron {
-  margin-left: 0;
-  color: #adb5bd;
-  transition: transform 0.25s;
-}
-.job-card--expanded .job-chevron {
-  transform: rotate(180deg);
 }
 .job-body {
   padding: 0 22px 22px;

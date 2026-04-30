@@ -297,6 +297,7 @@ CREATE TABLE dbo.Formacion (
     AdjuntoSoporte NVARCHAR(500) NULL,
     FechaVigencia  DATE          NULL,
     DuracionHoras  INT           NULL,
+    MostrarEnCv    BIT           NOT NULL DEFAULT 1,
     CONSTRAINT PK_Formacion PRIMARY KEY CLUSTERED (FormacionId),
     CONSTRAINT FK_Formacion_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
@@ -348,6 +349,7 @@ CREATE TABLE dbo.Proyecto (
     Aporte            NVARCHAR(MAX) NULL,
     Logro             NVARCHAR(MAX) NULL,
     Desafio           NVARCHAR(MAX) NULL,
+    MostrarEnCv       BIT           NOT NULL DEFAULT 1,
     CONSTRAINT PK_Proyecto PRIMARY KEY CLUSTERED (ProyectoId),
     CONSTRAINT FK_Proyecto_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );

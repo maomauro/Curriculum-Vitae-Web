@@ -29,6 +29,14 @@ public class ExperienciaController : CvControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpsertExperienciaRequest request, CancellationToken ct = default)
         => Ok(await _editor.UpdateExperienciaAsync(GetCurriculumId(), id, request, ct));
 
+    [HttpPatch("{id:int}/visibilidad")]
+    [HttpPut("{id:int}/visibilidad")]
+    public async Task<IActionResult> UpdateVisibilidad(
+        int id,
+        [FromBody] UpdateExperienciaVisibilidadRequest request,
+        CancellationToken ct = default)
+        => Ok(await _editor.UpdateExperienciaVisibilidadAsync(GetCurriculumId(), id, request, ct));
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {

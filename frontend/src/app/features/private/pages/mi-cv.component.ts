@@ -250,7 +250,7 @@ export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
           tipoContrato: e.tipoContrato,
           adjuntoSoporte: e.adjuntoSoporte,
         })),
-      formaciones: this.formaciones.map(f => ({
+      formaciones: this.formaciones.filter(f => f.mostrarEnCv !== false).map(f => ({
         formacionId: f.formacionId,
         titulo: f.titulo,
         institucion: f.institucion,
@@ -270,7 +270,7 @@ export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
         nivelEscucha: h.nivelEscucha,
         nivelHabla: h.nivelHabla,
       })),
-      proyectos: this.proyectos.map(pr => ({
+      proyectos: this.proyectos.filter(pr => pr.mostrarEnCv !== false).map(pr => ({
         proyectoId: pr.proyectoId,
         nombreProyecto: pr.nombreProyecto,
         rol: pr.rol,

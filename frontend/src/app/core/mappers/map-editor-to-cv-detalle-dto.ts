@@ -24,6 +24,8 @@ export function mapEditorToCvDetalleDto(
   redes: RedSocialDto[]
 ): CvDetalleDto {
   const experienciasVisibles = experiencias.filter(e => e.mostrarEnCv !== false);
+  const formacionesVisibles = formaciones.filter(f => f.mostrarEnCv !== false);
+  const proyectosVisibles = proyectos.filter(pr => pr.mostrarEnCv !== false);
   const idsExpCv = new Set(experienciasVisibles.map(e => e.experienciaId));
 
   const nombreCompleto = !personales
@@ -67,7 +69,7 @@ export function mapEditorToCvDetalleDto(
       funciones: e.funciones,
       tipoContrato: e.tipoContrato,
     })),
-    formaciones: formaciones.map(f => ({
+    formaciones: formacionesVisibles.map(f => ({
       formacionId: f.formacionId,
       titulo: f.titulo,
       institucion: f.institucion,
@@ -87,7 +89,7 @@ export function mapEditorToCvDetalleDto(
       nivelEscucha: h.nivelEscucha,
       nivelHabla: h.nivelHabla,
     })),
-    proyectos: proyectos.map(pr => ({
+    proyectos: proyectosVisibles.map(pr => ({
       proyectoId: pr.proyectoId,
       nombreProyecto: pr.nombreProyecto,
       rol: pr.rol,

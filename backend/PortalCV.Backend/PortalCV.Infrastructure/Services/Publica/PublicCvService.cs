@@ -348,11 +348,11 @@ public class PublicCvService : IPublicCvService
             p.AspiracionSalarialPesos, p.AspiracionSalarialDolares, p.EsActivo)),
         experienciasVisibles.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
             e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones, e.TipoContrato)),
-        c.Formaciones.Select(f => new FormacionPublicoDto(f.FormacionId, f.Titulo, f.Institucion,
+        c.Formaciones.Where(f => f.MostrarEnCv).Select(f => new FormacionPublicoDto(f.FormacionId, f.Titulo, f.Institucion,
             f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin)),
         c.Habilidades.Select(h => new HabilidadPublicoDto(h.HabilidadId, h.Nombre, h.Tipo, MapHabilidadNivelPublico(h.Nivel), h.Descripcion,
             h.NivelLectura, h.NivelEscritura, h.NivelEscucha, h.NivelHabla)),
-        c.Proyectos.Select(p => new ProyectoPublicoDto(p.ProyectoId, p.NombreProyecto, p.Rol,
+        c.Proyectos.Where(p => p.MostrarEnCv).Select(p => new ProyectoPublicoDto(p.ProyectoId, p.NombreProyecto, p.Rol,
             p.StackTecnologico, p.Aporte, p.Logro, p.EquipoTamano, p.DuracionMeses)),
         c.Referencias.Where(r => r.TipoReferencia == "Laboral"
             && (r.ExperienciaId is null || idsExpVisibles.Contains(r.ExperienciaId.Value)))

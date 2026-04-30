@@ -35,3 +35,8 @@ public class UpsertExperienciaRequest
     public bool? MostrarEnCv { get; set; }
 }
 
+public class UpdateExperienciaVisibilidadRequest
+{
+    public bool MostrarEnCv { get; set; }
+}
+

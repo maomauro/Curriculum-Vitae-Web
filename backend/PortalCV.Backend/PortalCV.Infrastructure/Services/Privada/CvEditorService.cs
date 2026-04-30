@@ -209,6 +209,25 @@ public class CvEditorService : ICvEditorService
         return MapExperiencia(e);
     }
 
+    public async Task<ExperienciaDto> UpdateExperienciaVisibilidadAsync(
+        int curriculumId,
+        int id,
+        UpdateExperienciaVisibilidadRequest r,
+        CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
+        e.MostrarEnCv = r.MostrarEnCv;
+        await _context.SaveChangesAsync(ct);
+        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
+            new Dictionary<string, string>
+            {
+                ["experienciaId"] = e.ExperienciaId.ToString(),
+                ["mostrarEnCv"] = e.MostrarEnCv ? "true" : "false"
+            }, ct);
+        return MapExperiencia(e);
+    }
+
     public async Task DeleteExperienciaAsync(int curriculumId, int id, CancellationToken ct = default)
     {
         var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
@@ -236,7 +255,8 @@ public class CvEditorService : ICvEditorService
             FechaInicio = r.FechaInicio, FechaFin = r.FechaFin,
             TipoFormacion = r.TipoFormacion, Descripcion = r.Descripcion,
             AdjuntoSoporte = r.AdjuntoSoporte, FechaVigencia = r.FechaVigencia,
-            DuracionHoras = r.DuracionHoras
+            DuracionHoras = r.DuracionHoras,
+            MostrarEnCv = r.MostrarEnCv ?? true
         };
         _context.Formaciones.Add(e);
         await _context.SaveChangesAsync(ct);
@@ -258,10 +278,30 @@ public class CvEditorService : ICvEditorService
         e.TipoFormacion = r.TipoFormacion; e.Descripcion = r.Descripcion;
         e.AdjuntoSoporte = r.AdjuntoSoporte; e.FechaVigencia = r.FechaVigencia;
         e.DuracionHoras = r.DuracionHoras;
+        e.MostrarEnCv = r.MostrarEnCv ?? true;
         await _context.SaveChangesAsync(ct);
         await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
             new Dictionary<string, string> { ["formacionId"] = e.FormacionId.ToString() }, ct);
+        return MapFormacion(e);
+    }
+
+    public async Task<FormacionDto> UpdateFormacionVisibilidadAsync(
+        int curriculumId,
+        int id,
+        UpdateFormacionVisibilidadRequest r,
+        CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
+        e.MostrarEnCv = r.MostrarEnCv;
+        await _context.SaveChangesAsync(ct);
+        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
+            new Dictionary<string, string>
+            {
+                ["formacionId"] = e.FormacionId.ToString(),
+                ["mostrarEnCv"] = e.MostrarEnCv ? "true" : "false"
+            }, ct);
         return MapFormacion(e);
     }
 
@@ -339,7 +379,8 @@ public class CvEditorService : ICvEditorService
             CurriculumId = curriculumId, NombreProyecto = r.NombreProyecto, Rol = r.Rol,
             EquipoTamano = r.EquipoTamano, DuracionMeses = r.DuracionMeses,
             StackTecnologico = r.StackTecnologico, Aporte = r.Aporte,
-            Logro = r.Logro, Desafio = r.Desafio
+            Logro = r.Logro, Desafio = r.Desafio,
+            MostrarEnCv = r.MostrarEnCv ?? true
         };
         _context.Proyectos.Add(e);
         await _context.SaveChangesAsync(ct);
@@ -356,10 +397,30 @@ public class CvEditorService : ICvEditorService
         e.EquipoTamano = r.EquipoTamano; e.DuracionMeses = r.DuracionMeses;
         e.StackTecnologico = r.StackTecnologico; e.Aporte = r.Aporte;
         e.Logro = r.Logro; e.Desafio = r.Desafio;
+        e.MostrarEnCv = r.MostrarEnCv ?? true;
         await _context.SaveChangesAsync(ct);
         await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoUpdate, "Proyecto", e.ProyectoId,
             new Dictionary<string, string> { ["proyectoId"] = e.ProyectoId.ToString() }, ct);
+        return MapProyecto(e);
+    }
+
+    public async Task<ProyectoDto> UpdateProyectoVisibilidadAsync(
+        int curriculumId,
+        int id,
+        UpdateProyectoVisibilidadRequest r,
+        CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Proyectos, id, curriculumId, ct);
+        e.MostrarEnCv = r.MostrarEnCv;
+        await _context.SaveChangesAsync(ct);
+        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoUpdate, "Proyecto", e.ProyectoId,
+            new Dictionary<string, string>
+            {
+                ["proyectoId"] = e.ProyectoId.ToString(),
+                ["mostrarEnCv"] = e.MostrarEnCv ? "true" : "false"
+            }, ct);
         return MapProyecto(e);
     }
 
@@ -711,7 +772,7 @@ public class CvEditorService : ICvEditorService
 
     private static FormacionDto MapFormacion(Formacion e) => new(
         e.FormacionId, e.Titulo, e.Institucion, e.Area, e.FechaInicio, e.FechaFin,
-        e.TipoFormacion, e.Descripcion, e.AdjuntoSoporte, e.FechaVigencia, e.DuracionHoras);
+        e.TipoFormacion, e.Descripcion, e.AdjuntoSoporte, e.FechaVigencia, e.DuracionHoras, e.MostrarEnCv);
 
     /// <summary>CK SQL histórico: solo 'Basico' sin tilde; el front envía 'Básico'.</summary>
     private static string? NormalizeHabilidadNivelForStorage(string? nivel)
@@ -735,7 +796,7 @@ public class CvEditorService : ICvEditorService
 
     private static ProyectoDto MapProyecto(Proyecto e) => new(
         e.ProyectoId, e.NombreProyecto, e.Rol, e.EquipoTamano, e.DuracionMeses,
-        e.StackTecnologico, e.Aporte, e.Logro, e.Desafio);
+        e.StackTecnologico, e.Aporte, e.Logro, e.Desafio, e.MostrarEnCv);
 
     private static ReferenciaDto MapReferencia(Referencia e) => new(
         e.ReferenciaId, e.TipoReferencia, e.ExperienciaId, e.Nombre, e.Apellido,
