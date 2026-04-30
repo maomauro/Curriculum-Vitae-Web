@@ -65,6 +65,22 @@ public class FormacionController : CvControllerBase
         return Ok(await _editor.UpdateFormacionAsync(curriculumId, id, request, ct));
     }
 
+    [HttpPatch("{id:int}/visibilidad")]
+    [HttpPut("{id:int}/visibilidad")]
+    public async Task<IActionResult> UpdateVisibilidad(
+        int id,
+        [FromBody] UpdateFormacionVisibilidadRequest request,
+        CancellationToken ct = default)
+    {
+        var err = BadIfCurriculumInvalid(out var curriculumId);
+        if (err is not null)
+        {
+            return err;
+        }
+
+        return Ok(await _editor.UpdateFormacionVisibilidadAsync(curriculumId, id, request, ct));
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {

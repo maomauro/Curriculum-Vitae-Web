@@ -219,7 +219,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private cargarConteo(): void {
     this.dashboardService.getNotificaciones(1).subscribe({
       next: data => { this.conteoNoLeidas = data.conteoNoLeidas; },
-      error: () => {}
+      error: () => { this.conteoNoLeidas = 0; }
     });
   }
 

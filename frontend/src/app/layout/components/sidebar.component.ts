@@ -216,7 +216,6 @@ export class SidebarComponent implements OnInit {
       next: d => {
         this.conteoAlertasNoLeidas = d.conteoNoLeidas;
       },
-      error: () => {},
     });
   }
 }

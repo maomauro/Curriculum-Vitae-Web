@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnInit, Renderer2 } from '@angular/core';
 
 @Component({
   selector: 'app-public-layout',
@@ -11,7 +11,7 @@ import { Component, OnDestroy, OnInit, Renderer2 } from '@angular/core';
     <app-footer-public></app-footer-public>
   `
 })
-export class PublicLayoutComponent implements OnInit, OnDestroy {
+export class PublicLayoutComponent implements OnInit {
   constructor(private renderer: Renderer2) {}
 
   ngOnInit(): void {
@@ -25,5 +25,4 @@ export class PublicLayoutComponent implements OnInit, OnDestroy {
     this.renderer.removeClass(document.body, 'bg-body-tertiary');
   }
 
-  ngOnDestroy(): void {}
 }

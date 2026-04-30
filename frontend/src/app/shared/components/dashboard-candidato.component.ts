@@ -378,7 +378,7 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   mostrarGraficas = true;
 
   /** Chart.js tipa cada chart por tipo; guardamos solo instancias con destroy(). */
-  private chartInstances: Array<{ destroy(): void }> = [];
+  private chartInstances: { destroy(): void }[] = [];
 
   ngOnInit(): void {
     const detalle = this.shellCtx.cv;

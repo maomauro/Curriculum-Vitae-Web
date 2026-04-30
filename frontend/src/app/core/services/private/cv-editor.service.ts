@@ -81,6 +81,9 @@ export interface ExperienciaDto {
 }
 
 export type UpsertExperienciaRequest = Omit<ExperienciaDto, 'experienciaId' | 'fechaRegistro'>;
+export interface UpdateExperienciaVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Formaciones ─────────────────────────────────────────────────────────
 
@@ -96,9 +99,13 @@ export interface FormacionDto {
   adjuntoSoporte: string | null;
   fechaVigencia: string | null;
   duracionHoras: number | null;
+  mostrarEnCv: boolean;
 }
 
 export type UpsertFormacionRequest = Omit<FormacionDto, 'formacionId'>;
+export interface UpdateFormacionVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Habilidades ─────────────────────────────────────────────────────────
 
@@ -128,9 +135,13 @@ export interface ProyectoDto {
   aporte: string | null;
   logro: string | null;
   desafio: string | null;
+  mostrarEnCv: boolean;
 }
 
 export type UpsertProyectoRequest = Omit<ProyectoDto, 'proyectoId'>;
+export interface UpdateProyectoVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Referencias ─────────────────────────────────────────────────────────
 
@@ -250,6 +261,12 @@ export class CvEditorService {
   updateExperiencia(id: number, data: UpsertExperienciaRequest): Observable<ExperienciaDto> {
     return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}`, data);
   }
+  updateExperienciaVisibilidad(
+    id: number,
+    data: UpdateExperienciaVisibilidadRequest
+  ): Observable<ExperienciaDto> {
+    return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}/visibilidad`, data);
+  }
   deleteExperiencia(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/experiencias/${id}`);
   }
@@ -263,6 +280,12 @@ export class CvEditorService {
   }
   updateFormacion(id: number, data: UpsertFormacionRequest): Observable<FormacionDto> {
     return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}`, data);
+  }
+  updateFormacionVisibilidad(
+    id: number,
+    data: UpdateFormacionVisibilidadRequest
+  ): Observable<FormacionDto> {
+    return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}/visibilidad`, data);
   }
   deleteFormacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/formaciones/${id}`);
@@ -291,6 +314,12 @@ export class CvEditorService {
   }
   updateProyecto(id: number, data: UpsertProyectoRequest): Observable<ProyectoDto> {
     return this.http.put<ProyectoDto>(`${this.BASE}/proyectos/${id}`, data);
+  }
+  updateProyectoVisibilidad(
+    id: number,
+    data: UpdateProyectoVisibilidadRequest
+  ): Observable<ProyectoDto> {
+    return this.http.put<ProyectoDto>(`${this.BASE}/proyectos/${id}/visibilidad`, data);
   }
   deleteProyecto(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/proyectos/${id}`);
