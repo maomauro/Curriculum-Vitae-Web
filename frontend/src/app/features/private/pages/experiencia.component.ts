@@ -668,8 +668,14 @@ export class ExperienciaComponent implements OnInit {
     if (months < 12) {
       return months <= 1 ? '1 mes' : `${months} meses`;
     }
-    const y = Math.floor(months / 12);
-    return y === 1 ? '1 año' : `${y} años`;
+    const years = Math.floor(months / 12);
+    const rest = months % 12;
+    const yearPart = years === 1 ? '1 año' : `${years} años`;
+    if (rest === 0) {
+      return yearPart;
+    }
+    const monthPart = rest === 1 ? '1 mes' : `${rest} meses`;
+    return `${yearPart} y ${monthPart}`;
   }
 
   cargar(): void {
