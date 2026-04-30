@@ -1,7 +1,9 @@
 import { mapEditorToCvDetalleDto } from './map-editor-to-cv-detalle-dto';
 import type {
   ExperienciaDto,
+  FormacionDto,
   PresentacionCvDto,
+  ProyectoDto,
   ReferenciaDto,
 } from '../services/private/cv-editor.service';
 
@@ -171,5 +173,75 @@ describe('mapEditorToCvDetalleDto', () => {
     );
     expect(dto.referencias.length).toBe(1);
     expect(dto.referencias[0].tipoReferencia).toBe('Personal');
+  });
+
+  it('excluye formaciones con mostrarEnCv false', () => {
+    const formaciones = [
+      {
+        formacionId: 1,
+        titulo: 'Visible',
+        institucion: 'A',
+        area: null,
+        fechaInicio: null,
+        fechaFin: null,
+        tipoFormacion: null,
+        descripcion: null,
+        adjuntoSoporte: null,
+        fechaVigencia: null,
+        duracionHoras: null,
+        mostrarEnCv: true,
+      },
+      {
+        formacionId: 2,
+        titulo: 'Oculta',
+        institucion: 'B',
+        area: null,
+        fechaInicio: null,
+        fechaFin: null,
+        tipoFormacion: null,
+        descripcion: null,
+        adjuntoSoporte: null,
+        fechaVigencia: null,
+        duracionHoras: null,
+        mostrarEnCv: false,
+      },
+    ] as FormacionDto[];
+
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], formaciones, [], [], [], []);
+    expect(dto.formaciones.length).toBe(1);
+    expect(dto.formaciones[0].formacionId).toBe(1);
+  });
+
+  it('excluye proyectos con mostrarEnCv false', () => {
+    const proyectos = [
+      {
+        proyectoId: 10,
+        nombreProyecto: 'Visible',
+        rol: 'Dev',
+        equipoTamano: null,
+        duracionMeses: null,
+        stackTecnologico: null,
+        aporte: null,
+        logro: null,
+        desafio: null,
+        mostrarEnCv: true,
+      },
+      {
+        proyectoId: 11,
+        nombreProyecto: 'Oculto',
+        rol: 'Dev',
+        equipoTamano: null,
+        duracionMeses: null,
+        stackTecnologico: null,
+        aporte: null,
+        logro: null,
+        desafio: null,
+        mostrarEnCv: false,
+      },
+    ] as ProyectoDto[];
+
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], proyectos, [], []);
+    expect(dto.proyectos.length).toBe(1);
+    expect(dto.proyectos[0].proyectoId).toBe(10);
   });
 });

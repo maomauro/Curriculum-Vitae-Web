@@ -8,7 +8,7 @@
  *
  * Por defecto se usa http://localhost:5005 (perfil `http` del launchSettings del API).
  */
-const { env } = require('process');
+const { env } = require('node:process');
 
 const target = env.PORTALCV_API_PROXY_TARGET || 'http://localhost:5005';
 
