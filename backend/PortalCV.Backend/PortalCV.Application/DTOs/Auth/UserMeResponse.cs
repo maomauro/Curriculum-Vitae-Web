@@ -6,7 +6,9 @@ namespace PortalCV.Application.DTOs.Auth;
 /// DTO que representa la información del usuario actualmente autenticado para el endpoint /me.
 /// </summary>
 public record UserMeResponse(
+    int UsuarioId,
     string Email,
+    string NombreCompleto,
     IEnumerable<string> Roles,
     int? CurriculumId
 );

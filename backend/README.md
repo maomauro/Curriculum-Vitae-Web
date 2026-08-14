@@ -315,8 +315,13 @@ HTTP Response (DTO serializado como JSON)
 
 ## Autenticación (JWT)
 
-- El token se devuelve en el login y debe enviarse en el header: `Authorization: Bearer <token>`
-- Claims incluidos: `sub` (UsuarioId), `email`, `role` (uno o varios), `curriculum_id`
+- El JWT **no viaja en el body** de `/api/auth/login` ni se guarda en `localStorage`: `AuthController` lo deja en una cookie `HttpOnly` (`portalcv_auth`) para que no sea accesible desde JavaScript en el cliente (mitiga robo de sesión vía XSS).
+  - Producción: `Secure=true`, `SameSite=None` (el SPA en Static Web Apps y la API en Container Apps son dominios distintos → cookie cross-site).
+  - Development: `Secure=false`, `SameSite=Lax` (ng serve sirve `/api` vía proxy, mismo origen aparente).
+- El pipeline de `JwtBearer` (`Program.cs`) acepta el token desde el header `Authorization: Bearer <token>` **o** desde la cookie `portalcv_auth` si no hay header; los clientes que no son el SPA (Postman, scripts) pueden seguir usando el header.
+- `POST /api/auth/logout` borra la cookie (`AllowAnonymous`: debe funcionar incluso con el token ya vencido).
+- `GET /api/auth/me` devuelve `UsuarioId`, `Email`, `NombreCompleto`, `Roles` y `CurriculumId` leyendo los claims del JWT; el frontend lo usa para restaurar la sesión al recargar la página, ya que no puede decodificar la cookie.
+- Claims incluidos en el JWT: `sub` (UsuarioId), `email`, `nombre`, `role` (uno o varios), `curriculum_id`
 - `CvControllerBase` lee `curriculum_id` del token → cada controlador sabe qué CV editar sin que el frontend lo envíe explícitamente
 - Roles: `Visitante` (sin login), `Publicador` (dueño del CV), `Admin` (gestor del sistema)
 
