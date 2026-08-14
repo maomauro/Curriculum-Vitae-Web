@@ -6,6 +6,7 @@ using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
+using PortalCV.Domain.Exceptions;
 using PortalCV.Infrastructure.Data;
 using PortalCV.Infrastructure.Helpers;
 
@@ -742,10 +743,16 @@ public class CvEditorService : ICvEditorService
         var entity = await dbSet.FindAsync(new object[] { id }, ct)
             ?? throw new KeyNotFoundException($"{typeof(T).Name} {id} no encontrado.");
 
-        // Verificar ownership via reflexión en la propiedad CurriculumId
-        var prop = typeof(T).GetProperty("CurriculumId");
-        if (prop is not null && (int)(prop.GetValue(entity) ?? 0) != curriculumId)
-            throw new UnauthorizedAccessException($"{typeof(T).Name} {id} no pertenece al curriculum {curriculumId}.");
+        // Verificar ownership via reflexión en la propiedad CurriculumId.
+        // Si el tipo no expone esa propiedad, es un error de programación (uso indebido
+        // de este helper con un tipo no "owned") y debe fallar de forma ruidosa en vez
+        // de tratar la entidad como si perteneciera al curriculum solicitante.
+        var prop = typeof(T).GetProperty("CurriculumId")
+            ?? throw new InvalidOperationException(
+                $"{typeof(T).Name} no tiene una propiedad CurriculumId; no se puede verificar propiedad con GetOwnedOrThrowAsync.");
+
+        if ((int)(prop.GetValue(entity) ?? 0) != curriculumId)
+            throw new ForbiddenOperationException($"{typeof(T).Name} {id} no pertenece al curriculum {curriculumId}.");
 
         return entity;
     }
