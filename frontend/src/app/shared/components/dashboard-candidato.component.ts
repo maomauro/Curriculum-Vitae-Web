@@ -197,7 +197,7 @@ function buildMetricas(cv: CvDetalleDto): MetricaCard[] {
   ];
 }
 
-function buildExpPorEmpresa(experiencias: ExperienciaPublicoDto[]): ExpEmpresa[] {
+export function buildExpPorEmpresa(experiencias: ExperienciaPublicoDto[]): ExpEmpresa[] {
   const map = new Map<string, { meses: number; primeraFechaInicio: Date | null }>();
   for (const e of experiencias) {
     const emp = (e.empresa ?? 'Sin empresa').trim() || 'Sin empresa';
@@ -271,12 +271,12 @@ function buildTimelineYearSeries(cv: CvDetalleDto): TimelineYearSeries {
   return { labels, edu, exp };
 }
 
-function normalizarTipoFormacion(tipo: string | null | undefined): string {
+export function normalizarTipoFormacion(tipo: string | null | undefined): string {
   const value = (tipo ?? '').trim();
   return value || 'Sin tipo';
 }
 
-function buildEducacionTipoSeries(formaciones: FormacionPublicoDto[]): EducacionTipoSeries {
+export function buildEducacionTipoSeries(formaciones: FormacionPublicoDto[]): EducacionTipoSeries {
   const countByType = new Map<string, number>();
   for (const formacion of formaciones ?? []) {
     const tipo = normalizarTipoFormacion(formacion.tipoFormacion);
@@ -340,7 +340,7 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
     .sort((a, b) => b.promedio - a.promedio);
 }
 
-function normalizarNivelHabilidad(nivel: string | null | undefined): 'basico' | 'intermedio' | 'avanzado' | 'experto' | null {
+export function normalizarNivelHabilidad(nivel: string | null | undefined): 'basico' | 'intermedio' | 'avanzado' | 'experto' | null {
   if (!nivel?.trim()) return null;
   const t = nivel.trim().toLowerCase();
   if (t.includes('bás') || t.includes('basic')) return 'basico';
@@ -350,11 +350,11 @@ function normalizarNivelHabilidad(nivel: string | null | undefined): 'basico' | 
   return null;
 }
 
-function contieneAlguno(texto: string, keywords: string[]): boolean {
+export function contieneAlguno(texto: string, keywords: string[]): boolean {
   return keywords.some(keyword => texto.includes(keyword));
 }
 
-function clasificarGrupoHabilidad(habilidad: HabilidadPublicoDto): string {
+export function clasificarGrupoHabilidad(habilidad: HabilidadPublicoDto): string {
   const tipo = (habilidad.tipo ?? '').trim().toLowerCase();
   const texto = [habilidad.nombre, habilidad.descripcion, habilidad.tipo]
     .filter(Boolean)
@@ -454,7 +454,7 @@ function clasificarGrupoHabilidad(habilidad: HabilidadPublicoDto): string {
   return 'Otros';
 }
 
-function buildHabilidadNivelSerie(habs: HabilidadPublicoDto[]): HabilidadNivelSerie {
+export function buildHabilidadNivelSerie(habs: HabilidadPublicoDto[]): HabilidadNivelSerie {
   const map = new Map<string, { basico: number; intermedio: number; avanzado: number; experto: number; total: number }>();
   for (const habilidad of habs ?? []) {
     const tipo = clasificarGrupoHabilidad(habilidad);
@@ -478,7 +478,7 @@ function buildHabilidadNivelSerie(habs: HabilidadPublicoDto[]): HabilidadNivelSe
   };
 }
 
-function buildHabilidadStrategicPoints(habs: HabilidadPublicoDto[]): HabilidadStrategicPoint[] {
+export function buildHabilidadStrategicPoints(habs: HabilidadPublicoDto[]): HabilidadStrategicPoint[] {
   const map = new Map<
     string,
     { basico: number; intermedio: number; avanzado: number; experto: number; total: number; sumaMadurez: number }
