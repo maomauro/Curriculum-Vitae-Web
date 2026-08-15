@@ -6,6 +6,9 @@
 /out-tsc
 /bazel-out
 
+# Config runtime generado/desplegado por CI-CD (contiene URLs de entorno)
+/public/app-config.json
+
 # Node
 /node_modules
 npm-debug.log

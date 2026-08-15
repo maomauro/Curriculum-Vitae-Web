@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PortalCV.Api.Contracts.Auth;
 using PortalCV.Application.Constants;
 using PortalCV.Application.Interfaces;
@@ -14,14 +15,17 @@ namespace PortalCV.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IWebHostEnvironment _environment;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IWebHostEnvironment environment)
     {
         _authService = authService;
+        _environment = environment;
     }
 
-    /// <summary>Inicia sesión y devuelve un JWT.</summary>
+    /// <summary>Inicia sesión y deja el JWT en una cookie HttpOnly (no viaja en el body).</summary>
     [AllowAnonymous]
+    [EnableRateLimiting("auth-public")]
     [HttpPost("login")]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request,
@@ -29,11 +33,32 @@ public class AuthController : ControllerBase
     {
         var appRequest = new AppDto.LoginRequest(request.Email, request.Password);
         var result = await _authService.LoginAsync(appRequest, ct);
-        return Ok(result);
+
+        SetAuthCookie(result.Token, result.Expiracion);
+
+        var response = new LoginResponse(
+            result.UsuarioId,
+            result.Email,
+            result.NombreCompleto,
+            result.Roles,
+            result.CurriculumId,
+            result.Expiracion);
+
+        return Ok(response);
+    }
+
+    /// <summary>Cierra la sesión borrando la cookie del JWT. Anónimo: debe funcionar incluso si el token ya venció.</summary>
+    [AllowAnonymous]
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete(AuthCookieDefaults.Name, BuildCookieOptions(DateTimeOffset.UnixEpoch));
+        return Ok(new { message = ApiMessages.Auth.SesionCerrada });
     }
 
     /// <summary>Registra un nuevo publicador y crea su curriculum vacío.</summary>
     [AllowAnonymous]
+    [EnableRateLimiting("auth-public")]
     [HttpPost("register")]
     public async Task<IActionResult> Register(
         [FromBody] RegisterRequest request,
@@ -56,17 +81,28 @@ public class AuthController : ControllerBase
         }
     }
 
-    /// <summary>Devuelve información del usuario autenticado.</summary>
+    /// <summary>
+    /// Devuelve información del usuario autenticado. El frontend la usa para restaurar
+    /// la sesión al recargar la página, ya que el JWT vive en una cookie HttpOnly que
+    /// JavaScript no puede leer ni decodificar directamente.
+    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me()
     {
-        var email        = User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? User.Identity?.Name;
+        // El JwtBearerHandler remapea claims JWT cortos a los URI largos de ClaimTypes
+        // (sub -> NameIdentifier, email -> ClaimTypes.Email) via su inbound claim map por
+        // defecto: hay que buscar ambas formas, igual que ya hace CvControllerBase con "sub".
+        var idStr        = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var email        = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? User.Identity?.Name;
+        var nombre       = User.FindFirstValue("nombre");
         var roles        = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
         var curriculumId = User.FindFirstValue("curriculum_id");
 
         return Ok(new AppDto.UserMeResponse(
+            int.TryParse(idStr, out var usuarioId) ? usuarioId : 0,
             email ?? string.Empty,
+            nombre ?? email ?? string.Empty,
             roles,
             int.TryParse(curriculumId, out var id) ? id : null
         ));
@@ -77,6 +113,7 @@ public class AuthController : ControllerBase
     /// Respuesta genérica para no revelar si el email existe.
     /// </summary>
     [AllowAnonymous]
+    [EnableRateLimiting("auth-public")]
     [HttpPost("forgot-password")]
     public IActionResult ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -104,4 +141,28 @@ public class AuthController : ControllerBase
 
         return Ok(new { message = ApiMessages.Auth.ContraseñaActualizada });
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Cookie del JWT
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private void SetAuthCookie(string token, DateTime expiracion)
+        => Response.Cookies.Append(AuthCookieDefaults.Name, token, BuildCookieOptions(expiracion));
+
+    /// <summary>
+    /// SameSite=None + Secure es obligatorio en producción porque el SPA (Static Web Apps)
+    /// y la API (Container Apps) viven en dominios distintos — es una cookie cross-site.
+    /// En Development se usa Lax/no-Secure porque ng serve la sirve por HTTP a través del
+    /// proxy (mismo origen aparente); un navegador descarta SameSite=None sin Secure.
+    /// </summary>
+    private CookieOptions BuildCookieOptions(DateTime expiracion) => BuildCookieOptions(new DateTimeOffset(expiracion, TimeSpan.Zero));
+
+    private CookieOptions BuildCookieOptions(DateTimeOffset expiracion) => new()
+    {
+        HttpOnly = true,
+        Secure = !_environment.IsDevelopment(),
+        SameSite = _environment.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+        Expires = expiracion,
+        Path = "/"
+    };
 }

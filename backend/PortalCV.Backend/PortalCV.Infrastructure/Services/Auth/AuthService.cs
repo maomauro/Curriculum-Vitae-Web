@@ -75,7 +75,7 @@ public class AuthService : IAuthService
 
         var (token, expiracion) = BuildJwt(usuario, roles, curriculumId, nombreCompleto);
 
-        return new LoginResponse(token, usuario.Email, nombreCompleto, roles, expiracion);
+        return new LoginResponse(token, usuario.UsuarioId, usuario.Email, nombreCompleto, roles, curriculumId, expiracion);
     }
 
     // ──────────────────────────────────────────────────────────────────────────

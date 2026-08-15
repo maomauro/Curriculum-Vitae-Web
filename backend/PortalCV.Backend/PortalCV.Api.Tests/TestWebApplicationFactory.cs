@@ -21,7 +21,9 @@ namespace PortalCV.Api.Tests;
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     // Clave JWT solo para tests. Longitud minima 32 chars (HS256).
-    private const string TestJwtKey = "test-jwt-key-for-integration-tests-only-32plus";
+    public const string TestJwtKey = "test-jwt-key-for-integration-tests-only-32plus";
+    public const string TestJwtIssuer = "PortalCV.Api.Tests";
+    public const string TestJwtAudience = "PortalCV.Client.Tests";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -34,8 +36,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             "ConnectionStrings:DefaultConnection",
             "Server=(localdb);Database=Test;Trusted_Connection=True;");
         builder.UseSetting("Jwt:Key", TestJwtKey);
-        builder.UseSetting("Jwt:Issuer", "PortalCV.Api.Tests");
-        builder.UseSetting("Jwt:Audience", "PortalCV.Client.Tests");
+        builder.UseSetting("Jwt:Issuer", TestJwtIssuer);
+        builder.UseSetting("Jwt:Audience", TestJwtAudience);
 
         builder.ConfigureTestServices(services =>
         {
@@ -54,9 +56,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 .AddEntityFrameworkInMemoryDatabase()
                 .BuildServiceProvider();
 
+            // El nombre se genera UNA sola vez aqui (no dentro del lambda de abajo):
+            // AddDbContext invoca ese lambda cada vez que se resuelve un DbContext
+            // nuevo (una vez por scope/request), asi que un Guid.NewGuid() inline
+            // generaria una base en memoria distinta por cada peticion HTTP y los
+            // tests nunca verian los datos escritos en una peticion anterior.
+            var inMemoryDatabaseName = $"PortalCV-Tests-{Guid.NewGuid()}";
+
             services.AddDbContext<PortalCvDbContext>(options =>
             {
-                options.UseInMemoryDatabase($"PortalCV-Tests-{Guid.NewGuid()}");
+                options.UseInMemoryDatabase(inMemoryDatabaseName);
                 options.UseInternalServiceProvider(efInMemoryProvider);
             });
         });

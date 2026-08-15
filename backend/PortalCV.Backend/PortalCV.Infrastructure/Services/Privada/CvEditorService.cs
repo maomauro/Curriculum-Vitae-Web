@@ -6,6 +6,7 @@ using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
+using PortalCV.Domain.Exceptions;
 using PortalCV.Infrastructure.Data;
 using PortalCV.Infrastructure.Helpers;
 
@@ -96,8 +97,7 @@ public class CvEditorService : ICvEditorService
         existing.TipoResidencia = r.TipoResidencia;
         existing.FotoUrl = r.FotoUrl;
 
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PersonalesUpsert, "Personales", existing.PersonalesId,
             new Dictionary<string, string> { ["personalesId"] = existing.PersonalesId.ToString() }, ct);
         return MapPersonales(existing);
@@ -123,8 +123,7 @@ public class CvEditorService : ICvEditorService
             EsActivo = r.EsActivo
         };
         _context.Perfiles.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilCreate, "Perfil", e.PerfilId,
             new Dictionary<string, string> { ["nombrePerfil"] = e.NombrePerfil ?? string.Empty }, ct);
         return MapPerfil(e);
@@ -139,22 +138,14 @@ public class CvEditorService : ICvEditorService
         e.AspiracionSalarialPesos = r.AspiracionSalarialPesos;
         e.AspiracionSalarialDolares = r.AspiracionSalarialDolares;
         e.EsActivo = r.EsActivo;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilUpdate, "Perfil", e.PerfilId,
             new Dictionary<string, string> { ["perfilId"] = e.PerfilId.ToString() }, ct);
         return MapPerfil(e);
     }
 
-    public async Task DeletePerfilAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.Perfiles, id, curriculumId, ct);
-        _context.Perfiles.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilDelete, "Perfil", id,
-            new Dictionary<string, string> { ["perfilId"] = id.ToString() }, ct);
-    }
+    public Task DeletePerfilAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.Perfiles, curriculumId, id, CvAuditoriaAcciones.PerfilDelete, "Perfil", "perfilId", ct);
 
     // --- Experiencia ---
 
@@ -181,8 +172,7 @@ public class CvEditorService : ICvEditorService
             FechaRegistro = DateTime.UtcNow
         };
         _context.Experiencias.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaCreate, "Experiencia", e.ExperienciaId,
             new Dictionary<string, string>
             {
@@ -202,8 +192,7 @@ public class CvEditorService : ICvEditorService
         e.Funciones = r.Funciones; e.EsActual = r.EsActual;
         e.MostrarEnCv = r.MostrarEnCv ?? true;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
             new Dictionary<string, string> { ["experienciaId"] = e.ExperienciaId.ToString() }, ct);
         return MapExperiencia(e);
@@ -217,8 +206,7 @@ public class CvEditorService : ICvEditorService
     {
         var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
         e.MostrarEnCv = r.MostrarEnCv;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
             new Dictionary<string, string>
             {
@@ -228,15 +216,8 @@ public class CvEditorService : ICvEditorService
         return MapExperiencia(e);
     }
 
-    public async Task DeleteExperienciaAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
-        _context.Experiencias.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaDelete, "Experiencia", id,
-            new Dictionary<string, string> { ["experienciaId"] = id.ToString() }, ct);
-    }
+    public Task DeleteExperienciaAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.Experiencias, curriculumId, id, CvAuditoriaAcciones.ExperienciaDelete, "Experiencia", "experienciaId", ct);
 
     // --- Formación ---
 
@@ -259,8 +240,7 @@ public class CvEditorService : ICvEditorService
             MostrarEnCv = r.MostrarEnCv ?? true
         };
         _context.Formaciones.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionCreate, "Formacion", e.FormacionId,
             new Dictionary<string, string>
             {
@@ -279,8 +259,7 @@ public class CvEditorService : ICvEditorService
         e.AdjuntoSoporte = r.AdjuntoSoporte; e.FechaVigencia = r.FechaVigencia;
         e.DuracionHoras = r.DuracionHoras;
         e.MostrarEnCv = r.MostrarEnCv ?? true;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
             new Dictionary<string, string> { ["formacionId"] = e.FormacionId.ToString() }, ct);
         return MapFormacion(e);
@@ -294,8 +273,7 @@ public class CvEditorService : ICvEditorService
     {
         var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
         e.MostrarEnCv = r.MostrarEnCv;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
             new Dictionary<string, string>
             {
@@ -305,15 +283,8 @@ public class CvEditorService : ICvEditorService
         return MapFormacion(e);
     }
 
-    public async Task DeleteFormacionAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
-        _context.Formaciones.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionDelete, "Formacion", id,
-            new Dictionary<string, string> { ["formacionId"] = id.ToString() }, ct);
-    }
+    public Task DeleteFormacionAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.Formaciones, curriculumId, id, CvAuditoriaAcciones.FormacionDelete, "Formacion", "formacionId", ct);
 
     // --- Habilidades ---
 
@@ -335,8 +306,7 @@ public class CvEditorService : ICvEditorService
             NivelEscucha = r.NivelEscucha, NivelHabla = r.NivelHabla
         };
         _context.Habilidades.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadCreate, "Habilidad", e.HabilidadId,
             new Dictionary<string, string> { ["nombre"] = e.Nombre ?? string.Empty }, ct);
         return MapHabilidad(e);
@@ -348,22 +318,14 @@ public class CvEditorService : ICvEditorService
         e.Nombre = r.Nombre; e.Tipo = r.Tipo; e.Nivel = NormalizeHabilidadNivelForStorage(r.Nivel); e.Descripcion = r.Descripcion;
         e.NivelLectura = r.NivelLectura; e.NivelEscritura = r.NivelEscritura;
         e.NivelEscucha = r.NivelEscucha; e.NivelHabla = r.NivelHabla;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadUpdate, "Habilidad", e.HabilidadId,
             new Dictionary<string, string> { ["habilidadId"] = e.HabilidadId.ToString() }, ct);
         return MapHabilidad(e);
     }
 
-    public async Task DeleteHabilidadAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.Habilidades, id, curriculumId, ct);
-        _context.Habilidades.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadDelete, "Habilidad", id,
-            new Dictionary<string, string> { ["habilidadId"] = id.ToString() }, ct);
-    }
+    public Task DeleteHabilidadAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.Habilidades, curriculumId, id, CvAuditoriaAcciones.HabilidadDelete, "Habilidad", "habilidadId", ct);
 
     // --- Proyectos ---
 
@@ -383,8 +345,7 @@ public class CvEditorService : ICvEditorService
             MostrarEnCv = r.MostrarEnCv ?? true
         };
         _context.Proyectos.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoCreate, "Proyecto", e.ProyectoId,
             new Dictionary<string, string> { ["nombreProyecto"] = e.NombreProyecto ?? string.Empty }, ct);
         return MapProyecto(e);
@@ -398,8 +359,7 @@ public class CvEditorService : ICvEditorService
         e.StackTecnologico = r.StackTecnologico; e.Aporte = r.Aporte;
         e.Logro = r.Logro; e.Desafio = r.Desafio;
         e.MostrarEnCv = r.MostrarEnCv ?? true;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoUpdate, "Proyecto", e.ProyectoId,
             new Dictionary<string, string> { ["proyectoId"] = e.ProyectoId.ToString() }, ct);
         return MapProyecto(e);
@@ -413,8 +373,7 @@ public class CvEditorService : ICvEditorService
     {
         var e = await GetOwnedOrThrowAsync(_context.Proyectos, id, curriculumId, ct);
         e.MostrarEnCv = r.MostrarEnCv;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoUpdate, "Proyecto", e.ProyectoId,
             new Dictionary<string, string>
             {
@@ -424,15 +383,8 @@ public class CvEditorService : ICvEditorService
         return MapProyecto(e);
     }
 
-    public async Task DeleteProyectoAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.Proyectos, id, curriculumId, ct);
-        _context.Proyectos.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ProyectoDelete, "Proyecto", id,
-            new Dictionary<string, string> { ["proyectoId"] = id.ToString() }, ct);
-    }
+    public Task DeleteProyectoAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.Proyectos, curriculumId, id, CvAuditoriaAcciones.ProyectoDelete, "Proyecto", "proyectoId", ct);
 
     // --- Referencias ---
 
@@ -453,8 +405,7 @@ public class CvEditorService : ICvEditorService
             FechaRegistro = DateTime.UtcNow
         };
         _context.Referencias.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaCreate, "Referencia", e.ReferenciaId,
             new Dictionary<string, string>
             {
@@ -472,22 +423,14 @@ public class CvEditorService : ICvEditorService
         e.Telefono = r.Telefono; e.Parentesco = r.Parentesco; e.Cargo = r.Cargo;
         e.Empresa = r.Empresa; e.Relacion = r.Relacion; e.Observaciones = r.Observaciones;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaUpdate, "Referencia", e.ReferenciaId,
             new Dictionary<string, string> { ["referenciaId"] = e.ReferenciaId.ToString() }, ct);
         return MapReferencia(e);
     }
 
-    public async Task DeleteReferenciaAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.Referencias, id, curriculumId, ct);
-        _context.Referencias.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaDelete, "Referencia", id,
-            new Dictionary<string, string> { ["referenciaId"] = id.ToString() }, ct);
-    }
+    public Task DeleteReferenciaAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.Referencias, curriculumId, id, CvAuditoriaAcciones.ReferenciaDelete, "Referencia", "referenciaId", ct);
 
     // --- Redes sociales ---
 
@@ -500,8 +443,7 @@ public class CvEditorService : ICvEditorService
     {
         var e = new RedSocial { CurriculumId = curriculumId, NombreRed = r.NombreRed, LinkPublico = r.LinkPublico, UsuarioContacto = r.UsuarioContacto };
         _context.RedesSociales.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialCreate, "RedSocial", e.RedSocialId,
             new Dictionary<string, string> { ["nombreRed"] = e.NombreRed ?? string.Empty }, ct);
         return MapRedSocial(e);
@@ -511,22 +453,14 @@ public class CvEditorService : ICvEditorService
     {
         var e = await GetOwnedOrThrowAsync(_context.RedesSociales, id, curriculumId, ct);
         e.NombreRed = r.NombreRed; e.LinkPublico = r.LinkPublico; e.UsuarioContacto = r.UsuarioContacto;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialUpdate, "RedSocial", e.RedSocialId,
             new Dictionary<string, string> { ["redSocialId"] = e.RedSocialId.ToString() }, ct);
         return MapRedSocial(e);
     }
 
-    public async Task DeleteRedSocialAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.RedesSociales, id, curriculumId, ct);
-        _context.RedesSociales.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialDelete, "RedSocial", id,
-            new Dictionary<string, string> { ["redSocialId"] = id.ToString() }, ct);
-    }
+    public Task DeleteRedSocialAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.RedesSociales, curriculumId, id, CvAuditoriaAcciones.RedSocialDelete, "RedSocial", "redSocialId", ct);
 
     // --- Familiares ---
 
@@ -544,8 +478,7 @@ public class CvEditorService : ICvEditorService
             EsContactoPrincipal = r.EsContactoPrincipal
         };
         _context.FamiliarsContacto.Add(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FamiliarCreate, "FamiliarContacto", e.FamiliarId,
             new Dictionary<string, string> { ["nombres"] = e.Nombres ?? string.Empty }, ct);
         return MapFamiliar(e);
@@ -556,22 +489,14 @@ public class CvEditorService : ICvEditorService
         var e = await GetOwnedOrThrowAsync(_context.FamiliarsContacto, id, curriculumId, ct);
         e.Parentesco = r.Parentesco; e.Nombres = r.Nombres; e.Apellidos = r.Apellidos;
         e.Email = r.Email; e.Telefono = r.Telefono; e.EsContactoPrincipal = r.EsContactoPrincipal;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FamiliarUpdate, "FamiliarContacto", e.FamiliarId,
             new Dictionary<string, string> { ["familiarId"] = e.FamiliarId.ToString() }, ct);
         return MapFamiliar(e);
     }
 
-    public async Task DeleteFamiliarAsync(int curriculumId, int id, CancellationToken ct = default)
-    {
-        var e = await GetOwnedOrThrowAsync(_context.FamiliarsContacto, id, curriculumId, ct);
-        _context.FamiliarsContacto.Remove(e);
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
-        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FamiliarDelete, "FamiliarContacto", id,
-            new Dictionary<string, string> { ["familiarId"] = id.ToString() }, ct);
-    }
+    public Task DeleteFamiliarAsync(int curriculumId, int id, CancellationToken ct = default)
+        => DeleteEntidadAsync(_context.FamiliarsContacto, curriculumId, id, CvAuditoriaAcciones.FamiliarDelete, "FamiliarContacto", "familiarId", ct);
 
     // --- Visibilidad ---
 
@@ -646,8 +571,7 @@ public class CvEditorService : ICvEditorService
 
         c.PlantillaCodigo = code;
         c.FechaActualizacion = DateTime.UtcNow;
-        await _context.SaveChangesAsync(ct);
-        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+        await GuardarYNotificarAsync(curriculumId, ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PresentacionPlantilla, "Curriculum", curriculumId,
             new Dictionary<string, string> { ["plantillaCodigo"] = code }, ct);
         var meses = await CalcularExperienciaLaboralMesesAcumuladosAsync(curriculumId, ct);
@@ -727,6 +651,28 @@ public class CvEditorService : ICvEditorService
         return int.TryParse(v, out var id) && id > 0 ? id : null;
     }
 
+    /// <summary>Guarda cambios y dispara la notificación de snapshot público. Repetido en casi
+    /// todos los Create/Update/Delete de este servicio; no aplica a UpdateCurriculumPublicacionAsync,
+    /// que notifica con NotifyPublicationChangedAsync (lleva el estado publicado/borrador).</summary>
+    private async Task GuardarYNotificarAsync(int curriculumId, CancellationToken ct)
+    {
+        await _context.SaveChangesAsync(ct);
+        await _snapshotExport.NotifyCurriculumDataChangedAsync(curriculumId, ct);
+    }
+
+    /// <summary>Los 8 DeleteXAsync de este servicio son estructuralmente idénticos: cargar
+    /// verificando ownership, remover, guardar+notificar y auditar con el id como único detalle.</summary>
+    private async Task DeleteEntidadAsync<T>(
+        DbSet<T> dbSet, int curriculumId, int id, string accion, string entidadTipo, string detalleKey, CancellationToken ct)
+        where T : class
+    {
+        var e = await GetOwnedOrThrowAsync(dbSet, id, curriculumId, ct);
+        dbSet.Remove(e);
+        await GuardarYNotificarAsync(curriculumId, ct);
+        await RegistrarCvAsync(curriculumId, accion, entidadTipo, id,
+            new Dictionary<string, string> { [detalleKey] = id.ToString() }, ct);
+    }
+
     private Task RegistrarCvAsync(
         int curriculumId,
         string accion,
@@ -742,10 +688,16 @@ public class CvEditorService : ICvEditorService
         var entity = await dbSet.FindAsync(new object[] { id }, ct)
             ?? throw new KeyNotFoundException($"{typeof(T).Name} {id} no encontrado.");
 
-        // Verificar ownership via reflexión en la propiedad CurriculumId
-        var prop = typeof(T).GetProperty("CurriculumId");
-        if (prop is not null && (int)(prop.GetValue(entity) ?? 0) != curriculumId)
-            throw new UnauthorizedAccessException($"{typeof(T).Name} {id} no pertenece al curriculum {curriculumId}.");
+        // Verificar ownership via reflexión en la propiedad CurriculumId.
+        // Si el tipo no expone esa propiedad, es un error de programación (uso indebido
+        // de este helper con un tipo no "owned") y debe fallar de forma ruidosa en vez
+        // de tratar la entidad como si perteneciera al curriculum solicitante.
+        var prop = typeof(T).GetProperty("CurriculumId")
+            ?? throw new InvalidOperationException(
+                $"{typeof(T).Name} no tiene una propiedad CurriculumId; no se puede verificar propiedad con GetOwnedOrThrowAsync.");
+
+        if ((int)(prop.GetValue(entity) ?? 0) != curriculumId)
+            throw new ForbiddenOperationException($"{typeof(T).Name} {id} no pertenece al curriculum {curriculumId}.");
 
         return entity;
     }

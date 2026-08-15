@@ -15,12 +15,13 @@ export interface UserInfo {
   curriculumId: number;
 }
 
-/** Respuesta exacta del endpoint POST /api/auth/login */
+/** Respuesta exacta del endpoint POST /api/auth/login (sin el JWT: viaja como cookie HttpOnly). */
 interface LoginApiResponse {
-  token: string;
+  usuarioId: number;
   email: string;
   nombreCompleto: string;
   roles: string[];
+  curriculumId: number;
   expiracion: string;
 }
 
@@ -35,13 +36,30 @@ interface ForgotPasswordApiResponse {
   message: string;
 }
 
-// Claim name que usa ClaimTypes.Role en .NET
-const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+/** Respuesta exacta del endpoint GET /api/auth/me */
+export interface MeApiResponse {
+  usuarioId: number;
+  email: string;
+  nombreCompleto: string;
+  roles: string[];
+  curriculumId: number | null;
+}
+
+/**
+ * Semilla de sesión resuelta por main.ts (GET /api/auth/me con la cookie del
+ * navegador) antes de arrancar Angular. El JWT vive en una cookie HttpOnly:
+ * este servicio nunca lo lee, decodifica ni guarda — solo confía en lo que el
+ * backend confirma vía /me (al cargar la app) o /login (al autenticarse).
+ */
+declare global {
+  interface Window {
+    __PORTALCV_SESSION__?: MeApiResponse | null;
+  }
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly API_URL = `${API_BASE_URL}/api/auth`;
-  private readonly TOKEN_KEY = 'portalcv_token';
 
   private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
@@ -51,20 +69,15 @@ export class AuthService {
   }
 
   constructor(private http: HttpClient) {
-    const token = this.getToken();
-    if (token) {
-      const user = this.buildUserFromToken(token);
-      if (user) this.currentUserSubject.next(user);
+    const seed = globalThis.window?.__PORTALCV_SESSION__;
+    if (seed) {
+      this.currentUserSubject.next(this.buildUserFromResponse(seed));
     }
   }
 
   login(email: string, password: string): Observable<LoginApiResponse> {
     return this.http.post<LoginApiResponse>(`${this.API_URL}/login`, { email, password }).pipe(
-      tap(res => {
-        localStorage.setItem(this.TOKEN_KEY, res.token);
-        const user = this.buildUserFromToken(res.token, res.nombreCompleto);
-        this.currentUserSubject.next(user);
-      })
+      tap(res => this.currentUserSubject.next(this.buildUserFromResponse(res)))
     );
   }
 
@@ -86,25 +99,23 @@ export class AuthService {
     });
   }
 
+  /** Cierre de sesión explícito (botón "Cerrar sesión", inactividad): limpia el estado local y borra la cookie en el backend. */
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
+    this.clearLocalSession();
+    this.http.post(`${this.API_URL}/logout`, {}).subscribe({ error: () => { /* la cookie ya se borra aunque la llamada falle */ } });
+  }
+
+  /**
+   * Solo limpia el estado local, sin llamar al backend. La usa el interceptor
+   * de errores ante un 401: si el servidor ya rechazó la cookie, no hace falta
+   * pedirle que la borre.
+   */
+  clearLocalSession(): void {
     this.currentUserSubject.next(null);
   }
 
-  getToken(): string | null {
-    const token = localStorage.getItem(this.TOKEN_KEY);
-    if (!token) return null;
-
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return null;
-    }
-
-    return token;
-  }
-
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return this.currentUser !== null;
   }
 
   hasRol(nombreRol: string): boolean {
@@ -122,46 +133,15 @@ export class AuthService {
     return '/dashboard';
   }
 
-  private buildUserFromToken(token: string, nombreCompleto?: string): UserInfo | null {
-    const payload = this.parseJwt(token);
-    if (!payload) return null;
-
-    const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-
-    const roles: string[] = [];
-    const roleRaw = payload[ROLE_CLAIM] ?? payload['role'];
-    if (Array.isArray(roleRaw)) roles.push(...roleRaw.map(str));
-    else if (roleRaw) roles.push(str(roleRaw));
-
+  private buildUserFromResponse(res: LoginApiResponse | MeApiResponse): UserInfo {
+    const roles = res.roles ?? [];
     return {
-      id:           Number(payload['sub'] ?? 0),
-      // En refresh no tenemos nombreCompleto del login; si el claim "nombre" no existe,
-      // usamos email para evitar que la UI muestre "Usuario".
-      nombre:       (nombreCompleto && nombreCompleto.trim()) || str(payload['nombre']) || str(payload['email']) || 'Usuario',
-      email:        str(payload['email']),
-      rol:          roles[0] ?? '',
+      id: res.usuarioId,
+      nombre: (res.nombreCompleto && res.nombreCompleto.trim()) || res.email || 'Usuario',
+      email: res.email,
+      rol: roles[0] ?? '',
       roles,
-      curriculumId: Number(payload['curriculum_id'] ?? 0),
+      curriculumId: res.curriculumId ?? 0,
     };
-  }
-
-  private parseJwt(token: string): Record<string, unknown> | null {
-    try {
-      const payload = token.split('.')[1];
-      return JSON.parse(atob(payload)) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
-
-  private isTokenExpired(token: string): boolean {
-    const payload = this.parseJwt(token);
-    if (!payload) return true;
-
-    const exp = payload['exp'];
-    if (typeof exp !== 'number') return true;
-
-    const now = Math.floor(Date.now() / 1000);
-    return exp <= now;
   }
 }

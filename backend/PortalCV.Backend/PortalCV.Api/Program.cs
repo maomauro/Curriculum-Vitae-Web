@@ -1,7 +1,9 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi.Models;
 using PortalCV.Api.Json;
 using PortalCV.Api.Middleware;
@@ -90,11 +92,9 @@ namespace PortalCV.Api
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
+                    Type = SecuritySchemeType.ApiKey,
                     In = ParameterLocation.Header,
-                    Description = "Usa: Bearer {token}"
+                    Description = "JWT Authorization header usando el esquema Bearer. Ejemplo: \"Bearer {token}\""
                 });
 
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -145,9 +145,81 @@ namespace PortalCV.Api
                         IssuerSigningKey = signingKey,
                         ClockSkew = TimeSpan.Zero
                     };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            string? token = null;
+
+                            // Swagger UI (según esquema de seguridad) puede enviar Authorization
+                            // sin prefijo "Bearer ". Si parece un JWT, lo aceptamos igual.
+                            var authHeader = context.Request.Headers.Authorization.ToString();
+                            if (!string.IsNullOrWhiteSpace(authHeader))
+                            {
+                                const string bearerPrefix = "Bearer ";
+                                if (authHeader.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    token = authHeader[bearerPrefix.Length..].Trim();
+                                }
+                                else if (authHeader.Count(static c => c == '.') == 2)
+                                {
+                                    token = authHeader.Trim();
+                                }
+                            }
+
+                            // El SPA ya no recibe el JWT en el body ni lo guarda en localStorage:
+                            // viaja como cookie HttpOnly (ver AuthController.SetAuthCookie). Si no
+                            // hay header Authorization utilizable, se cae a la cookie.
+                            if (string.IsNullOrWhiteSpace(token) &&
+                                context.Request.Cookies.TryGetValue(
+                                    PortalCV.Application.Constants.AuthCookieDefaults.Name, out var cookieToken) &&
+                                !string.IsNullOrWhiteSpace(cookieToken))
+                            {
+                                token = cookieToken;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(token))
+                            {
+                                context.Token = token;
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             builder.Services.AddAuthorization();
+
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.OnRejected = async (context, token) =>
+                {
+                    context.HttpContext.Response.ContentType = "application/json";
+                    await context.HttpContext.Response.WriteAsync(
+                        "{\"message\":\"Demasiadas solicitudes. Intenta de nuevo en unos minutos.\",\"statusCode\":429}",
+                        token);
+                };
+
+                options.AddFixedWindowLimiter("auth-public", limiter =>
+                {
+                    limiter.PermitLimit = 10;
+                    limiter.Window = TimeSpan.FromMinutes(1);
+                    limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    limiter.QueueLimit = 0;
+                    limiter.AutoReplenishment = true;
+                });
+
+                options.AddFixedWindowLimiter("contact-public", limiter =>
+                {
+                    limiter.PermitLimit = 5;
+                    limiter.Window = TimeSpan.FromMinutes(1);
+                    limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    limiter.QueueLimit = 0;
+                    limiter.AutoReplenishment = true;
+                });
+            });
 
             // Health checks:
             // - /health: liveness basico (la API responde; sin dependencias externas).
@@ -185,6 +257,7 @@ namespace PortalCV.Api
                 app.UseHttpsRedirection();
             }
 
+            app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
 
