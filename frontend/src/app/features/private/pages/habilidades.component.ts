@@ -11,6 +11,23 @@ type HabilidadUI = HabilidadDto;
 
 type HabilidadTipoCv = 'Tecnica' | 'Blanda' | 'Idioma';
 
+/** Metadatos de presentación por sección; las 3 secciones comparten el mismo template parametrizado. */
+interface HabilidadSeccionConfig {
+  tipo: HabilidadTipoCv;
+  /** Sufijo usado en clases/ids: hab-{claseId}-block, hab-trigger-{claseId}, etc. */
+  claseId: 'tecnica' | 'blanda' | 'idioma';
+  icono: string;
+  titulo: string;
+  subtitulo: string;
+  botonLabel: string;
+  /** Texto visible del input (idéntico al original antes de parametrizar). */
+  nombrePlaceholder: string;
+  /** Accesible para lectores de pantalla; puede ser más específico que el placeholder visible. */
+  nombreAriaLabel: string;
+  emptyMensaje: string;
+  eliminarTitle: string;
+}
+
 @Component({
   selector: 'app-habilidades',
   standalone: false,
@@ -25,12 +42,59 @@ export class HabilidadesComponent implements OnInit {
   private readonly savingKeys = new Set<string>();
   private readonly pendingAutosaveKeys = new Set<string>();
 
-  /** Acordeón por sección (todas colapsadas por defecto). */
-  accordionTecnicasOpen = false;
-  accordionBlandasOpen = false;
-  accordionIdiomasOpen = false;
-
   niveles = ['Básico', 'Intermedio', 'Avanzado', 'Experto'];
+
+  readonly secciones: HabilidadSeccionConfig[] = [
+    {
+      tipo: 'Tecnica',
+      claseId: 'tecnica',
+      icono: 'bi-cpu-fill',
+      titulo: 'Habilidades Técnicas',
+      subtitulo: 'Tecnologías, lenguajes, frameworks y herramientas',
+      botonLabel: 'Agregar habilidad técnica',
+      nombrePlaceholder: 'Nombre de la habilidad',
+      nombreAriaLabel: 'Nombre de la habilidad técnica',
+      emptyMensaje: 'No hay habilidades técnicas. Usa «Agregar habilidad técnica» para añadir la primera.',
+      eliminarTitle: 'Eliminar habilidad',
+    },
+    {
+      tipo: 'Blanda',
+      claseId: 'blanda',
+      icono: 'bi-heart-fill',
+      titulo: 'Habilidades blandas',
+      subtitulo: 'Competencias interpersonales y soft skills',
+      botonLabel: 'Agregar habilidad blanda',
+      nombrePlaceholder: 'Nombre de la habilidad',
+      nombreAriaLabel: 'Nombre de la habilidad blanda',
+      emptyMensaje: 'No hay habilidades blandas. Usa «Agregar habilidad blanda» para añadir la primera.',
+      eliminarTitle: 'Eliminar habilidad',
+    },
+    {
+      tipo: 'Idioma',
+      claseId: 'idioma',
+      icono: 'bi-translate',
+      titulo: 'Idiomas',
+      subtitulo: 'Lenguas que manejas: nombre, nivel general y detalle opcional',
+      botonLabel: 'Agregar idioma',
+      nombrePlaceholder: 'Nombre del idioma',
+      nombreAriaLabel: 'Nombre del idioma',
+      emptyMensaje: 'No hay idiomas registrados. Usa «Agregar idioma» para añadir el primero.',
+      eliminarTitle: 'Eliminar idioma',
+    },
+  ];
+
+  /** Acordeón por sección (todas colapsadas por defecto). */
+  private readonly accordionOpenState = new Map<HabilidadTipoCv, boolean>(
+    this.secciones.map(s => [s.tipo, false])
+  );
+
+  isAccordionOpen(tipo: HabilidadTipoCv): boolean {
+    return this.accordionOpenState.get(tipo) ?? false;
+  }
+
+  toggleAccordion(tipo: HabilidadTipoCv): void {
+    this.accordionOpenState.set(tipo, !this.isAccordionOpen(tipo));
+  }
 
   get tecnicas(): HabilidadUI[] {
     return this.habilidades.filter(h => h.tipo !== 'Blanda' && h.tipo !== 'Idioma');
@@ -82,6 +146,27 @@ export class HabilidadesComponent implements OnInit {
     return this.borradorIdioma !== null;
   }
 
+  /** Accesores genéricos para el template parametrizado (delegan en los getters por tipo de arriba). */
+  guardadasDe(tipo: HabilidadTipoCv): HabilidadUI[] {
+    switch (tipo) {
+      case 'Tecnica': return this.tecnicasGuardadas;
+      case 'Blanda': return this.blandasGuardadas;
+      case 'Idioma': return this.idiomasGuardadas;
+    }
+  }
+
+  borradorDe(tipo: HabilidadTipoCv): HabilidadUI | null {
+    switch (tipo) {
+      case 'Tecnica': return this.borradorTecnica;
+      case 'Blanda': return this.borradorBlanda;
+      case 'Idioma': return this.borradorIdioma;
+    }
+  }
+
+  hayBorradorDe(tipo: HabilidadTipoCv): boolean {
+    return this.borradorDe(tipo) !== null;
+  }
+
   constructor(
     private cvEditorService: CvEditorService,
     private notificationService: NotificationService
@@ -108,13 +193,7 @@ export class HabilidadesComponent implements OnInit {
 
   onAgregarHabilidadClick(ev: Event, tipo: HabilidadTipoCv): void {
     ev.stopPropagation();
-    if (tipo === 'Tecnica') {
-      this.accordionTecnicasOpen = true;
-    } else if (tipo === 'Blanda') {
-      this.accordionBlandasOpen = true;
-    } else {
-      this.accordionIdiomasOpen = true;
-    }
+    this.accordionOpenState.set(tipo, true);
     this.agregarHabilidad(tipo);
   }
 

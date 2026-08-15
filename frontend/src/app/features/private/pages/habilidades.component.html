@@ -16,36 +16,37 @@
 
 <ng-container *ngIf="!loading">
 
-<!-- Habilidades técnicas — acordeón -->
-<div class="seccion-card hab-tecnica-block overflow-hidden">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 hab-tecnica-head">
+<!-- Secciones de habilidades (Técnica/Blanda/Idioma) — mismo bloque, parametrizado por sec -->
+<div [class]="'seccion-card hab-' + sec.claseId + '-block overflow-hidden'" *ngFor="let sec of secciones">
+  <div [class]="'d-flex flex-wrap justify-content-between align-items-center gap-3 hab-' + sec.claseId + '-head'">
     <div class="d-flex align-items-start gap-2 flex-grow-1 min-w-0 hab-accordion-title-hit rounded px-1 py-1"
          role="button" tabindex="0"
-         id="hab-trigger-tecnica"
-         [attr.aria-expanded]="accordionTecnicasOpen"
-         aria-controls="hab-panel-tecnica"
-         (click)="accordionTecnicasOpen = !accordionTecnicasOpen"
-         (keydown.enter)="accordionTecnicasOpen = !accordionTecnicasOpen"
-         (keydown.space)="$event.preventDefault(); accordionTecnicasOpen = !accordionTecnicasOpen">
+         id="hab-trigger-{{ sec.claseId }}"
+         [attr.aria-expanded]="isAccordionOpen(sec.tipo)"
+         attr.aria-controls="hab-panel-{{ sec.claseId }}"
+         (click)="toggleAccordion(sec.tipo)"
+         (keydown.enter)="toggleAccordion(sec.tipo)"
+         (keydown.space)="$event.preventDefault(); toggleAccordion(sec.tipo)">
       <i class="bi cv-chevron-muted flex-shrink-0 mt-1" aria-hidden="true"
-         [class.bi-chevron-down]="!accordionTecnicasOpen"
-         [class.bi-chevron-up]="accordionTecnicasOpen"></i>
+         [class.bi-chevron-down]="!isAccordionOpen(sec.tipo)"
+         [class.bi-chevron-up]="isAccordionOpen(sec.tipo)"></i>
       <div>
-        <div class="seccion-titulo mb-0"><i class="bi bi-cpu-fill"></i>Habilidades Técnicas</div>
-        <div class="seccion-subtitulo mb-0">Tecnologías, lenguajes, frameworks y herramientas</div>
+        <div class="seccion-titulo mb-0"><i class="bi" [class]="sec.icono"></i>{{ sec.titulo }}</div>
+        <div class="seccion-subtitulo mb-0">{{ sec.subtitulo }}</div>
       </div>
     </div>
     <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0"
-            (click)="onAgregarHabilidadClick($event, 'Tecnica')"
-            [disabled]="hayBorradorTecnica"
-            [attr.title]="hayBorradorTecnica ? 'Completa o cancela la fila nueva antes de agregar otra.' : null">
-      <i class="bi bi-plus-circle me-1"></i>Agregar habilidad técnica
+            (click)="onAgregarHabilidadClick($event, sec.tipo)"
+            [disabled]="hayBorradorDe(sec.tipo)"
+            [attr.title]="hayBorradorDe(sec.tipo) ? 'Completa o cancela la fila nueva antes de agregar otra.' : null">
+      <i class="bi bi-plus-circle me-1"></i>{{ sec.botonLabel }}
     </button>
   </div>
 
-  <div *ngIf="accordionTecnicasOpen" id="hab-panel-tecnica" role="region" aria-labelledby="hab-trigger-tecnica"
+  <div *ngIf="isAccordionOpen(sec.tipo)" id="hab-panel-{{ sec.claseId }}" role="region"
+       attr.aria-labelledby="hab-trigger-{{ sec.claseId }}"
        class="hab-accordion-panel cv-border-t-soft pt-3">
-  <div class="hab-tecnica-rows">
+  <div [class]="'hab-' + sec.claseId + '-rows'">
     <div class="skill-row skill-row--header">
       <div class="skill-name"><small class="text-muted fw-bold">Nombre</small></div>
       <div class="skill-level"><small class="text-muted fw-bold">Nivel</small></div>
@@ -53,242 +54,60 @@
       <div class="skill-actions" aria-hidden="true"></div>
     </div>
 
-    <div class="skill-row" *ngFor="let skill of tecnicasGuardadas">
+    <div class="skill-row" *ngFor="let skill of guardadasDe(sec.tipo)">
       <div class="skill-name">
         <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.nombre"
+               [attr.aria-label]="sec.nombreAriaLabel"
                (blur)="onSkillFieldCommit(skill)"
-               placeholder="Nombre de la habilidad">
+               [placeholder]="sec.nombrePlaceholder">
       </div>
       <div class="skill-level">
-        <select class="form-select form-select-sm" [(ngModel)]="skill.nivel" (change)="onSkillFieldCommit(skill)">
+        <select class="form-select form-select-sm" aria-label="Nivel" [(ngModel)]="skill.nivel" (change)="onSkillFieldCommit(skill)">
           <option *ngFor="let n of niveles" [ngValue]="n">{{ n }}</option>
         </select>
       </div>
       <div class="skill-desc">
         <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.descripcion"
+               aria-label="Descripción (opcional)"
                (blur)="onSkillFieldCommit(skill)"
                placeholder="Descripción opcional">
       </div>
       <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="eliminar(skill)" title="Eliminar habilidad">
+        <button type="button" class="btn-hab-del" (click)="eliminar(skill)" [attr.title]="sec.eliminarTitle">
           <i class="bi bi-trash3"></i>
         </button>
       </div>
     </div>
 
-    <div class="skill-row" *ngIf="borradorTecnica as draft">
+    <div class="skill-row" *ngIf="borradorDe(sec.tipo) as draft">
       <div class="skill-name">
         <input type="text" class="form-control form-control-sm" [(ngModel)]="draft.nombre"
+               [attr.aria-label]="sec.nombreAriaLabel"
                (blur)="onSkillFieldCommit(draft)"
-               placeholder="Nombre de la habilidad">
+               [placeholder]="sec.nombrePlaceholder">
       </div>
       <div class="skill-level">
-        <select class="form-select form-select-sm" [(ngModel)]="draft.nivel" (change)="onSkillFieldCommit(draft)">
+        <select class="form-select form-select-sm" aria-label="Nivel" [(ngModel)]="draft.nivel" (change)="onSkillFieldCommit(draft)">
           <option *ngFor="let n of niveles" [ngValue]="n">{{ n }}</option>
         </select>
       </div>
       <div class="skill-desc">
         <input type="text" class="form-control form-control-sm" [(ngModel)]="draft.descripcion"
+               aria-label="Descripción (opcional)"
                (blur)="onSkillFieldCommit(draft)"
                placeholder="Descripción opcional">
       </div>
       <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="cancelarBorrador(borradorTecnica)"
+        <button type="button" class="btn-hab-del" (click)="cancelarBorrador(draft)"
                 title="Cancelar fila nueva (sin guardar)">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
     </div>
 
-    <div class="skill-row" *ngIf="tecnicasGuardadas.length === 0 && !borradorTecnica">
+    <div class="skill-row" *ngIf="guardadasDe(sec.tipo).length === 0 && !hayBorradorDe(sec.tipo)">
       <div class="w-100 text-muted small text-center py-3">
-        No hay habilidades técnicas. Usa «Agregar habilidad técnica» para añadir la primera.
-      </div>
-    </div>
-  </div>
-  </div>
-</div>
-
-<!-- Habilidades blandas — acordeón -->
-<div class="seccion-card hab-blanda-block overflow-hidden">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 hab-blanda-head">
-    <div class="d-flex align-items-start gap-2 flex-grow-1 min-w-0 hab-accordion-title-hit rounded px-1 py-1"
-         role="button" tabindex="0"
-         id="hab-trigger-blanda"
-         [attr.aria-expanded]="accordionBlandasOpen"
-         aria-controls="hab-panel-blanda"
-         (click)="accordionBlandasOpen = !accordionBlandasOpen"
-         (keydown.enter)="accordionBlandasOpen = !accordionBlandasOpen"
-         (keydown.space)="$event.preventDefault(); accordionBlandasOpen = !accordionBlandasOpen">
-      <i class="bi cv-chevron-muted flex-shrink-0 mt-1" aria-hidden="true"
-         [class.bi-chevron-down]="!accordionBlandasOpen"
-         [class.bi-chevron-up]="accordionBlandasOpen"></i>
-      <div>
-        <div class="seccion-titulo mb-0"><i class="bi bi-heart-fill"></i>Habilidades blandas</div>
-        <div class="seccion-subtitulo mb-0">Competencias interpersonales y soft skills</div>
-      </div>
-    </div>
-    <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0"
-            (click)="onAgregarHabilidadClick($event, 'Blanda')"
-            [disabled]="hayBorradorBlanda"
-            [attr.title]="hayBorradorBlanda ? 'Completa o cancela la fila nueva antes de agregar otra.' : null">
-      <i class="bi bi-plus-circle me-1"></i>Agregar habilidad blanda
-    </button>
-  </div>
-
-  <div *ngIf="accordionBlandasOpen" id="hab-panel-blanda" role="region" aria-labelledby="hab-trigger-blanda"
-       class="hab-accordion-panel cv-border-t-soft pt-3">
-  <div class="hab-blanda-rows">
-    <div class="skill-row skill-row--header">
-      <div class="skill-name"><small class="text-muted fw-bold">Nombre</small></div>
-      <div class="skill-level"><small class="text-muted fw-bold">Nivel</small></div>
-      <div class="skill-desc"><small class="text-muted fw-bold">Descripción (opcional)</small></div>
-      <div class="skill-actions" aria-hidden="true"></div>
-    </div>
-
-    <div class="skill-row" *ngFor="let skill of blandasGuardadas">
-      <div class="skill-name">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.nombre"
-               (blur)="onSkillFieldCommit(skill)"
-               placeholder="Nombre de la habilidad">
-      </div>
-      <div class="skill-level">
-        <select class="form-select form-select-sm" [(ngModel)]="skill.nivel" (change)="onSkillFieldCommit(skill)">
-          <option *ngFor="let n of niveles" [ngValue]="n">{{ n }}</option>
-        </select>
-      </div>
-      <div class="skill-desc">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.descripcion"
-               (blur)="onSkillFieldCommit(skill)"
-               placeholder="Descripción opcional">
-      </div>
-      <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="eliminar(skill)" title="Eliminar habilidad">
-          <i class="bi bi-trash3"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="skill-row" *ngIf="borradorBlanda as draftB">
-      <div class="skill-name">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="draftB.nombre"
-               (blur)="onSkillFieldCommit(draftB)"
-               placeholder="Nombre de la habilidad">
-      </div>
-      <div class="skill-level">
-        <select class="form-select form-select-sm" [(ngModel)]="draftB.nivel" (change)="onSkillFieldCommit(draftB)">
-          <option *ngFor="let n of niveles" [ngValue]="n">{{ n }}</option>
-        </select>
-      </div>
-      <div class="skill-desc">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="draftB.descripcion"
-               (blur)="onSkillFieldCommit(draftB)"
-               placeholder="Descripción opcional">
-      </div>
-      <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="cancelarBorrador(borradorBlanda)"
-                title="Cancelar fila nueva (sin guardar)">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="skill-row" *ngIf="blandasGuardadas.length === 0 && !borradorBlanda">
-      <div class="w-100 text-muted small text-center py-3">
-        No hay habilidades blandas. Usa «Agregar habilidad blanda» para añadir la primera.
-      </div>
-    </div>
-  </div>
-  </div>
-</div>
-
-<!-- Idiomas — acordeón -->
-<div class="seccion-card hab-idioma-block overflow-hidden">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 hab-idioma-head">
-    <div class="d-flex align-items-start gap-2 flex-grow-1 min-w-0 hab-accordion-title-hit rounded px-1 py-1"
-         role="button" tabindex="0"
-         id="hab-trigger-idioma"
-         [attr.aria-expanded]="accordionIdiomasOpen"
-         aria-controls="hab-panel-idioma"
-         (click)="accordionIdiomasOpen = !accordionIdiomasOpen"
-         (keydown.enter)="accordionIdiomasOpen = !accordionIdiomasOpen"
-         (keydown.space)="$event.preventDefault(); accordionIdiomasOpen = !accordionIdiomasOpen">
-      <i class="bi cv-chevron-muted flex-shrink-0 mt-1" aria-hidden="true"
-         [class.bi-chevron-down]="!accordionIdiomasOpen"
-         [class.bi-chevron-up]="accordionIdiomasOpen"></i>
-      <div>
-        <div class="seccion-titulo mb-0"><i class="bi bi-translate"></i>Idiomas</div>
-        <div class="seccion-subtitulo mb-0">Lenguas que manejas: nombre, nivel general y detalle opcional</div>
-      </div>
-    </div>
-    <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0"
-            (click)="onAgregarHabilidadClick($event, 'Idioma')"
-            [disabled]="hayBorradorIdioma"
-            [attr.title]="hayBorradorIdioma ? 'Completa o cancela la fila nueva antes de agregar otra.' : null">
-      <i class="bi bi-plus-circle me-1"></i>Agregar idioma
-    </button>
-  </div>
-
-  <div *ngIf="accordionIdiomasOpen" id="hab-panel-idioma" role="region" aria-labelledby="hab-trigger-idioma"
-       class="hab-accordion-panel cv-border-t-soft pt-3">
-  <div class="hab-idioma-rows">
-    <div class="skill-row skill-row--header">
-      <div class="skill-name"><small class="text-muted fw-bold">Nombre</small></div>
-      <div class="skill-level"><small class="text-muted fw-bold">Nivel</small></div>
-      <div class="skill-desc"><small class="text-muted fw-bold">Descripción (opcional)</small></div>
-      <div class="skill-actions" aria-hidden="true"></div>
-    </div>
-
-    <div class="skill-row" *ngFor="let skill of idiomasGuardadas">
-      <div class="skill-name">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.nombre"
-               (blur)="onSkillFieldCommit(skill)"
-               placeholder="Nombre del idioma">
-      </div>
-      <div class="skill-level">
-        <select class="form-select form-select-sm" [(ngModel)]="skill.nivel" (change)="onSkillFieldCommit(skill)">
-          <option *ngFor="let n of niveles" [ngValue]="n">{{ n }}</option>
-        </select>
-      </div>
-      <div class="skill-desc">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.descripcion"
-               (blur)="onSkillFieldCommit(skill)"
-               placeholder="Descripción opcional">
-      </div>
-      <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="eliminar(skill)" title="Eliminar idioma">
-          <i class="bi bi-trash3"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="skill-row" *ngIf="borradorIdioma as draftI">
-      <div class="skill-name">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="draftI.nombre"
-               (blur)="onSkillFieldCommit(draftI)"
-               placeholder="Nombre del idioma">
-      </div>
-      <div class="skill-level">
-        <select class="form-select form-select-sm" [(ngModel)]="draftI.nivel" (change)="onSkillFieldCommit(draftI)">
-          <option *ngFor="let n of niveles" [ngValue]="n">{{ n }}</option>
-        </select>
-      </div>
-      <div class="skill-desc">
-        <input type="text" class="form-control form-control-sm" [(ngModel)]="draftI.descripcion"
-               (blur)="onSkillFieldCommit(draftI)"
-               placeholder="Descripción opcional">
-      </div>
-      <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="cancelarBorrador(borradorIdioma)"
-                title="Cancelar fila nueva (sin guardar)">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="skill-row" *ngIf="idiomasGuardadas.length === 0 && !borradorIdioma">
-      <div class="w-100 text-muted small text-center py-3">
-        No hay idiomas registrados. Usa «Agregar idioma» para añadir el primero.
+        {{ sec.emptyMensaje }}
       </div>
     </div>
   </div>
