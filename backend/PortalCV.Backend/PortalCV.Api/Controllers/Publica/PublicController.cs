@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PortalCV.Application.Constants;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
@@ -82,6 +83,7 @@ public class PublicController : ControllerBase
         => Ok(_publicSnapshotService.GetLatest());
 
     /// <summary>Formulario de contacto para el propietario de un CV.</summary>
+    [EnableRateLimiting("contact-public")]
     [HttpPost("cvs/{urlPublica}/contactar")]
     public async Task<IActionResult> Contactar(
         string urlPublica,

@@ -12,16 +12,12 @@ namespace PortalCV.Api.Controllers;
 [Authorize(Roles = "Publicador,Admin")]
 public abstract class CvControllerBase : ControllerBase
 {
-    protected int GetUsuarioId()
-    {
-        var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User.FindFirstValue("sub");
-        return int.TryParse(value, out var id) ? id : 0;
-    }
-
     protected int GetCurriculumId()
     {
         var value = User.FindFirstValue("curriculum_id");
-        return int.TryParse(value, out var id) ? id : 0;
+        if (int.TryParse(value, out var id) && id > 0)
+            return id;
+
+        throw new UnauthorizedAccessException("El token no contiene un curriculum_id válido.");
     }
 }

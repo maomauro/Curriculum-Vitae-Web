@@ -1,0 +1,385 @@
+{
+  "info": {
+    "_postman_id": "6ad07814-9fbf-4b5b-9153-8ac9e52e21db",
+    "name": "PortalCV APIs",
+    "description": "Coleccion para pruebas de PortalCV en produccion/local. Incluye login JWT y endpoints publicos, privados y admin.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// El JWT ya no viaja en el body de login (ver AuthController.SetAuthCookie):",
+                  "// viaja como cookie HttpOnly 'portalcv_auth'. Postman la guarda solo en su",
+                  "// cookie jar (Cookies > <dominio de baseUrl>) y la reenvia automaticamente",
+                  "// en las siguientes requests a ese mismo dominio; no hay nada que copiar a mano.",
+                  "pm.test('status 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('body no incluye el token (solo va en la cookie)', function () {",
+                  "  pm.expect(pm.response.text()).to.not.include('\"token\"');",
+                  "});",
+                  "",
+                  "var data = {};",
+                  "try { data = pm.response.json(); } catch (e) {}",
+                  "",
+                  "if (data.expiracion) {",
+                  "  pm.environment.set('jwtExpiracion', data.expiracion);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{authEmail}}\",\n  \"password\": \"{{authPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Publico",
+      "item": [
+        {
+          "name": "GET /api/public/cvs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/cvs?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "cvs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/public/filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/filters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "filters"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/public/cvs/{urlPublica}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/cvs/{{publicSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "cvs",
+                "{{publicSlug}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/public/cvs/{urlPublica}/stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/cvs/{{publicSlug}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "cvs",
+                "{{publicSlug}}",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/public/cvs/{urlPublica}/contactar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Reclutador Demo\",\n  \"email\": \"reclutador@example.com\",\n  \"empresa\": \"Empresa Demo\",\n  \"motivoContacto\": \"Vacante\",\n  \"asunto\": \"Interes en perfil\",\n  \"comoMeEncontraste\": \"Busqueda\",\n  \"mensaje\": \"Hola, me interesa conversar sobre tu perfil.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/public/cvs/{{publicSlug}}/contactar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "cvs",
+                "{{publicSlug}}",
+                "contactar"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Privada (JWT Publicador/Admin)",
+      "item": [
+        {
+          "name": "GET /api/cv/personales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cv/personales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cv",
+                "personales"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cv/perfiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cv/perfiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cv",
+                "perfiles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cv/formaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cv/formaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cv",
+                "formaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/contactos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contactos"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Admin (JWT Admin)",
+      "item": [
+        {
+          "name": "GET /api/admin/roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/public-cv-snapshot/pending",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/public-cv-snapshot/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "public-cv-snapshot",
+                "pending"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://portalcv-api.wittyriver-e6fd0cd4.brazilsouth.azurecontainerapps.io"
+    }
+  ]
+}

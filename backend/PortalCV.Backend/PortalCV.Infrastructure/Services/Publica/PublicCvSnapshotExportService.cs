@@ -44,9 +44,18 @@ public sealed class PublicCvSnapshotExportService : IPublicCvSnapshotExportServi
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
         var pubCv = scope.ServiceProvider.GetRequiredService<IPublicCvService>();
-
-        await UpsertExportRowAsync(db, pubCv, curriculumId, _logger, ct);
-        await MarkSiteSnapshotStaleAsync(db, ct);
+        try
+        {
+            await UpsertExportRowAsync(db, pubCv, curriculumId, _logger, ct);
+            await MarkSiteSnapshotStaleAsync(db, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "PublicCvSnapshotExport: fallo no bloqueante al refrescar snapshot para CurriculumId={CurriculumId}",
+                curriculumId);
+        }
     }
 
     public async Task NotifyPublicationChangedAsync(int curriculumId, bool isNowPublished, CancellationToken ct = default)
@@ -55,11 +64,19 @@ public sealed class PublicCvSnapshotExportService : IPublicCvSnapshotExportServi
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
         var pubCv = scope.ServiceProvider.GetRequiredService<IPublicCvService>();
-
-        // Conservamos el snapshot incluso en borrador; el estado se filtra al consolidar export público.
-        await UpsertExportRowAsync(db, pubCv, curriculumId, _logger, ct);
-
-        await MarkSiteSnapshotStaleAsync(db, ct);
+        try
+        {
+            // Conservamos el snapshot incluso en borrador; el estado se filtra al consolidar export público.
+            await UpsertExportRowAsync(db, pubCv, curriculumId, _logger, ct);
+            await MarkSiteSnapshotStaleAsync(db, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "PublicCvSnapshotExport: fallo no bloqueante al refrescar publicación para CurriculumId={CurriculumId}",
+                curriculumId);
+        }
     }
 
     public async Task<bool> IsStaticSnapshotStaleAsync(CancellationToken ct = default)

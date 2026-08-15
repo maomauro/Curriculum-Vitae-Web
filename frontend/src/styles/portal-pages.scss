@@ -2150,7 +2150,7 @@
 .public-cv-ficha .cv-chart-canvas-dona,
 .cv-dash-analytics-host .cv-chart-canvas-dona {
   position: relative;
-  max-width: min(100%, 400px);
+  max-width: min(100%, 420px);
   height: 320px;
   margin: 0 auto;
 }
@@ -2162,8 +2162,8 @@
 .public-cv-ficha .cv-chart-canvas-radar,
 .cv-dash-analytics-host .cv-chart-canvas-radar {
   position: relative;
-  max-width: 340px;
-  height: 300px;
+  max-width: min(100%, 420px);
+  height: 320px;
   margin: 0 auto;
 }
 .public-cv-ficha .cv-chart-canvas-radar canvas,

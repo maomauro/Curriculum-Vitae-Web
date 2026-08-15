@@ -27,6 +27,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/.angular/
 
+# ── Datos sensibles ──────────────────────────────────────────────────────────
+# Dumps SQL de ejemplo con datos reales (documento, direccion, hash de password).
+# Nunca versionar: si necesitas un script de ejemplo para el equipo, usar datos ficticios.
+scripts/ejemplo/
+
 # ── Sistema operativo ────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

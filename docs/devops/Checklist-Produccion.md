@@ -2,6 +2,10 @@
 
 Lista orientativa antes de exponer el portal a usuarios reales. Complementa [Integracion-SonarCloud.md](../produccion/Integracion-SonarCloud.md), [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md) y [Guia-git.md](../guias/Guia-git.md).
 
+Referencia de corte vigente para retomar trabajo:
+- [Estado-Actual-2026-08-07.md](../produccion/Estado-Actual-2026-08-07.md)
+- [Smoke-Test-Produccion.md](./Smoke-Test-Produccion.md)
+
 ---
 
 ## Configuración y secretos

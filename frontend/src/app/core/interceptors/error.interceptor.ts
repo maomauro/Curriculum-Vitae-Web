@@ -20,7 +20,9 @@ export class ErrorInterceptor implements HttpInterceptor {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
-          this.authService.logout();
+          // Si el backend ya rechazó la cookie, no hace falta pedirle que la borre
+          // (eso es lo que hace logout()): solo se limpia el estado local.
+          this.authService.clearLocalSession();
           void this.router.navigate(['/'], { queryParams: { authModal: 'login' } });
         }
         return throwError(() => error);

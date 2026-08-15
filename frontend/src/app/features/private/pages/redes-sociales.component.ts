@@ -18,7 +18,7 @@ const REDES_OPCIONES = [
   { nombre: 'Instagram',  icono: 'bi-instagram', color: '#e1306c' },
   { nombre: 'Facebook',   icono: 'bi-facebook',  color: '#1877f2' },
   { nombre: 'YouTube',    icono: 'bi-youtube',   color: '#ff0000' },
-  { nombre: 'Portfolio',  icono: 'bi-globe',     color: '#2c7be5' },
+  { nombre: 'Portafolio', icono: 'bi-globe',     color: '#2c7be5' },
   { nombre: 'Otra',       icono: 'bi-link-45deg',color: '#6c757d' },
 ];
 

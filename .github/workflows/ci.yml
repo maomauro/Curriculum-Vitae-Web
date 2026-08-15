@@ -30,12 +30,14 @@ jobs:
           --no-restore
           --configuration Release
 
-      - name: Tests unitarios e integración
+      - name: Tests unitarios e integración (con cobertura)
         run: >
           dotnet test backend/PortalCV.Backend/PortalCV.Api.Tests/PortalCV.Api.Tests.csproj
           --no-build --configuration Release
           --logger "trx;LogFileName=backend-tests.trx"
           --results-directory backend/TestResults
+          --collect:"XPlat Code Coverage"
+          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Subir resultados de tests
         if: always()
@@ -44,6 +46,14 @@ jobs:
           name: backend-test-results
           path: backend/TestResults/*.trx
           if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Subir reporte de cobertura del backend
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/TestResults/**/coverage.opencover.xml
+          if-no-files-found: error
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────────────────────
@@ -107,6 +117,12 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage/portalcv-web
 
+      - name: Descargar reporte de cobertura del backend
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/TestResults
+
       - name: Validate SonarCloud config
         id: sonar-config
         env:
@@ -136,4 +152,5 @@ jobs:
             -Dsonar.tests=frontend/src
             -Dsonar.test.inclusions=**/*.spec.ts
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/portalcv-web/lcov.info
-            -Dsonar.coverage.exclusions=backend/**,frontend/eslint.config.js,frontend/proxy.conf.js,frontend/src/app/features/admin/**,frontend/src/app/features/auth/**,frontend/src/app/features/private/**,frontend/src/app/layout/**,frontend/src/styles/**,**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts
+            -Dsonar.cs.opencover.reportsPaths=backend/TestResults/**/coverage.opencover.xml
+            -Dsonar.coverage.exclusions=frontend/eslint.config.js,frontend/proxy.conf.js,frontend/src/styles/**,**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts,backend/**/*.Tests/**,backend/**/Program.cs

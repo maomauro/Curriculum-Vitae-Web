@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using PortalCV.Application;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
 using PortalCV.Infrastructure.Data;
@@ -15,6 +17,13 @@ namespace PortalCV.Infrastructure.Services;
 /// </summary>
 public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+    };
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PublicSnapshotService> _logger;
     private readonly TimeSpan _refreshInterval;
@@ -97,30 +106,33 @@ public sealed class PublicSnapshotService : BackgroundService, IPublicSnapshotSe
             return;
         }
 
-        var publicCvService = scope.ServiceProvider.GetRequiredService<IPublicCvService>();
-        const int pageSize = 50;
-        var page = 1;
-        var total = 0;
         var items = new List<PublicSnapshotItemDto>();
 
-        do
+        var rows = await (
+            from exportRow in db.PublicCvSnapshotExports.AsNoTracking()
+            join curriculum in db.Curriculums.AsNoTracking()
+                on exportRow.CurriculumId equals curriculum.CurriculumId
+            where curriculum.Estado == CurriculumEstados.Publicado
+                && curriculum.Usuario.Estado == UsuarioEstados.Activo
+            orderby exportRow.CurriculumId
+            select exportRow.ItemJson
+        ).ToListAsync(ct);
+
+        foreach (var itemJson in rows)
         {
-            var result = await publicCvService.BuscarCvsAsync(
-                new BuscarCvsQuery(null, null, null, page, pageSize),
-                ct);
-
-            total = result.Total;
-            foreach (var listado in result.Items)
+            try
             {
-                var detalle = await publicCvService.GetDetalleAsync(listado.UrlPublica, null, ct);
-                if (detalle is null) continue;
-                var stats = await publicCvService.GetEstadisticasAsync(listado.UrlPublica, ct);
-                items.Add(new PublicSnapshotItemDto(listado, detalle, stats));
+                var item = JsonSerializer.Deserialize<PublicSnapshotItemDto>(itemJson, JsonOptions);
+                if (item is not null)
+                {
+                    items.Add(item);
+                }
             }
-
-            page++;
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Snapshot público: export JSON inválido al reconstruir caché en memoria.");
+            }
         }
-        while ((page - 1) * pageSize < total);
 
         _current = new PublicCvsSnapshotDto(
             DateTime.UtcNow,
