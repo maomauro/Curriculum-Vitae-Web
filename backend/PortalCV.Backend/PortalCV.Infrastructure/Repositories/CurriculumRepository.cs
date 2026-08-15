@@ -32,6 +32,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
     public async Task<Curriculum?> GetPublicadoPorIdAsync(int curriculumId, CancellationToken ct = default)
         => await _dbSet
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.Usuario)
             .Include(c => c.Personales)
             .Include(c => c.Perfiles)
@@ -51,6 +52,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
     public async Task<Curriculum?> GetByIdForSnapshotAsync(int curriculumId, CancellationToken ct = default)
         => await _dbSet
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.Usuario)
             .Include(c => c.Personales)
             .Include(c => c.Perfiles)

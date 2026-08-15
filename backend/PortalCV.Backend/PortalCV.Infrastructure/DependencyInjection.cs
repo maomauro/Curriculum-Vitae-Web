@@ -21,7 +21,10 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<PortalCvDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options
+                .UseSqlServer(
+                    connectionString,
+                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
         services.AddHttpContextAccessor();
 
