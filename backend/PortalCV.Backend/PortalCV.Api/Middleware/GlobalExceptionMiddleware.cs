@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using PortalCV.Application.Constants;
+using PortalCV.Domain.Exceptions;
 
 namespace PortalCV.Api.Middleware;
 
@@ -26,10 +27,15 @@ public sealed class GlobalExceptionMiddleware
             _logger.LogWarning(ex, "Recurso no encontrado en {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteErrorResponseAsync(context, (int)HttpStatusCode.NotFound, ex.Message);
         }
+        catch (ForbiddenOperationException ex)
+        {
+            _logger.LogWarning(ex, "Acceso prohibido en {Method} {Path}", context.Request.Method, context.Request.Path);
+            await WriteErrorResponseAsync(context, (int)HttpStatusCode.Forbidden, ex.Message);
+        }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Acceso no autorizado en {Method} {Path}", context.Request.Method, context.Request.Path);
-            await WriteErrorResponseAsync(context, (int)HttpStatusCode.Forbidden, ex.Message);
+            await WriteErrorResponseAsync(context, (int)HttpStatusCode.Unauthorized, ex.Message);
         }
         catch (ArgumentException ex)
         {
