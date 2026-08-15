@@ -39,6 +39,29 @@ interface TimelineYearSeries {
   exp: number[];
 }
 
+interface EducacionTipoSeries {
+  labels: string[];
+  values: number[];
+}
+
+interface HabilidadNivelSerie {
+  labels: string[];
+  basico: number[];
+  intermedio: number[];
+  avanzado: number[];
+  experto: number[];
+}
+
+interface HabilidadStrategicPoint {
+  grupo: string;
+  total: number;
+  madurezPromedio: number;
+  basico: number;
+  intermedio: number;
+  avanzado: number;
+  experto: number;
+}
+
 interface ProyectoChartRow {
   etiqueta: string;
   nombreLargo: string;
@@ -51,7 +74,6 @@ interface ProyectoChartRow {
 
 /** Paleta prototipo dashboard-candidato.html */
 const CHART_COLOR_VERDE = '#6EE7B7';
-const CHART_COLOR_PURPLE = '#818CF8';
 const CHART_COLOR_BARRAS = '#7C6FCD';
 /** Dona participación proyectos: colores alternados (naranja portal + paleta suave) */
 const CHART_PROYECTOS_DONA_COLORS = [
@@ -63,6 +85,16 @@ const CHART_PROYECTOS_DONA_COLORS = [
   '#22c55e',
   '#0ea5e9',
   '#eab308',
+];
+const CHART_HABILIDADES_BUBBLE_COLORS = [
+  'rgba(37, 99, 235, 0.78)',
+  'rgba(14, 165, 233, 0.78)',
+  'rgba(34, 197, 94, 0.78)',
+  'rgba(124, 111, 205, 0.78)',
+  'rgba(253, 126, 20, 0.82)',
+  'rgba(236, 72, 153, 0.78)',
+  'rgba(234, 179, 8, 0.82)',
+  'rgba(99, 102, 241, 0.78)',
 ];
 const TIPOS_FORMACION_ACADEMICA = new Set([
   'Posgrado',
@@ -166,18 +198,39 @@ function buildMetricas(cv: CvDetalleDto): MetricaCard[] {
 }
 
 function buildExpPorEmpresa(experiencias: ExperienciaPublicoDto[]): ExpEmpresa[] {
-  const map = new Map<string, number>();
+  const map = new Map<string, { meses: number; primeraFechaInicio: Date | null }>();
   for (const e of experiencias) {
     const emp = (e.empresa ?? 'Sin empresa').trim() || 'Sin empresa';
-    map.set(emp, (map.get(emp) ?? 0) + mesesExperiencia(e));
+    const fechaInicio = parseDateOnly(e.fechaInicio);
+    const current = map.get(emp) ?? { meses: 0, primeraFechaInicio: null };
+    const primeraFechaInicio =
+      current.primeraFechaInicio && fechaInicio
+        ? current.primeraFechaInicio <= fechaInicio
+          ? current.primeraFechaInicio
+          : fechaInicio
+        : current.primeraFechaInicio ?? fechaInicio;
+
+    map.set(emp, {
+      meses: current.meses + mesesExperiencia(e),
+      primeraFechaInicio,
+    });
   }
   const rows = [...map.entries()]
-    .map(([empresa, meses]) => ({ empresa, meses }))
+    .map(([empresa, data]) => ({
+      empresa,
+      meses: data.meses,
+      primeraFechaInicio: data.primeraFechaInicio,
+    }))
     .filter(r => r.meses > 0)
-    .sort((a, b) => b.meses - a.meses);
+    .sort((a, b) => {
+      const ta = a.primeraFechaInicio?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      const tb = b.primeraFechaInicio?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      return ta - tb;
+    });
   const max = rows[0]?.meses ?? 1;
   return rows.map(r => ({
-    ...r,
+    empresa: r.empresa,
+    meses: r.meses,
     porcentaje: Math.round((100 * r.meses) / max),
   }));
 }
@@ -216,6 +269,27 @@ function buildTimelineYearSeries(cv: CvDetalleDto): TimelineYearSeries {
     exp.push(xc);
   }
   return { labels, edu, exp };
+}
+
+function normalizarTipoFormacion(tipo: string | null | undefined): string {
+  const value = (tipo ?? '').trim();
+  return value || 'Sin tipo';
+}
+
+function buildEducacionTipoSeries(formaciones: FormacionPublicoDto[]): EducacionTipoSeries {
+  const countByType = new Map<string, number>();
+  for (const formacion of formaciones ?? []) {
+    const tipo = normalizarTipoFormacion(formacion.tipoFormacion);
+    countByType.set(tipo, (countByType.get(tipo) ?? 0) + 1);
+  }
+
+  const rows = [...countByType.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'es'));
+
+  return {
+    labels: rows.map(([tipo]) => tipo),
+    values: rows.map(([, total]) => total),
+  };
 }
 
 function truncarEtiquetaGrafico(s: string, max = 44): string {
@@ -266,6 +340,185 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
     .sort((a, b) => b.promedio - a.promedio);
 }
 
+function normalizarNivelHabilidad(nivel: string | null | undefined): 'basico' | 'intermedio' | 'avanzado' | 'experto' | null {
+  if (!nivel?.trim()) return null;
+  const t = nivel.trim().toLowerCase();
+  if (t.includes('bás') || t.includes('basic')) return 'basico';
+  if (t.includes('intermedio')) return 'intermedio';
+  if (t.includes('avanz')) return 'avanzado';
+  if (t.includes('expert')) return 'experto';
+  return null;
+}
+
+function contieneAlguno(texto: string, keywords: string[]): boolean {
+  return keywords.some(keyword => texto.includes(keyword));
+}
+
+function clasificarGrupoHabilidad(habilidad: HabilidadPublicoDto): string {
+  const tipo = (habilidad.tipo ?? '').trim().toLowerCase();
+  const texto = [habilidad.nombre, habilidad.descripcion, habilidad.tipo]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (tipo === 'idioma' || contieneAlguno(texto, ['ingles', 'inglés', 'spanish', 'español', 'portugues', 'portugués', 'frances', 'francés'])) {
+    return 'Idiomas';
+  }
+
+  if (
+    tipo === 'blanda' &&
+    contieneAlguno(texto, ['liderazgo', 'gestión de equipos', 'gestion de equipos', 'toma de decisiones', 'delegación', 'delegacion'])
+  ) {
+    return 'Liderazgo y Gestión';
+  }
+
+  if (
+    tipo === 'blanda' &&
+    contieneAlguno(texto, ['pensamiento analítico', 'pensamiento analitico', 'resolución de problemas', 'resolucion de problemas', 'pensamiento crítico', 'pensamiento critico'])
+  ) {
+    return 'Pensamiento Analítico';
+  }
+
+  if (
+    tipo === 'blanda' &&
+    contieneAlguno(texto, ['comunicación', 'comunicacion', 'stakeholder', 'negociación', 'negociacion', 'empatía', 'empatia'])
+  ) {
+    return 'Comunicación';
+  }
+
+  if (
+    tipo === 'blanda' &&
+    contieneAlguno(texto, ['adaptabilidad', 'mejora continua', 'aprendizaje continuo'])
+  ) {
+    return 'Adaptabilidad y Mejora';
+  }
+
+  if (
+    tipo === 'blanda' &&
+    contieneAlguno(texto, ['orientación a resultados', 'orientacion a resultados', 'planificación', 'planificacion', 'gestión del tiempo', 'gestion del tiempo'])
+  ) {
+    return 'Orientación a Resultados';
+  }
+
+  if (
+    tipo === 'blanda' &&
+    contieneAlguno(texto, ['integridad', 'ética', 'etica', 'responsabilidad'])
+  ) {
+    return 'Integridad y Ética';
+  }
+
+  if (tipo === 'blanda') {
+    return 'Habilidades blandas';
+  }
+
+  if (
+    contieneAlguno(texto, ['togaf', 'archimate', 'mrae', 'uml', 'enterprise architect', 'archi', 'draw.io', 'drawio', 'arquitectura', 'modelado'])
+  ) {
+    return 'Arquitectura y Modelado';
+  }
+
+  if (
+    contieneAlguno(texto, ['google cloud', 'gcp', 'aws', 'azure devops', 'docker', 'kubernetes', 'gitlab', 'github', 'devops', 'terraform', 'jenkins'])
+  ) {
+    return 'Cloud y DevOps';
+  }
+
+  if (
+    contieneAlguno(texto, ['java', '.net', 'c#', 'php', 'python', 'typescript', 'angular', 'react', 'vue', 'javascript', 'desarrollo'])
+  ) {
+    return 'Desarrollo de Software';
+  }
+
+  if (
+    contieneAlguno(texto, ['jira', 'postman', 'soapui', 'sonarqube', 'figma', 'testing', 'qa', 'pruebas', 'swagger'])
+  ) {
+    return 'Gestión y Testing';
+  }
+
+  if (
+    contieneAlguno(texto, ['ssis', 'odi', 'airflow', 'data lakehouse', 'delta lake', 'wso2', 'etl', 'integración', 'integracion', 'sql server', 'postgresql', 'mysql', 'mongodb', 'data warehouse'])
+  ) {
+    return 'Datos e Integración';
+  }
+
+  if (
+    contieneAlguno(texto, ['scikit-learn', 'mlflow', 'power bi', 'power automate', 'machine learning', 'analítica', 'analitica', 'automatización', 'automatizacion', 'bi'])
+  ) {
+    return 'IA, Analítica y Automatización';
+  }
+
+  if (tipo === 'tecnica') {
+    return 'Otras habilidades técnicas';
+  }
+
+  return 'Otros';
+}
+
+function buildHabilidadNivelSerie(habs: HabilidadPublicoDto[]): HabilidadNivelSerie {
+  const map = new Map<string, { basico: number; intermedio: number; avanzado: number; experto: number; total: number }>();
+  for (const habilidad of habs ?? []) {
+    const tipo = clasificarGrupoHabilidad(habilidad);
+    const nivel = normalizarNivelHabilidad(habilidad.nivel);
+    if (!nivel) continue;
+    const current = map.get(tipo) ?? { basico: 0, intermedio: 0, avanzado: 0, experto: 0, total: 0 };
+    current[nivel] += 1;
+    current.total += 1;
+    map.set(tipo, current);
+  }
+
+  const rows = [...map.entries()]
+    .sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0], 'es'));
+
+  return {
+    labels: rows.map(([tipo]) => tipo),
+    basico: rows.map(([, v]) => v.basico),
+    intermedio: rows.map(([, v]) => v.intermedio),
+    avanzado: rows.map(([, v]) => v.avanzado),
+    experto: rows.map(([, v]) => v.experto),
+  };
+}
+
+function buildHabilidadStrategicPoints(habs: HabilidadPublicoDto[]): HabilidadStrategicPoint[] {
+  const map = new Map<
+    string,
+    { basico: number; intermedio: number; avanzado: number; experto: number; total: number; sumaMadurez: number }
+  >();
+
+  for (const habilidad of habs ?? []) {
+    const grupo = clasificarGrupoHabilidad(habilidad);
+    const nivel = normalizarNivelHabilidad(habilidad.nivel);
+    if (!nivel) continue;
+
+    const valorMadurez =
+      nivel === 'basico' ? 1 : nivel === 'intermedio' ? 2 : nivel === 'avanzado' ? 3 : 4;
+    const current = map.get(grupo) ?? {
+      basico: 0,
+      intermedio: 0,
+      avanzado: 0,
+      experto: 0,
+      total: 0,
+      sumaMadurez: 0,
+    };
+
+    current[nivel] += 1;
+    current.total += 1;
+    current.sumaMadurez += valorMadurez;
+    map.set(grupo, current);
+  }
+
+  return [...map.entries()]
+    .map(([grupo, value]) => ({
+      grupo,
+      total: value.total,
+      madurezPromedio: value.total > 0 ? Math.round((value.sumaMadurez / value.total) * 10) / 10 : 0,
+      basico: value.basico,
+      intermedio: value.intermedio,
+      avanzado: value.avanzado,
+      experto: value.experto,
+    }))
+    .sort((a, b) => b.total - a.total || b.madurezPromedio - a.madurezPromedio || a.grupo.localeCompare(b.grupo, 'es'));
+}
+
 @Component({
   selector: 'app-dashboard-candidato',
   standalone: false,
@@ -314,10 +567,10 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
           </div>
           <div class="col-lg-6">
             <div class="cv-chart-card">
-              <div class="cv-ct-title">Línea de tiempo: Educación y experiencia</div>
-              <div class="cv-ct-subtitle">Eventos académicos y laborales por año.</div>
-              <p *ngIf="!timelineYearSeries.labels.length" class="text-muted small mb-0">No hay fechas en formaciones ni experiencias.</p>
-              <div *ngIf="timelineYearSeries.labels.length" class="cv-chart-canvas-timeline">
+              <div class="cv-ct-title">Educación por tipo de formación</div>
+              <div class="cv-ct-subtitle">Cantidad de registros académicos agrupados por categoría.</div>
+              <p *ngIf="!educacionTipoSeries.labels.length" class="text-muted small mb-0">No hay formaciones registradas para graficar.</p>
+              <div *ngIf="educacionTipoSeries.labels.length" class="cv-chart-canvas-timeline">
                 <canvas #cvDashChartTimeline></canvas>
               </div>
             </div>
@@ -335,18 +588,43 @@ function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string;
               <p *ngIf="proyectosRawCount > 0 && !proyectosChart.length" class="text-muted small mb-0">
                 Los proyectos no tienen duración en meses; no se puede calcular la participación.
               </p>
-              <div *ngIf="proyectosChart.length" class="cv-chart-canvas-dona">
+              <div *ngIf="proyectosChart.length" class="cv-chart-canvas-dona" [style.height.px]="chartProyectosHeightPx">
                 <canvas #cvDashChartProyectos></canvas>
+              </div>
+              <div *ngIf="proyectosChart.length" class="mt-3 d-grid gap-2">
+                <div
+                  *ngFor="let proyecto of proyectosChart; let i = index"
+                  class="d-flex align-items-start gap-2 small min-w-0">
+                  <span
+                    class="rounded-circle flex-shrink-0 mt-1"
+                    [style.background-color]="getProyectoColor(i)"
+                    style="width:12px;height:12px;"></span>
+                  <div class="min-w-0 flex-grow-1">
+                    <div class="fw-semibold text-break">{{ proyecto.nombreLargo }}</div>
+                    <div class="text-muted">{{ proyecto.porcentajeTiempo }}% · {{ proyecto.meses }} meses</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           <div class="col-lg-6">
             <div class="cv-chart-card">
-              <div class="cv-ct-title">Nivel promedio de habilidades por tipo</div>
-              <div class="cv-ct-subtitle">Nivel promedio en cada categoría (1 = Básico → 4 = Experto).</div>
-              <p *ngIf="!nivelPromedio.length" class="text-muted small mb-0">No hay niveles categorizados para promediar.</p>
-              <div *ngIf="nivelPromedio.length" class="cv-chart-canvas-radar">
+              <div class="cv-ct-title">Mapa estratégico de capacidades</div>
+              <div class="cv-ct-subtitle">Cada grupo combina cobertura total y madurez promedio declarada.</div>
+              <p *ngIf="!habilidadStrategicPoints.length" class="text-muted small mb-0">No hay niveles categorizados para mapear.</p>
+              <div *ngIf="habilidadStrategicPoints.length" class="cv-chart-canvas-radar" [style.height.px]="chartHabilidadesHeightPx">
                 <canvas #cvDashChartRadar></canvas>
+              </div>
+              <div *ngIf="habilidadStrategicPoints.length" class="mt-3 row g-2">
+                <div *ngFor="let p of habilidadStrategicPointsVisible" class="col-12 col-xl-6">
+                  <div class="d-flex justify-content-between gap-3 small border-top pt-2">
+                    <div class="fw-semibold text-break">{{ p.grupo }}</div>
+                    <div class="text-muted text-end text-nowrap">{{ p.total }} hab. · {{ p.madurezPromedio }}/4</div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="habilidadStrategicPoints.length > habilidadStrategicMaxRows" class="small text-muted mt-2">
+                Mostrando {{ habilidadStrategicMaxRows }} de {{ habilidadStrategicPoints.length }} grupos.
               </div>
             </div>
           </div>
@@ -366,12 +644,22 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   metricas: MetricaCard[] = [];
   expEmpresas: ExpEmpresa[] = [];
   timelineYearSeries: TimelineYearSeries = { labels: [], edu: [], exp: [] };
+  educacionTipoSeries: EducacionTipoSeries = { labels: [], values: [] };
   proyectosChart: ProyectoChartRow[] = [];
   /** Total de registros de proyecto en el CV (aunque no tengan meses). */
   proyectosRawCount = 0;
   nivelPromedio: { tipo: string; promedio: number }[] = [];
+  habilidadNivelSerie: HabilidadNivelSerie = { labels: [], basico: [], intermedio: [], avanzado: [], experto: [] };
+  habilidadStrategicPoints: HabilidadStrategicPoint[] = [];
   completitud = 0;
   chartExpHeightPx = 260;
+  chartProyectosHeightPx = 320;
+  chartHabilidadesHeightPx = 300;
+  readonly habilidadStrategicMaxRows = 8;
+
+  get habilidadStrategicPointsVisible(): HabilidadStrategicPoint[] {
+    return this.habilidadStrategicPoints.slice(0, this.habilidadStrategicMaxRows);
+  }
 
   /** En CV público: según visibilidad; en área privada siempre true. */
   mostrarMetricas = true;
@@ -429,17 +717,27 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     if (this.mostrarGraficas) {
       this.expEmpresas = buildExpPorEmpresa(cv.experiencias ?? []);
       this.timelineYearSeries = buildTimelineYearSeries(cv);
+      this.educacionTipoSeries = buildEducacionTipoSeries(cv.formaciones ?? []);
       this.proyectosRawCount = cv.proyectos?.length ?? 0;
       this.proyectosChart = buildProyectosParticipacionPorTiempo(cv.proyectos ?? []);
       this.nivelPromedio = buildNivelPromedioPorTipo(cv.habilidades ?? []);
+      this.habilidadNivelSerie = buildHabilidadNivelSerie(cv.habilidades ?? []);
+      this.habilidadStrategicPoints = buildHabilidadStrategicPoints(cv.habilidades ?? []);
       this.chartExpHeightPx = Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80));
+      this.chartProyectosHeightPx = Math.min(380, Math.max(260, this.proyectosChart.length > 4 ? 300 : 260));
+      this.chartHabilidadesHeightPx = Math.min(440, Math.max(280, this.habilidadStrategicPoints.length * 28 + 120));
     } else {
       this.expEmpresas = [];
       this.timelineYearSeries = { labels: [], edu: [], exp: [] };
+      this.educacionTipoSeries = { labels: [], values: [] };
       this.proyectosRawCount = cv.proyectos?.length ?? 0;
       this.proyectosChart = [];
       this.nivelPromedio = [];
+      this.habilidadNivelSerie = { labels: [], basico: [], intermedio: [], avanzado: [], experto: [] };
+      this.habilidadStrategicPoints = [];
       this.chartExpHeightPx = 260;
+      this.chartProyectosHeightPx = 320;
+      this.chartHabilidadesHeightPx = 300;
     }
   }
 
@@ -502,25 +800,19 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     }
 
     const tl = this.chartTimelineEl?.nativeElement;
-    if (this.timelineYearSeries.labels.length && tl) {
+    if (this.educacionTipoSeries.labels.length && tl) {
       const ctx = tl.getContext('2d');
       if (ctx) {
         this.chartInstances.push(
           new Chart(ctx, {
             type: 'bar',
             data: {
-              labels: this.timelineYearSeries.labels,
+              labels: this.educacionTipoSeries.labels,
               datasets: [
                 {
-                  label: 'Educación',
-                  data: this.timelineYearSeries.edu,
+                  label: 'Formaciones',
+                  data: this.educacionTipoSeries.values,
                   backgroundColor: CHART_COLOR_VERDE,
-                  borderRadius: 2,
-                },
-                {
-                  label: 'Experiencia',
-                  data: this.timelineYearSeries.exp,
-                  backgroundColor: CHART_COLOR_PURPLE,
                   borderRadius: 2,
                 },
               ],
@@ -530,14 +822,13 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
               maintainAspectRatio: false,
               plugins: {
                 legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 12, padding: 14, font: { size: 12 } },
+                  display: false,
                 },
               },
               scales: {
                 x: {
                   grid: { display: false },
-                  ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0 },
+                  ticks: { font: { size: 10 }, maxRotation: 35, minRotation: 0 },
                 },
                 y: {
                   grid: { color: '#f0f0f0' },
@@ -579,13 +870,7 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
               cutout: '56%',
               plugins: {
                 legend: {
-                  position: 'bottom',
-                  labels: {
-                    boxWidth: 12,
-                    padding: 14,
-                    font: { size: 11 },
-                    usePointStyle: true,
-                  },
+                  display: false,
                 },
                 tooltip: {
                   callbacks: {
@@ -618,47 +903,82 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     }
 
     const radar = this.chartRadarEl?.nativeElement;
-    if (this.nivelPromedio.length && radar) {
+    if (this.habilidadStrategicPoints.length && radar) {
       const ctx = radar.getContext('2d');
       if (ctx) {
+        const puntos = this.habilidadStrategicPoints;
         this.chartInstances.push(
           new Chart(ctx, {
-            type: 'radar',
+            type: 'bubble',
             data: {
-              labels: this.nivelPromedio.map(n => n.tipo),
-              datasets: [
-                {
-                  label: 'Nivel promedio',
-                  data: this.nivelPromedio.map(n => n.promedio),
-                  backgroundColor: 'rgba(129, 140, 248, 0.30)',
-                  borderColor: CHART_COLOR_PURPLE,
-                  borderWidth: 2,
-                  pointBackgroundColor: CHART_COLOR_PURPLE,
-                  pointRadius: 4,
-                },
-              ],
+              datasets: puntos.map((punto, index) => ({
+                label: punto.grupo,
+                data: [
+                  {
+                    x: punto.total,
+                    y: punto.madurezPromedio,
+                    r: Math.max(8, Math.min(22, 6 + punto.total * 1.4)),
+                  },
+                ],
+                backgroundColor: CHART_HABILIDADES_BUBBLE_COLORS[index % CHART_HABILIDADES_BUBBLE_COLORS.length],
+                borderColor: '#ffffff',
+                borderWidth: 2,
+              })),
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
               scales: {
-                r: {
-                  min: 0,
-                  max: 4,
+                x: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: 'Cobertura (cantidad de habilidades)',
+                  },
                   ticks: {
                     stepSize: 1,
                     font: { size: 10 },
-                    backdropColor: 'transparent',
                   },
-                  pointLabels: { font: { size: 13 } },
                   grid: { color: '#e5e7eb' },
-                  angleLines: { color: '#e5e7eb' },
+                },
+                y: {
+                  min: 1,
+                  max: 4,
+                  title: {
+                    display: true,
+                    text: 'Madurez promedio',
+                  },
+                  ticks: {
+                    stepSize: 1,
+                    callback: value => {
+                      if (value === 1) return 'Básico';
+                      if (value === 2) return 'Intermedio';
+                      if (value === 3) return 'Avanzado';
+                      if (value === 4) return 'Experto';
+                      return value;
+                    },
+                  },
+                  grid: { color: '#e5e7eb' },
                 },
               },
               plugins: {
                 legend: {
-                  position: 'bottom',
-                  labels: { boxWidth: 14, padding: 16, font: { size: 12 } },
+                  display: false,
+                },
+                tooltip: {
+                  callbacks: {
+                    title: items => items[0]?.dataset?.label ?? '',
+                    label: item => {
+                      const punto = puntos[item.datasetIndex];
+                      if (!punto) return '';
+                      return [
+                        `Cobertura: ${punto.total} habilidades`,
+                        `Madurez: ${punto.madurezPromedio}/4`,
+                        `Básico: ${punto.basico} · Intermedio: ${punto.intermedio}`,
+                        `Avanzado: ${punto.avanzado} · Experto: ${punto.experto}`,
+                      ];
+                    },
+                  },
                 },
               },
             },
@@ -666,5 +986,9 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
         );
       }
     }
+  }
+
+  getProyectoColor(index: number): string {
+    return CHART_PROYECTOS_DONA_COLORS[index % CHART_PROYECTOS_DONA_COLORS.length];
   }
 }
