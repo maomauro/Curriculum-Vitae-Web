@@ -1,5 +1,11 @@
 # Plan de Trabajo para Salida a Produccion — PortalCV
 
+> Nota de vigencia: este plan conserva el contexto historico del corte 23-04-2026.
+> Para retomar trabajo con estado consolidado, usar primero:
+> - `docs/produccion/Estado-Actual-2026-08-07.md`
+> - `docs/devops/Smoke-Test-Produccion.md`
+> - `docs/produccion/Sprint-Cierre-GoLive-2026-08.md`
+
 Estado del plan: En ejecucion
 Fecha de corte: 23-04-2026
 Rama de trabajo actual: `feat/backend` (operativo)
