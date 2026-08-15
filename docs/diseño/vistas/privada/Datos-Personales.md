@@ -58,7 +58,7 @@
 | Residencia | País, Departamento, Ciudad, Dirección, Código postal |
 | Seguridad Social | EPS, AFP, ARL, Caja compensación |
 | Información Familiar | Estado civil, Hijos (cantidad), Familiares de contacto (lista) |
-| Redes Sociales | LinkedIn, GitHub, Portfolio/web, Twitter/X, Stack Overflow |
+| Redes Sociales | LinkedIn, GitHub, Portafolio/web, Twitter/X, Stack Overflow |
 | Referencias Personales | Lista: Nombre, Cargo, Empresa, Email, Teléfono, Relación |
 
 ---
