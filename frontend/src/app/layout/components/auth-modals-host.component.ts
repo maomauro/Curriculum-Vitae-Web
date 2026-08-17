@@ -24,7 +24,7 @@ export class AuthModalsHostComponent {
     this.authModal.close();
   }
 
-  cerrarSiBackdrop(ev: MouseEvent): void {
+  cerrarSiBackdrop(ev: MouseEvent | KeyboardEvent): void {
     if (ev.target === ev.currentTarget) {
       this.cerrar();
     }

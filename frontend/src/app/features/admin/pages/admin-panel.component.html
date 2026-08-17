@@ -69,7 +69,9 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
       <div class="seccion-titulo mb-0">Usuarios del sistema</div>
       <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+        <label class="visually-hidden" for="admin-panel-filtro-estado">Filtrar por estado</label>
         <select
+          id="admin-panel-filtro-estado"
           class="form-select form-select-sm admin-filter-select"
           [(ngModel)]="filtroEstado"
           (ngModelChange)="onFiltrosChanged()">
@@ -78,7 +80,9 @@
           <option value="Inactivo">Inactivos</option>
         </select>
         <div class="admin-search-with-clear">
+          <label class="visually-hidden" for="admin-panel-busqueda">Buscar usuarios por email</label>
           <input
+            id="admin-panel-busqueda"
             type="text"
             class="form-control form-control-sm admin-search-input"
             placeholder="Buscar por email..."
@@ -215,8 +219,8 @@
   </div>
 
   <!-- Modal gestión de roles -->
-  <div *ngIf="usuarioSeleccionado" class="modal-overlay" (click)="cerrarRoles()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
+  <div *ngIf="usuarioSeleccionado" class="modal-overlay" (click)="cerrarRoles()" (keydown)="cerrarRoles()">
+    <div class="modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="d-flex align-items-center justify-content-between mb-3">
         <h6 class="mb-0 fw-bold">
           <i class="bi bi-shield-lock me-2 text-primary"></i>

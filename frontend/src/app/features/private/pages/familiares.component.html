@@ -34,7 +34,12 @@
 
     <!-- Cabecera -->
     <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
-         (click)="toggleEditarFamiliar(fam)">
+         role="button"
+         tabindex="0"
+         [attr.aria-expanded]="fam.editando"
+         (click)="toggleEditarFamiliar(fam)"
+         (keydown.enter)="toggleEditarFamiliar(fam)"
+         (keydown.space)="$event.preventDefault(); toggleEditarFamiliar(fam)">
       <div class="rounded-3 cv-icon-box cv-icon-box--warning">
         <i class="bi bi-person-heart"></i>
       </div>
@@ -55,16 +60,16 @@
       <div class="row g-3 mt-1">
 
         <div class="col-md-4">
-          <label class="form-label">Nombres</label>
-          <input type="text" class="form-control" [(ngModel)]="fam.form.nombres">
+          <label class="form-label" [for]="'fam-nombres-'+i">Nombres</label>
+          <input [id]="'fam-nombres-'+i" type="text" class="form-control" [(ngModel)]="fam.form.nombres">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Apellidos</label>
-          <input type="text" class="form-control" [(ngModel)]="fam.form.apellidos">
+          <label class="form-label" [for]="'fam-apellidos-'+i">Apellidos</label>
+          <input [id]="'fam-apellidos-'+i" type="text" class="form-control" [(ngModel)]="fam.form.apellidos">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Parentesco</label>
-          <select class="form-select" [(ngModel)]="fam.form.parentesco">
+          <label class="form-label" [for]="'fam-parentesco-'+i">Parentesco</label>
+          <select [id]="'fam-parentesco-'+i" class="form-select" [(ngModel)]="fam.form.parentesco">
             <option value="">— Selecciona —</option>
             <option value="Padre">Padre</option>
             <option value="Madre">Madre</option>
@@ -80,12 +85,12 @@
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" [(ngModel)]="fam.form.email">
+          <label class="form-label" [for]="'fam-email-'+i">Email</label>
+          <input [id]="'fam-email-'+i" type="email" class="form-control" [(ngModel)]="fam.form.email">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Teléfono</label>
-          <input type="text" class="form-control" [(ngModel)]="fam.form.telefono">
+          <label class="form-label" [for]="'fam-telefono-'+i">Teléfono</label>
+          <input [id]="'fam-telefono-'+i" type="text" class="form-control" [(ngModel)]="fam.form.telefono">
         </div>
         <div class="col-md-4 d-flex align-items-end pb-1">
           <div class="form-check">

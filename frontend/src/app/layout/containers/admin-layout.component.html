@@ -25,7 +25,9 @@
             Cerrar
           </button>
         </div>
+        <label class="visually-hidden" for="admin-layout-snapshot-json">Contenido del snapshot público en JSON</label>
         <textarea
+          id="admin-layout-snapshot-json"
           class="form-control font-monospace snapshot-preview-textarea"
           [value]="snapshotPreviewJson"
           readonly
@@ -38,5 +40,6 @@
     class="sidebar-overlay"
     role="presentation"
     aria-hidden="true"
-    (click)="onSidebarOverlayClick()"></div>
+    (click)="onSidebarOverlayClick()"
+    (keydown)="onSidebarOverlayClick()"></div>
 </div>

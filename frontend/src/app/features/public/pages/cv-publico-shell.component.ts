@@ -128,7 +128,7 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
-  cerrarModalSiBackdrop(ev: MouseEvent): void {
+  cerrarModalSiBackdrop(ev: MouseEvent | KeyboardEvent): void {
     if (ev.target === ev.currentTarget) {
       this.cerrarModalContacto();
     }

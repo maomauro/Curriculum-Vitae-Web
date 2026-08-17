@@ -92,10 +92,12 @@
   </p>
   <div class="d-flex flex-column flex-sm-row gap-2">
     <div class="input-group">
+      <label class="visually-hidden" for="cfg_url_cv">URL pública del CV</label>
       <span class="input-group-text">
         <i class="bi bi-link-45deg text-primary"></i>
       </span>
       <input
+        id="cfg_url_cv"
         type="text"
         class="form-control"
         [value]="urlCv"
@@ -193,7 +195,7 @@
   </p>
   <div class="vis-row align-items-center py-1">
     <div class="vis-info flex-grow-1 min-w-0">
-      <div class="vis-name">Publicar mi CV en el portal</div>
+      <label class="vis-name" for="cfg_cv_publicado">Publicar mi CV en el portal</label>
       <div class="vis-desc small text-muted mb-0">
         Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
       </div>
@@ -206,7 +208,8 @@
         id="cfg_cv_publicado"
         [checked]="cvPublicado"
         [disabled]="!presentacionLista || guardandoPublicacion"
-        (click)="onCvPublicacionClick($event)">
+        (click)="onCvPublicacionClick($event)"
+        (keydown)="$event.stopPropagation()">
     </div>
   </div>
   <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">

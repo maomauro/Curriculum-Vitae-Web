@@ -37,7 +37,7 @@
     </button>
   </div>
   <div class="project-body">
-    <ng-container *ngTemplateOutlet="formularioProyecto; context: { $implicit: borrador, esNuevo: true }"></ng-container>
+    <ng-container *ngTemplateOutlet="formularioProyecto; context: { $implicit: borrador, esNuevo: true, uid: 'nuevo' }"></ng-container>
   </div>
 </div>
 
@@ -45,7 +45,13 @@
   *ngFor="let p of proyectos; let i = index; trackBy: trackByProyectoId"
   class="project-card"
   [class.expanded]="p.expanded">
-  <div class="project-card-header" (click)="toggleExpanded(p)">
+  <div class="project-card-header"
+       role="button"
+       tabindex="0"
+       [attr.aria-expanded]="p.expanded"
+       (click)="toggleExpanded(p)"
+       (keydown.enter)="toggleExpanded(p)"
+       (keydown.space)="$event.preventDefault(); toggleExpanded(p)">
     <div class="project-icon"><i class="bi" [ngClass]="iconClass(i)"></i></div>
     <div class="flex-grow-1 min-w-0">
       <div class="project-title text-truncate">{{ tituloCard(p) }}</div>
@@ -59,7 +65,7 @@
         <i class="bi bi-people me-1"></i>{{ pillEquipo(p) }}
       </span>
     </div>
-    <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()">
+    <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <span class="profile-toggle-label">Mostrar en Mi CV</span>
       <div class="form-check form-switch mb-0">
         <input class="form-check-input" type="checkbox" role="switch"
@@ -71,37 +77,37 @@
     </div>
     <i class="bi bi-chevron-down project-chevron"></i>
   </div>
-  <div class="project-body" (click)="$event.stopPropagation()">
-    <ng-container *ngTemplateOutlet="formularioProyecto; context: { $implicit: p, esNuevo: false }"></ng-container>
+  <div class="project-body" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <ng-container *ngTemplateOutlet="formularioProyecto; context: { $implicit: p, esNuevo: false, uid: p.proyectoId }"></ng-container>
   </div>
 </div>
 
-<ng-template #formularioProyecto let-p let-esNuevo="esNuevo">
+<ng-template #formularioProyecto let-p let-esNuevo="esNuevo" let-uid="uid">
   <div class="row g-3">
     <div class="col-md-5">
-      <label class="form-label">
+      <label class="form-label" [for]="'proy-nombre-'+uid">
         Nombre del proyecto <span class="text-danger">*</span>
       </label>
-      <input type="text" class="form-control" [(ngModel)]="p.form.nombreProyecto"
+      <input [id]="'proy-nombre-'+uid" type="text" class="form-control" [(ngModel)]="p.form.nombreProyecto"
              [placeholder]="esNuevo ? 'Ej: App de reservas de turnos' : ''" />
     </div>
     <div class="col-md-4">
-      <label class="form-label">
+      <label class="form-label" [for]="'proy-rol-'+uid">
         Rol en el proyecto <span class="text-danger">*</span>
       </label>
-      <input type="text" class="form-control" [(ngModel)]="p.form.rol"
+      <input [id]="'proy-rol-'+uid" type="text" class="form-control" [(ngModel)]="p.form.rol"
              [placeholder]="esNuevo ? 'Ej: Tech Lead, QA Engineer…' : ''" />
     </div>
     <div class="col-6 col-md-1">
-      <label class="form-label">Equipo</label>
-      <input type="number" class="form-control" min="1" [(ngModel)]="p.form.equipoTamano" />
+      <label class="form-label" [for]="'proy-equipo-'+uid">Equipo</label>
+      <input [id]="'proy-equipo-'+uid" type="number" class="form-control" min="1" [(ngModel)]="p.form.equipoTamano" />
     </div>
     <div class="col-6 col-md-2">
-      <label class="form-label">Duración (meses)</label>
-      <input type="number" class="form-control" min="1" [(ngModel)]="p.form.duracionMeses" />
+      <label class="form-label" [for]="'proy-duracion-'+uid">Duración (meses)</label>
+      <input [id]="'proy-duracion-'+uid" type="number" class="form-control" min="1" [(ngModel)]="p.form.duracionMeses" />
     </div>
     <div class="col-12">
-      <label class="form-label">Stack tecnológico</label>
+      <label class="form-label" [for]="'proy-stack-'+uid">Stack tecnológico</label>
       <div class="stack-tags mb-2">
         <span *ngFor="let tag of p.stackTags; let ti = index" class="stack-tag">
           {{ tag }}
@@ -112,6 +118,7 @@
       </div>
       <div class="input-group input-group-sm stack-input-group">
         <input
+          [id]="'proy-stack-'+uid"
           type="text"
           class="form-control"
           [(ngModel)]="p.stackDraft"
@@ -123,18 +130,18 @@
       </div>
     </div>
     <div class="col-12">
-      <label class="form-label">Mi aporte al proyecto</label>
-      <textarea class="form-control" rows="2" [(ngModel)]="p.form.aporte"
+      <label class="form-label" [for]="'proy-aporte-'+uid">Mi aporte al proyecto</label>
+      <textarea [id]="'proy-aporte-'+uid" class="form-control" rows="2" [(ngModel)]="p.form.aporte"
                 placeholder="¿En qué parte trabajaste específicamente?"></textarea>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Logro principal</label>
-      <textarea class="form-control" rows="2" [(ngModel)]="p.form.logro"
+      <label class="form-label" [for]="'proy-logro-'+uid">Logro principal</label>
+      <textarea [id]="'proy-logro-'+uid" class="form-control" rows="2" [(ngModel)]="p.form.logro"
                 placeholder="¿Qué impacto tuvo tu trabajo?"></textarea>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Principal desafío</label>
-      <textarea class="form-control" rows="2" [(ngModel)]="p.form.desafio"
+      <label class="form-label" [for]="'proy-desafio-'+uid">Principal desafío</label>
+      <textarea [id]="'proy-desafio-'+uid" class="form-control" rows="2" [(ngModel)]="p.form.desafio"
                 placeholder="¿Cuál fue el mayor reto técnico o de gestión?"></textarea>
     </div>
   </div>

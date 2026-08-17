@@ -187,7 +187,7 @@ export class AdminAuditoriaComponent implements OnInit {
     this.modalMantenimientoAdmin = false;
   }
 
-  cerrarModalMantenimientoAdminSiBackdrop(ev: MouseEvent): void {
+  cerrarModalMantenimientoAdminSiBackdrop(ev: MouseEvent | KeyboardEvent): void {
     if (ev.target === ev.currentTarget) {
       this.cerrarModalMantenimientoAdmin();
     }
@@ -203,7 +203,7 @@ export class AdminAuditoriaComponent implements OnInit {
     this.modalMantenimientoCv = false;
   }
 
-  cerrarModalMantenimientoCvSiBackdrop(ev: MouseEvent): void {
+  cerrarModalMantenimientoCvSiBackdrop(ev: MouseEvent | KeyboardEvent): void {
     if (ev.target === ev.currentTarget) {
       this.cerrarModalMantenimientoCv();
     }

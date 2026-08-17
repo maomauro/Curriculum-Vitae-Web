@@ -58,14 +58,16 @@
       No leídas ({{ noLeidasCount }})
     </button>
   </div>
-  <select class="form-select form-select-sm admin-filter-select" [(ngModel)]="tipo" (change)="aplicarFiltros()">
+  <label class="visually-hidden" for="alertas-filtro-tipo">Filtrar por tipo</label>
+  <select id="alertas-filtro-tipo" class="form-select form-select-sm admin-filter-select" [(ngModel)]="tipo" (change)="aplicarFiltros()">
     <option value="">Tipo: Todos</option>
     <option value="Contacto">Contactos recibidos</option>
     <option value="Vista">Vistas del CV</option>
     <option value="Descarga">Descargas</option>
     <option value="Sistema">Sistema</option>
   </select>
-  <select class="form-select form-select-sm admin-filter-select" [(ngModel)]="periodo" (change)="aplicarFiltros()">
+  <label class="visually-hidden" for="alertas-filtro-periodo">Filtrar por período</label>
+  <select id="alertas-filtro-periodo" class="form-select form-select-sm admin-filter-select" [(ngModel)]="periodo" (change)="aplicarFiltros()">
     <option value="mes">Período: Este mes</option>
     <option value="semana">Última semana</option>
     <option value="tresmeses">Últimos 3 meses</option>
@@ -90,7 +92,11 @@
   <div *ngFor="let alerta of noLeidas"
        class="alert-item cv-cursor-pointer" [class.unread]="!alerta.esLeida"
        [ngClass]="'type-' + tipoClass(alerta.tipoVisita)"
-       (click)="marcarLeida(alerta)">
+       role="button"
+       tabindex="0"
+       (click)="marcarLeida(alerta)"
+       (keydown.enter)="marcarLeida(alerta)"
+       (keydown.space)="$event.preventDefault(); marcarLeida(alerta)">
     <div class="alert-icon" [ngClass]="tipoClass(alerta.tipoVisita)">
       <i class="bi" [ngClass]="tipoIcono(alerta.tipoVisita)"></i>
     </div>

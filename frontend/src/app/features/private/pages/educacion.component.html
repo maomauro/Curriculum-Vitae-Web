@@ -22,7 +22,13 @@
 <div *ngFor="let edu of formaciones; let i = index; trackBy: trackByFormacion">
   <div class="edu-formacion-card"
        [class.edu-formacion-card--nuevo]="edu.formacionId === 0">
-    <div class="p-4 d-flex align-items-center gap-3" (click)="onHeaderClick(edu, $event)">
+    <div class="p-4 d-flex align-items-center gap-3"
+         role="button"
+         tabindex="0"
+         [attr.aria-expanded]="edu.expanded"
+         (click)="onHeaderClick(edu, $event)"
+         (keydown.enter)="onHeaderClick(edu, $event)"
+         (keydown.space)="$event.preventDefault(); onHeaderClick(edu, $event)">
       <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 cv-icon-box"
            [style.background]="iconoBg(tipoParaCabecera(edu))"
            [style.color]="iconoColor(tipoParaCabecera(edu))">
@@ -40,7 +46,7 @@
             [class.cv-badge-neutral]="edu.formacionId !== 0">
         {{ edu.formacionId === 0 ? 'Nueva' : labelTipo(tipoParaCabecera(edu)) }}
       </span>
-      <div *ngIf="edu.formacionId !== 0" class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()">
+      <div *ngIf="edu.formacionId !== 0" class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <span class="profile-toggle-label">Mostrar en Mi CV</span>
         <div class="form-check form-switch mb-0">
           <input class="form-check-input" type="checkbox" role="switch"
@@ -57,62 +63,62 @@
     <div *ngIf="edu.expanded" class="px-4 pb-4 cv-border-t-soft">
       <div class="row g-3 mt-1">
         <div class="col-md-4">
-          <label class="form-label">Tipo de formación</label>
-          <select class="form-select" [(ngModel)]="edu.form.tipoFormacion">
+          <label class="form-label" [for]="'edu-tipo-formacion-'+i">Tipo de formación</label>
+          <select [id]="'edu-tipo-formacion-'+i" class="form-select" [(ngModel)]="edu.form.tipoFormacion">
             <option *ngFor="let opt of tipoFormacionOptions" [ngValue]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label">
+          <label class="form-label" [for]="'edu-titulo-'+i">
             {{ etiquetaTitulo(edu) }} <span class="text-danger">*</span>
           </label>
-          <input type="text" class="form-control" [(ngModel)]="edu.form.titulo"
+          <input [id]="'edu-titulo-'+i" type="text" class="form-control" [(ngModel)]="edu.form.titulo"
                  [placeholder]="placeholderTitulo(edu)">
         </div>
         <div class="col-md-4">
-          <label class="form-label">
+          <label class="form-label" [for]="'edu-institucion-'+i">
             {{ etiquetaInstitucion(edu) }} <span class="text-danger">*</span>
           </label>
-          <input type="text" class="form-control" [(ngModel)]="edu.form.institucion"
+          <input [id]="'edu-institucion-'+i" type="text" class="form-control" [(ngModel)]="edu.form.institucion"
                  [placeholder]="placeholderInstitucion(edu)">
         </div>
         <div class="col-md-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label">Área de estudio</label>
-          <input type="text" class="form-control" [(ngModel)]="edu.form.area" maxlength="300"
+          <label class="form-label" [for]="'edu-area-'+i">Área de estudio</label>
+          <input [id]="'edu-area-'+i" type="text" class="form-control" [(ngModel)]="edu.form.area" maxlength="300"
                  placeholder="Ej: Ingeniería de Software">
         </div>
         <div class="col-md-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label">Duración (horas)</label>
-          <input type="number" class="form-control" min="0" [(ngModel)]="edu.form.duracionHoras"
+          <label class="form-label" [for]="'edu-duracion-horas-'+i">Duración (horas)</label>
+          <input [id]="'edu-duracion-horas-'+i" type="number" class="form-control" min="0" [(ngModel)]="edu.form.duracionHoras"
                  placeholder="Opcional">
         </div>
         <div class="col-md-6 col-lg-2">
-          <label class="form-label">{{ etiquetaFechaInicio(edu) }}</label>
-          <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaInicio">
+          <label class="form-label" [for]="'edu-fecha-inicio-'+i">{{ etiquetaFechaInicio(edu) }}</label>
+          <input [id]="'edu-fecha-inicio-'+i" type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaInicio">
         </div>
         <div class="col-md-6 col-lg-2" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label">Fecha fin</label>
-          <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaFin">
+          <label class="form-label" [for]="'edu-fecha-fin-'+i">Fecha fin</label>
+          <input [id]="'edu-fecha-fin-'+i" type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaFin">
         </div>
         <div class="col-md-6 col-lg-2" *ngIf="esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label">Vigencia hasta</label>
-          <input type="date" class="form-control" [(ngModel)]="edu.form.fechaVigencia">
+          <label class="form-label" [for]="'edu-fecha-vigencia-'+i">Vigencia hasta</label>
+          <input [id]="'edu-fecha-vigencia-'+i" type="date" class="form-control" [(ngModel)]="edu.form.fechaVigencia">
         </div>
         <div class="col-md-6 col-lg-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label">Soporte / diploma</label>
-          <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
+          <label class="form-label" [for]="'edu-soporte-'+i">Soporte / diploma</label>
+          <input [id]="'edu-soporte-'+i" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
                  [title]="hintAdjuntoSoporte">
           <small class="text-muted">{{ notaAdjuntoSoporte }}</small>
         </div>
         <div class="col-md-6 col-lg-4" *ngIf="esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label">Archivo del certificado</label>
-          <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
+          <label class="form-label" [for]="'edu-soporte-'+i">Archivo del certificado</label>
+          <input [id]="'edu-soporte-'+i" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
                  [title]="hintAdjuntoSoporte">
           <small class="text-muted">{{ notaAdjuntoSoporte }}</small>
         </div>
         <div class="col-12">
-          <label class="form-label">Descripción adicional</label>
-          <textarea class="form-control" rows="2" [(ngModel)]="edu.form.descripcion"
+          <label class="form-label" [for]="'edu-descripcion-'+i">Descripción adicional</label>
+          <textarea [id]="'edu-descripcion-'+i" class="form-control" rows="2" [(ngModel)]="edu.form.descripcion"
                     placeholder="Información adicional sobre tu formación…"></textarea>
         </div>
       </div>

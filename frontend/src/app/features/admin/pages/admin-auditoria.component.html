@@ -43,7 +43,9 @@
       <div class="seccion-titulo mb-0">Eventos de administración</div>
       <div class="d-flex flex-wrap align-items-center gap-2">
         <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+          <label class="visually-hidden" for="admin-auditoria-filtro-accion">Filtrar por acción</label>
           <select
+            id="admin-auditoria-filtro-accion"
             class="form-select form-select-sm admin-filter-select"
             [(ngModel)]="filtroAccionAdmin"
             [ngModelOptions]="{ standalone: true }"
@@ -52,7 +54,9 @@
             <option *ngFor="let o of opcionesAccionAdmin" [ngValue]="o.codigo">{{ o.etiqueta }}</option>
           </select>
           <div class="admin-search-with-clear">
+            <label class="visually-hidden" for="admin-auditoria-busqueda">Buscar en auditoría de administración</label>
             <input
+              id="admin-auditoria-busqueda"
               type="text"
               class="form-control form-control-sm admin-search-input"
               placeholder="Buscar actor, entidad, detalle…"
@@ -159,7 +163,9 @@
       <div class="seccion-titulo mb-0">Eventos de edición de CV</div>
       <div class="d-flex flex-wrap align-items-center gap-2">
         <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+          <label class="visually-hidden" for="admin-auditoria-cv-filtro-accion">Filtrar por acción</label>
           <select
+            id="admin-auditoria-cv-filtro-accion"
             class="form-select form-select-sm admin-filter-select"
             [(ngModel)]="filtroAccionCv"
             [ngModelOptions]="{ standalone: true }"
@@ -168,7 +174,9 @@
             <option *ngFor="let o of opcionesAccionCv" [ngValue]="o.codigo">{{ o.etiqueta }}</option>
           </select>
           <div class="admin-search-with-clear">
+            <label class="visually-hidden" for="admin-auditoria-cv-busqueda">Buscar en auditoría de CV</label>
             <input
+              id="admin-auditoria-cv-busqueda"
               type="text"
               class="form-control form-control-sm admin-search-input"
               placeholder="Buscar actor, propietario, URL, detalle…"
@@ -270,7 +278,7 @@
 </div>
 
 <ng-container *ngIf="modalMantenimientoAdmin">
-  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAdmin()" aria-hidden="true"></div>
+  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAdmin()" (keydown)="cerrarModalMantenimientoAdmin()" aria-hidden="true"></div>
   <div
     id="modalMantenimientoAuditoriaAdmin"
     class="modal show d-block portal-modal__root"
@@ -278,10 +286,11 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="modalMantenimientoAuditoriaAdminLabel"
-    (click)="cerrarModalMantenimientoAdminSiBackdrop($event)">
+    (click)="cerrarModalMantenimientoAdminSiBackdrop($event)"
+    (keydown)="cerrarModalMantenimientoAdminSiBackdrop($event)">
     <div
       class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog portal-modal__dialog--500"
-      (click)="$event.stopPropagation()">
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-content portal-modal__panel">
         <div class="modal-header portal-modal__header">
           <div class="portal-modal__title-row">
@@ -307,8 +316,9 @@
         <div class="modal-body portal-modal__body">
           <div class="row g-3 mb-3">
             <div class="col-6">
-              <label class="form-label small mb-0">Año</label>
+              <label class="form-label small mb-0" for="admin-auditoria-purge-anio">Año</label>
               <select
+                id="admin-auditoria-purge-anio"
                 class="form-select form-select-sm mb-2"
                 [(ngModel)]="anioPurgeAdmin"
                 [ngModelOptions]="{ standalone: true }">
@@ -323,8 +333,9 @@
               </button>
             </div>
             <div class="col-6">
-              <label class="form-label small mb-0">Mes</label>
+              <label class="form-label small mb-0" for="admin-auditoria-purge-mes">Mes</label>
               <select
+                id="admin-auditoria-purge-mes"
                 class="form-select form-select-sm mb-2"
                 [(ngModel)]="mesPurgeAdmin"
                 [ngModelOptions]="{ standalone: true }">
@@ -340,9 +351,10 @@
             </div>
           </div>
           <hr class="my-2" />
-          <label class="form-label small mb-1">Confirmación para vaciar tabla</label>
+          <label class="form-label small mb-1" for="admin-auditoria-purge-confirm">Confirmación para vaciar tabla</label>
           <div class="admin-search-with-clear mb-2">
             <input
+              id="admin-auditoria-purge-confirm"
               type="text"
               class="form-control form-control-sm admin-search-input"
               [(ngModel)]="confirmVaciarAdmin"
@@ -376,7 +388,7 @@
 </ng-container>
 
 <ng-container *ngIf="modalMantenimientoCv">
-  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoCv()" aria-hidden="true"></div>
+  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoCv()" (keydown)="cerrarModalMantenimientoCv()" aria-hidden="true"></div>
   <div
     id="modalMantenimientoAuditoriaCv"
     class="modal show d-block portal-modal__root"
@@ -384,10 +396,11 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="modalMantenimientoAuditoriaCvLabel"
-    (click)="cerrarModalMantenimientoCvSiBackdrop($event)">
+    (click)="cerrarModalMantenimientoCvSiBackdrop($event)"
+    (keydown)="cerrarModalMantenimientoCvSiBackdrop($event)">
     <div
       class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog portal-modal__dialog--500"
-      (click)="$event.stopPropagation()">
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
       <div class="modal-content portal-modal__panel">
         <div class="modal-header portal-modal__header">
           <div class="portal-modal__title-row">
@@ -413,8 +426,9 @@
         <div class="modal-body portal-modal__body">
           <div class="row g-3 mb-3">
             <div class="col-6">
-              <label class="form-label small mb-0">Año</label>
+              <label class="form-label small mb-0" for="admin-auditoria-cv-purge-anio">Año</label>
               <select
+                id="admin-auditoria-cv-purge-anio"
                 class="form-select form-select-sm mb-2"
                 [(ngModel)]="anioPurgeCv"
                 [ngModelOptions]="{ standalone: true }">
@@ -429,8 +443,9 @@
               </button>
             </div>
             <div class="col-6">
-              <label class="form-label small mb-0">Mes</label>
+              <label class="form-label small mb-0" for="admin-auditoria-cv-purge-mes">Mes</label>
               <select
+                id="admin-auditoria-cv-purge-mes"
                 class="form-select form-select-sm mb-2"
                 [(ngModel)]="mesPurgeCv"
                 [ngModelOptions]="{ standalone: true }">
@@ -446,9 +461,10 @@
             </div>
           </div>
           <hr class="my-2" />
-          <label class="form-label small mb-1">Confirmación para vaciar tabla</label>
+          <label class="form-label small mb-1" for="admin-auditoria-cv-purge-confirm">Confirmación para vaciar tabla</label>
           <div class="admin-search-with-clear mb-2">
             <input
+              id="admin-auditoria-cv-purge-confirm"
               type="text"
               class="form-control form-control-sm admin-search-input"
               [(ngModel)]="confirmVaciarCv"

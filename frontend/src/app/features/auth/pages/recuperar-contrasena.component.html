@@ -18,7 +18,8 @@
 
       <form *ngIf="!sent" (ngSubmit)="onSubmit()">
         <div class="input-group mb-4">
-          <input type="email" class="form-control"
+          <label class="visually-hidden" for="recuperar-email">Correo electrónico</label>
+          <input id="recuperar-email" type="email" class="form-control"
             placeholder="Correo electrónico"
             [(ngModel)]="email" name="email" required autocomplete="email">
           <button
