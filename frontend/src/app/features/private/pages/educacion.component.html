@@ -1,0 +1,137 @@
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h4><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Formación Académica</h4>
+    <p class="text-muted small mb-0">Registra títulos, certificaciones y estudios; elige el tipo en cada tarjeta. Cada registro se guarda por separado.</p>
+  </div>
+  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+    <i class="bi bi-plus-circle me-1"></i>Agregar formación
+  </button>
+</div>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+</div>
+
+<div *ngIf="!loading && formaciones.length === 0" class="text-center py-5 text-muted">
+  <i class="bi bi-mortarboard display-5"></i>
+  <p class="mt-3">No tienes registros de formación. Agrega el primero.</p>
+</div>
+
+<div *ngFor="let edu of formaciones; let i = index; trackBy: trackByFormacion">
+  <div class="edu-formacion-card"
+       [class.edu-formacion-card--nuevo]="edu.formacionId === 0">
+    <div class="p-4 d-flex align-items-center gap-3" (click)="onHeaderClick(edu, $event)">
+      <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 cv-icon-box"
+           [style.background]="iconoBg(tipoParaCabecera(edu))"
+           [style.color]="iconoColor(tipoParaCabecera(edu))">
+        <i class="bi" [ngClass]="icono(tipoParaCabecera(edu))"></i>
+      </div>
+      <div class="flex-grow-1 min-w-0">
+        <div class="fw-bold cv-accordion-title cv-cursor-pointer">{{ tituloCabecera(edu) }}</div>
+        <div class="cv-accordion-sub-primary">{{ subtituloCabecera(edu) }}</div>
+      </div>
+      <span class="text-muted small me-2 d-none d-sm-inline flex-shrink-0 text-nowrap"
+            *ngIf="rangoFechasCabecera(edu) as rango">{{ rango }}</span>
+      <span class="badge rounded-pill flex-shrink-0"
+            [class.bg-primary-subtle]="edu.formacionId === 0"
+            [class.text-primary]="edu.formacionId === 0"
+            [class.cv-badge-neutral]="edu.formacionId !== 0">
+        {{ edu.formacionId === 0 ? 'Nueva' : labelTipo(tipoParaCabecera(edu)) }}
+      </span>
+      <div *ngIf="edu.formacionId !== 0" class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()">
+        <span class="profile-toggle-label">Mostrar en Mi CV</span>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" role="switch"
+                 [id]="'edu-hdr-cv-'+i"
+                 [(ngModel)]="edu.form.mostrarEnCv"
+                 (ngModelChange)="onMostrarEnCvChange(edu, $event)"
+                 [disabled]="guardando || guardandoVisibilidadFormacionId === edu.formacionId">
+        </div>
+      </div>
+      <i class="bi ms-2 cv-chevron-muted flex-shrink-0" [class.bi-chevron-down]="!edu.expanded"
+         [class.bi-chevron-up]="edu.expanded" aria-hidden="true"></i>
+    </div>
+
+    <div *ngIf="edu.expanded" class="px-4 pb-4 cv-border-t-soft">
+      <div class="row g-3 mt-1">
+        <div class="col-md-4">
+          <label class="form-label">Tipo de formación</label>
+          <select class="form-select" [(ngModel)]="edu.form.tipoFormacion">
+            <option *ngFor="let opt of tipoFormacionOptions" [ngValue]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">
+            {{ etiquetaTitulo(edu) }} <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-control" [(ngModel)]="edu.form.titulo"
+                 [placeholder]="placeholderTitulo(edu)">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">
+            {{ etiquetaInstitucion(edu) }} <span class="text-danger">*</span>
+          </label>
+          <input type="text" class="form-control" [(ngModel)]="edu.form.institucion"
+                 [placeholder]="placeholderInstitucion(edu)">
+        </div>
+        <div class="col-md-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
+          <label class="form-label">Área de estudio</label>
+          <input type="text" class="form-control" [(ngModel)]="edu.form.area" maxlength="300"
+                 placeholder="Ej: Ingeniería de Software">
+        </div>
+        <div class="col-md-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
+          <label class="form-label">Duración (horas)</label>
+          <input type="number" class="form-control" min="0" [(ngModel)]="edu.form.duracionHoras"
+                 placeholder="Opcional">
+        </div>
+        <div class="col-md-6 col-lg-2">
+          <label class="form-label">{{ etiquetaFechaInicio(edu) }}</label>
+          <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaInicio">
+        </div>
+        <div class="col-md-6 col-lg-2" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
+          <label class="form-label">Fecha fin</label>
+          <input type="date" class="form-control" [max]="todayDate" [(ngModel)]="edu.form.fechaFin">
+        </div>
+        <div class="col-md-6 col-lg-2" *ngIf="esCertificacion(edu.form.tipoFormacion)">
+          <label class="form-label">Vigencia hasta</label>
+          <input type="date" class="form-control" [(ngModel)]="edu.form.fechaVigencia">
+        </div>
+        <div class="col-md-6 col-lg-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
+          <label class="form-label">Soporte / diploma</label>
+          <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
+                 [title]="hintAdjuntoSoporte">
+          <small class="text-muted">{{ notaAdjuntoSoporte }}</small>
+        </div>
+        <div class="col-md-6 col-lg-4" *ngIf="esCertificacion(edu.form.tipoFormacion)">
+          <label class="form-label">Archivo del certificado</label>
+          <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
+                 [title]="hintAdjuntoSoporte">
+          <small class="text-muted">{{ notaAdjuntoSoporte }}</small>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descripción adicional</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="edu.form.descripcion"
+                    placeholder="Información adicional sobre tu formación…"></textarea>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3 justify-content-end">
+        <button *ngIf="edu.formacionId === 0" type="button" class="btn btn-outline-secondary btn-sm"
+                (click)="cancelar(edu)">
+          Cancelar
+        </button>
+        <button *ngIf="edu.formacionId !== 0" type="button" class="btn btn-outline-danger btn-sm"
+                (click)="eliminar(edu)">
+          <i class="bi bi-trash3 me-1"></i>Eliminar
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" (click)="guardar(edu)"
+                [disabled]="guardando || (edu.formacionId !== 0 && guardandoVisibilidadFormacionId === edu.formacionId)">
+          <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!guardando" class="bi bi-floppy-fill me-1"></i>Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

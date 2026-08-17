@@ -1,0 +1,153 @@
+<div class="public-buscar-cvs">
+  <section
+    class="py-4 cv-section-toolbar"
+    aria-label="Filtros de búsqueda de CVs públicos">
+    <div class="container">
+      <div class="bg-white p-4 rounded-3 shadow-sm">
+        <div class="row align-items-end g-3">
+          <div class="col-12 col-md-5">
+            <label class="form-label small text-muted mb-1" for="buscar-cvs-q">
+              Palabra clave
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted" aria-hidden="true"></i>
+              </span>
+              <input
+                id="buscar-cvs-q"
+                type="search"
+                class="form-control border-start-0 ps-0 cv-buscar-input-search"
+                placeholder="Nombre, cargo, habilidad…"
+                autocomplete="off"
+                [(ngModel)]="busqueda"
+                (input)="onFiltroInput('q')"
+                (keyup.enter)="buscar()">
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label small text-muted mb-1" for="buscar-cvs-ciudad">
+              Ciudad
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-geo-alt text-muted" aria-hidden="true"></i>
+              </span>
+              <input
+                id="buscar-cvs-ciudad"
+                type="search"
+                class="form-control border-start-0 ps-0 cv-buscar-input-search"
+                placeholder="Ej. Bogotá, Medellín…"
+                autocomplete="off"
+                [(ngModel)]="ciudad"
+                (input)="onFiltroInput('ciudad')"
+                (keyup.enter)="buscar()">
+            </div>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label small text-muted mb-1 d-none d-md-block">&nbsp;</label>
+            <button type="button" class="btn btn-primary w-100" (click)="buscar()">
+              <i class="bi bi-search me-2" aria-hidden="true"></i>Buscar
+            </button>
+          </div>
+        </div>
+        <div class="mt-3 text-muted small" role="status" aria-live="polite">
+          <ng-container *ngIf="!loading">{{ resumenResultados }}</ng-container>
+          <ng-container *ngIf="loading">Buscando…</ng-container>
+        </div>
+        <div *ngIf="usandoSnapshot" class="mt-2 small public-data-status public-data-status--snapshot" role="status" aria-live="polite">
+          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+          Mostrando datos temporales del snapshot.
+          <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)">
+            Última actualización: {{ snapshotActualizadoEn | date:'medium' }}.
+          </span>
+        </div>
+        <div
+          *ngIf="!loading && !usandoSnapshot"
+          class="mt-2 small public-data-status public-data-status--live"
+          role="status">
+          <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>
+          Datos en directo desde el servidor (base de datos).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5 cv-section-list" aria-label="Resultados">
+    <div class="container">
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando resultados…</span>
+        </div>
+      </div>
+
+      <div *ngIf="!loading" class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col" *ngFor="let cv of cvs">
+          <article class="card card-cv h-100">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div *ngIf="cv.fotoUrl" class="flex-shrink-0">
+                  <img
+                    [src]="cv.fotoUrl"
+                    class="rounded-circle cv-thumb"
+                    [alt]="altFoto(cv.nombreCompleto)">
+                </div>
+                <div *ngIf="!cv.fotoUrl" class="avatar-circle {{ colorClass(cv.curriculumId) }} flex-shrink-0" aria-hidden="true">
+                  {{ iniciales(cv.nombreCompleto) }}
+                </div>
+                <div>
+                  <div class="cv-name fw-bold cv-name-strong">{{ cv.nombreCompleto }}</div>
+                  <div class="cv-title text-muted small">{{ cv.nombrePerfil }}</div>
+                  <div *ngIf="cv.ciudad || cv.pais" class="text-muted small">
+                    <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>{{ cv.ciudad }}<ng-container *ngIf="cv.ciudad && cv.pais">, </ng-container>{{ cv.pais }}
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge-tech" *ngFor="let tech of cv.habilidades | slice:0:5">{{ tech }}</span>
+              </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+              <a
+                [routerLink]="['/cv', cv.urlPublica]"
+                class="btn btn-outline-primary btn-sm w-100">
+                Ver CV
+                <span class="ms-1" aria-hidden="true">→</span>
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-12 text-center py-5" *ngIf="cvs.length === 0">
+          <i class="bi bi-search display-4 text-muted" aria-hidden="true"></i>
+          <p class="text-muted mt-3 mb-3">No hay CVs publicados que coincidan con estos filtros.</p>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="limpiarFiltro()">
+            Quitar filtros y ver todo el directorio
+          </button>
+        </div>
+      </div>
+
+      <nav
+        *ngIf="!loading && totalPages > 1"
+        class="d-flex justify-content-center align-items-center mt-4 gap-2"
+        aria-label="Paginación de resultados">
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          [disabled]="page === 1"
+          (click)="cambiarPagina(page - 1)"
+          aria-label="Página anterior">
+          <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <span class="px-2 small text-muted">{{ page }} / {{ totalPages }}</span>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          [disabled]="page === totalPages"
+          (click)="cambiarPagina(page + 1)"
+          aria-label="Página siguiente">
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+      </nav>
+    </div>
+  </section>
+</div>

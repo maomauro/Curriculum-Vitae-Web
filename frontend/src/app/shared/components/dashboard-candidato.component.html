@@ -1,0 +1,106 @@
+<div class="cv-page-header-card">
+  <div class="cv-ph-icon" aria-hidden="true">
+    <i class="bi bi-bar-chart-steps"></i>
+  </div>
+  <div>
+    <h5 class="fw-bold mb-0">Dashboard de Hoja de Vida</h5>
+    <p class="text-muted mb-0 cv-analytics-lead">
+      Visualiza y analiza la información personal, profesional y académica.<span *ngIf="completitud > 0">
+        · Completitud aproximada {{ completitud }}%.</span>
+    </p>
+  </div>
+</div>
+
+<div class="cv-metricas-grid mb-4" *ngIf="mostrarMetricas && metricas.length">
+  <div *ngFor="let m of metricas" class="min-w-0">
+    <div class="cv-dash-metric-card" [style.background]="m.gradiente">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="min-w-0 pe-2">
+          <div class="mc-label">{{ m.label }}</div>
+          <div class="mc-value">{{ m.valor }}</div>
+          <div class="mc-sub">{{ m.sub }}</div>
+        </div>
+        <i class="bi mc-icon flex-shrink-0" [ngClass]="m.icono"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4" *ngIf="mostrarGraficas">
+  <div class="col-lg-6">
+    <div class="cv-chart-card">
+      <div class="cv-ct-title">Experiencia laboral por empresa</div>
+      <div class="cv-ct-subtitle">Duración aproximada en meses por empleador.</div>
+      <p *ngIf="!expEmpresas.length" class="text-muted small mb-0">No hay experiencias con fechas para graficar.</p>
+      <div
+        *ngIf="expEmpresas.length"
+        class="cv-chart-canvas-h"
+        [style.height.px]="chartExpHeightPx">
+        <canvas #cvDashChartExp></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="cv-chart-card">
+      <div class="cv-ct-title">Educación por tipo de formación</div>
+      <div class="cv-ct-subtitle">Cantidad de registros académicos agrupados por categoría.</div>
+      <p *ngIf="!educacionTipoSeries.labels.length" class="text-muted small mb-0">No hay formaciones registradas para graficar.</p>
+      <div *ngIf="educacionTipoSeries.labels.length" class="cv-chart-canvas-timeline">
+        <canvas #cvDashChartTimeline></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-5" *ngIf="mostrarGraficas">
+  <div class="col-lg-6">
+    <div class="cv-chart-card">
+      <div class="cv-ct-title">Participación por tiempo (proyectos)</div>
+      <div class="cv-ct-subtitle">
+        Porcentaje de los meses totales dedicados a cada proyecto (solo proyectos con duración declarada).
+      </div>
+      <p *ngIf="proyectosRawCount === 0" class="text-muted small mb-0">No hay proyectos en este CV.</p>
+      <p *ngIf="proyectosRawCount > 0 && !proyectosChart.length" class="text-muted small mb-0">
+        Los proyectos no tienen duración en meses; no se puede calcular la participación.
+      </p>
+      <div *ngIf="proyectosChart.length" class="cv-chart-canvas-dona" [style.height.px]="chartProyectosHeightPx">
+        <canvas #cvDashChartProyectos></canvas>
+      </div>
+      <div *ngIf="proyectosChart.length" class="mt-3 d-grid gap-2">
+        <div
+          *ngFor="let proyecto of proyectosChart; let i = index"
+          class="d-flex align-items-start gap-2 small min-w-0">
+          <span
+            class="rounded-circle flex-shrink-0 mt-1"
+            [style.background-color]="getProyectoColor(i)"
+            style="width:12px;height:12px;"></span>
+          <div class="min-w-0 flex-grow-1">
+            <div class="fw-semibold text-break">{{ proyecto.nombreLargo }}</div>
+            <div class="text-muted">{{ proyecto.porcentajeTiempo }}% · {{ proyecto.meses }} meses</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="cv-chart-card">
+      <div class="cv-ct-title">Mapa estratégico de capacidades</div>
+      <div class="cv-ct-subtitle">Cada grupo combina cobertura total y madurez promedio declarada.</div>
+      <p *ngIf="!habilidadStrategicPoints.length" class="text-muted small mb-0">No hay niveles categorizados para mapear.</p>
+      <div *ngIf="habilidadStrategicPoints.length" class="cv-chart-canvas-radar" [style.height.px]="chartHabilidadesHeightPx">
+        <canvas #cvDashChartRadar></canvas>
+      </div>
+      <div *ngIf="habilidadStrategicPoints.length" class="mt-3 row g-2">
+        <div *ngFor="let p of habilidadStrategicPointsVisible" class="col-12 col-xl-6">
+          <div class="d-flex justify-content-between gap-3 small border-top pt-2">
+            <div class="fw-semibold text-break">{{ p.grupo }}</div>
+            <div class="text-muted text-end text-nowrap">{{ p.total }} hab. · {{ p.madurezPromedio }}/4</div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="habilidadStrategicPoints.length > habilidadStrategicMaxRows" class="small text-muted mt-2">
+        Mostrando {{ habilidadStrategicMaxRows }} de {{ habilidadStrategicPoints.length }} grupos.
+      </div>
+    </div>
+  </div>
+</div>

@@ -6,9 +6,7 @@ import { CvDetalleVistaContext } from '../../../shared/contexts/cv-detalle-vista
 @Component({
   selector: 'app-detalle-cv',
   standalone: false,
-  template: `
-    <app-cv-plantilla-preview *ngIf="vistaPlantilla" [vm]="vistaPlantilla"></app-cv-plantilla-preview>
-  `,
+  templateUrl: './detalle-cv.component.html',
 })
 export class DetalleCvComponent {
   private readonly shellCtx = inject(CvDetalleVistaContext);

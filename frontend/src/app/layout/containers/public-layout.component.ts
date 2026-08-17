@@ -3,13 +3,7 @@ import { Component, OnInit, Renderer2 } from '@angular/core';
 @Component({
   selector: 'app-public-layout',
   standalone: false,
-  template: `
-    <app-navbar-public></app-navbar-public>
-    <main>
-      <router-outlet></router-outlet>
-    </main>
-    <app-footer-public></app-footer-public>
-  `
+  templateUrl: './public-layout.component.html',
 })
 export class PublicLayoutComponent implements OnInit {
   constructor(private renderer: Renderer2) {}
