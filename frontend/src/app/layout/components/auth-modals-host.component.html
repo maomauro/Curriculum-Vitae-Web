@@ -1,12 +1,13 @@
 <ng-container *ngIf="kind() !== 'none'">
-  <div class="portal-modal__backdrop" aria-hidden="true" (click)="cerrar()"></div>
+  <div class="portal-modal__backdrop" aria-hidden="true" (click)="cerrar()" (keydown)="cerrar()"></div>
   <div
     class="modal show d-block portal-modal__root"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
     [attr.aria-labelledby]="tituloId"
-    (click)="cerrarSiBackdrop($event)">
+    (click)="cerrarSiBackdrop($event)"
+    (keydown)="cerrarSiBackdrop($event)">
     <div
       class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog"
       [class.portal-modal__dialog--wide]="kind() === 'register'">

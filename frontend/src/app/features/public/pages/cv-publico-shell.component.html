@@ -78,7 +78,7 @@
   </div>
 
   <ng-container *ngIf="ctx.cv && modalContactoAbierto">
-    <div class="portal-modal__backdrop" (click)="cerrarModalContacto()" aria-hidden="true"></div>
+    <div class="portal-modal__backdrop" (click)="cerrarModalContacto()" (keydown)="cerrarModalContacto()" aria-hidden="true"></div>
     <div
       id="modalContactoPublico"
       class="modal show d-block portal-modal__root"
@@ -86,10 +86,11 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="modalContactoPublicoLabel"
-      (click)="cerrarModalSiBackdrop($event)">
+      (click)="cerrarModalSiBackdrop($event)"
+      (keydown)="cerrarModalSiBackdrop($event)">
       <div
         class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog portal-modal__dialog--xl"
-        (click)="$event.stopPropagation()">
+        (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <div class="modal-content portal-modal__panel">
           <div class="modal-header portal-modal__header">
             <div class="portal-modal__title-row">
@@ -120,24 +121,24 @@
             <form *ngIf="!contactoEnviado" #contactoForm="ngForm" (ngSubmit)="enviarContacto(contactoForm)">
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label fw-semibold small">Tu nombre <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" [(ngModel)]="contacto.nombre" required
+                  <label class="form-label fw-semibold small" for="shellCtcNombre">Tu nombre <span class="text-danger">*</span></label>
+                  <input id="shellCtcNombre" type="text" class="form-control" [(ngModel)]="contacto.nombre" required
                          name="shellCtcNombre" placeholder="Juan Pérez" autocomplete="name"
                          #shellCtcNombreRef="ngModel"
                          [class.is-invalid]="shellCtcNombreRef.invalid && shellCtcNombreRef.touched">
                   <div class="invalid-feedback">Indica tu nombre.</div>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-semibold small">Tu empresa <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" [(ngModel)]="contacto.empresa" required
+                  <label class="form-label fw-semibold small" for="shellCtcEmpresa">Tu empresa <span class="text-danger">*</span></label>
+                  <input id="shellCtcEmpresa" type="text" class="form-control" [(ngModel)]="contacto.empresa" required
                          name="shellCtcEmpresa" placeholder="Empresa SA" autocomplete="organization"
                          #shellCtcEmpresaRef="ngModel"
                          [class.is-invalid]="shellCtcEmpresaRef.invalid && shellCtcEmpresaRef.touched">
                   <div class="invalid-feedback">Indica tu empresa.</div>
                 </div>
                 <div class="col-12">
-                  <label class="form-label fw-semibold small">Tu correo electrónico <span class="text-danger">*</span></label>
-                  <input type="email" class="form-control" [(ngModel)]="contacto.email" required email
+                  <label class="form-label fw-semibold small" for="shellCtcEmail">Tu correo electrónico <span class="text-danger">*</span></label>
+                  <input id="shellCtcEmail" type="email" class="form-control" [(ngModel)]="contacto.email" required email
                          name="shellCtcEmail" placeholder="tu@empresa.com" autocomplete="email"
                          #shellCtcEmailRef="ngModel"
                          [class.is-invalid]="shellCtcEmailRef.invalid && shellCtcEmailRef.touched">
@@ -149,8 +150,8 @@
                   </div>
                 </div>
                 <div class="col-12">
-                  <label class="form-label fw-semibold small">Motivo de contacto <span class="text-danger">*</span></label>
-                  <select class="form-select" [(ngModel)]="contacto.motivoContacto" name="shellCtcMotivo" required
+                  <label class="form-label fw-semibold small" for="shellCtcMotivo">Motivo de contacto <span class="text-danger">*</span></label>
+                  <select id="shellCtcMotivo" class="form-select" [(ngModel)]="contacto.motivoContacto" name="shellCtcMotivo" required
                           #shellCtcMotivoRef="ngModel"
                           [class.is-invalid]="shellCtcMotivoRef.invalid && shellCtcMotivoRef.touched">
                     <option value="">— Selecciona un motivo —</option>

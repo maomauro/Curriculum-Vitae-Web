@@ -34,34 +34,34 @@
   </div>
   <div class="row g-3">
     <div class="col-md-5">
-      <label class="form-label">Nombre del perfil / Cargo objetivo <span class="text-danger">*</span></label>
-      <input type="text" class="form-control" placeholder="Ej: Scrum Master, Data Analyst…"
+      <label class="form-label" for="perfil-nuevo-nombre">Nombre del perfil / Cargo objetivo <span class="text-danger">*</span></label>
+      <input id="perfil-nuevo-nombre" type="text" class="form-control" placeholder="Ej: Scrum Master, Data Analyst…"
              [(ngModel)]="formNuevo.nombrePerfil">
     </div>
     <div class="col-md-7">
-      <label class="form-label">Descripción / Resumen profesional</label>
-      <textarea class="form-control" rows="3"
+      <label class="form-label" for="perfil-nuevo-descripcion">Descripción / Resumen profesional</label>
+      <textarea id="perfil-nuevo-descripcion" class="form-control" rows="3"
                 placeholder="Escribe un resumen corto de este perfil profesional…"
                 [(ngModel)]="formNuevo.descripcionPerfil"></textarea>
     </div>
     <div class="col-md-3">
-      <label class="form-label">Experiencia en este perfil (años)</label>
-      <input type="number" class="form-control" min="0" step="0.5" placeholder="Ej: 7.5"
+      <label class="form-label" for="perfil-nuevo-experiencia">Experiencia en este perfil (años)</label>
+      <input id="perfil-nuevo-experiencia" type="number" class="form-control" min="0" step="0.5" placeholder="Ej: 7.5"
              [(ngModel)]="formNuevo.experienciaPerfilAnios">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Aspiración salarial (COP)</label>
+      <label class="form-label" for="perfil-nuevo-aspiracion-cop">Aspiración salarial (COP)</label>
       <div class="input-group">
         <span class="input-group-text">$</span>
-        <input type="number" class="form-control" min="0" placeholder="0"
+        <input id="perfil-nuevo-aspiracion-cop" type="number" class="form-control" min="0" placeholder="0"
                [(ngModel)]="formNuevo.aspiracionSalarialPesos">
       </div>
     </div>
     <div class="col-md-3">
-      <label class="form-label">Aspiración salarial (USD)</label>
+      <label class="form-label" for="perfil-nuevo-aspiracion-usd">Aspiración salarial (USD)</label>
       <div class="input-group">
         <span class="input-group-text">$</span>
-        <input type="number" class="form-control" min="0" placeholder="0"
+        <input id="perfil-nuevo-aspiracion-usd" type="number" class="form-control" min="0" placeholder="0"
                [(ngModel)]="formNuevo.aspiracionSalarialDolares">
       </div>
     </div>
@@ -134,23 +134,23 @@
                   [(ngModel)]="p.form.descripcionPerfil"></textarea>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Experiencia en este perfil (años)</label>
-        <input type="number" class="form-control" min="0" step="0.5"
+        <label class="form-label" [attr.for]="'experiencia-anios-' + p.perfilId">Experiencia en este perfil (años)</label>
+        <input type="number" class="form-control" [id]="'experiencia-anios-' + p.perfilId" min="0" step="0.5"
                [(ngModel)]="p.form.experienciaPerfilAnios">
       </div>
       <div class="col-md-3">
-        <label class="form-label">Aspiración salarial (COP)</label>
+        <label class="form-label" [attr.for]="'aspiracion-cop-' + p.perfilId">Aspiración salarial (COP)</label>
         <div class="input-group">
           <span class="input-group-text">$</span>
-          <input type="number" class="form-control" min="0"
+          <input type="number" class="form-control" [id]="'aspiracion-cop-' + p.perfilId" min="0"
                  [(ngModel)]="p.form.aspiracionSalarialPesos">
         </div>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Aspiración salarial (USD)</label>
+        <label class="form-label" [attr.for]="'aspiracion-usd-' + p.perfilId">Aspiración salarial (USD)</label>
         <div class="input-group">
           <span class="input-group-text">$</span>
-          <input type="number" class="form-control" min="0"
+          <input type="number" class="form-control" [id]="'aspiracion-usd-' + p.perfilId" min="0"
                  [(ngModel)]="p.form.aspiracionSalarialDolares">
         </div>
       </div>

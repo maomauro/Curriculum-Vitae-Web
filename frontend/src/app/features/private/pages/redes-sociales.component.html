@@ -29,7 +29,7 @@
 </div>
 
 <!-- Lista (ancho completo como referencias / familiares) -->
-<div *ngFor="let red of redes">
+<div *ngFor="let red of redes; let i = index">
   <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
 
     <!-- Vista normal -->
@@ -59,19 +59,19 @@
     <div *ngIf="red.editando" class="px-4 pb-4 cv-border-t-soft">
       <div class="row g-3 mt-1">
         <div class="col-md-6">
-          <label class="form-label">Red social</label>
-          <select class="form-select" [(ngModel)]="red.form.nombreRed">
+          <label class="form-label" [for]="'red-nombre-'+i">Red social</label>
+          <select [id]="'red-nombre-'+i" class="form-select" [(ngModel)]="red.form.nombreRed">
             <option *ngFor="let op of redesOpciones" [value]="op.nombre">{{ op.nombre }}</option>
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Usuario / Contacto</label>
-          <input type="text" class="form-control" [(ngModel)]="red.form.usuarioContacto"
+          <label class="form-label" [for]="'red-usuario-'+i">Usuario / Contacto</label>
+          <input [id]="'red-usuario-'+i" type="text" class="form-control" [(ngModel)]="red.form.usuarioContacto"
                  placeholder="@usuario">
         </div>
         <div class="col-12">
-          <label class="form-label">URL / Enlace público</label>
-          <input type="url" class="form-control" [(ngModel)]="red.form.linkPublico"
+          <label class="form-label" [for]="'red-link-'+i">URL / Enlace público</label>
+          <input [id]="'red-link-'+i" type="url" class="form-control" [(ngModel)]="red.form.linkPublico"
                  placeholder="https://...">
         </div>
       </div>

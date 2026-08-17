@@ -118,7 +118,7 @@ export class ExperienciaComponent implements OnInit {
     };
   }
 
-  toggleLaborRefHeader(ref: ReferenciaDto, ev: MouseEvent): void {
+  toggleLaborRefHeader(ref: ReferenciaDto, ev: Event): void {
     const el = ev.target as HTMLElement;
     if (el.closest('button')) {
       return;
@@ -176,7 +176,7 @@ export class ExperienciaComponent implements OnInit {
     };
   }
 
-  toggleBorradorHeader(b: BorradorRefLaboral, ev: MouseEvent): void {
+  toggleBorradorHeader(b: BorradorRefLaboral, ev: Event): void {
     const el = ev.target as HTMLElement;
     if (el.closest('button')) {
       return;

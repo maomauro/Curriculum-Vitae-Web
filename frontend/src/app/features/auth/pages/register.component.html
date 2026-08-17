@@ -9,7 +9,8 @@
       <div *ngIf="errorMsg" class="alert alert-danger py-2 mb-3">{{ errorMsg }}</div>
       <form (ngSubmit)="onRegister()">
         <div class="input-group mb-3">
-          <input type="text" class="form-control" placeholder="Nombre completo"
+          <label class="visually-hidden" for="register-name">Nombre completo</label>
+          <input id="register-name" type="text" class="form-control" placeholder="Nombre completo"
             [(ngModel)]="name" name="name" required autocomplete="name">
           <button
             *ngIf="name?.trim()"
@@ -22,7 +23,8 @@
           <div class="input-group-text"><span class="bi bi-person"></span></div>
         </div>
         <div class="input-group mb-3">
-          <input type="email" class="form-control" placeholder="Correo electrónico"
+          <label class="visually-hidden" for="register-email">Correo electrónico</label>
+          <input id="register-email" type="email" class="form-control" placeholder="Correo electrónico"
             [(ngModel)]="email" name="email" required autocomplete="email">
           <button
             *ngIf="email?.trim()"
@@ -35,7 +37,8 @@
           <div class="input-group-text"><span class="bi bi-envelope"></span></div>
         </div>
         <div class="input-group mb-3">
-          <input type="password" class="form-control" placeholder="Contraseña (min. 8 caracteres)"
+          <label class="visually-hidden" for="register-password">Contraseña</label>
+          <input id="register-password" type="password" class="form-control" placeholder="Contraseña (min. 8 caracteres)"
             [(ngModel)]="password" name="password" required minlength="8" autocomplete="new-password">
           <button
             *ngIf="password.length > 0"

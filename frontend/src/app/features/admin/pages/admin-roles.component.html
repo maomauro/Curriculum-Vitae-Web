@@ -25,7 +25,9 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-2 pb-2">
     <div class="seccion-titulo mb-0">Catálogo de roles</div>
     <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+      <label class="visually-hidden" for="admin-roles-filtro">Filtrar por rol</label>
       <select
+        id="admin-roles-filtro"
         class="form-select form-select-sm admin-filter-select"
         [(ngModel)]="filtroRol"
         [ngModelOptions]="{ standalone: true }">
@@ -33,7 +35,9 @@
         <option *ngFor="let r of rolesOrdenados" [ngValue]="r.nombreRol">{{ r.nombreRol }}</option>
       </select>
       <div class="admin-search-with-clear">
+        <label class="visually-hidden" for="admin-roles-busqueda">Buscar en el catálogo de roles</label>
         <input
+          id="admin-roles-busqueda"
           type="text"
           class="form-control form-control-sm admin-search-input"
           placeholder="Buscar rol, descripción…"

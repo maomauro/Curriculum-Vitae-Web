@@ -97,7 +97,7 @@ export class EducacionComponent implements OnInit {
     return edu.formacionId;
   }
 
-  onHeaderClick(edu: FormacionUI, ev: MouseEvent): void {
+  onHeaderClick(edu: FormacionUI, ev: Event): void {
     const el = ev.target as HTMLElement;
     if (el.closest('button')) {
       return;

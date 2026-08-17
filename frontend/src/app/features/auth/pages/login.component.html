@@ -18,7 +18,8 @@
 
       <form (ngSubmit)="onLogin()">
         <div class="input-group mb-3">
-          <input type="email" class="form-control"
+          <label class="visually-hidden" for="login-email">Correo electrónico</label>
+          <input id="login-email" type="email" class="form-control"
             placeholder="Correo electrónico"
             [(ngModel)]="email" name="email" required autocomplete="username">
           <button
@@ -33,7 +34,8 @@
         </div>
 
         <div class="input-group mb-4">
-          <input type="password" class="form-control"
+          <label class="visually-hidden" for="login-password">Contraseña</label>
+          <input id="login-password" type="password" class="form-control"
             placeholder="Contraseña"
             [(ngModel)]="password" name="password" required autocomplete="current-password">
           <button

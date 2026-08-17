@@ -29,12 +29,17 @@
 </div>
 
 <!-- Lista -->
-<div *ngFor="let ref of referencias">
+<div *ngFor="let ref of referencias; let i = index">
   <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
 
     <!-- Cabecera -->
     <div class="p-4 d-flex align-items-center gap-3 cv-cursor-pointer"
-         (click)="ref.expanded = !ref.expanded">
+         role="button"
+         tabindex="0"
+         [attr.aria-expanded]="ref.expanded"
+         (click)="ref.expanded = !ref.expanded"
+         (keydown.enter)="ref.expanded = !ref.expanded"
+         (keydown.space)="$event.preventDefault(); ref.expanded = !ref.expanded">
       <div class="rounded-3 cv-icon-box cv-icon-box--primary">
         <i class="bi bi-person-lines-fill"></i>
       </div>
@@ -54,51 +59,51 @@
       <div class="row g-3 mt-1">
 
         <div class="col-md-4">
-          <label class="form-label">Tipo de referencia</label>
-          <select class="form-select" [disabled]="true">
+          <label class="form-label" [for]="'ref-tipo-'+i">Tipo de referencia</label>
+          <select [id]="'ref-tipo-'+i" class="form-select" [disabled]="true">
             <option>Personal</option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Nombre <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.nombre" autocomplete="name">
+          <label class="form-label" [for]="'ref-nombre-'+i">Nombre <span class="text-danger">*</span></label>
+          <input [id]="'ref-nombre-'+i" type="text" class="form-control" [(ngModel)]="ref.form.nombre" autocomplete="name">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Apellido</label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.apellido">
+          <label class="form-label" [for]="'ref-apellido-'+i">Apellido</label>
+          <input [id]="'ref-apellido-'+i" type="text" class="form-control" [(ngModel)]="ref.form.apellido">
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">Cargo</label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.cargo">
+          <label class="form-label" [for]="'ref-cargo-'+i">Cargo</label>
+          <input [id]="'ref-cargo-'+i" type="text" class="form-control" [(ngModel)]="ref.form.cargo">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Empresa</label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.empresa">
+          <label class="form-label" [for]="'ref-empresa-'+i">Empresa</label>
+          <input [id]="'ref-empresa-'+i" type="text" class="form-control" [(ngModel)]="ref.form.empresa">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Relación</label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.relacion"
+          <label class="form-label" [for]="'ref-relacion-'+i">Relación</label>
+          <input [id]="'ref-relacion-'+i" type="text" class="form-control" [(ngModel)]="ref.form.relacion"
                  placeholder="Ej: Jefe directo, Colega">
         </div>
 
         <div class="col-md-4">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" [(ngModel)]="ref.form.email">
+          <label class="form-label" [for]="'ref-email-'+i">Email</label>
+          <input [id]="'ref-email-'+i" type="email" class="form-control" [(ngModel)]="ref.form.email">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Teléfono</label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.telefono">
+          <label class="form-label" [for]="'ref-telefono-'+i">Teléfono</label>
+          <input [id]="'ref-telefono-'+i" type="text" class="form-control" [(ngModel)]="ref.form.telefono">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Parentesco</label>
-          <input type="text" class="form-control" [(ngModel)]="ref.form.parentesco"
+          <label class="form-label" [for]="'ref-parentesco-'+i">Parentesco</label>
+          <input [id]="'ref-parentesco-'+i" type="text" class="form-control" [(ngModel)]="ref.form.parentesco"
                  placeholder="Solo si aplica">
         </div>
 
         <div class="col-12">
-          <label class="form-label">Observaciones</label>
-          <textarea class="form-control" rows="2" [(ngModel)]="ref.form.observaciones"></textarea>
+          <label class="form-label" [for]="'ref-observaciones-'+i">Observaciones</label>
+          <textarea [id]="'ref-observaciones-'+i" class="form-control" rows="2" [(ngModel)]="ref.form.observaciones"></textarea>
         </div>
 
       </div>
