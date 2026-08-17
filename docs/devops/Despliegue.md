@@ -222,6 +222,11 @@ package-and-deploy:
 | Output location | `dist/portalcv-web/browser` |
 | API location | -- (API separada en Container Apps) |
 
+> **Nota:** `portalcv-web` es el nombre del recurso en Azure, no el hostname publico. Azure asigna
+> un `defaultHostname` aleatorio salvo que se configure un dominio custom. Verificar el valor real con
+> `az staticwebapp show --name portalcv-web --resource-group CV-Mao --query defaultHostname -o tsv`
+> (URL vigente al 2026-08-17: `https://salmon-island-04cb08d0f.7.azurestaticapps.net`).
+
 > Estado actual: el frontend usa rutas relativas `/api` en los servicios activos.
 > Si se adopta una URL absoluta por entorno (`environment.prod.ts`), debe implementarse y versionarse
 > explícitamente en la rama correspondiente antes de usar esta estrategia en producción.
@@ -458,7 +463,7 @@ GITHUB
 
 VALIDACION
 [ ] https://portalcv-api.azurecontainerapps.io/swagger accesible
-[ ] https://portalcv-web.azurestaticapps.net carga la app Angular
+[ ] https://salmon-island-04cb08d0f.7.azurestaticapps.net carga la app Angular (defaultHostname real del recurso `portalcv-web`)
 [ ] Frontend puede hacer login contra la API
 [ ] API conecta correctamente a Azure SQL
 ```
