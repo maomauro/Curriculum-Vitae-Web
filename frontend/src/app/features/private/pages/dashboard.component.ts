@@ -11,23 +11,7 @@ import { CvDetalleVistaContext } from '../../../shared/contexts/cv-detalle-vista
   selector: 'app-dashboard',
   standalone: false,
   providers: [CvDetalleVistaContext],
-  template: `
-    <div *ngIf="loadingCvAnaliticas" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Cargando dashboard…</span>
-      </div>
-      <p class="text-muted small mt-3 mb-0">Cargando analíticas de tu hoja de vida…</p>
-    </div>
-
-    <div *ngIf="!loadingCvAnaliticas && cvAnaliticasError" class="container py-5 text-center">
-      <i class="bi bi-wifi-off display-4 text-muted"></i>
-      <p class="text-muted mt-3">No pudimos cargar el dashboard. Intenta actualizar la página.</p>
-    </div>
-
-    <div class="cv-dash-analytics-host" *ngIf="!loadingCvAnaliticas && !cvAnaliticasError && cvAnaliticasListo">
-      <app-dashboard-candidato></app-dashboard-candidato>
-    </div>
-  `,
+  templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit {
   private readonly cvAnaliticasDetalle = inject(CvAnaliticasDetalleService);

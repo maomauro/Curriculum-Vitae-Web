@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit, Renderer2 } from '@angular/core';
 @Component({
   selector: 'app-auth-layout',
   standalone: false,
-  template: `<router-outlet></router-outlet>`
+  templateUrl: './auth-layout.component.html',
 })
 export class AuthLayoutComponent implements OnInit, OnDestroy {
   constructor(private renderer: Renderer2) {}

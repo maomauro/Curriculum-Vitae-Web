@@ -1,0 +1,74 @@
+<div class="page-header cv-mi-screen-only">
+  <div>
+    <h4><i class="bi bi-file-earmark-person-fill me-2 text-primary"></i>Mi CV</h4>
+    <span class="text-muted small">
+      Vista previa en ancho tamaño carta (8,5"); un solo bloque con scroll. Al imprimir o guardar PDF el
+      navegador pagina automáticamente.
+    </span>
+    <div *ngIf="!loading" class="mt-2 d-flex flex-wrap align-items-center gap-2 cv-mi-plantilla-bar">
+      <span class="small text-muted mb-0 d-inline-flex align-items-center text-nowrap">
+        <i class="bi bi-palette2 me-1 text-primary" aria-hidden="true"></i>
+        Plantilla
+      </span>
+      <div
+        class="d-inline-flex align-items-center cv-mi-plantilla-dots"
+        role="group"
+        aria-label="Elegir plantilla por color">
+        <button
+          *ngFor="let t of plantillas"
+          type="button"
+          class="cv-mi-plantilla-dot"
+          [class.cv-mi-plantilla-dot--active]="t.codigo === plantillaCodigo"
+          [style.background-color]="t.color"
+          [disabled]="savingPlantilla"
+          [attr.aria-pressed]="t.codigo === plantillaCodigo"
+          [attr.title]="t.nombre + ' — ' + t.resumen"
+          (click)="onPlantillaSelect(t.codigo)">
+          <span class="visually-hidden">{{ t.nombre }}</span>
+        </button>
+      </div>
+      <span
+        class="small cv-mi-plantilla-nombre text-truncate"
+        [style.borderLeftColor]="plantillaColor"
+        [attr.title]="plantillaNombre + ' — ' + plantillaResumen">
+        {{ plantillaNombre }}
+      </span>
+      <span *ngIf="savingPlantilla" class="small text-muted d-inline-flex align-items-center">
+        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        Guardando…
+      </span>
+      <span *ngIf="hayCambiosPlantilla && !savingPlantilla" class="small text-warning-emphasis">
+        Cambios sin guardar
+      </span>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="!hayCambiosPlantilla || savingPlantilla"
+        (click)="guardarPlantilla()">
+        Guardar plantilla
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="!hayCambiosPlantilla || savingPlantilla"
+        (click)="revertirPlantilla()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" (click)="imprimir()">
+      <i class="bi bi-printer-fill me-1"></i>Imprimir / PDF
+    </button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+</div>
+
+<div *ngIf="!loading">
+  <app-cv-plantilla-preview [vm]="previewVm" [vis]="this"></app-cv-plantilla-preview>
+</div>
