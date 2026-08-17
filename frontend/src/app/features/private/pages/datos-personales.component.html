@@ -1,0 +1,361 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h4><i class="bi bi-person-lines-fill me-2 text-primary"></i>Datos Personales</h4>
+    <span class="text-muted small">Identificación, contacto, residencia, seguridad social, familiares, redes y referencias</span>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading">
+
+<!-- Grupo: identificación, básicos, contacto, residencia, seguridad + guardar -->
+<section class="seccion-card datos-personales-nucleo mb-4"
+         aria-label="Identificación, datos básicos, contacto, residencia y seguridad social">
+
+<!-- 1. Información de Identificación -->
+<div class="datos-personales-acordeon-bloque">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('identificacion')"
+          [attr.aria-expanded]="isSectionOpen('identificacion')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-card-text"></i>Información de Identificación</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('identificacion')"
+         [class.bi-chevron-right]="!isSectionOpen('identificacion')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('identificacion')">Documentos de identidad, pasaporte y libreta militar</div>
+  <div class="row g-3 mt-1" *ngIf="isSectionOpen('identificacion')">
+    <div class="col-md-4">
+      <label class="form-label" for="dp-tipo-identificacion">Tipo de identificación</label>
+      <select id="dp-tipo-identificacion" class="form-select" [(ngModel)]="p.tipoIdentificacion">
+        <option value="CC">Cédula de Ciudadanía</option>
+        <option value="CE">Cédula de Extranjería</option>
+        <option value="PA">Pasaporte</option>
+        <option value="TI">Tarjeta de Identidad</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-numero-documento">Número de documento</label>
+      <input id="dp-numero-documento" type="text" class="form-control" placeholder="1.234.567.890"
+             [(ngModel)]="p.numeroDocumento">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-fecha-expedicion">Fecha de expedición</label>
+      <input id="dp-fecha-expedicion" type="date" class="form-control" [max]="todayDate" [(ngModel)]="p.fechaExpedicion">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-lugar-expedicion">Lugar de expedición</label>
+      <input id="dp-lugar-expedicion" type="text" class="form-control" placeholder="Bogotá D.C."
+             [(ngModel)]="p.lugarExpedicion">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-libreta-militar-numero">Libreta militar número</label>
+      <input id="dp-libreta-militar-numero" type="text" class="form-control" placeholder="Número"
+             [(ngModel)]="p.libretaMilitarNumero">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-libreta-militar-clase">Clase libreta militar</label>
+      <select id="dp-libreta-militar-clase" class="form-select" [(ngModel)]="p.libretaMilitarClase">
+        <option [ngValue]="null">— No aplica —</option>
+        <option value="1ª Clase">1ª Clase</option>
+        <option value="2ª Clase">2ª Clase</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-pasaporte-numero">Pasaporte número</label>
+      <input id="dp-pasaporte-numero" type="text" class="form-control" placeholder="Número de pasaporte"
+             [(ngModel)]="p.pasaporteNumero">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-pasaporte-vigencia">Pasaporte vigencia</label>
+      <input id="dp-pasaporte-vigencia" type="date" class="form-control" [(ngModel)]="p.pasaporteVigencia">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-visa-numero">Visa número</label>
+      <input id="dp-visa-numero" type="text" class="form-control" placeholder="Número de visa"
+             [(ngModel)]="p.visaNumero">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-visa-vigencia">Visa vigencia</label>
+      <input id="dp-visa-vigencia" type="date" class="form-control" [(ngModel)]="p.visaVigencia">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-visa-clase">Visa clase</label>
+      <input id="dp-visa-clase" type="text" class="form-control" placeholder="Tipo de visa"
+             [(ngModel)]="p.visaClase">
+    </div>
+  </div>
+</div>
+
+<!-- 2. Datos Básicos -->
+<div class="datos-personales-acordeon-bloque">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('basicos')"
+          [attr.aria-expanded]="isSectionOpen('basicos')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-person-fill"></i>Datos Básicos</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('basicos')"
+         [class.bi-chevron-right]="!isSectionOpen('basicos')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('basicos')">Nombre completo, fecha de nacimiento, datos demográficos y foto de perfil</div>
+  <div class="row g-3 mt-1" *ngIf="isSectionOpen('basicos')">
+    <div class="col-md-3">
+      <label class="form-label" for="dp-primer-nombre">Primer nombre <span class="text-danger">*</span></label>
+      <input id="dp-primer-nombre" type="text" class="form-control" placeholder="Ana"
+             [(ngModel)]="p.primerNombre">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-segundo-nombre">Segundo nombre</label>
+      <input id="dp-segundo-nombre" type="text" class="form-control" placeholder="María"
+             [(ngModel)]="p.segundoNombre">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-primer-apellido">Primer apellido <span class="text-danger">*</span></label>
+      <input id="dp-primer-apellido" type="text" class="form-control" placeholder="García"
+             [(ngModel)]="p.primerApellido">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-segundo-apellido">Segundo apellido</label>
+      <input id="dp-segundo-apellido" type="text" class="form-control" placeholder="López"
+             [(ngModel)]="p.segundoApellido">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-fecha-nacimiento">Fecha de nacimiento</label>
+      <input id="dp-fecha-nacimiento" type="date" class="form-control" [max]="todayDate" [(ngModel)]="p.fechaNacimiento">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-lugar-nacimiento">Lugar de nacimiento</label>
+      <input id="dp-lugar-nacimiento" type="text" class="form-control" placeholder="Bogotá D.C."
+             [(ngModel)]="p.lugarNacimiento">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-genero">Género</label>
+      <select id="dp-genero" class="form-select" [(ngModel)]="p.genero">
+        <option value="F">Femenino</option>
+        <option value="M">Masculino</option>
+        <option value="NB">No binario</option>
+        <option value="ND">Prefiero no indicar</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-nacionalidad">Nacionalidad</label>
+      <input id="dp-nacionalidad" type="text" class="form-control" placeholder="Colombiana"
+             [(ngModel)]="p.nacionalidad">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-tipo-sangre">Tipo de sangre</label>
+      <select id="dp-tipo-sangre" class="form-select" [(ngModel)]="p.tipoSangre">
+        <option value="">— Seleccionar —</option>
+        <option *ngFor="let ts of tiposSangre">{{ ts }}</option>
+      </select>
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="dp-foto-url">URL de foto de perfil</label>
+      <input id="dp-foto-url" type="url" class="form-control" placeholder="https://..."
+             [(ngModel)]="p.fotoUrl">
+    </div>
+  </div>
+</div>
+
+<!-- 3. Información de Contacto -->
+<div class="datos-personales-acordeon-bloque">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('contacto')"
+          [attr.aria-expanded]="isSectionOpen('contacto')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-telephone-fill"></i>Información de Contacto</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('contacto')"
+         [class.bi-chevron-right]="!isSectionOpen('contacto')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('contacto')">Correo electrónico y teléfonos de contacto</div>
+  <div class="row g-3 mt-1" *ngIf="isSectionOpen('contacto')">
+    <div class="col-md-4">
+      <label class="form-label" for="dp-email">Correo electrónico <span class="text-danger">*</span></label>
+      <input id="dp-email" type="email" class="form-control" placeholder="tu@email.com"
+             [(ngModel)]="p.email">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-celular">Teléfono celular</label>
+      <input id="dp-celular" type="tel" class="form-control" placeholder="+57 300 000 0000"
+             [(ngModel)]="p.celular">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-telefono-fijo">Teléfono fijo</label>
+      <input id="dp-telefono-fijo" type="tel" class="form-control" placeholder="601 000 0000"
+             [(ngModel)]="p.telefonoFijo">
+    </div>
+  </div>
+</div>
+
+<!-- 4. Información de Residencia -->
+<div class="datos-personales-acordeon-bloque">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('residencia')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-house-fill"></i>Información de Residencia</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('residencia')"
+         [class.bi-chevron-right]="!isSectionOpen('residencia')"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('residencia')">Dirección actual y datos de ubicación</div>
+  <div class="row g-3 mt-1" *ngIf="isSectionOpen('residencia')">
+    <div class="col-md-3">
+      <label class="form-label" for="dp-pais">País</label>
+      <input id="dp-pais" type="text" class="form-control" placeholder="Colombia"
+             [(ngModel)]="p.pais">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-departamento">Departamento</label>
+      <input id="dp-departamento" type="text" class="form-control" placeholder="Cundinamarca"
+             [(ngModel)]="p.departamento">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-ciudad">Ciudad de residencia</label>
+      <input id="dp-ciudad" type="text" class="form-control" placeholder="Bogotá D.C."
+             [(ngModel)]="p.ciudad">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-codigo-postal">Código postal</label>
+      <input id="dp-codigo-postal" type="text" class="form-control" placeholder="110111"
+             [(ngModel)]="p.codigoPostal">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-barrio">Barrio</label>
+      <input id="dp-barrio" type="text" class="form-control" placeholder="Nombre del barrio"
+             [(ngModel)]="p.barrio">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" for="dp-direccion">Dirección</label>
+      <input id="dp-direccion" type="text" class="form-control" placeholder="Calle 123 # 45-67"
+             [(ngModel)]="p.direccion">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="dp-tipo-residencia">Tipo de residencia</label>
+      <input id="dp-tipo-residencia" type="text" class="form-control" placeholder="Casa, apartamento..."
+             [(ngModel)]="p.tipoResidencia">
+    </div>
+  </div>
+</div>
+
+<!-- 5. Seguridad Social -->
+<div class="datos-personales-acordeon-bloque">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('seguridad')"
+          [attr.aria-expanded]="isSectionOpen('seguridad')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-shield-fill-check"></i>Seguridad Social</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('seguridad')"
+         [class.bi-chevron-right]="!isSectionOpen('seguridad')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('seguridad')">EPS, fondo de pensiones y cesantías</div>
+  <div class="row g-3 mt-1" *ngIf="isSectionOpen('seguridad')">
+    <div class="col-md-4">
+      <label class="form-label" for="dp-eps">EPS</label>
+      <input id="dp-eps" type="text" class="form-control" placeholder="Nombre de EPS"
+             [(ngModel)]="p.eps">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-pencion">Fondo de pensiones</label>
+      <input id="dp-pencion" type="text" class="form-control" placeholder="Fondo de pensión"
+             [(ngModel)]="p.pencion">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="dp-cesantias">Fondo de cesantías</label>
+      <input id="dp-cesantias" type="text" class="form-control" placeholder="Fondo de cesantías"
+             [(ngModel)]="p.cesantias">
+    </div>
+  </div>
+</div>
+
+<div class="datos-personales-guardar-footer">
+  <div class="d-flex flex-column flex-md-row flex-md-wrap align-items-md-center justify-content-md-between gap-3">
+    <div class="seccion-subtitulo border-0 pt-0 mb-0 text-muted small">
+      Resumen de identificación, datos básicos, contacto, residencia y seguridad social
+    </div>
+    <div class="text-md-end flex-shrink-0">
+      <span *ngIf="guardando" class="text-muted small me-3">Guardando…</span>
+      <span *ngIf="guardadoOk" class="text-success small me-3">
+        <i class="bi bi-check-circle-fill me-1"></i>Guardado
+      </span>
+      <button type="button" class="btn btn-primary px-4" (click)="guardar()" [disabled]="guardando">
+        <i class="bi bi-floppy-fill me-2"></i>Guardar datos personales
+      </button>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- Bloque semántico: familiares, redes y referencias (entidades aparte de Personales) -->
+<section id="bloque-familiares-redes-referencias" class="datos-personales-relaciones" aria-labelledby="titulo-relaciones-fyr">
+  <h2 id="titulo-relaciones-fyr" class="h6 fw-bold text-secondary mb-3 mt-2 d-flex flex-wrap align-items-center gap-2">
+    <i class="bi bi-diagram-3 text-primary" aria-hidden="true"></i>
+    <span>Información familiar, redes sociales y referencias personales</span>
+  </h2>
+
+  <!-- 6. Información familiar -->
+  <section class="seccion-card" aria-label="Información familiar">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('familiar')" [attr.aria-expanded]="isSectionOpen('familiar')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-house-heart-fill"></i>Información familiar</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('familiar')"
+         [class.bi-chevron-right]="!isSectionOpen('familiar')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('familiar')">
+    Contactos de emergencia y familiares. No se muestran en el CV público. Usa <strong>Guardar</strong> en cada tarjeta al editar.
+  </div>
+  <div [hidden]="!isSectionOpen('familiar')">
+    <app-familiares [embedded]="true"></app-familiares>
+  </div>
+  </section>
+
+  <!-- 7. Redes sociales -->
+  <section class="seccion-card" aria-label="Redes sociales">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('redes')" [attr.aria-expanded]="isSectionOpen('redes')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-share-fill"></i>Redes sociales</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('redes')"
+         [class.bi-chevron-right]="!isSectionOpen('redes')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('redes')">
+    Perfiles visibles en tu CV público. Guarda cada red desde su tarjeta.
+  </div>
+  <div [hidden]="!isSectionOpen('redes')">
+    <app-redes-sociales [embedded]="true"></app-redes-sociales>
+  </div>
+  </section>
+
+  <!-- 8. Referencias personales -->
+  <section class="seccion-card" aria-label="Referencias personales">
+  <button type="button" class="btn w-100 text-start p-0 border-0 bg-transparent"
+          (click)="toggleSection('referencias')" [attr.aria-expanded]="isSectionOpen('referencias')">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="seccion-titulo mb-0"><i class="bi bi-person-check-fill"></i>Referencias personales</div>
+      <i class="bi" [class.bi-chevron-down]="isSectionOpen('referencias')"
+         [class.bi-chevron-right]="!isSectionOpen('referencias')" aria-hidden="true"></i>
+    </div>
+  </button>
+  <div class="seccion-subtitulo" *ngIf="isSectionOpen('referencias')">
+    Personas que pueden dar fe de tu trayectoria. Guarda cada referencia al editarla.
+  </div>
+  <div [hidden]="!isSectionOpen('referencias')">
+    <app-referencias [embedded]="true"></app-referencias>
+  </div>
+  </section>
+</section>
+
+</ng-container>

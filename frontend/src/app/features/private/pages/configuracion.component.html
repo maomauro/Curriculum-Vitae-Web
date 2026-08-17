@@ -1,0 +1,219 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h4><i class="bi bi-gear-fill me-2 text-primary"></i>Configuración</h4>
+    <span class="text-muted small">Privacidad, visibilidad del CV y ajustes de cuenta</span>
+  </div>
+</div>
+
+<!-- Visibilidad del CV -->
+<div class="seccion-card">
+  <div class="seccion-titulo"><i class="bi bi-eye-fill"></i>Visibilidad del CV</div>
+  <div class="seccion-subtitulo">
+    Clasifica la visibilidad por páginas ya implementadas. En cada sección se listan los atributos que se mostrarán
+    en tu CV público cuando el switch esté activo.
+    <strong class="d-block mt-2">Los cambios se guardan automáticamente</strong> al activar o desactivar cada opción.
+  </div>
+  <div class="vis-accordion">
+    <div class="vis-accordion-item" *ngFor="let grupo of visibilidadGrupos">
+      <button
+        type="button"
+        class="vis-accordion-header"
+        [id]="'vis-acc-trigger-' + grupo.id"
+        [attr.aria-expanded]="grupo.accordionOpen"
+        [attr.aria-controls]="grupo.accordionOpen ? 'vis-acc-panel-' + grupo.id : null"
+        (click)="toggleVisGrupo(grupo)">
+        <span class="vis-accordion-grupo-titulo" [ngClass]="grupo.clase">
+          <i class="bi" [ngClass]="grupo.icon" aria-hidden="true"></i>
+          {{ grupo.titulo }}
+        </span>
+        <i class="bi flex-shrink-0 cv-chevron-muted" aria-hidden="true"
+           [class.bi-chevron-down]="!grupo.accordionOpen"
+           [class.bi-chevron-up]="grupo.accordionOpen"></i>
+      </button>
+      <div
+        *ngIf="grupo.accordionOpen"
+        class="vis-accordion-body"
+        [id]="'vis-acc-panel-' + grupo.id"
+        role="region"
+        [attr.aria-labelledby]="'vis-acc-trigger-' + grupo.id">
+        <p *ngIf="grupo.id === 'dashboard-publico'" class="text-muted small mb-3 px-1">
+          Controla la pestaña <strong>Dashboard analítico</strong> en tu CV público. Si el interruptor principal está
+          activo pero desactivas <strong>métricas</strong> y <strong>gráficas</strong>, esa pestaña no se mostrará.
+        </p>
+        <ng-container *ngFor="let campo of grupo.items">
+          <div class="vis-row" [class.vis-row--sin-switch-seccion]="campo.sinSwitchSeccion">
+            <div class="vis-info">
+              <div class="vis-icon" [ngClass]="campo.iconStyle">
+                <i class="bi" [ngClass]="campo.icon"></i>
+              </div>
+              <div>
+                <div class="vis-name">{{ campo.label }}</div>
+                <div class="vis-desc">
+                  <ng-container *ngIf="campo.sinSwitchSeccion">
+                    Esta información forma parte esencial del CV; solo puedes ajustar los atributos indicados.
+                  </ng-container>
+                  <ng-container *ngIf="!campo.sinSwitchSeccion">
+                    Activa/desactiva la sección completa o personaliza atributos.
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+            <div class="form-check form-switch mb-0" *ngIf="!campo.sinSwitchSeccion">
+              <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
+                     [(ngModel)]="campo.visible" [id]="'vis_' + campo.key"
+                     [disabled]="interruptorVisibilidadDeshabilitado(campo)"
+                     (change)="onToggleSeccion(campo)">
+            </div>
+          </div>
+          <div class="vis-attr-list">
+            <div class="vis-attr-row" *ngFor="let attr of campo.atributos">
+              <div class="vis-attr-name">{{ attr.label }}</div>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
+                       [(ngModel)]="attr.visible" [id]="'vis_' + attr.key"
+                       [disabled]="interruptorVisibilidadDeshabilitado(campo) || (!campo.sinSwitchSeccion && !campo.visible)"
+                       (change)="onToggleAtributo(campo, attr)">
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- URL pública del CV -->
+<div class="seccion-card">
+  <div class="seccion-titulo">URL pública del CV</div>
+  <p class="text-muted small mb-3">
+    Comparte este enlace para que otros puedan ver tu CV. El dominio es el de esta misma ventana (por ejemplo
+    <code class="small">localhost</code> en desarrollo o tu sitio en producción); no hace falta configurarlo a mano.
+  </p>
+  <div class="d-flex flex-column flex-sm-row gap-2">
+    <div class="input-group">
+      <label class="visually-hidden" for="cfg_url_cv">URL pública del CV</label>
+      <span class="input-group-text">
+        <i class="bi bi-link-45deg text-primary"></i>
+      </span>
+      <input
+        id="cfg_url_cv"
+        type="text"
+        class="form-control"
+        [value]="urlCv"
+        [placeholder]="urlCvCargando ? 'Cargando enlace…' : 'No disponible'"
+        readonly>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm px-3"
+        [disabled]="!urlCv"
+        (click)="copiarUrl()">
+        <i class="bi bi-clipboard me-1"></i>
+        {{ copiado ? '¡Copiado!' : 'Copiar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Cambio de contraseña -->
+<div class="seccion-card">
+  <div class="seccion-titulo">Cambiar contraseña</div>
+  <p class="text-muted small mb-3">Mínimo 8 caracteres. Tras guardar, sigue usando tu correo para iniciar sesión.</p>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label" for="cfg_pwd_actual">Contraseña actual</label>
+      <input
+        id="cfg_pwd_actual"
+        type="password"
+        class="form-control"
+        name="cfgPwdActual"
+        [(ngModel)]="passwordActual"
+        autocomplete="current-password"
+        [disabled]="guardandoContrasena">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="cfg_pwd_nueva">Nueva contraseña</label>
+      <input
+        id="cfg_pwd_nueva"
+        type="password"
+        class="form-control"
+        name="cfgPwdNueva"
+        [(ngModel)]="passwordNueva"
+        autocomplete="new-password"
+        minlength="8"
+        [disabled]="guardandoContrasena"
+        [class.is-invalid]="nuevaContrasenaMuyCorta || contrasenasNuevasDesalineadas"
+        [class.is-valid]="contrasenasNuevasCoincidenOk"
+        [attr.aria-invalid]="nuevaContrasenaMuyCorta || contrasenasNuevasDesalineadas">
+      <div class="invalid-feedback d-block" *ngIf="nuevaContrasenaMuyCorta">
+        {{ pwdFormMsg.passwordMinLength }}
+      </div>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="cfg_pwd_nueva2">Repetir nueva contraseña</label>
+      <input
+        id="cfg_pwd_nueva2"
+        type="password"
+        class="form-control"
+        name="cfgPwdNueva2"
+        [(ngModel)]="passwordNueva2"
+        autocomplete="new-password"
+        minlength="8"
+        [disabled]="guardandoContrasena"
+        [class.is-invalid]="repetirContrasenaMismatchEnVivo"
+        [class.is-valid]="contrasenasNuevasCoincidenOk"
+        [attr.aria-invalid]="repetirContrasenaMismatchEnVivo">
+      <div class="invalid-feedback d-block" *ngIf="repetirContrasenaMismatchEnVivo">
+        {{ pwdFormMsg.passwordMismatch }}
+      </div>
+    </div>
+    <div class="col-12">
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="guardandoContrasena"
+        (click)="actualizarContrasena()">
+        <span *ngIf="guardandoContrasena" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        <i *ngIf="!guardandoContrasena" class="bi bi-shield-lock me-1"></i>
+        {{ guardandoContrasena ? 'Guardando…' : 'Actualizar contraseña' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Publicación en el portal (Estado Publicado / Borrador en curriculum) -->
+<div class="seccion-card">
+  <div class="seccion-titulo">
+    <i class="bi bi-megaphone me-2 text-primary"></i>Publicación del CV
+  </div>
+  <p class="text-muted small mb-3">
+    Con el interruptor activo tu CV queda <strong>publicado</strong>: aparece en la búsqueda pública y el enlace de arriba
+    funciona para quien lo visite. Si lo desactivas, pasa a <strong>borrador</strong>: solo tú lo ves en el portal privado;
+    el enlace público ya no mostrará tu CV.
+  </p>
+  <div class="vis-row align-items-center py-1">
+    <div class="vis-info flex-grow-1 min-w-0">
+      <label class="vis-name" for="cfg_cv_publicado">Publicar mi CV en el portal</label>
+      <div class="vis-desc small text-muted mb-0">
+        Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
+      </div>
+    </div>
+    <div class="form-check form-switch mb-0 flex-shrink-0">
+      <input
+        class="form-check-input cv-switch-cursor"
+        type="checkbox"
+        role="switch"
+        id="cfg_cv_publicado"
+        [checked]="cvPublicado"
+        [disabled]="!presentacionLista || guardandoPublicacion"
+        (click)="onCvPublicacionClick($event)"
+        (keydown)="$event.stopPropagation()">
+    </div>
+  </div>
+  <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
+    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    Actualizando publicación…
+  </p>
+</div>

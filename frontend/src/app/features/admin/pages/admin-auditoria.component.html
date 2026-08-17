@@ -1,0 +1,498 @@
+<div class="page-header">
+  <div>
+    <h4>
+      <i class="bi bi-journal-text me-2 text-primary"></i>
+      Auditoría
+    </h4>
+    <span class="text-muted small">
+      Historial del panel de administración y de las ediciones que los usuarios hacen en sus CV.
+    </span>
+  </div>
+</div>
+
+<ul class="nav nav-tabs px-2 pt-2 mb-0 border-bottom-0">
+  <li class="nav-item">
+    <button
+      type="button"
+      class="nav-link"
+      [class.active]="pestana === 'admin'"
+      (click)="cambiarPestana('admin')">
+      Auditoría administración
+    </button>
+  </li>
+  <li class="nav-item">
+    <button
+      type="button"
+      class="nav-link"
+      [class.active]="pestana === 'cv'"
+      (click)="cambiarPestana('cv')">
+      Auditoría CV
+    </button>
+  </li>
+</ul>
+
+<div *ngIf="pestana === 'admin'" class="seccion-card border-top-0 rounded-top-0">
+  <div *ngIf="loadingAdmin" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando auditoría…</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loadingAdmin">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
+      <div class="seccion-titulo mb-0">Eventos de administración</div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+          <label class="visually-hidden" for="admin-auditoria-filtro-accion">Filtrar por acción</label>
+          <select
+            id="admin-auditoria-filtro-accion"
+            class="form-select form-select-sm admin-filter-select"
+            [(ngModel)]="filtroAccionAdmin"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onCambioFiltrosAdmin()">
+            <option [ngValue]="''">Todas las acciones</option>
+            <option *ngFor="let o of opcionesAccionAdmin" [ngValue]="o.codigo">{{ o.etiqueta }}</option>
+          </select>
+          <div class="admin-search-with-clear">
+            <label class="visually-hidden" for="admin-auditoria-busqueda">Buscar en auditoría de administración</label>
+            <input
+              id="admin-auditoria-busqueda"
+              type="text"
+              class="form-control form-control-sm admin-search-input"
+              placeholder="Buscar actor, entidad, detalle…"
+              [(ngModel)]="busquedaAdmin"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onCambioFiltrosAdmin()" />
+            <button
+              *ngIf="busquedaAdmin?.trim()"
+              type="button"
+              class="admin-search-clear"
+              (click)="limpiarBusquedaAdmin()"
+              aria-label="Limpiar búsqueda">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+          (click)="abrirModalMantenimientoAdmin()">
+          <i class="bi bi-trash3 me-1"></i>
+          Mantenimiento de registros
+        </button>
+      </div>
+    </div>
+    <div *ngIf="errorAdmin" class="alert alert-danger py-2 small mb-3 mx-2">{{ errorAdmin }}</div>
+
+    <div *ngIf="!errorAdmin && !loadingAdmin && totalAdmin === 0">
+      <div *ngIf="!hayFiltrosAdmin" class="text-center text-muted py-5 px-2">
+        <i class="bi bi-inbox display-6 d-block mb-2"></i>
+        <p class="mb-0">Aún no hay eventos de administración registrados.</p>
+      </div>
+      <div *ngIf="hayFiltrosAdmin" class="text-center text-muted py-5 px-2">
+        <i class="bi bi-search admin-search-icon"></i>
+        <p class="mt-2 mb-0">No hay eventos que coincidan con el filtro o la búsqueda.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!errorAdmin && !loadingAdmin && totalAdmin > 0" class="table-responsive admin-table-wrap">
+      <table class="table table-hover align-middle w-100 mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
+            <th scope="col">FECHA (UTC)</th>
+            <th scope="col">ACTOR</th>
+            <th scope="col">ACCIÓN</th>
+            <th scope="col">ENTIDAD</th>
+            <th scope="col">DETALLE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of itemsAdmin; let i = index">
+            <td class="text-end text-muted small">{{ (pageAdmin - 1) * pageSizeAdmin + i + 1 }}</td>
+            <td class="text-nowrap small">{{ fmtFecha(row.fechaUtc) }}</td>
+            <td class="small">
+              <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
+              <span *ngIf="!row.actorEmail" class="text-muted">—</span>
+            </td>
+            <td>
+              <span class="badge rounded-pill bg-light text-dark border">{{ etiquetaAccionAdmin(row.accion) }}</span>
+            </td>
+            <td class="small text-muted">
+              {{ row.entidadTipo }}<span *ngIf="row.entidadId != null"> #{{ row.entidadId }}</span>
+            </td>
+            <td class="small font-monospace text-break" style="max-width: 28rem">{{ detalleLegible(row.detalleJson) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div
+        class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
+        <span class="text-muted small"> {{ rangoTextoAdmin }} </span>
+        <div class="btn-group btn-group-sm">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="pageAdmin <= 1"
+            (click)="irPaginaAdmin(pageAdmin - 1)">
+            Anterior
+          </button>
+          <button type="button" class="btn btn-outline-secondary" disabled>{{ pageAdmin }} / {{ totalPagesAdmin }}</button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="pageAdmin >= totalPagesAdmin"
+            (click)="irPaginaAdmin(pageAdmin + 1)">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="pestana === 'cv'" class="seccion-card border-top-0 rounded-top-0">
+  <div *ngIf="loadingCv" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando auditoría de CV…</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loadingCv">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
+      <div class="seccion-titulo mb-0">Eventos de edición de CV</div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+          <label class="visually-hidden" for="admin-auditoria-cv-filtro-accion">Filtrar por acción</label>
+          <select
+            id="admin-auditoria-cv-filtro-accion"
+            class="form-select form-select-sm admin-filter-select"
+            [(ngModel)]="filtroAccionCv"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onCambioFiltrosCv()">
+            <option [ngValue]="''">Todas las acciones</option>
+            <option *ngFor="let o of opcionesAccionCv" [ngValue]="o.codigo">{{ o.etiqueta }}</option>
+          </select>
+          <div class="admin-search-with-clear">
+            <label class="visually-hidden" for="admin-auditoria-cv-busqueda">Buscar en auditoría de CV</label>
+            <input
+              id="admin-auditoria-cv-busqueda"
+              type="text"
+              class="form-control form-control-sm admin-search-input"
+              placeholder="Buscar actor, propietario, URL, detalle…"
+              [(ngModel)]="busquedaCv"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onCambioFiltrosCv()" />
+            <button
+              *ngIf="busquedaCv?.trim()"
+              type="button"
+              class="admin-search-clear"
+              (click)="limpiarBusquedaCv()"
+              aria-label="Limpiar búsqueda">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+          (click)="abrirModalMantenimientoCv()">
+          <i class="bi bi-trash3 me-1"></i>
+          Mantenimiento de registros
+        </button>
+      </div>
+    </div>
+    <div *ngIf="errorCv" class="alert alert-danger py-2 small mb-3 mx-2">{{ errorCv }}</div>
+
+    <div *ngIf="!errorCv && !loadingCv && totalCv === 0">
+      <div *ngIf="!hayFiltrosCv" class="text-center text-muted py-5 px-2">
+        <i class="bi bi-inbox display-6 d-block mb-2"></i>
+        <p class="mb-0">Aún no hay eventos de edición de CV registrados.</p>
+      </div>
+      <div *ngIf="hayFiltrosCv" class="text-center text-muted py-5 px-2">
+        <i class="bi bi-search admin-search-icon"></i>
+        <p class="mt-2 mb-0">No hay eventos que coincidan con el filtro o la búsqueda.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!errorCv && !loadingCv && totalCv > 0" class="table-responsive admin-table-wrap">
+      <table class="table table-hover align-middle w-100 mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
+            <th scope="col">FECHA (UTC)</th>
+            <th scope="col">ACTOR</th>
+            <th scope="col">CV (PROPIETARIO)</th>
+            <th scope="col">ACCIÓN</th>
+            <th scope="col">ENTIDAD</th>
+            <th scope="col">DETALLE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of itemsCv; let i = index">
+            <td class="text-end text-muted small">{{ (pageCv - 1) * pageSizeCv + i + 1 }}</td>
+            <td class="text-nowrap small">{{ fmtFecha(row.fechaUtc) }}</td>
+            <td class="small">
+              <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
+              <span *ngIf="!row.actorEmail" class="text-muted">—</span>
+            </td>
+            <td class="small">
+              <div *ngIf="row.propietarioEmail">{{ row.propietarioEmail }}</div>
+              <div *ngIf="row.urlPublica" class="text-muted font-monospace">/{{ row.urlPublica }}</div>
+              <span *ngIf="!row.propietarioEmail && !row.urlPublica" class="text-muted">#{{ row.curriculumId }}</span>
+            </td>
+            <td>
+              <span class="badge rounded-pill bg-light text-dark border">{{ etiquetaAccionCv(row.accion) }}</span>
+            </td>
+            <td class="small text-muted">
+              {{ row.entidadTipo }}<span *ngIf="row.entidadId != null"> #{{ row.entidadId }}</span>
+            </td>
+            <td class="small font-monospace text-break" style="max-width: 22rem">{{ detalleLegible(row.detalleJson) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div
+        class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
+        <span class="text-muted small"> {{ rangoTextoCv }} </span>
+        <div class="btn-group btn-group-sm">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="pageCv <= 1"
+            (click)="irPaginaCv(pageCv - 1)">
+            Anterior
+          </button>
+          <button type="button" class="btn btn-outline-secondary" disabled>{{ pageCv }} / {{ totalPagesCv }}</button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="pageCv >= totalPagesCv"
+            (click)="irPaginaCv(pageCv + 1)">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-container *ngIf="modalMantenimientoAdmin">
+  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAdmin()" (keydown)="cerrarModalMantenimientoAdmin()" aria-hidden="true"></div>
+  <div
+    id="modalMantenimientoAuditoriaAdmin"
+    class="modal show d-block portal-modal__root"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalMantenimientoAuditoriaAdminLabel"
+    (click)="cerrarModalMantenimientoAdminSiBackdrop($event)"
+    (keydown)="cerrarModalMantenimientoAdminSiBackdrop($event)">
+    <div
+      class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog portal-modal__dialog--500"
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-content portal-modal__panel">
+        <div class="modal-header portal-modal__header">
+          <div class="portal-modal__title-row">
+            <span class="portal-modal__icon" aria-hidden="true">
+              <i class="bi bi-journal-text"></i>
+            </span>
+            <div>
+              <h2 class="portal-modal__title" id="modalMantenimientoAuditoriaAdminLabel">
+                Mantenimiento — Auditoría administración
+              </h2>
+              <span class="portal-modal__subtitle">
+                Los filtros usan <strong>FechaUtc</strong>. «Vaciar tabla» exige escribir
+                <code>{{ fraseVaciar }}</code> tal cual.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-close portal-modal__close"
+            (click)="cerrarModalMantenimientoAdmin()"
+            aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body portal-modal__body">
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label small mb-0" for="admin-auditoria-purge-anio">Año</label>
+              <select
+                id="admin-auditoria-purge-anio"
+                class="form-select form-select-sm mb-2"
+                [(ngModel)]="anioPurgeAdmin"
+                [ngModelOptions]="{ standalone: true }">
+                <option *ngFor="let y of aniosPurge" [ngValue]="y">{{ y }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100"
+                [disabled]="purgingAdmin"
+                (click)="purgeAdmin('anio')">
+                Borrar año
+              </button>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-0" for="admin-auditoria-purge-mes">Mes</label>
+              <select
+                id="admin-auditoria-purge-mes"
+                class="form-select form-select-sm mb-2"
+                [(ngModel)]="mesPurgeAdmin"
+                [ngModelOptions]="{ standalone: true }">
+                <option *ngFor="let m of mesesPurge" [ngValue]="m.v">{{ m.n }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100"
+                [disabled]="purgingAdmin"
+                (click)="purgeAdmin('anioMes')">
+                Borrar mes
+              </button>
+            </div>
+          </div>
+          <hr class="my-2" />
+          <label class="form-label small mb-1" for="admin-auditoria-purge-confirm">Confirmación para vaciar tabla</label>
+          <div class="admin-search-with-clear mb-2">
+            <input
+              id="admin-auditoria-purge-confirm"
+              type="text"
+              class="form-control form-control-sm admin-search-input"
+              [(ngModel)]="confirmVaciarAdmin"
+              (ngModelChange)="onConfirmVaciarAdminChange()"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="fraseVaciar"
+              autocomplete="off" />
+            <button
+              *ngIf="(confirmVaciarAdmin?.length ?? 0) > 0"
+              type="button"
+              class="admin-search-clear"
+              (click)="limpiarConfirmVaciarAdmin()"
+              aria-label="Limpiar confirmación">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div *ngIf="showConfirmErrorAdmin" class="alert alert-danger py-2 small mb-2">
+            Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-danger"
+            [disabled]="purgingAdmin || !canVaciarAdminCompleto"
+            (click)="purgeAdmin('todo')">
+            Vaciar tabla completa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="modalMantenimientoCv">
+  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoCv()" (keydown)="cerrarModalMantenimientoCv()" aria-hidden="true"></div>
+  <div
+    id="modalMantenimientoAuditoriaCv"
+    class="modal show d-block portal-modal__root"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalMantenimientoAuditoriaCvLabel"
+    (click)="cerrarModalMantenimientoCvSiBackdrop($event)"
+    (keydown)="cerrarModalMantenimientoCvSiBackdrop($event)">
+    <div
+      class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog portal-modal__dialog--500"
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-content portal-modal__panel">
+        <div class="modal-header portal-modal__header">
+          <div class="portal-modal__title-row">
+            <span class="portal-modal__icon" aria-hidden="true">
+              <i class="bi bi-file-earmark-person"></i>
+            </span>
+            <div>
+              <h2 class="portal-modal__title" id="modalMantenimientoAuditoriaCvLabel">
+                Mantenimiento — Auditoría CV
+              </h2>
+              <span class="portal-modal__subtitle">
+                Los filtros usan <strong>FechaUtc</strong>. «Vaciar tabla» exige escribir
+                <code>{{ fraseVaciar }}</code> tal cual.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-close portal-modal__close"
+            (click)="cerrarModalMantenimientoCv()"
+            aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body portal-modal__body">
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label small mb-0" for="admin-auditoria-cv-purge-anio">Año</label>
+              <select
+                id="admin-auditoria-cv-purge-anio"
+                class="form-select form-select-sm mb-2"
+                [(ngModel)]="anioPurgeCv"
+                [ngModelOptions]="{ standalone: true }">
+                <option *ngFor="let y of aniosPurge" [ngValue]="y">{{ y }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100"
+                [disabled]="purgingCv"
+                (click)="purgeCv('anio')">
+                Borrar año
+              </button>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-0" for="admin-auditoria-cv-purge-mes">Mes</label>
+              <select
+                id="admin-auditoria-cv-purge-mes"
+                class="form-select form-select-sm mb-2"
+                [(ngModel)]="mesPurgeCv"
+                [ngModelOptions]="{ standalone: true }">
+                <option *ngFor="let m of mesesPurge" [ngValue]="m.v">{{ m.n }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100"
+                [disabled]="purgingCv"
+                (click)="purgeCv('anioMes')">
+                Borrar mes
+              </button>
+            </div>
+          </div>
+          <hr class="my-2" />
+          <label class="form-label small mb-1" for="admin-auditoria-cv-purge-confirm">Confirmación para vaciar tabla</label>
+          <div class="admin-search-with-clear mb-2">
+            <input
+              id="admin-auditoria-cv-purge-confirm"
+              type="text"
+              class="form-control form-control-sm admin-search-input"
+              [(ngModel)]="confirmVaciarCv"
+              (ngModelChange)="onConfirmVaciarCvChange()"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="fraseVaciar"
+              autocomplete="off" />
+            <button
+              *ngIf="(confirmVaciarCv?.length ?? 0) > 0"
+              type="button"
+              class="admin-search-clear"
+              (click)="limpiarConfirmVaciarCv()"
+              aria-label="Limpiar confirmación">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div *ngIf="showConfirmErrorCv" class="alert alert-danger py-2 small mb-2">
+            Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-danger"
+            [disabled]="purgingCv || !canVaciarCvCompleto"
+            (click)="purgeCv('todo')">
+            Vaciar tabla completa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

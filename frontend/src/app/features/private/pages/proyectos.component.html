@@ -1,0 +1,164 @@
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h4><i class="bi bi-kanban-fill me-2 text-primary"></i>Proyectos</h4>
+    <p class="text-muted small mb-0">
+      Muestra los proyectos más relevantes de tu carrera: rol, impacto y tecnologías usadas
+    </p>
+  </div>
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="agregar()"
+    [disabled]="!!borrador">
+    <i class="bi bi-plus-circle me-2"></i>Agregar proyecto
+  </button>
+</div>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+</div>
+
+<div *ngIf="!loading && proyectos.length === 0 && !borrador" class="text-center py-5 text-muted">
+  <i class="bi bi-kanban display-5"></i>
+  <p class="mt-3">No tienes proyectos registrados. Agrega el primero.</p>
+</div>
+
+<!-- Borrador: tarjeta discontinua (prototipo newProject) -->
+<div *ngIf="borrador" class="project-card project-card--nuevo expanded">
+  <div class="project-card-header">
+    <div class="project-icon"><i class="bi bi-plus-lg"></i></div>
+    <div class="flex-grow-1 min-w-0">
+      <div class="project-title">Nuevo proyecto</div>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarBorrador()">
+      <i class="bi bi-x-lg me-1"></i>Cancelar
+    </button>
+  </div>
+  <div class="project-body">
+    <ng-container *ngTemplateOutlet="formularioProyecto; context: { $implicit: borrador, esNuevo: true, uid: 'nuevo' }"></ng-container>
+  </div>
+</div>
+
+<div
+  *ngFor="let p of proyectos; let i = index; trackBy: trackByProyectoId"
+  class="project-card"
+  [class.expanded]="p.expanded">
+  <div class="project-card-header"
+       role="button"
+       tabindex="0"
+       [attr.aria-expanded]="p.expanded"
+       (click)="toggleExpanded(p)"
+       (keydown.enter)="toggleExpanded(p)"
+       (keydown.space)="$event.preventDefault(); toggleExpanded(p)">
+    <div class="project-icon"><i class="bi" [ngClass]="iconClass(i)"></i></div>
+    <div class="flex-grow-1 min-w-0">
+      <div class="project-title text-truncate">{{ tituloCard(p) }}</div>
+      <div class="project-role text-truncate">{{ subtituloRol(p) }}</div>
+    </div>
+    <div class="project-meta d-none d-sm-flex">
+      <span *ngIf="pillMeses(p)" class="meta-pill">
+        <i class="bi bi-clock me-1"></i>{{ pillMeses(p) }}
+      </span>
+      <span *ngIf="pillEquipo(p)" class="meta-pill">
+        <i class="bi bi-people me-1"></i>{{ pillEquipo(p) }}
+      </span>
+    </div>
+    <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <span class="profile-toggle-label">Mostrar en Mi CV</span>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch"
+               [id]="'prj-hdr-cv-'+i"
+               [(ngModel)]="p.form.mostrarEnCv"
+               (ngModelChange)="onMostrarEnCvChange(p, $event)"
+               [disabled]="guardando || guardandoVisibilidadProyectoId === p.proyectoId">
+      </div>
+    </div>
+    <i class="bi bi-chevron-down project-chevron"></i>
+  </div>
+  <div class="project-body" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <ng-container *ngTemplateOutlet="formularioProyecto; context: { $implicit: p, esNuevo: false, uid: p.proyectoId }"></ng-container>
+  </div>
+</div>
+
+<ng-template #formularioProyecto let-p let-esNuevo="esNuevo" let-uid="uid">
+  <div class="row g-3">
+    <div class="col-md-5">
+      <label class="form-label" [for]="'proy-nombre-'+uid">
+        Nombre del proyecto <span class="text-danger">*</span>
+      </label>
+      <input [id]="'proy-nombre-'+uid" type="text" class="form-control" [(ngModel)]="p.form.nombreProyecto"
+             [placeholder]="esNuevo ? 'Ej: App de reservas de turnos' : ''" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" [for]="'proy-rol-'+uid">
+        Rol en el proyecto <span class="text-danger">*</span>
+      </label>
+      <input [id]="'proy-rol-'+uid" type="text" class="form-control" [(ngModel)]="p.form.rol"
+             [placeholder]="esNuevo ? 'Ej: Tech Lead, QA Engineer…' : ''" />
+    </div>
+    <div class="col-6 col-md-1">
+      <label class="form-label" [for]="'proy-equipo-'+uid">Equipo</label>
+      <input [id]="'proy-equipo-'+uid" type="number" class="form-control" min="1" [(ngModel)]="p.form.equipoTamano" />
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" [for]="'proy-duracion-'+uid">Duración (meses)</label>
+      <input [id]="'proy-duracion-'+uid" type="number" class="form-control" min="1" [(ngModel)]="p.form.duracionMeses" />
+    </div>
+    <div class="col-12">
+      <label class="form-label" [for]="'proy-stack-'+uid">Stack tecnológico</label>
+      <div class="stack-tags mb-2">
+        <span *ngFor="let tag of p.stackTags; let ti = index" class="stack-tag">
+          {{ tag }}
+          <button type="button" class="stack-tag-del" (click)="quitarStack(p, ti)" [attr.aria-label]="'Quitar ' + tag">
+            <i class="bi bi-x"></i>
+          </button>
+        </span>
+      </div>
+      <div class="input-group input-group-sm stack-input-group">
+        <input
+          [id]="'proy-stack-'+uid"
+          type="text"
+          class="form-control"
+          [(ngModel)]="p.stackDraft"
+          [placeholder]="esNuevo ? 'Ej: Vue.js, Django…' : 'Ej: Docker, PostgreSQL…'"
+          (keydown.enter)="agregarStack(p, $event)" />
+        <button type="button" class="btn btn-outline-primary" (click)="agregarStack(p, $event)">
+          <i class="bi bi-plus"></i>
+        </button>
+      </div>
+    </div>
+    <div class="col-12">
+      <label class="form-label" [for]="'proy-aporte-'+uid">Mi aporte al proyecto</label>
+      <textarea [id]="'proy-aporte-'+uid" class="form-control" rows="2" [(ngModel)]="p.form.aporte"
+                placeholder="¿En qué parte trabajaste específicamente?"></textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" [for]="'proy-logro-'+uid">Logro principal</label>
+      <textarea [id]="'proy-logro-'+uid" class="form-control" rows="2" [(ngModel)]="p.form.logro"
+                placeholder="¿Qué impacto tuvo tu trabajo?"></textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" [for]="'proy-desafio-'+uid">Principal desafío</label>
+      <textarea [id]="'proy-desafio-'+uid" class="form-control" rows="2" [(ngModel)]="p.form.desafio"
+                placeholder="¿Cuál fue el mayor reto técnico o de gestión?"></textarea>
+    </div>
+  </div>
+  <div class="project-action-row justify-content-end gap-2">
+    <button
+      *ngIf="!esNuevo"
+      type="button"
+      class="btn btn-outline-danger btn-sm"
+      (click)="eliminar(p)">
+      <i class="bi bi-trash3 me-1"></i>Eliminar
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary px-4"
+      (click)="guardar(p, esNuevo)"
+      [disabled]="guardando || (!esNuevo && guardandoVisibilidadProyectoId === p.proyectoId)">
+      <i class="bi bi-floppy-fill me-2"></i>{{ esNuevo ? 'Crear proyecto' : 'Guardar' }}
+    </button>
+  </div>
+</ng-template>

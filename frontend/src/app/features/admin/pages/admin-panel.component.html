@@ -1,0 +1,267 @@
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h4>
+      <i class="bi bi-people-fill me-2 text-primary"></i>
+      Usuarios
+    </h4>
+    <span class="text-muted small">Estado de cuenta, publicación del CV en el portal y roles por cuenta</span>
+  </div>
+</div>
+
+<!-- Spinner -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando usuarios…</span>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading">
+  <!-- Métricas rápidas -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl">
+      <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
+        <div class="rounded-3 admin-stat-icon admin-stat-icon--blue">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <div class="admin-stat-value">{{ totalUsuarios }}</div>
+          <div class="text-muted admin-stat-label">Usuarios registrados</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+      <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
+        <div class="rounded-3 admin-stat-icon admin-stat-icon--green">
+          <i class="bi bi-person-check-fill"></i>
+        </div>
+        <div>
+          <div class="admin-stat-value">{{ totalActivos }}</div>
+          <div class="text-muted admin-stat-label">Usuarios activos</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+      <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
+        <div class="rounded-3 admin-stat-icon admin-stat-icon--amber">
+          <i class="bi bi-eye-fill"></i>
+        </div>
+        <div>
+          <div class="admin-stat-value">{{ totalCvPublicados }}</div>
+          <div class="text-muted admin-stat-label">CV portal publicados</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+      <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center gap-3">
+        <div class="rounded-3 admin-stat-icon admin-stat-icon--violet">
+          <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div>
+          <div class="admin-stat-value">{{ totalUsuariosConRoles }}</div>
+          <div class="text-muted admin-stat-label">Usuarios con roles asignados</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
+      <div class="seccion-titulo mb-0">Usuarios del sistema</div>
+      <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+        <label class="visually-hidden" for="admin-panel-filtro-estado">Filtrar por estado</label>
+        <select
+          id="admin-panel-filtro-estado"
+          class="form-select form-select-sm admin-filter-select"
+          [(ngModel)]="filtroEstado"
+          (ngModelChange)="onFiltrosChanged()">
+          <option value="">Todos</option>
+          <option value="Activo">Activos</option>
+          <option value="Inactivo">Inactivos</option>
+        </select>
+        <div class="admin-search-with-clear">
+          <label class="visually-hidden" for="admin-panel-busqueda">Buscar usuarios por email</label>
+          <input
+            id="admin-panel-busqueda"
+            type="text"
+            class="form-control form-control-sm admin-search-input"
+            placeholder="Buscar por email..."
+            [(ngModel)]="busqueda"
+            (ngModelChange)="onFiltrosChanged()" />
+          <button
+            *ngIf="busqueda?.trim()"
+            type="button"
+            class="admin-search-clear"
+            (click)="limpiarBusquedaUsuarios()"
+            aria-label="Limpiar búsqueda">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="usuariosFiltrados.length === 0" class="text-center text-muted py-4 px-2">
+      <i class="bi bi-search admin-search-icon"></i>
+      <p class="mt-2 mb-0">No se encontraron usuarios con los filtros aplicados.</p>
+    </div>
+
+    <div *ngIf="usuariosFiltrados.length > 0" class="table-responsive admin-table-wrap">
+      <table class="table table-hover align-middle w-100 mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
+            <th scope="col">USUARIO</th>
+            <th scope="col">REGISTRO</th>
+            <th scope="col">ESTADO</th>
+            <th scope="col">CV PORTAL</th>
+            <th scope="col">ROLES</th>
+            <th scope="col" class="text-end">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of usuariosPagina; let i = index">
+            <td class="text-end text-muted small">{{ (paginaActual - 1) * pageSize + i + 1 }}</td>
+            <td>
+              <span class="fw-semibold admin-email">{{ u.email }}</span>
+            </td>
+            <td>{{ fmtFecha(u.fechaRegistro) }}</td>
+            <td>
+              <span
+                class="badge rounded-pill"
+                [class.badge-user-activo]="u.estado === 'Activo'"
+                [class.badge-user-inactivo]="u.estado !== 'Activo'">
+                {{ u.estado }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="badge rounded-pill"
+                [class.badge-cv-publicado]="u.cvPublicado"
+                [class.badge-cv-borrador]="!u.cvPublicado">
+                {{ u.cvPublicado ? 'Publicado' : 'Borrador' }}
+              </span>
+            </td>
+            <td>
+              <ng-container *ngIf="u.roles?.length; else sinRoles">
+                <span
+                  *ngFor="let r of u.roles"
+                  class="badge rounded-pill me-1"
+                  [class.badge-role-admin]="r.nombreRol === 'Admin'"
+                  [class.badge-role-user]="r.nombreRol !== 'Admin'">
+                  {{ r.nombreRol }}
+                </span>
+              </ng-container>
+              <ng-template #sinRoles>
+                <span class="text-muted sin-roles">Sin roles</span>
+              </ng-template>
+            </td>
+            <td class="text-end text-nowrap admin-acciones-cell">
+              <div class="d-flex gap-1 justify-content-end align-items-center flex-wrap admin-acciones-inner">
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-outline-danger]="u.estado === 'Activo'"
+                  [class.btn-outline-success]="u.estado !== 'Activo'"
+                  [title]="u.estado === 'Activo' ? 'Desactivar' : 'Activar'"
+                  (click)="toggleEstado(u)">
+                  <i class="bi" [class.bi-person-x]="u.estado === 'Activo'" [class.bi-person-check]="u.estado !== 'Activo'"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-outline-warning]="u.cvPublicado"
+                  [class.btn-outline-primary]="!u.cvPublicado"
+                  [title]="u.cvPublicado ? 'Despublicar CV' : 'Publicar CV'"
+                  [attr.aria-label]="u.cvPublicado ? 'Despublicar CV' : 'Publicar CV'"
+                  (click)="toggleCvPublicacion(u)">
+                  <i class="bi" [class.bi-eye-slash]="u.cvPublicado" [class.bi-eye]="!u.cvPublicado"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  title="Gestionar roles"
+                  (click)="abrirRoles(u)">
+                  <i class="bi bi-shield-lock"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div
+        *ngIf="totalPaginas > 1"
+        class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
+        <span class="text-muted small">
+          Mostrando {{ rangoDesde }}–{{ rangoHasta }} de {{ usuariosFiltrados.length }}
+        </span>
+        <div class="btn-group btn-group-sm">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="paginaActual <= 1"
+            (click)="irPagina(paginaActual - 1)">
+            Anterior
+          </button>
+          <button type="button" class="btn btn-outline-secondary" disabled>
+            {{ paginaActual }} / {{ totalPaginas }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="paginaActual >= totalPaginas"
+            (click)="irPagina(paginaActual + 1)">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal gestión de roles -->
+  <div *ngIf="usuarioSeleccionado" class="modal-overlay" (click)="cerrarRoles()" (keydown)="cerrarRoles()">
+    <div class="modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="bi bi-shield-lock me-2 text-primary"></i>
+          Roles de {{ usuarioSeleccionado.email }}
+        </h6>
+        <button class="btn btn-sm btn-outline-secondary" (click)="cerrarRoles()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div *ngIf="rolesError" class="alert alert-danger py-2 small mb-3">{{ rolesError }}</div>
+
+      <div class="d-flex flex-column gap-2">
+        <div
+          *ngFor="let rol of rolesParaAsignar"
+          class="d-flex align-items-center justify-content-between p-3 rounded-3 admin-roles-row">
+          <div>
+            <span class="fw-semibold admin-rol-name">{{ rol.nombreRol }}</span>
+            <div class="text-muted admin-rol-desc">{{ rol.descripcion || 'Sin descripción' }}</div>
+          </div>
+          <div>
+            <span
+              *ngIf="tieneRol(usuarioSeleccionado, rol.rolId)"
+              class="badge rounded-pill me-2 badge-asignado"
+              >Asignado</span
+            >
+            <button
+              class="btn btn-sm"
+              [class.btn-outline-danger]="tieneRol(usuarioSeleccionado, rol.rolId)"
+              [class.btn-outline-primary]="!tieneRol(usuarioSeleccionado, rol.rolId)"
+              [disabled]="rolesGuardando"
+              (click)="toggleRol(usuarioSeleccionado, rol)">
+              <i
+                class="bi"
+                [class.bi-dash]="tieneRol(usuarioSeleccionado, rol.rolId)"
+                [class.bi-plus]="!tieneRol(usuarioSeleccionado, rol.rolId)"></i>
+              {{ tieneRol(usuarioSeleccionado, rol.rolId) ? 'Quitar' : 'Asignar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
