@@ -4,11 +4,14 @@ import {
   AUDITORIA_PURGE_CONFIRMACION_VACIAR,
   AuditoriaAdminListItemDto,
   AuditoriaAdminPageDto,
+  AuditoriaAuthListItemDto,
+  AuditoriaAuthPageDto,
   AuditoriaCvListItemDto,
   AuditoriaCvPageDto,
 } from '../../../core/services/admin/admin.service';
 import {
   AUDITORIA_ADMIN_ACCION_LABELS,
+  AUDITORIA_AUTH_ACCION_LABELS,
   AUDITORIA_CV_ACCION_LABELS,
   etiquetaAuditoriaAccion,
 } from '../../../core/constants/auditoria-accion-labels';
@@ -16,7 +19,7 @@ import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-mess
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
 type AuditoriaPurgeModo = 'anioMes' | 'anio' | 'todo';
-type AuditoriaPurgeTabla = 'admin' | 'cv';
+type AuditoriaPurgeTabla = 'admin' | 'cv' | 'auth';
 
 @Component({
   selector: 'app-admin-auditoria',
@@ -24,10 +27,11 @@ type AuditoriaPurgeTabla = 'admin' | 'cv';
   templateUrl: './admin-auditoria.component.html',
 })
 export class AdminAuditoriaComponent implements OnInit {
-  pestana: 'admin' | 'cv' = 'admin';
+  pestana: 'admin' | 'cv' | 'auth' = 'admin';
 
   modalMantenimientoAdmin = false;
   modalMantenimientoCv = false;
+  modalMantenimientoAuth = false;
 
   readonly opcionesAccionAdmin = Object.entries(AUDITORIA_ADMIN_ACCION_LABELS).map(([codigo, etiqueta]) => ({
     codigo,
@@ -37,11 +41,17 @@ export class AdminAuditoriaComponent implements OnInit {
     codigo,
     etiqueta,
   }));
+  readonly opcionesAccionAuth = Object.entries(AUDITORIA_AUTH_ACCION_LABELS).map(([codigo, etiqueta]) => ({
+    codigo,
+    etiqueta,
+  }));
 
   filtroAccionAdmin = '';
   busquedaAdmin = '';
   filtroAccionCv = '';
   busquedaCv = '';
+  filtroAccionAuth = '';
+  busquedaAuth = '';
 
   readonly fraseVaciar = AUDITORIA_PURGE_CONFIRMACION_VACIAR;
   aniosPurge: number[] = [];
@@ -72,6 +82,12 @@ export class AdminAuditoriaComponent implements OnInit {
   showConfirmErrorCv = false;
   purgingCv = false;
 
+  anioPurgeAuth = new Date().getUTCFullYear();
+  mesPurgeAuth = 1;
+  confirmVaciarAuth = '';
+  showConfirmErrorAuth = false;
+  purgingAuth = false;
+
   loadingAdmin = true;
   errorAdmin: string | null = null;
   itemsAdmin: AuditoriaAdminListItemDto[] = [];
@@ -87,6 +103,14 @@ export class AdminAuditoriaComponent implements OnInit {
   pageCv = 1;
   pageSizeCv = 10;
   totalPagesCv = 1;
+
+  loadingAuth = false;
+  errorAuth: string | null = null;
+  itemsAuth: AuditoriaAuthListItemDto[] = [];
+  totalAuth = 0;
+  pageAuth = 1;
+  pageSizeAuth = 10;
+  totalPagesAuth = 1;
 
   constructor(
     private adminService: AdminService,
@@ -109,6 +133,10 @@ export class AdminAuditoriaComponent implements OnInit {
     return !!(this.filtroAccionCv?.trim() || this.busquedaCv?.trim());
   }
 
+  get hayFiltrosAuth(): boolean {
+    return !!(this.filtroAccionAuth?.trim() || this.busquedaAuth?.trim());
+  }
+
   get rangoTextoAdmin(): string {
     if (this.totalAdmin === 0) return '';
     const desde = (this.pageAdmin - 1) * this.pageSizeAdmin + 1;
@@ -123,12 +151,20 @@ export class AdminAuditoriaComponent implements OnInit {
     return `Mostrando ${desde}–${hasta} de ${this.totalCv}`;
   }
 
-  cambiarPestana(t: 'admin' | 'cv'): void {
+  get rangoTextoAuth(): string {
+    if (this.totalAuth === 0) return '';
+    const desde = (this.pageAuth - 1) * this.pageSizeAuth + 1;
+    const hasta = Math.min(this.pageAuth * this.pageSizeAuth, this.totalAuth);
+    return `Mostrando ${desde}–${hasta} de ${this.totalAuth}`;
+  }
+
+  cambiarPestana(t: 'admin' | 'cv' | 'auth'): void {
     if (this.pestana === t) return;
     this.cerrarModalesMantenimiento();
     this.pestana = t;
     if (t === 'admin') this.cargarAdmin();
-    else this.cargarCv();
+    else if (t === 'cv') this.cargarCv();
+    else this.cargarAuth();
   }
 
   onCambioFiltrosAdmin(): void {
@@ -141,6 +177,11 @@ export class AdminAuditoriaComponent implements OnInit {
     this.cargarCv();
   }
 
+  onCambioFiltrosAuth(): void {
+    this.pageAuth = 1;
+    this.cargarAuth();
+  }
+
   limpiarBusquedaAdmin(): void {
     this.busquedaAdmin = '';
     this.onCambioFiltrosAdmin();
@@ -149,6 +190,11 @@ export class AdminAuditoriaComponent implements OnInit {
   limpiarBusquedaCv(): void {
     this.busquedaCv = '';
     this.onCambioFiltrosCv();
+  }
+
+  limpiarBusquedaAuth(): void {
+    this.busquedaAuth = '';
+    this.onCambioFiltrosAuth();
   }
 
   limpiarConfirmVaciarAdmin(): void {
@@ -161,12 +207,21 @@ export class AdminAuditoriaComponent implements OnInit {
     this.showConfirmErrorCv = false;
   }
 
+  limpiarConfirmVaciarAuth(): void {
+    this.confirmVaciarAuth = '';
+    this.showConfirmErrorAuth = false;
+  }
+
   onConfirmVaciarAdminChange(): void {
     this.showConfirmErrorAdmin = false;
   }
 
   onConfirmVaciarCvChange(): void {
     this.showConfirmErrorCv = false;
+  }
+
+  onConfirmVaciarAuthChange(): void {
+    this.showConfirmErrorAuth = false;
   }
 
   get canVaciarAdminCompleto(): boolean {
@@ -177,8 +232,13 @@ export class AdminAuditoriaComponent implements OnInit {
     return this.confirmVaciarCv.trim() === this.fraseVaciar;
   }
 
+  get canVaciarAuthCompleto(): boolean {
+    return this.confirmVaciarAuth.trim() === this.fraseVaciar;
+  }
+
   abrirModalMantenimientoAdmin(): void {
     this.modalMantenimientoCv = false;
+    this.modalMantenimientoAuth = false;
     this.showConfirmErrorAdmin = false;
     this.modalMantenimientoAdmin = true;
   }
@@ -195,6 +255,7 @@ export class AdminAuditoriaComponent implements OnInit {
 
   abrirModalMantenimientoCv(): void {
     this.modalMantenimientoAdmin = false;
+    this.modalMantenimientoAuth = false;
     this.showConfirmErrorCv = false;
     this.modalMantenimientoCv = true;
   }
@@ -209,9 +270,27 @@ export class AdminAuditoriaComponent implements OnInit {
     }
   }
 
+  abrirModalMantenimientoAuth(): void {
+    this.modalMantenimientoAdmin = false;
+    this.modalMantenimientoCv = false;
+    this.showConfirmErrorAuth = false;
+    this.modalMantenimientoAuth = true;
+  }
+
+  cerrarModalMantenimientoAuth(): void {
+    this.modalMantenimientoAuth = false;
+  }
+
+  cerrarModalMantenimientoAuthSiBackdrop(ev: MouseEvent | KeyboardEvent): void {
+    if (ev.target === ev.currentTarget) {
+      this.cerrarModalMantenimientoAuth();
+    }
+  }
+
   private cerrarModalesMantenimiento(): void {
     this.modalMantenimientoAdmin = false;
     this.modalMantenimientoCv = false;
+    this.modalMantenimientoAuth = false;
   }
 
   @HostListener('document:keydown.escape')
@@ -220,6 +299,8 @@ export class AdminAuditoriaComponent implements OnInit {
       this.cerrarModalMantenimientoAdmin();
     } else if (this.modalMantenimientoCv) {
       this.cerrarModalMantenimientoCv();
+    } else if (this.modalMantenimientoAuth) {
+      this.cerrarModalMantenimientoAuth();
     }
   }
 
@@ -269,6 +350,29 @@ export class AdminAuditoriaComponent implements OnInit {
     });
   }
 
+  cargarAuth(): void {
+    this.loadingAuth = true;
+    this.errorAuth = null;
+    this.adminService
+      .getAuditoriaAuth(this.pageAuth, this.pageSizeAuth, this.filtroAccionAuth, this.busquedaAuth)
+      .subscribe({
+      next: (res: AuditoriaAuthPageDto) => {
+        this.itemsAuth = res.items ?? [];
+        this.totalAuth = res.total;
+        this.pageAuth = res.page;
+        this.pageSizeAuth = res.pageSize;
+        this.totalPagesAuth = Math.max(1, res.totalPages);
+        this.loadingAuth = false;
+      },
+      error: () => {
+        this.loadingAuth = false;
+        this.errorAuth =
+          'No se pudo cargar la auditoría de autenticación. Verifica la tabla AuditoriaAuth (script 06) y que la API esté actualizada.';
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      },
+    });
+  }
+
   irPaginaAdmin(p: number): void {
     this.pageAdmin = Math.max(1, Math.min(p, this.totalPagesAdmin));
     this.cargarAdmin();
@@ -277,6 +381,11 @@ export class AdminAuditoriaComponent implements OnInit {
   irPaginaCv(p: number): void {
     this.pageCv = Math.max(1, Math.min(p, this.totalPagesCv));
     this.cargarCv();
+  }
+
+  irPaginaAuth(p: number): void {
+    this.pageAuth = Math.max(1, Math.min(p, this.totalPagesAuth));
+    this.cargarAuth();
   }
 
   purgeAdmin(modo: AuditoriaPurgeModo): void {
@@ -349,12 +458,51 @@ export class AdminAuditoriaComponent implements OnInit {
       });
   }
 
+  purgeAuth(modo: AuditoriaPurgeModo): void {
+    const warningAuth = this.getPurgeWarningMessage('auth', modo);
+    if (!globalThis.confirm(warningAuth)) return;
+
+    if (modo === 'todo') {
+      if (!this.canVaciarAuthCompleto) {
+        this.showConfirmErrorAuth = true;
+        this.notificationService.error('Escribe la frase de confirmación exacta para vaciar la tabla.');
+        return;
+      }
+    }
+    this.purgingAuth = true;
+    this.adminService
+      .purgeAuditoria({
+        tabla: 'auth',
+        modo,
+        anio: this.anioPurgeAuth,
+        mes: modo === 'anioMes' ? this.mesPurgeAuth : undefined,
+        confirmacion: modo === 'todo' ? this.confirmVaciarAuth.trim() : undefined,
+      })
+      .subscribe({
+        next: res => {
+          this.purgingAuth = false;
+          this.notificationService.success(`Eliminados ${res.eliminados} registro(s).`);
+          this.confirmVaciarAuth = '';
+          this.cerrarModalMantenimientoAuth();
+          this.cargarAuth();
+        },
+        error: (err: { error?: { message?: string } }) => {
+          this.purgingAuth = false;
+          this.notificationService.error(err?.error?.message ?? 'No se pudo completar la purga.');
+        },
+      });
+  }
+
   etiquetaAccionAdmin(accion: string): string {
     return etiquetaAuditoriaAccion(accion, AUDITORIA_ADMIN_ACCION_LABELS);
   }
 
   etiquetaAccionCv(accion: string): string {
     return etiquetaAuditoriaAccion(accion, AUDITORIA_CV_ACCION_LABELS);
+  }
+
+  etiquetaAccionAuth(accion: string): string {
+    return etiquetaAuditoriaAccion(accion, AUDITORIA_AUTH_ACCION_LABELS);
   }
 
   fmtFecha(iso: string): string {
@@ -377,17 +525,17 @@ export class AdminAuditoriaComponent implements OnInit {
   }
 
   private getPurgeWarningMessage(tabla: AuditoriaPurgeTabla, modo: AuditoriaPurgeModo): string {
-    const nombreTabla = tabla === 'admin' ? 'Auditoría administración' : 'Auditoría CV';
+    const nombreTabla = tabla === 'admin' ? 'Auditoría administración' : tabla === 'cv' ? 'Auditoría CV' : 'Auditoría autenticación';
     if (modo === 'todo') {
       return `Advertencia: vas a vaciar COMPLETAMENTE la tabla ${nombreTabla}. Esta acción no se puede deshacer. ¿Continuar?`;
     }
     if (modo === 'anio') {
-      const anio = tabla === 'admin' ? this.anioPurgeAdmin : this.anioPurgeCv;
+      const anio = tabla === 'admin' ? this.anioPurgeAdmin : tabla === 'cv' ? this.anioPurgeCv : this.anioPurgeAuth;
       return `Advertencia: vas a eliminar registros del año ${anio} en ${nombreTabla}. ¿Continuar?`;
     }
 
-    const anio = tabla === 'admin' ? this.anioPurgeAdmin : this.anioPurgeCv;
-    const mes = tabla === 'admin' ? this.mesPurgeAdmin : this.mesPurgeCv;
+    const anio = tabla === 'admin' ? this.anioPurgeAdmin : tabla === 'cv' ? this.anioPurgeCv : this.anioPurgeAuth;
+    const mes = tabla === 'admin' ? this.mesPurgeAdmin : tabla === 'cv' ? this.mesPurgeCv : this.mesPurgeAuth;
     const mesNombre = this.mesesPurge.find(m => m.v === mes)?.n ?? `mes ${mes}`;
     return `Advertencia: vas a eliminar registros de ${mesNombre} ${anio} en ${nombreTabla}. ¿Continuar?`;
   }

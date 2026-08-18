@@ -15,11 +15,13 @@ namespace PortalCV.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IAuthAuditoriaService _auditoria;
     private readonly IWebHostEnvironment _environment;
 
-    public AuthController(IAuthService authService, IWebHostEnvironment environment)
+    public AuthController(IAuthService authService, IAuthAuditoriaService auditoria, IWebHostEnvironment environment)
     {
         _authService = authService;
+        _auditoria = auditoria;
         _environment = environment;
     }
 
@@ -31,10 +33,20 @@ public class AuthController : ControllerBase
         [FromBody] LoginRequest request,
         CancellationToken ct)
     {
-        var appRequest = new AppDto.LoginRequest(request.Email, request.Password);
-        var result = await _authService.LoginAsync(appRequest, ct);
+        AppDto.LoginResponse result;
+        try
+        {
+            var appRequest = new AppDto.LoginRequest(request.Email, request.Password);
+            result = await _authService.LoginAsync(appRequest, ct);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await _auditoria.RegistrarAsync(null, AuthAuditoriaAcciones.LoginFallido, request.Email ?? string.Empty, null, ct);
+            throw;
+        }
 
         SetAuthCookie(result.Token, result.Expiracion);
+        await _auditoria.RegistrarAsync(result.UsuarioId, AuthAuditoriaAcciones.LoginExitoso, result.Email, null, ct);
 
         var response = new LoginResponse(
             result.UsuarioId,
@@ -50,9 +62,15 @@ public class AuthController : ControllerBase
     /// <summary>Cierra la sesión borrando la cookie del JWT. Anónimo: debe funcionar incluso si el token ya venció.</summary>
     [AllowAnonymous]
     [HttpPost("logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
         Response.Cookies.Delete(AuthCookieDefaults.Name, BuildCookieOptions(DateTimeOffset.UnixEpoch));
+
+        var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? string.Empty;
+        if (int.TryParse(idStr, out var usuarioId))
+            await _auditoria.RegistrarAsync(usuarioId, AuthAuditoriaAcciones.Logout, email, null, ct);
+
         return Ok(new { message = ApiMessages.Auth.SesionCerrada });
     }
 

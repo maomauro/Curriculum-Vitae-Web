@@ -24,6 +24,7 @@ public class AdminController : ControllerBase
     private readonly ICvEditorService _cvEditor;
     private readonly IAdminAuditoriaService _auditoria;
     private readonly ICvAuditoriaService _auditoriaCv;
+    private readonly IAuthAuditoriaService _auditoriaAuth;
     private readonly IPublicCvSnapshotExportService _snapshotExport;
 
     public AdminController(
@@ -34,6 +35,7 @@ public class AdminController : ControllerBase
         ICvEditorService cvEditor,
         IAdminAuditoriaService auditoria,
         ICvAuditoriaService auditoriaCv,
+        IAuthAuditoriaService auditoriaAuth,
         IPublicCvSnapshotExportService snapshotExport)
     {
         _usuarioRepo = usuarioRepo;
@@ -43,6 +45,7 @@ public class AdminController : ControllerBase
         _cvEditor = cvEditor;
         _auditoria = auditoria;
         _auditoriaCv = auditoriaCv;
+        _auditoriaAuth = auditoriaAuth;
         _snapshotExport = snapshotExport;
     }
 
@@ -80,6 +83,20 @@ public class AdminController : ControllerBase
         return Ok(AuditoriaPagedResult(items, total, p, ps));
     }
 
+    /// <summary>Historial de eventos de autenticación: login exitoso/fallido, logout (paginado, solo Admin).</summary>
+    [HttpGet("auditoria-auth")]
+    public async Task<IActionResult> GetAuditoriaAuth(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? accion = null,
+        [FromQuery] string? q = null,
+        CancellationToken ct = default)
+    {
+        var (p, ps) = ClampAuditoriaPaging(page, pageSize);
+        var (items, total) = await _auditoriaAuth.ListarAsync(p, ps, accion, q, ct);
+        return Ok(AuditoriaPagedResult(items, total, p, ps));
+    }
+
     /// <summary>Elimina filas de auditoría por año/mes o vacía la tabla (con frase de confirmación).</summary>
     [HttpPost("auditoria/purge")]
     public async Task<ActionResult<PurgeAuditoriaResponseDto>> PurgeAuditoria(
@@ -90,7 +107,7 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = ApiMessages.Admin.AuditoriaPurgeParametrosInvalidos });
 
         var tabla = body.Tabla?.Trim().ToLowerInvariant();
-        if (tabla is not ("admin" or "cv"))
+        if (tabla is not ("admin" or "cv" or "auth"))
             return BadRequest(new { message = ApiMessages.Admin.AuditoriaPurgeTablaInvalida });
 
         if (!TryParsePurgeModo(body.Modo, out var modo))
@@ -104,9 +121,12 @@ public class AdminController : ControllerBase
 
         try
         {
-            var n = tabla == "admin"
-                ? await _auditoria.PurgeAsync(modo, body.Anio, body.Mes, ct)
-                : await _auditoriaCv.PurgeAsync(modo, body.Anio, body.Mes, ct);
+            var n = tabla switch
+            {
+                "admin" => await _auditoria.PurgeAsync(modo, body.Anio, body.Mes, ct),
+                "cv" => await _auditoriaCv.PurgeAsync(modo, body.Anio, body.Mes, ct),
+                _ => await _auditoriaAuth.PurgeAsync(modo, body.Anio, body.Mes, ct)
+            };
             return Ok(new PurgeAuditoriaResponseDto { Eliminados = n });
         }
         catch (ArgumentException)

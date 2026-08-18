@@ -19,6 +19,12 @@ Actualmente el esquema de snapshot ya está integrado en:
 
 Para bases existentes, usar migración controlada del mismo esquema (sin re-ejecutar `05` completo con datos productivos).
 
+## Escenario: agregar una tabla nueva a una base Azure ya existente
+
+`05_AzureSQL_CreateSchema.sql` es un script de recreación completa (`DROP` + `CREATE`): **nunca** re-ejecutarlo contra una base con datos productivos. Para sumar una tabla nueva, se agrega un script incremental numerado en `production/` que solo crea lo nuevo (`IF OBJECT_ID(...) IS NULL CREATE TABLE ...`, seguro de re-ejecutar), y además se refleja la tabla en `05_AzureSQL_CreateSchema.sql` y `manual/01_CreateSchema.sql` para que sigan siendo la referencia completa del esquema.
+
+- `production/06_AddAuditoriaAuth.sql`: agrega `dbo.AuditoriaAuth` (auditoría de login/logout). Precedente a seguir para futuras migraciones incrementales.
+
 ## Scripts fuera de produccion (`manual/`)
 
 Los exports ad-hoc de SSMS no se versionan aqui: el modelo de referencia son `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql`.

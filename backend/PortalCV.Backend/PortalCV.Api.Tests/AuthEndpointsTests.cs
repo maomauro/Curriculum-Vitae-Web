@@ -3,7 +3,12 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using PortalCV.Application.Constants;
+using PortalCV.Domain.Entities;
+using PortalCV.Infrastructure.Data;
 
 namespace PortalCV.Api.Tests;
 
@@ -58,6 +63,25 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var response = await client.PostAsync("/api/auth/login", payload);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_CredencialesInvalidas_RegistraAuditoriaFallida()
+    {
+        var client = _factory.CreateClient();
+        var email = $"login-fallido-{Guid.NewGuid():N}@example.com";
+        var payload = new StringContent(
+            $"{{\"email\":\"{email}\",\"password\":\"incorrecta\"}}",
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await client.PostAsync("/api/auth/login", payload);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+
+        var registro = await ObtenerUltimaAuditoriaAuthAsync(email);
+        Assert.NotNull(registro);
+        Assert.Equal(AuthAuditoriaAcciones.LoginFallido, registro!.Accion);
+        Assert.Null(registro.ActorUsuarioId);
     }
 
     [Fact]
@@ -160,6 +184,11 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>
         // si Me() solo busca la forma corta, este campo queda vacio (bug detectado en vivo).
         var meBody = await meResponse.Content.ReadAsStringAsync();
         Assert.Contains($"\"email\":\"{email}\"", meBody, StringComparison.OrdinalIgnoreCase);
+
+        var registro = await ObtenerUltimaAuditoriaAuthAsync(email);
+        Assert.NotNull(registro);
+        Assert.Equal(AuthAuditoriaAcciones.LoginExitoso, registro!.Accion);
+        Assert.NotNull(registro.ActorUsuarioId);
     }
 
     [Fact]
@@ -174,6 +203,58 @@ public class AuthEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var authCookie = cookies!.FirstOrDefault(c => c.StartsWith("portalcv_auth=", StringComparison.Ordinal));
         Assert.NotNull(authCookie);
         Assert.Contains("portalcv_auth=;", authCookie!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Logout_ConSesionActiva_RegistraAuditoria()
+    {
+        var client = _factory.CreateClient();
+        var email = $"logout-test-{Guid.NewGuid():N}@example.com";
+
+        // Registro via el servicio (DI) en vez de POST /api/auth/register: evita consumir
+        // el rate limit compartido de "auth-public" entre los tests de esta clase (solo
+        // interesa aqui el login/logout reales, no volver a probar el registro por HTTP).
+        using (var seedScope = _factory.Services.CreateScope())
+        {
+            var authService = seedScope.ServiceProvider.GetRequiredService<PortalCV.Application.Interfaces.IAuthService>();
+            await authService.RegisterAsync(
+                new PortalCV.Application.DTOs.Auth.RegisterRequest(email, "password123", "Logout Test"),
+                CancellationToken.None);
+        }
+
+        var loginPayload = new StringContent(
+            $"{{\"email\":\"{email}\",\"password\":\"password123\"}}",
+            Encoding.UTF8, "application/json");
+        var loginResponse = await client.PostAsync("/api/auth/login", loginPayload);
+        var authCookie = loginResponse.Headers.GetValues("Set-Cookie")
+            .First(c => c.StartsWith("portalcv_auth=", StringComparison.Ordinal))
+            .Split(';')[0];
+
+        using var logoutClient = _factory.CreateClient();
+        var logoutRequest = new HttpRequestMessage(HttpMethod.Post, "/api/auth/logout")
+        {
+            Content = new StringContent("", Encoding.UTF8, "application/json")
+        };
+        logoutRequest.Headers.TryAddWithoutValidation("Cookie", authCookie);
+        var logoutResponse = await logoutClient.SendAsync(logoutRequest);
+        Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
+
+        var registro = await ObtenerUltimaAuditoriaAuthAsync(email, AuthAuditoriaAcciones.Logout);
+        Assert.NotNull(registro);
+        Assert.NotNull(registro!.ActorUsuarioId);
+    }
+
+    /// <summary>Consulta directa al DbContext InMemory (el registro de auditoría no viaja en la respuesta HTTP).</summary>
+    private async Task<AuditoriaAuth?> ObtenerUltimaAuditoriaAuthAsync(string email, string? accion = null)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+
+        IQueryable<AuditoriaAuth> query = context.AuditoriasAuth.Where(a => a.Email == email);
+        if (accion is not null)
+            query = query.Where(a => a.Accion == accion);
+
+        return await query.OrderByDescending(a => a.AuditoriaAuthId).FirstOrDefaultAsync();
     }
 
     [Fact]

@@ -10,7 +10,7 @@ public enum AuditoriaPurgeModo
 /// <summary>Solicitud de purga de tablas de auditoría (solo Admin).</summary>
 public class PurgeAuditoriaRequestDto
 {
-    /// <summary>"admin" o "cv".</summary>
+    /// <summary>"admin", "cv" o "auth".</summary>
     public string Tabla { get; set; } = string.Empty;
 
     /// <summary>"anioMes", "anio" o "todo".</summary>

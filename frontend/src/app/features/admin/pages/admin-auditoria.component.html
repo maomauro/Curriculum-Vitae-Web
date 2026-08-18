@@ -29,6 +29,15 @@
       Auditoría CV
     </button>
   </li>
+  <li class="nav-item">
+    <button
+      type="button"
+      class="nav-link"
+      [class.active]="pestana === 'auth'"
+      (click)="cambiarPestana('auth')">
+      Auditoría autenticación
+    </button>
+  </li>
 </ul>
 
 <div *ngIf="pestana === 'admin'" class="seccion-card border-top-0 rounded-top-0">
@@ -277,6 +286,124 @@
   </div>
 </div>
 
+<div *ngIf="pestana === 'auth'" class="seccion-card border-top-0 rounded-top-0">
+  <div *ngIf="loadingAuth" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando auditoría de autenticación…</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loadingAuth">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
+      <div class="seccion-titulo mb-0">Eventos de autenticación</div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="d-flex gap-2 flex-nowrap align-items-center admin-usuarios-filtros">
+          <label class="visually-hidden" for="admin-auditoria-auth-filtro-accion">Filtrar por acción</label>
+          <select
+            id="admin-auditoria-auth-filtro-accion"
+            class="form-select form-select-sm admin-filter-select"
+            [(ngModel)]="filtroAccionAuth"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onCambioFiltrosAuth()">
+            <option [ngValue]="''">Todas las acciones</option>
+            <option *ngFor="let o of opcionesAccionAuth" [ngValue]="o.codigo">{{ o.etiqueta }}</option>
+          </select>
+          <div class="admin-search-with-clear">
+            <label class="visually-hidden" for="admin-auditoria-auth-busqueda">Buscar en auditoría de autenticación</label>
+            <input
+              id="admin-auditoria-auth-busqueda"
+              type="text"
+              class="form-control form-control-sm admin-search-input"
+              placeholder="Buscar email, actor, detalle…"
+              [(ngModel)]="busquedaAuth"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onCambioFiltrosAuth()" />
+            <button
+              *ngIf="busquedaAuth?.trim()"
+              type="button"
+              class="admin-search-clear"
+              (click)="limpiarBusquedaAuth()"
+              aria-label="Limpiar búsqueda">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+          (click)="abrirModalMantenimientoAuth()">
+          <i class="bi bi-trash3 me-1"></i>
+          Mantenimiento de registros
+        </button>
+      </div>
+    </div>
+    <div *ngIf="errorAuth" class="alert alert-danger py-2 small mb-3 mx-2">{{ errorAuth }}</div>
+
+    <div *ngIf="!errorAuth && !loadingAuth && totalAuth === 0">
+      <div *ngIf="!hayFiltrosAuth" class="text-center text-muted py-5 px-2">
+        <i class="bi bi-inbox display-6 d-block mb-2"></i>
+        <p class="mb-0">Aún no hay eventos de autenticación registrados.</p>
+      </div>
+      <div *ngIf="hayFiltrosAuth" class="text-center text-muted py-5 px-2">
+        <i class="bi bi-search admin-search-icon"></i>
+        <p class="mt-2 mb-0">No hay eventos que coincidan con el filtro o la búsqueda.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!errorAuth && !loadingAuth && totalAuth > 0" class="table-responsive admin-table-wrap">
+      <table class="table table-hover align-middle w-100 mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
+            <th scope="col">FECHA (UTC)</th>
+            <th scope="col">EMAIL</th>
+            <th scope="col">ACTOR</th>
+            <th scope="col">ACCIÓN</th>
+            <th scope="col">DETALLE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of itemsAuth; let i = index">
+            <td class="text-end text-muted small">{{ (pageAuth - 1) * pageSizeAuth + i + 1 }}</td>
+            <td class="text-nowrap small">{{ fmtFecha(row.fechaUtc) }}</td>
+            <td class="small">{{ row.email }}</td>
+            <td class="small">
+              <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
+              <span *ngIf="!row.actorEmail" class="text-muted">—</span>
+            </td>
+            <td>
+              <span class="badge rounded-pill bg-light text-dark border">{{ etiquetaAccionAuth(row.accion) }}</span>
+            </td>
+            <td class="small font-monospace text-break" style="max-width: 28rem">{{ detalleLegible(row.detalleJson) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div
+        class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
+        <span class="text-muted small"> {{ rangoTextoAuth }} </span>
+        <div class="btn-group btn-group-sm">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="pageAuth <= 1"
+            (click)="irPaginaAuth(pageAuth - 1)">
+            Anterior
+          </button>
+          <button type="button" class="btn btn-outline-secondary" disabled>{{ pageAuth }} / {{ totalPagesAuth }}</button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="pageAuth >= totalPagesAuth"
+            (click)="irPaginaAuth(pageAuth + 1)">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <ng-container *ngIf="modalMantenimientoAdmin">
   <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAdmin()" (keydown)="cerrarModalMantenimientoAdmin()" aria-hidden="true"></div>
   <div
@@ -489,6 +616,116 @@
             class="btn btn-sm btn-danger"
             [disabled]="purgingCv || !canVaciarCvCompleto"
             (click)="purgeCv('todo')">
+            Vaciar tabla completa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="modalMantenimientoAuth">
+  <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAuth()" (keydown)="cerrarModalMantenimientoAuth()" aria-hidden="true"></div>
+  <div
+    id="modalMantenimientoAuditoriaAuth"
+    class="modal show d-block portal-modal__root"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalMantenimientoAuditoriaAuthLabel"
+    (click)="cerrarModalMantenimientoAuthSiBackdrop($event)"
+    (keydown)="cerrarModalMantenimientoAuthSiBackdrop($event)">
+    <div
+      class="modal-dialog modal-dialog-centered modal-dialog-scrollable portal-modal__dialog portal-modal__dialog--500"
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="modal-content portal-modal__panel">
+        <div class="modal-header portal-modal__header">
+          <div class="portal-modal__title-row">
+            <span class="portal-modal__icon" aria-hidden="true">
+              <i class="bi bi-shield-lock"></i>
+            </span>
+            <div>
+              <h2 class="portal-modal__title" id="modalMantenimientoAuditoriaAuthLabel">
+                Mantenimiento — Auditoría autenticación
+              </h2>
+              <span class="portal-modal__subtitle">
+                Los filtros usan <strong>FechaUtc</strong>. «Vaciar tabla» exige escribir
+                <code>{{ fraseVaciar }}</code> tal cual.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-close portal-modal__close"
+            (click)="cerrarModalMantenimientoAuth()"
+            aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body portal-modal__body">
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label small mb-0" for="admin-auditoria-auth-purge-anio">Año</label>
+              <select
+                id="admin-auditoria-auth-purge-anio"
+                class="form-select form-select-sm mb-2"
+                [(ngModel)]="anioPurgeAuth"
+                [ngModelOptions]="{ standalone: true }">
+                <option *ngFor="let y of aniosPurge" [ngValue]="y">{{ y }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100"
+                [disabled]="purgingAuth"
+                (click)="purgeAuth('anio')">
+                Borrar año
+              </button>
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-0" for="admin-auditoria-auth-purge-mes">Mes</label>
+              <select
+                id="admin-auditoria-auth-purge-mes"
+                class="form-select form-select-sm mb-2"
+                [(ngModel)]="mesPurgeAuth"
+                [ngModelOptions]="{ standalone: true }">
+                <option *ngFor="let m of mesesPurge" [ngValue]="m.v">{{ m.n }}</option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100"
+                [disabled]="purgingAuth"
+                (click)="purgeAuth('anioMes')">
+                Borrar mes
+              </button>
+            </div>
+          </div>
+          <hr class="my-2" />
+          <label class="form-label small mb-1" for="admin-auditoria-auth-purge-confirm">Confirmación para vaciar tabla</label>
+          <div class="admin-search-with-clear mb-2">
+            <input
+              id="admin-auditoria-auth-purge-confirm"
+              type="text"
+              class="form-control form-control-sm admin-search-input"
+              [(ngModel)]="confirmVaciarAuth"
+              (ngModelChange)="onConfirmVaciarAuthChange()"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="fraseVaciar"
+              autocomplete="off" />
+            <button
+              *ngIf="(confirmVaciarAuth?.length ?? 0) > 0"
+              type="button"
+              class="admin-search-clear"
+              (click)="limpiarConfirmVaciarAuth()"
+              aria-label="Limpiar confirmación">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div *ngIf="showConfirmErrorAuth" class="alert alert-danger py-2 small mb-2">
+            Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-danger"
+            [disabled]="purgingAuth || !canVaciarAuthCompleto"
+            (click)="purgeAuth('todo')">
             Vaciar tabla completa
           </button>
         </div>
