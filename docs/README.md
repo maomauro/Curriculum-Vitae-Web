@@ -50,10 +50,12 @@ Infraestructura, despliegue y políticas de mantenimiento.
 | [DevOps.md](./devops/DevOps.md) | Pipelines, CI/CD, configuración Docker |
 | [Despliegue.md](./devops/Despliegue.md) | Decisiones de infraestructura y arquitectura de despliegue |
 | [Runbook-Azure.md](./devops/Runbook-Azure.md) | Runbook ejecutable con comandos `az` para provisionar Azure desde cero |
-| [Validacion-Snapshot-ColdStart.md](./devops/Validacion-Snapshot-ColdStart.md) | ⚠️ Retirado (2026-08-18): pruebas del fallback snapshot que ya no existe en el código |
+| [Smoke-Test-Produccion.md](./devops/Smoke-Test-Produccion.md) | Pasos de verificación manual post-despliegue en producción |
 | [Plan-Backup-Mantenimiento.md](./devops/Plan-Backup-Mantenimiento.md) | Plan de backup y mantenimiento |
 | [Politica-Proteccion-Ramas.md](./devops/Politica-Proteccion-Ramas.md) | Reglas de protección de ramas Git |
 | [Checklist-Produccion.md](./devops/Checklist-Produccion.md) | Verificación previa a publicar en producción |
+| [Checklist-Auditoria-Repositorio.md](./devops/Checklist-Auditoria-Repositorio.md) | Checklist de auditoría del repo (limpieza, estructura, docs vs. código) — 2026-08-18 |
+| [postman/](./devops/postman/) | Colección Postman de la API + entornos (local/producción) |
 
 ---
 
@@ -77,6 +79,19 @@ Plan de salida a producción y configuración de calidad continua.
 |---|---|
 | [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live en Azure (ACA + SWA + Azure SQL) |
 | [Integracion-SonarCloud.md](./produccion/Integracion-SonarCloud.md) | Configuración de SonarCloud en CI, cobertura LCOV y variables requeridas |
+
+---
+
+## 🗄️ archivo/
+Documentación retirada o de corte histórico. Se conserva como referencia de diseño, no describe el estado actual del código.
+
+| Archivo | Contenido |
+|---|---|
+| [Snapshot-JSON-ColdStart.md](./archivo/Snapshot-JSON-ColdStart.md) | ⚠️ Retirado (2026-08-18): diseño del fallback de snapshot ante cold-start, eliminado del código |
+| [Snapshot-JSON-Checklist-Implementacion.md](./archivo/Snapshot-JSON-Checklist-Implementacion.md) | ⚠️ Retirado (2026-08-18): checklist de implementación del snapshot |
+| [Validacion-Snapshot-ColdStart.md](./archivo/Validacion-Snapshot-ColdStart.md) | ⚠️ Retirado (2026-08-18): pruebas del fallback snapshot que ya no existe en el código |
+| [Estado-Actual-2026-08-07.md](./archivo/Estado-Actual-2026-08-07.md) | Corte de estado del proyecto al 2026-08-07 |
+| [Sprint-Cierre-GoLive-2026-08.md](./archivo/Sprint-Cierre-GoLive-2026-08.md) | Cierre del sprint de salida a producción (agosto 2026) |
 
 ---
 
