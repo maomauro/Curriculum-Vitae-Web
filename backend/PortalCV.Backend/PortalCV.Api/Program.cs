@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi.Models;
 using PortalCV.Api.Json;
@@ -229,6 +230,19 @@ namespace PortalCV.Api
                 .AddDbContextCheck<PortalCvDbContext>("database");
 
             var app = builder.Build();
+
+            // Detrás del ingress de Azure Container Apps la IP real del visitante viaja en
+            // X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress solo vería la
+            // IP interna del proxy de la plataforma. KnownNetworks/KnownProxies se limpian
+            // porque el proxy de Container Apps no tiene una IP fija conocida de antemano
+            // (mismo patrón recomendado por Microsoft para apps detrás de un PaaS gestionado).
+            var forwardedHeadersOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            };
+            forwardedHeadersOptions.KnownIPNetworks.Clear();
+            forwardedHeadersOptions.KnownProxies.Clear();
+            app.UseForwardedHeaders(forwardedHeadersOptions);
 
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.UseSerilogRequestLogging();

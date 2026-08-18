@@ -10,6 +10,7 @@ public interface IAuthAuditoriaService
         string accion,
         string email,
         IReadOnlyDictionary<string, string>? detalle,
+        string? ipOrigen = null,
         CancellationToken ct = default);
 
     Task<(IReadOnlyList<AuditoriaAuthListItemDto> Items, int Total)> ListarAsync(

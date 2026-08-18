@@ -476,6 +476,7 @@ CREATE TABLE dbo.AuditoriaAuth (
     Accion           NVARCHAR(80)  NOT NULL,
     Email            NVARCHAR(256) NOT NULL,
     DetalleJson      NVARCHAR(MAX) NULL,
+    IpOrigen         NVARCHAR(45) NULL,
     CONSTRAINT PK_AuditoriaAuth PRIMARY KEY CLUSTERED (AuditoriaAuthId),
     CONSTRAINT FK_AuditoriaAuth_Usuario_Actor FOREIGN KEY (ActorUsuarioId)
         REFERENCES dbo.Usuario (UsuarioId) ON DELETE SET NULL

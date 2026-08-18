@@ -28,6 +28,9 @@ public class AuditoriaAuthConfiguration : IEntityTypeConfiguration<AuditoriaAuth
 
         builder.Property(x => x.DetalleJson);
 
+        builder.Property(x => x.IpOrigen)
+            .HasMaxLength(45);
+
         builder.HasOne(x => x.Actor)
             .WithMany()
             .HasForeignKey(x => x.ActorUsuarioId)
