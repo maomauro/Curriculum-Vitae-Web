@@ -38,6 +38,12 @@ export const AUDITORIA_CV_ACCION_LABELS: Record<string, string> = {
   'cv.curriculum_publicacion': 'Publicar / borrador',
 };
 
+export const AUDITORIA_AUTH_ACCION_LABELS: Record<string, string> = {
+  'auth.login_exitoso': 'Login exitoso',
+  'auth.login_fallido': 'Login fallido',
+  'auth.logout': 'Logout',
+};
+
 export function etiquetaAuditoriaAccion(accion: string, map: Record<string, string>): string {
   return map[accion] ?? accion;
 }

@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IAdminAuditoriaService, AdminAuditoriaService>();
         services.AddScoped<ICvAuditoriaService, CvAuditoriaService>();
+        services.AddScoped<IAuthAuditoriaService, AuthAuditoriaService>();
 
         return services;
     }

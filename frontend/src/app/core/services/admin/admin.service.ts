@@ -64,11 +64,29 @@ export interface AuditoriaCvPageDto {
   totalPages: number;
 }
 
+export interface AuditoriaAuthListItemDto {
+  auditoriaAuthId: number;
+  fechaUtc: string;
+  actorUsuarioId: number | null;
+  actorEmail: string | null;
+  accion: string;
+  email: string;
+  detalleJson: string | null;
+}
+
+export interface AuditoriaAuthPageDto {
+  items: AuditoriaAuthListItemDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 /** Debe coincidir con `AuditoriaPurgeConfirmacion.VaciarTodo` en la API. */
 export const AUDITORIA_PURGE_CONFIRMACION_VACIAR = 'VACIAR_AUDITORIA';
 
 export interface PurgeAuditoriaRequest {
-  tabla: 'admin' | 'cv';
+  tabla: 'admin' | 'cv' | 'auth';
   modo: 'anioMes' | 'anio' | 'todo';
   anio?: number;
   mes?: number;
@@ -146,6 +164,21 @@ export class AdminService {
     if (a) params = params.set('accion', a);
     if (qq) params = params.set('q', qq);
     return this.http.get<AuditoriaCvPageDto>(`${BASE}/auditoria-cv`, { params });
+  }
+
+  /** Listado de auditoría de autenticación: login exitoso/fallido, logout (solo rol Admin). */
+  getAuditoriaAuth(
+    page = 1,
+    pageSize = 10,
+    accion?: string | null,
+    q?: string | null
+  ): Observable<AuditoriaAuthPageDto> {
+    let params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
+    const a = accion?.trim();
+    const qq = q?.trim();
+    if (a) params = params.set('accion', a);
+    if (qq) params = params.set('q', qq);
+    return this.http.get<AuditoriaAuthPageDto>(`${BASE}/auditoria-auth`, { params });
   }
 
   purgeAuditoria(body: PurgeAuditoriaRequest): Observable<PurgeAuditoriaResponseDto> {
