@@ -47,6 +47,7 @@ IF OBJECT_ID(N'dbo.PublicCvSnapshotExport', N'U') IS NOT NULL DROP TABLE dbo.Pub
 IF OBJECT_ID(N'dbo.PublicStaticSnapshotState', N'U') IS NOT NULL DROP TABLE dbo.PublicStaticSnapshotState;
 IF OBJECT_ID(N'dbo.Curriculum', N'U') IS NOT NULL              DROP TABLE dbo.Curriculum;
 IF OBJECT_ID(N'dbo.AuditoriaAdmin', N'U') IS NOT NULL        DROP TABLE dbo.AuditoriaAdmin;
+IF OBJECT_ID(N'dbo.AuditoriaAuth', N'U') IS NOT NULL         DROP TABLE dbo.AuditoriaAuth;
 IF OBJECT_ID(N'dbo.Usuario', N'U') IS NOT NULL                DROP TABLE dbo.Usuario;
 IF OBJECT_ID(N'dbo.Rol', N'U') IS NOT NULL                   DROP TABLE dbo.Rol;
 GO
@@ -467,6 +468,20 @@ CREATE TABLE dbo.AuditoriaAdmin (
 );
 
 CREATE NONCLUSTERED INDEX IX_AuditoriaAdmin_FechaUtc ON dbo.AuditoriaAdmin (FechaUtc DESC);
+
+CREATE TABLE dbo.AuditoriaAuth (
+    AuditoriaAuthId  INT NOT NULL IDENTITY(1,1),
+    FechaUtc         DATETIME2(0) NOT NULL CONSTRAINT DF_AuditoriaAuth_FechaUtc DEFAULT (SYSUTCDATETIME()),
+    ActorUsuarioId   INT NULL,
+    Accion           NVARCHAR(80)  NOT NULL,
+    Email            NVARCHAR(256) NOT NULL,
+    DetalleJson      NVARCHAR(MAX) NULL,
+    CONSTRAINT PK_AuditoriaAuth PRIMARY KEY CLUSTERED (AuditoriaAuthId),
+    CONSTRAINT FK_AuditoriaAuth_Usuario_Actor FOREIGN KEY (ActorUsuarioId)
+        REFERENCES dbo.Usuario (UsuarioId) ON DELETE SET NULL
+);
+
+CREATE NONCLUSTERED INDEX IX_AuditoriaAuth_FechaUtc ON dbo.AuditoriaAuth (FechaUtc DESC);
 
 CREATE TABLE dbo.AuditoriaCv (
     AuditoriaCvId    INT NOT NULL IDENTITY(1,1),
