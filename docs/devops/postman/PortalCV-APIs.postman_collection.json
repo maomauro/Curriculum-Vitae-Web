@@ -352,26 +352,6 @@
             }
           },
           "response": []
-        },
-        {
-          "name": "GET /api/admin/public-cv-snapshot/pending",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/public-cv-snapshot/pending",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "public-cv-snapshot",
-                "pending"
-              ]
-            }
-          },
-          "response": []
         }
       ]
     }

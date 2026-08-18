@@ -8,15 +8,8 @@
 
   <div class="container py-4" *ngIf="estado === 'listo' && ctx.cv">
     <div class="cv-publico-print-hide">
-      <div *ngIf="usandoSnapshot" class="small mb-3 public-data-status public-data-status--snapshot" role="status" aria-live="polite">
-        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-        Mostrando datos temporales del snapshot.
-        <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)">
-          Última actualización: {{ snapshotActualizadoEn | date:'medium' }}.
-        </span>
-      </div>
       <p
-        *ngIf="!usandoSnapshot && ctx.cv"
+        *ngIf="ctx.cv"
         class="small mb-3 cv-publico-print-hide public-data-status public-data-status--live"
         role="status">
         <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>

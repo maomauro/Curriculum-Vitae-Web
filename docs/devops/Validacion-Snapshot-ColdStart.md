@@ -1,5 +1,7 @@
 # Validación operativa - Snapshot JSON en cold start
 
+> ⚠️ **Retirado (2026-08-18).** Esta funcionalidad fue eliminada del código. Documento conservado como referencia histórica.
+
 ## Objetivo
 
 Validar en ambiente (idealmente staging) que:

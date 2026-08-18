@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { convertToParamMap, ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError, TimeoutError } from 'rxjs';
 import { CvAnaliticasDetalleService } from '../../../core/services/cv/cv-analiticas-detalle.service';
 import { PublicService, type CvDetalleDto } from '../../../core/services/public/public.service';
 import { CvPublicoShellComponent } from './cv-publico-shell.component';
@@ -14,10 +14,10 @@ describe('CvPublicoShellComponent', () => {
 
   const paramMap$ = new BehaviorSubject(convertToParamMap({ urlPublica: 'ana-dev' }));
 
-  const snapshotDetail: CvDetalleDto = {
+  const apiDetail: CvDetalleDto = {
     curriculumId: 1,
     urlPublica: 'ana-dev',
-    plantillaCodigo: 'clasico',
+    plantillaCodigo: 'moderno',
     experienciaLaboralMesesAcumulados: 24,
     personales: { nombreCompleto: 'Ana', fotoUrl: null, ciudad: null, pais: null, celular: null, email: null },
     perfiles: [],
@@ -29,13 +29,7 @@ describe('CvPublicoShellComponent', () => {
     redesSociales: [],
   };
 
-  const apiDetail: CvDetalleDto = {
-    ...snapshotDetail,
-    plantillaCodigo: 'moderno',
-  };
-
   const publicServiceMock = {
-    getDetalleSnapshot: jasmine.createSpy('getDetalleSnapshot'),
     registrarImpresionPdf: jasmine.createSpy('registrarImpresionPdf').and.returnValue(of(void 0)),
     contactar: jasmine.createSpy('contactar').and.returnValue(of(void 0)),
   };
@@ -57,43 +51,21 @@ describe('CvPublicoShellComponent', () => {
   });
 
   beforeEach(() => {
-    publicServiceMock.getDetalleSnapshot.calls.reset();
     cvAnaliticasMock.detallePublicoParaAnaliticas$.calls.reset();
     fixture = TestBed.createComponent(CvPublicoShellComponent);
     component = fixture.componentInstance;
   });
 
-  it('usa snapshot temporal y luego reemplaza con API cuando responde bien', () => {
-    publicServiceMock.getDetalleSnapshot.and.returnValue(
-      of({ detalle: snapshotDetail, generatedAtUtc: '2026-04-24T12:00:00Z' })
-    );
+  it('carga el detalle desde la API y queda en estado listo', () => {
     cvAnaliticasMock.detallePublicoParaAnaliticas$.and.returnValue(of(apiDetail));
 
     fixture.detectChanges();
 
     expect(component.estado).toBe('listo');
-    expect(component.usandoSnapshot).toBeFalse();
-    expect(component.snapshotActualizadoEn).toBeNull();
     expect(component.ctx.cv?.plantillaCodigo).toBe('moderno');
   });
 
-  it('mantiene snapshot cuando API falla y hay fallback', () => {
-    publicServiceMock.getDetalleSnapshot.and.returnValue(
-      of({ detalle: snapshotDetail, generatedAtUtc: '2026-04-24T12:00:00Z' })
-    );
-    cvAnaliticasMock.detallePublicoParaAnaliticas$.and.returnValue(
-      throwError(() => new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
-    );
-
-    fixture.detectChanges();
-
-    expect(component.estado).toBe('listo');
-    expect(component.usandoSnapshot).toBeTrue();
-    expect(component.ctx.cv?.urlPublica).toBe('ana-dev');
-  });
-
-  it('marca no_encontrado cuando API responde 404 sin snapshot', () => {
-    publicServiceMock.getDetalleSnapshot.and.returnValue(of(null));
+  it('marca no_encontrado cuando la API responde 404', () => {
     cvAnaliticasMock.detallePublicoParaAnaliticas$.and.returnValue(
       throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }))
     );
@@ -103,5 +75,23 @@ describe('CvPublicoShellComponent', () => {
     expect(component.estado).toBe('no_encontrado');
     expect(component.ctx.cv).toBeNull();
   });
-});
 
+  it('marca error cuando la API falla con otro status', () => {
+    cvAnaliticasMock.detallePublicoParaAnaliticas$.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
+    );
+
+    fixture.detectChanges();
+
+    expect(component.estado).toBe('error');
+    expect(component.ctx.cv).toBeNull();
+  });
+
+  it('marca error cuando la API excede el timeout', () => {
+    cvAnaliticasMock.detallePublicoParaAnaliticas$.and.returnValue(throwError(() => new TimeoutError()));
+
+    fixture.detectChanges();
+
+    expect(component.estado).toBe('error');
+  });
+});

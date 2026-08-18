@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { BuscarCvsComponent } from './buscar-cvs.component';
-import { PublicService, type CvListadoResponse, type SnapshotListadoResponse } from '../../../core/services/public/public.service';
+import { PublicService, type CvListadoResponse } from '../../../core/services/public/public.service';
 
 describe('BuscarCvsComponent', () => {
   let fixture: ComponentFixture<BuscarCvsComponent>;
@@ -12,19 +12,15 @@ describe('BuscarCvsComponent', () => {
   let router: Router;
 
   let queryParams$: BehaviorSubject<Record<string, string>>;
-  let snapshot$: Subject<SnapshotListadoResponse | null>;
   let api$: Subject<CvListadoResponse>;
   let publicServiceMock: {
-    buscarCvsSnapshot: jasmine.Spy;
     buscarCvs: jasmine.Spy;
   };
 
   beforeEach(async () => {
     queryParams$ = new BehaviorSubject<Record<string, string>>({});
-    snapshot$ = new Subject<SnapshotListadoResponse | null>();
     api$ = new Subject<CvListadoResponse>();
     publicServiceMock = {
-      buscarCvsSnapshot: jasmine.createSpy('buscarCvsSnapshot').and.returnValue(snapshot$.asObservable()),
       buscarCvs: jasmine.createSpy('buscarCvs').and.returnValue(api$.asObservable()),
     };
 
@@ -43,11 +39,10 @@ describe('BuscarCvsComponent', () => {
     spyOn(router, 'navigate').and.resolveTo(true);
   });
 
-  it('muestra snapshot temporal y luego reemplaza con API oficial', () => {
+  it('carga resultados desde la API y limpia loading', () => {
     fixture.detectChanges();
 
-    snapshot$.next({
-      generatedAtUtc: '2026-04-24T12:00:00Z',
+    api$.next({
       items: [
         {
           curriculumId: 1,
@@ -68,20 +63,7 @@ describe('BuscarCvsComponent', () => {
       totalPages: 1,
     });
 
-    expect(component.usandoSnapshot).toBeTrue();
     expect(component.cvs.length).toBe(1);
-    expect(component.loading).toBeFalse();
-
-    api$.next({
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 12,
-      totalPages: 1,
-    });
-
-    expect(component.usandoSnapshot).toBeFalse();
-    expect(component.snapshotActualizadoEn).toBeNull();
     expect(component.loading).toBeFalse();
   });
 
@@ -106,4 +88,3 @@ describe('BuscarCvsComponent', () => {
     expect(component.loading).toBeFalse();
   });
 });
-
