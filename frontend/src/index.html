@@ -8,26 +8,12 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <!-- APP_CONFIG_INJECT: en produccion, deploy-frontend-swa.yml reemplaza este comentario
        por <script>window.__PORTALCV_CONFIG__ = {...}</script> luego del build, con la config
-       ya resuelta (sin red, sin XHR). Debe quedar ANTES del script de abajo y del bundle de
-       Angular: api-base-url.ts calcula API_BASE_URL como constante al importarse, sin esperar
-       a nada asincrono, asi que si la config no esta disponible en ese instante, la constante
-       queda congelada en el valor de fallback para siempre. -->
-  <script>
-    // Respaldo solo para entornos donde no hubo inyeccion en build (p. ej. ng serve local):
-    // intenta una carga sincrona de app-config.json si nadie puso la config todavia.
-    if (!window.__PORTALCV_CONFIG__) {
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/app-config.json', false);
-        xhr.send(null);
-        if (xhr.status === 200) {
-          window.__PORTALCV_CONFIG__ = JSON.parse(xhr.responseText);
-        }
-      } catch (err) {
-        console.warn('No se pudo cargar app-config.json; se usara la configuracion por defecto.', err);
-      }
-    }
-  </script>
+       ya resuelta (sin red, sin XHR). Debe quedar ANTES del bundle de Angular: api-base-url.ts
+       calcula API_BASE_URL como constante al importarse, sin esperar a nada asincrono, asi que
+       si la config no esta disponible en ese instante, la constante queda congelada en el valor
+       de fallback para siempre. En entornos sin inyeccion (ng serve local), simplemente no se
+       define window.__PORTALCV_CONFIG__ y API_BASE_URL usa su fallback por hostname (relativo,
+       via proxy.conf.js). -->
 </head>
 <body>
   <app-root></app-root>
