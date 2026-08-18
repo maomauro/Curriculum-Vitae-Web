@@ -399,6 +399,103 @@ describe('AdminAuditoriaComponent', () => {
     expect(component.hayFiltrosAuth).toBeTrue();
   });
 
+  it('onCambioFiltrosAuth reinicia la página y recarga', () => {
+    setup();
+    component.ngOnInit();
+    component.cambiarPestana('auth');
+    component.pageAuth = 3;
+
+    component.onCambioFiltrosAuth();
+
+    expect(component.pageAuth).toBe(1);
+    expect(adminService.getAuditoriaAuth).toHaveBeenCalledTimes(2);
+  });
+
+  it('limpiarBusquedaAuth vacía la búsqueda y recarga', () => {
+    setup();
+    component.ngOnInit();
+    component.cambiarPestana('auth');
+    component.busquedaAuth = 'algo';
+
+    component.limpiarBusquedaAuth();
+
+    expect(component.busquedaAuth).toBe('');
+  });
+
+  it('rangoTextoAuth describe el rango mostrado', () => {
+    setup(of(pageAdminVacia), of(pageCvVacia), of({ items: [], total: 15, page: 1, pageSize: 10, totalPages: 2 }));
+    component.ngOnInit();
+    component.cambiarPestana('auth');
+
+    expect(component.rangoTextoAuth).toBe('Mostrando 1–10 de 15');
+  });
+
+  it('irPaginaAuth acota la página solicitada a [1, totalPages] antes de recargar', () => {
+    setup(of(pageAdminVacia), of(pageCvVacia), of({ items: [], total: 30, page: 1, pageSize: 10, totalPages: 3 }));
+    component.ngOnInit();
+    component.cambiarPestana('auth');
+    adminService.getAuditoriaAuth.calls.reset();
+
+    component.irPaginaAuth(99);
+
+    expect(adminService.getAuditoriaAuth).toHaveBeenCalledWith(3, jasmine.anything(), jasmine.anything(), jasmine.anything());
+  });
+
+  it('canVaciarAuthCompleto exige la frase exacta', () => {
+    setup();
+    component.confirmVaciarAuth = 'algo mal';
+    expect(component.canVaciarAuthCompleto).toBeFalse();
+
+    component.confirmVaciarAuth = AUDITORIA_PURGE_CONFIRMACION_VACIAR;
+    expect(component.canVaciarAuthCompleto).toBeTrue();
+  });
+
+  it('limpiarConfirmVaciarAuth y onConfirmVaciarAuthChange limpian el error de confirmación', () => {
+    setup();
+    component.confirmVaciarAuth = 'algo';
+    component.showConfirmErrorAuth = true;
+
+    component.onConfirmVaciarAuthChange();
+    expect(component.showConfirmErrorAuth).toBeFalse();
+
+    component.showConfirmErrorAuth = true;
+    component.limpiarConfirmVaciarAuth();
+    expect(component.confirmVaciarAuth).toBe('');
+    expect(component.showConfirmErrorAuth).toBeFalse();
+  });
+
+  it('purgeAuth cancela si el usuario no confirma el diálogo nativo', () => {
+    setup();
+    component.ngOnInit();
+    spyOn(globalThis, 'confirm').and.returnValue(false);
+
+    component.purgeAuth('anio');
+
+    expect(adminService.purgeAuditoria).not.toHaveBeenCalled();
+  });
+
+  it('purgeAuth notifica el mensaje de error del backend al fallar', () => {
+    setup();
+    component.ngOnInit();
+    spyOn(globalThis, 'confirm').and.returnValue(true);
+    adminService.purgeAuditoria.and.returnValue(throwError(() => ({ error: { message: 'no autorizado' } })));
+
+    component.purgeAuth('anio');
+
+    expect(component.purgingAuth).toBeFalse();
+    expect(notificationService.error).toHaveBeenCalledWith('no autorizado');
+  });
+
+  it('onEscapeCerrarModalMantenimiento cierra el modal de auth abierto', () => {
+    setup();
+    component.ngOnInit();
+    component.abrirModalMantenimientoAuth();
+
+    component.onEscapeCerrarModalMantenimiento();
+
+    expect(component.modalMantenimientoAuth).toBeFalse();
+  });
+
   it('etiquetaAccionAdmin, etiquetaAccionCv y etiquetaAccionAuth resuelven etiquetas legibles', () => {
     setup();
     expect(component.etiquetaAccionAdmin('desconocida')).toBe('desconocida');
