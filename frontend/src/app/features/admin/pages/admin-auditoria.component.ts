@@ -505,13 +505,6 @@ export class AdminAuditoriaComponent implements OnInit {
     return etiquetaAuditoriaAccion(accion, AUDITORIA_AUTH_ACCION_LABELS);
   }
 
-  fmtFecha(iso: string): string {
-    if (!iso?.trim()) return '—';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toISOString().replace('T', ' ').slice(0, 19);
-  }
-
   detalleLegible(json: string | null): string {
     if (!json?.trim()) return '—';
     try {
