@@ -41,12 +41,12 @@ public class AuthController : ControllerBase
         }
         catch (UnauthorizedAccessException)
         {
-            await _auditoria.RegistrarAsync(null, AuthAuditoriaAcciones.LoginFallido, request.Email ?? string.Empty, null, ct);
+            await _auditoria.RegistrarAsync(null, AuthAuditoriaAcciones.LoginFallido, request.Email ?? string.Empty, null, ObtenerIpCliente(), ct);
             throw;
         }
 
         SetAuthCookie(result.Token, result.Expiracion);
-        await _auditoria.RegistrarAsync(result.UsuarioId, AuthAuditoriaAcciones.LoginExitoso, result.Email, null, ct);
+        await _auditoria.RegistrarAsync(result.UsuarioId, AuthAuditoriaAcciones.LoginExitoso, result.Email, null, ObtenerIpCliente(), ct);
 
         var response = new LoginResponse(
             result.UsuarioId,
@@ -69,7 +69,7 @@ public class AuthController : ControllerBase
         var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue(JwtRegisteredClaimNames.Email) ?? string.Empty;
         if (int.TryParse(idStr, out var usuarioId))
-            await _auditoria.RegistrarAsync(usuarioId, AuthAuditoriaAcciones.Logout, email, null, ct);
+            await _auditoria.RegistrarAsync(usuarioId, AuthAuditoriaAcciones.Logout, email, null, ObtenerIpCliente(), ct);
 
         return Ok(new { message = ApiMessages.Auth.SesionCerrada });
     }
@@ -159,6 +159,13 @@ public class AuthController : ControllerBase
 
         return Ok(new { message = ApiMessages.Auth.ContraseñaActualizada });
     }
+
+    /// <summary>
+    /// IP real del cliente. Requiere ForwardedHeadersMiddleware (Program.cs) para leer
+    /// X-Forwarded-For detrás del ingress de Azure Container Apps; sin eso, HttpContext
+    /// solo vería la IP interna del proxy de la plataforma.
+    /// </summary>
+    private string? ObtenerIpCliente() => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     // ──────────────────────────────────────────────────────────────────────────
     // Cookie del JWT

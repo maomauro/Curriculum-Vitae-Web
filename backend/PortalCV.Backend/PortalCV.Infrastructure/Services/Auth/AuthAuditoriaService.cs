@@ -25,6 +25,7 @@ public class AuthAuditoriaService : IAuthAuditoriaService
         string accion,
         string email,
         IReadOnlyDictionary<string, string>? detalle,
+        string? ipOrigen = null,
         CancellationToken ct = default)
     {
         try
@@ -37,7 +38,8 @@ public class AuthAuditoriaService : IAuthAuditoriaService
                 Email = email,
                 DetalleJson = detalle is { Count: > 0 }
                     ? JsonSerializer.Serialize(detalle)
-                    : null
+                    : null,
+                IpOrigen = ipOrigen
             };
             _context.Set<AuditoriaAuth>().Add(row);
             await _context.SaveChangesAsync(ct);
@@ -95,7 +97,8 @@ public class AuthAuditoriaService : IAuthAuditoriaService
             ActorEmail = a.Actor?.Email,
             Accion = a.Accion,
             Email = a.Email,
-            DetalleJson = a.DetalleJson
+            DetalleJson = a.DetalleJson,
+            IpOrigen = a.IpOrigen
         }).ToList();
 
         return (items, total);
