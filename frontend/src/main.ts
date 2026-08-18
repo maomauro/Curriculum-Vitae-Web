@@ -16,8 +16,9 @@ import { API_BASE_URL } from './app/core/constants/api-base-url';
  * de forma síncrona en su constructor y los guards de rutas (authGuard, adminGuard,
  * publicadorGuard) sigan siendo síncronos sin tener que rediseñarlos como asíncronos.
  *
- * API_BASE_URL ya llega resuelto correctamente en este punto: index.html carga
- * app-config.json de forma síncrona (bloqueante) antes de evaluar este bundle.
+ * API_BASE_URL ya llega resuelto correctamente en este punto: index.html define
+ * window.__PORTALCV_CONFIG__ (inyectado en build por deploy-frontend-swa.yml, o
+ * cargado por el script de respaldo en dev) antes de evaluar este bundle.
  */
 async function loadInitialSession(): Promise<void> {
   try {
