@@ -1,13 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, map, shareReplay, timeout } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { getOrCreatePortalCvVisitorId } from '../../utils/portal-cv-visitor-id.util';
 import { API_BASE_URL } from '../../constants/api-base-url';
-import {
-  PUBLIC_CVS_SNAPSHOT_API_URL,
-  PUBLIC_CVS_SNAPSHOT_STATIC_URL,
-} from '../../constants/public-snapshot-url';
 
 /** Alinea respuestas JSON en PascalCase (p. ej. algunos proxies) con los DTOs camelCase del front. */
 function deepToCamel(value: unknown): unknown {
@@ -21,25 +17,6 @@ function deepToCamel(value: unknown): unknown {
     out[camel] = deepToCamel(v);
   }
   return out;
-}
-
-/**
- * El API puede responder 200 con `bootstrap-empty` e `items: []` tras un reinicio de contenedor;
- * el JSON estático del SWA puede traer última copia publicada. Preferimos quien tenga CVs.
- */
-function pickPublicSnapshotRicher(
-  api: PublicCvsSnapshotDto | null,
-  st: PublicCvsSnapshotDto | null
-): PublicCvsSnapshotDto | null {
-  const apiCount = api?.items?.length ?? 0;
-  const stCount = st?.items?.length ?? 0;
-  if (apiCount > 0) {
-    return api;
-  }
-  if (stCount > 0) {
-    return st;
-  }
-  return api ?? st;
 }
 
 // ── DTOs (espejo de PublicDtos.cs del backend) ──────────────────────────────
@@ -190,37 +167,11 @@ export interface BuscarCvsParams {
   pageSize?: number;
 }
 
-export interface PublicSnapshotItemDto {
-  listado: CvListadoItemDto;
-  detalle: CvDetalleDto;
-  estadisticas?: CvEstadisticasDto;
-}
-
-export interface PublicCvsSnapshotDto {
-  generatedAtUtc: string;
-  sourceVersion?: string | null;
-  items: PublicSnapshotItemDto[];
-}
-
-export interface SnapshotListadoResponse extends CvListadoResponse {
-  generatedAtUtc: string;
-  /** Alineado con backend / JSON estático; p. ej. `seed-local` vs `api-background-v1`. */
-  sourceVersion?: string | null;
-}
-
-/** Payload cuando existe detalle en el snapshot cacheado. */
-export interface PublicDetalleSnapshotDto {
-  detalle: CvDetalleDto;
-  generatedAtUtc: string;
-  sourceVersion?: string | null;
-}
-
 // ── Servicio ─────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class PublicService {
   private readonly BASE = `${API_BASE_URL}/api/public`;
-  private snapshotCache$?: Observable<PublicCvsSnapshotDto | null>;
 
   constructor(private http: HttpClient) {}
 
@@ -252,101 +203,6 @@ export class PublicService {
       .pipe(map(raw => deepToCamel(raw) as CvEstadisticasDto));
   }
 
-  getDetalleSnapshot(urlPublica: string): Observable<PublicDetalleSnapshotDto | null> {
-    const slug = (urlPublica ?? '').trim().toLowerCase();
-    if (!slug) return of(null);
-    return this.getSnapshot().pipe(
-      map(snapshot => {
-        if (!snapshot) return null;
-        const hit = snapshot.items.find(i => (i.detalle.urlPublica ?? '').trim().toLowerCase() === slug);
-        return hit
-          ? {
-              detalle: hit.detalle,
-              generatedAtUtc: snapshot.generatedAtUtc,
-              sourceVersion: snapshot.sourceVersion,
-            }
-          : null;
-      })
-    );
-  }
-
-  getEstadisticasSnapshot(urlPublica: string): Observable<{
-    stats: CvEstadisticasDto;
-    generatedAtUtc: string;
-    sourceVersion?: string | null;
-  } | null> {
-    const slug = (urlPublica ?? '').trim().toLowerCase();
-    if (!slug) return of(null);
-    return this.getSnapshot().pipe(
-      map(snapshot => {
-        if (!snapshot) return null;
-        const hit = snapshot.items.find(i => (i.detalle.urlPublica ?? '').trim().toLowerCase() === slug);
-        if (!hit?.estadisticas) return null;
-        return {
-          stats: hit.estadisticas,
-          generatedAtUtc: snapshot.generatedAtUtc,
-          sourceVersion: snapshot.sourceVersion,
-        };
-      })
-    );
-  }
-
-  buscarCvsSnapshot(params: BuscarCvsParams = {}): Observable<SnapshotListadoResponse | null> {
-    const page = params.page && params.page > 0 ? params.page : 1;
-    const pageSize = params.pageSize && params.pageSize > 0 ? params.pageSize : 12;
-    const q = (params.q ?? '').trim().toLowerCase();
-    const ciudad = (params.ciudad ?? '').trim().toLowerCase();
-    const habilidad = (params.habilidad ?? '').trim().toLowerCase();
-
-    return this.getSnapshot().pipe(
-      map(snapshot => {
-        if (!snapshot) return null;
-
-        const filtered = snapshot.items
-          .map(i => i.listado)
-          .filter(item => {
-            if (ciudad) {
-              const c = `${item.ciudad ?? ''} ${item.pais ?? ''}`.toLowerCase();
-              if (!c.includes(ciudad)) return false;
-            }
-            if (habilidad) {
-              const hs = (item.habilidades ?? []).map(h => h.toLowerCase());
-              if (!hs.some(h => h.includes(habilidad))) return false;
-            }
-            if (q) {
-              const haystack = [
-                item.nombreCompleto ?? '',
-                item.nombrePerfil ?? '',
-                item.ciudad ?? '',
-                item.pais ?? '',
-                ...(item.habilidades ?? []),
-              ]
-                .join(' ')
-                .toLowerCase();
-              if (!haystack.includes(q)) return false;
-            }
-            return true;
-          });
-
-        const total = filtered.length;
-        const totalPages = total === 0 ? 1 : Math.ceil(total / pageSize);
-        const safePage = Math.min(page, totalPages);
-        const start = (safePage - 1) * pageSize;
-        const items = filtered.slice(start, start + pageSize);
-
-        return {
-          generatedAtUtc: snapshot.generatedAtUtc,
-          sourceVersion: snapshot.sourceVersion,
-          items,
-          total,
-          page: safePage,
-          pageSize,
-          totalPages,
-        };
-      })
-    );
-  }
-
   contactar(urlPublica: string, dto: ContactarDto): Observable<void> {
     return this.http.post<void>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}/contactar`, dto);
   }
@@ -357,33 +213,5 @@ export class PublicService {
       urlPublica,
       visitanteAnonimoId: visitanteAnonimoId || undefined,
     });
-  }
-
-  private getSnapshot(): Observable<PublicCvsSnapshotDto | null> {
-    if (!this.snapshotCache$) {
-      const normalize = (raw: unknown): PublicCvsSnapshotDto | null => {
-        const snapshot = deepToCamel(raw) as PublicCvsSnapshotDto;
-        if (!snapshot || !Array.isArray(snapshot.items) || typeof snapshot.generatedAtUtc !== 'string') {
-          return null;
-        }
-        return snapshot;
-      };
-      /** Contenedor lento: timeout en API; siempre pedimos estático en paralelo para poder fusionar. */
-      const snapshotApiTimeoutMs = 5_000;
-      const api$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_API_URL).pipe(
-        timeout(snapshotApiTimeoutMs),
-        map(normalize),
-        catchError(() => of<PublicCvsSnapshotDto | null>(null))
-      );
-      const static$ = this.http.get<unknown>(PUBLIC_CVS_SNAPSHOT_STATIC_URL).pipe(
-        map(normalize),
-        catchError(() => of<PublicCvsSnapshotDto | null>(null))
-      );
-      this.snapshotCache$ = forkJoin({ api: api$, st: static$ }).pipe(
-        map(({ api, st }) => pickPublicSnapshotRicher(api, st)),
-        shareReplay({ bufferSize: 1, refCount: true })
-      );
-    }
-    return this.snapshotCache$;
   }
 }

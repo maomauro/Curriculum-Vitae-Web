@@ -1,5 +1,7 @@
 # Checklist de Implementación - Snapshot JSON (estado actual)
 
+> ⚠️ **Retirado (2026-08-18).** Esta funcionalidad fue eliminada del código. Documento conservado como referencia histórica.
+
 ## Objetivo operativo
 
 Mostrar CVs públicos y detalle público desde snapshot temporal cuando la API/DB no responde, y reemplazar por datos oficiales cuando el backend esté disponible.

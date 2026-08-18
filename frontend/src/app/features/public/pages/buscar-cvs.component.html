@@ -54,15 +54,8 @@
           <ng-container *ngIf="!loading">{{ resumenResultados }}</ng-container>
           <ng-container *ngIf="loading">Buscando…</ng-container>
         </div>
-        <div *ngIf="usandoSnapshot" class="mt-2 small public-data-status public-data-status--snapshot" role="status" aria-live="polite">
-          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-          Mostrando datos temporales del snapshot.
-          <span *ngIf="mostrarFechaGeneracionSnapshot(snapshotActualizadoEn, snapshotSourceVersion)">
-            Última actualización: {{ snapshotActualizadoEn | date:'medium' }}.
-          </span>
-        </div>
         <div
-          *ngIf="!loading && !usandoSnapshot"
+          *ngIf="!loading"
           class="mt-2 small public-data-status public-data-status--live"
           role="status">
           <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>

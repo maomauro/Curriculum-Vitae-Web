@@ -417,6 +417,8 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 ## ÉPICA 6: RESILIENCIA COLD START (SNAPSHOT JSON)
 
+> ⚠️ **Retirado (2026-08-18).** Se implementó y luego se eliminó del código: se optó por mantener la base de producción activa (evitando el cold-start en origen, posiblemente vía un proceso automático externo) en vez de un fallback client-side. Las tablas `PublicCvSnapshotExport`/`PublicStaticSnapshotState` siguen en el esquema pero sin uso. Sección conservada como referencia histórica.
+
 **Prioridad:** SHOULD HAVE  
 **Dependencia:** Épica 1 (módulo público) + `health/ready` operativo.
 

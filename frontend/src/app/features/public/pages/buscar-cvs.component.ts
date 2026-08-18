@@ -2,10 +2,6 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicService, CvListadoItemDto } from '../../../core/services/public/public.service';
-import {
-  etiquetaOrigenSnapshot,
-  mostrarFechaGeneracionSnapshot,
-} from '../../../core/utils/public-snapshot-source-label';
 
 @Component({
   selector: 'app-buscar-cvs',
@@ -21,12 +17,6 @@ export class BuscarCvsComponent implements OnInit {
   pageSize = 12;
   totalPages = 1;
   loading = false;
-  usandoSnapshot = false;
-  snapshotActualizadoEn: string | null = null;
-  /** `sourceVersion` del snapshot (p. ej. `seed-local` vs `api-background-v1`). */
-  snapshotSourceVersion: string | null = null;
-  readonly etiquetaOrigenSnapshot = etiquetaOrigenSnapshot;
-  readonly mostrarFechaGeneracionSnapshot = mostrarFechaGeneracionSnapshot;
   private requestId = 0;
 
   private readonly colores = ['blue', 'green', 'purple', 'orange', 'teal', 'red'];
@@ -87,27 +77,6 @@ export class BuscarCvsComponent implements OnInit {
   cargar(): void {
     const runId = ++this.requestId;
     this.loading = true;
-    this.usandoSnapshot = false;
-    this.snapshotSourceVersion = null;
-
-    this.publicService
-      .buscarCvsSnapshot({
-        q: this.busqueda || undefined,
-        ciudad: this.ciudad || undefined,
-        page: this.page,
-        pageSize: this.pageSize,
-      })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(snapshot => {
-        if (runId !== this.requestId || !snapshot) return;
-        this.cvs = snapshot.items;
-        this.total = snapshot.total;
-        this.totalPages = snapshot.totalPages;
-        this.usandoSnapshot = true;
-        this.snapshotActualizadoEn = snapshot.generatedAtUtc;
-        this.snapshotSourceVersion = snapshot.sourceVersion ?? null;
-        this.loading = false;
-      });
 
     this.publicService
       .buscarCvs({
@@ -116,15 +85,13 @@ export class BuscarCvsComponent implements OnInit {
         page: this.page,
         pageSize: this.pageSize,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
           if (runId !== this.requestId) return;
           this.cvs = res.items;
           this.total = res.total;
           this.totalPages = res.totalPages;
-          this.usandoSnapshot = false;
-          this.snapshotActualizadoEn = null;
-          this.snapshotSourceVersion = null;
           this.loading = false;
 
           const tp = this.totalPages;
