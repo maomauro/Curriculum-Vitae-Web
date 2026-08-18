@@ -255,6 +255,43 @@ Table EstadisticasPublicas {
   FechaActualizacion datetime [not null, default: `now()`]
 }
 
+Table AuditoriaAdmin {
+  AuditoriaAdminId int [pk, increment, not null]
+  FechaUtc datetime [not null, default: `now()`]
+  ActorUsuarioId int [note: 'NULL si el actor fue eliminado']
+  Accion varchar(80) [not null]
+  EntidadTipo varchar(40) [not null]
+  EntidadId int
+  DetalleJson text
+  indexes {
+    (FechaUtc) [name: "IX_AuditoriaAdmin_FechaUtc"]
+  }
+}
+
+Table AuditoriaAuth {
+  AuditoriaAuthId int [pk, increment, not null]
+  FechaUtc datetime [not null, default: `now()`]
+  ActorUsuarioId int [note: 'NULL en login fallido o si el actor fue eliminado']
+  Accion varchar(80) [not null]
+  Email varchar(256) [not null]
+  DetalleJson text
+  IpOrigen varchar(45) [note: 'IPv4 o IPv6, para detectar fuerza bruta']
+  indexes {
+    (FechaUtc) [name: "IX_AuditoriaAuth_FechaUtc"]
+  }
+}
+
+Table AuditoriaCv {
+  AuditoriaCvId int [pk, increment, not null]
+  FechaUtc datetime [not null, default: `now()`]
+  ActorUsuarioId int [note: 'NULL si el actor fue eliminado']
+  CurriculumId int [not null]
+  Accion varchar(80) [not null]
+  EntidadTipo varchar(40) [not null]
+  EntidadId int
+  DetalleJson text
+}
+
 Ref: UsuarioRol.UsuarioId > Usuario.UsuarioId
 Ref: UsuarioRol.RolId > Rol.RolId
 Ref: Curriculum.UsuarioId > Usuario.UsuarioId
@@ -273,3 +310,7 @@ Ref: VisitanteContacto.CurriculumId > Curriculum.CurriculumId
 Ref: AlertaVisita.CurriculumId > Curriculum.CurriculumId
 Ref: VisibilidadSeccion.CurriculumId > Curriculum.CurriculumId
 Ref: EstadisticasPublicas.CurriculumId > Curriculum.CurriculumId
+Ref: AuditoriaAdmin.ActorUsuarioId > Usuario.UsuarioId
+Ref: AuditoriaAuth.ActorUsuarioId > Usuario.UsuarioId
+Ref: AuditoriaCv.ActorUsuarioId > Usuario.UsuarioId
+Ref: AuditoriaCv.CurriculumId > Curriculum.CurriculumId
