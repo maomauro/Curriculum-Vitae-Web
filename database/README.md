@@ -28,6 +28,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
   - **Profesional**: `Perfil`, `Experiencia`, `Formacion`, `Habilidad`, `Proyecto`
   - **Interacción**: `VisitanteContacto`, `AlertaVisita`, `VisibilidadSeccion`
   - **Estadísticas**: `EstadisticasPublicas`
+  - **Auditoría** (append-only): `AuditoriaAdmin`, `AuditoriaAuth`, `AuditoriaCv`
 - **Índices** en columnas usadas en búsquedas y FKs.
 - **Datos iniciales previstos**: roles `Visitante`, `Publicador`, `Admin` (a insertar en el SQL).
 
@@ -42,6 +43,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 - **Habilidad** incluye cuatro columnas CEFR cuando `Tipo='Idioma'`: `NivelLectura`, `NivelEscritura`, `NivelEscucha`, `NivelHabla` (valores `A1`–`C2` o `NULL`).
 - **VisitanteContacto** tiene `Asunto` para el asunto del formulario de contacto público.
 - **AlertaVisita** tiene `TipoVisita` con cuatro valores (`Vista` | `Contacto` | `Descarga` | `Sistema`), campos `EsLeida`, `Titulo`, `Descripcion`, `Ciudad` y `Pais`.
+- **AuditoriaAdmin** / **AuditoriaAuth** / **AuditoriaCv** son tablas append-only (solo INSERT + purga manual desde el panel admin, nunca UPDATE). **AuditoriaAuth** incluye `IpOrigen` para detectar intentos de fuerza bruta en `login_fallido`.
 - Para **SQL Server local** (instalación en Windows), define `ConnectionStrings:DefaultConnection` en `dotnet user-secrets` o variables de entorno locales (no versionar secretos).
 
 ## Ver también

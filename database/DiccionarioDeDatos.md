@@ -273,3 +273,49 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | TotalContactos  | int            | Total de contactos públicos                 | not null, default: 0          |
 | UltimaVisita    | datetime       | Fecha de la última visita                   |                               |
 | FechaActualizacion| datetime      | Fecha de actualización                      | not null, default: now()      |
+
+---
+
+## Tabla: AuditoriaAdmin
+Registro append-only de acciones realizadas en el panel de administración.
+
+| Columna         | Tipo           | Descripción                                 | Reglas                        |
+|-----------------|----------------|---------------------------------------------|-------------------------------|
+| AuditoriaAdminId| int            | Identificador único                         | PK, autoincrement, not null   |
+| FechaUtc        | datetime2(0)   | Momento del evento, en UTC                  | not null, default: SYSUTCDATETIME() |
+| ActorUsuarioId  | int            | Usuario que ejecutó la acción                | FK Usuario.UsuarioId, NULL si el actor fue eliminado |
+| Accion          | varchar(80)    | Código de la acción (p. ej. `usuario.estado_actualizado`) | not null      |
+| EntidadTipo     | varchar(40)    | Tipo de entidad afectada                    | not null                     |
+| EntidadId       | int            | Id de la entidad afectada                   |                               |
+| DetalleJson     | text           | Detalle adicional en JSON                   |                               |
+
+---
+
+## Tabla: AuditoriaAuth
+Registro append-only de eventos de autenticación (login exitoso/fallido, logout).
+
+| Columna         | Tipo           | Descripción                                 | Reglas                        |
+|-----------------|----------------|---------------------------------------------|-------------------------------|
+| AuditoriaAuthId | int            | Identificador único                         | PK, autoincrement, not null   |
+| FechaUtc        | datetime2(0)   | Momento del evento, en UTC                  | not null, default: SYSUTCDATETIME() |
+| ActorUsuarioId  | int            | Usuario autenticado                         | FK Usuario.UsuarioId, NULL en login fallido o si el actor fue eliminado |
+| Accion          | varchar(80)    | Código de la acción (`auth.login_exitoso` / `auth.login_fallido` / `auth.logout`) | not null |
+| Email           | varchar(256)   | Email involucrado en el intento             | not null                     |
+| DetalleJson     | text           | Detalle adicional en JSON                   |                               |
+| IpOrigen        | varchar(45)    | IP del cliente (IPv4 o IPv6)                | usada para detectar fuerza bruta en login fallido |
+
+---
+
+## Tabla: AuditoriaCv
+Registro append-only de cambios realizados sobre el CV desde el área privada.
+
+| Columna         | Tipo           | Descripción                                 | Reglas                        |
+|-----------------|----------------|---------------------------------------------|-------------------------------|
+| AuditoriaCvId   | int            | Identificador único                         | PK, autoincrement, not null   |
+| FechaUtc        | datetime2(0)   | Momento del evento, en UTC                  | not null, default: SYSUTCDATETIME() |
+| ActorUsuarioId  | int            | Usuario que ejecutó la acción                | FK Usuario.UsuarioId, NULL si el actor fue eliminado |
+| CurriculumId    | int            | CV afectado                                 | FK Curriculum.CurriculumId, not null, ON DELETE CASCADE |
+| Accion          | varchar(80)    | Código de la acción                         | not null                     |
+| EntidadTipo     | varchar(40)    | Tipo de entidad afectada (p. ej. sección del CV) | not null                |
+| EntidadId       | int            | Id de la entidad afectada                   |                               |
+| DetalleJson     | text           | Detalle adicional en JSON                   |                               |

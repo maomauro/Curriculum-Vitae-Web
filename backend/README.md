@@ -35,8 +35,8 @@ Organizadas siguiendo la misma distribución de zonas funcionales que los protot
 
 ```
 Entities/
-├── Auth/       ← identidad y control de acceso
-├── Privada/    ← CV y toda la información del publicador
+├── Auth/       ← identidad, control de acceso y auditoría de autenticación/administración
+├── Privada/    ← CV y toda la información del publicador (incluida su auditoría de cambios)
 └── Publica/    ← entidades generadas desde la zona pública
 ```
 
@@ -45,6 +45,8 @@ Entities/
 | `Auth/` | `Usuario.cs` | Cuenta de usuario: email, hash de contraseña, estado (Activo/Inactivo) |
 | `Auth/` | `Rol.cs` | Roles del sistema (Visitante, Publicador, Admin) |
 | `Auth/` | `UsuarioRol.cs` | Tabla pivot que relaciona usuarios con roles (M:N) |
+| `Auth/` | `AuditoriaAuth.cs` | Registro append-only de login exitoso/fallido y logout (incluye `IpOrigen`) |
+| `Auth/` | `AuditoriaAdmin.cs` | Registro append-only de acciones del panel de administración |
 | `Privada/` | `Curriculum.cs` | El CV en sí: URL pública, estado, contadores de visitas/contactos |
 | `Privada/` | `Personales.cs` | Datos personales del profesional (nombre, doc., contacto, residencia) |
 | `Privada/` | `Perfil.cs` | Descripciones del perfil profesional o aspiraciones salariales |
@@ -58,9 +60,10 @@ Entities/
 | `Privada/` | `VisibilidadSeccion.cs` | Controla qué secciones del CV son visibles públicamente |
 | `Privada/` | `AlertaVisita.cs` | Notificación generada al recibir una visita o contacto |
 | `Privada/` | `EstadisticasPublicas.cs` | Totales acumulados de visitas/contactos por CV |
+| `Privada/` | `AuditoriaCv.cs` | Registro append-only de cambios sobre el CV desde el área privada |
 | `Publica/` | `VisitanteContacto.cs` | Registro de cada mensaje enviado por un reclutador (origen: zona pública) |
 
-> `Enums/` y `Exceptions/` están reservados para uso futuro.
+> `Enums/` está reservado para uso futuro. `Exceptions/` ya tiene contenido real: `ForbiddenOperationException.cs`.
 
 ---
 
@@ -82,12 +85,16 @@ Interfaces/
 | Subcarpeta | Interfaz | Responsabilidad |
 |------------|----------|-----------------|
 | `Auth/` | `IAuthService` | Login y registro de usuarios |
+| `Auth/` | `IAuthAuditoriaService` | Registrar y listar eventos de auditoría de autenticación |
 | `Publica/` | `IPublicCvService` | Búsqueda pública de CVs, detalle, estadísticas, contacto |
+| `Publica/` | `IPublicCvVisitaRegistroService` | Registrar la visita a un CV público en un scope de DI independiente |
 | `Privada/` | `ICvEditorService` | Edición del CV por el publicador (todas las secciones) |
 | `Privada/` | `ICurriculumRepository` | Queries especializadas: buscar por URL, por usuario, paginación con filtros |
 | `Privada/` | `IRepository<T>` | Repositorio genérico: GetById, GetAll, Find, Add, Update, Remove |
 | `Privada/` | `IAlertaService` | Consultar y marcar alertas de visitas/contactos |
 | `Privada/` | `IDashboardService` | Estadísticas del dashboard del publicador |
+| *(raíz)* | `IAdminAuditoriaService` | Registrar, listar y purgar auditoría de administración |
+| *(raíz)* | `ICvAuditoriaService` | Registrar, listar y purgar auditoría de cambios del CV |
 
 ### DTOs (`DTOs/`)
 
@@ -163,10 +170,14 @@ Services/
 | Subcarpeta | Archivo | Función |
 |------------|---------|---------|
 | `Auth/` | `AuthService.cs` | Login (BCrypt + JWT) y registro (crear Usuario, asignar rol Publicador, generar Curriculum vacío con URL pública) |
+| `Auth/` | `AuthAuditoriaService.cs` | Registra login exitoso/fallido y logout (con IP de origen), lista y purga `AuditoriaAuth` |
 | `Privada/` | `CvEditorService.cs` | CRUD completo de las 10 secciones del CV: Personales, Perfil, Experiencia, Formación, Habilidades, Proyectos, Referencias, Redes Sociales, Familiares, Visibilidad |
 | `Privada/` | `AlertaService.cs` | Listar alertas (paginado), marcar leída, marcar todas leídas, limpiar leídas, conteo no leídas; alineado con contactos cuando aplica |
 | `Privada/` | `DashboardService.cs` | Estadísticas agregadas del publicador: visitas, contactos y métricas del CV |
 | `Publica/` | `PublicCvService.cs` | Búsqueda paginada, detalle (+ registrar visita), estadísticas, filtros disponibles, formulario de contacto |
+| `Publica/` | `PublicCvVisitaRegistroService.cs` | Registra la visita a un CV público en un scope de DI propio (usado por `PublicCvService`) |
+| *(raíz)* | `AdminAuditoriaService.cs` | Registra, lista y purga `AuditoriaAdmin` |
+| *(raíz)* | `CvAuditoriaService.cs` | Registra, lista y purga `AuditoriaCv` |
 
 ### Configuración de DI (`DependencyInjection.cs`)
 
@@ -192,7 +203,7 @@ Controllers/
 
 | Controlador | Ruta base | Acceso | Qué hace |
 |-------------|-----------|--------|----------|
-| `Admin/AdminController` | `/api/admin` | Solo Admin | Gestión de usuarios, roles y asignaciones |
+| `Admin/AdminController` | `/api/admin` | Solo Admin | Gestión de usuarios, roles y asignaciones; auditoría de administración/CV/autenticación (`/auditoria`, `/auditoria-cv`, `/auditoria-auth`, `/auditoria/purge`) |
 | `Auth/AuthController` | `/api/auth` | Público | Login, registro, me, recuperar contraseña |
 | `Publica/PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar |
 | `Privada/CvControllerBase` | *(base)* | — | Clase base: extrae `UsuarioId` y `CurriculumId` del JWT |
@@ -248,6 +259,8 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 }
 ```
 
+> `Serilog`/`Logging`/`AllowedHosts` también están en `appsettings.json` con la configuración estándar de logging; se omiten aquí por brevedad.
+
 - **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
 - **JWT / SQL**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
 
@@ -265,7 +278,6 @@ Variables sensibles que debes configurar localmente:
 
 - `ConnectionStrings__DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
 - `Jwt__Key` (mínimo 32 caracteres)
-- `Auth__DemoUser__Email`, `Auth__DemoUser__Password` (si usas el demo user)
 
 Para el flujo nativo, inicializa `user-secrets` una sola vez:
 
@@ -273,8 +285,6 @@ Para el flujo nativo, inicializa `user-secrets` una sola vez:
 cd backend/PortalCV.Backend/PortalCV.Api
 dotnet user-secrets init
 dotnet user-secrets set "Jwt__Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
-dotnet user-secrets set "Auth__DemoUser__Email" "demo@local.test"
-dotnet user-secrets set "Auth__DemoUser__Password" "TU_PASSWORD_DEMO"
 ```
 
 Para el flujo Docker, copia la plantilla y completa valores reales:
@@ -331,12 +341,14 @@ HTTP Response (DTO serializado como JSON)
 
 Proyecto **xUnit** con tests de integración que arrancan el host de la API en memoria usando `WebApplicationFactory<Program>` y sustituyen SQL Server por **EF Core InMemory** (sin dependencia de base de datos real).
 
-Cobertura actual (mínima, se irá extendiendo):
+Cobertura actual:
 
 | Archivo | Qué valida |
 |---|---|
 | `PublicEndpointsTests.cs` | Endpoints públicos (`/api/public/cvs`, `/filters`, detalle 404) responden sin JWT |
-| `AuthEndpointsTests.cs` | Endpoints protegidos devuelven 401 sin token; forgot-password responde genérico |
+| `AuthEndpointsTests.cs` | Login/logout, registro de auditoría de autenticación (incluye IP de origen), endpoints protegidos devuelven 401 sin token; forgot-password responde genérico |
+| `CvEditorEndpointsTests.cs` | Edición del CV por el publicador y registro de auditoría de cambios |
+| `AdminAuditoriaAuthEndpointsTests.cs` | Endpoints admin de auditoría de autenticación: listado, control de acceso por rol, validaciones de purga |
 | `TestWebApplicationFactory.cs` | Fixture compartida: aísla el provider interno de EF para evitar choque SqlServer/InMemory |
 
 Ejecutar en local:
