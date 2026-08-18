@@ -54,13 +54,6 @@
           <ng-container *ngIf="!loading">{{ resumenResultados }}</ng-container>
           <ng-container *ngIf="loading">Buscando…</ng-container>
         </div>
-        <div
-          *ngIf="!loading"
-          class="mt-2 small public-data-status public-data-status--live"
-          role="status">
-          <i class="bi bi-cloud-check me-1" aria-hidden="true"></i>
-          Datos en directo desde el servidor (base de datos).
-        </div>
       </div>
     </div>
   </section>
