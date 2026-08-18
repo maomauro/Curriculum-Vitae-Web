@@ -313,11 +313,11 @@ az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 
 ---
 
-## 7.1 Snapshot público y JSON estático del repo
+## 7.1 Snapshot público (retirado 2026-08-18)
 
-El API mantiene el snapshot en **memoria** refrescándolo desde la base (`PublicSnapshot:RefreshIntervalMinutes`). No se usa Azure Blob.
+⚠️ **Funcionalidad retirada.** El mecanismo de resiliencia ante cold-start (snapshot en memoria + export estático `frontend/public/snapshots/public-cvs-snapshot.json` + endpoints `GET/POST /api/admin/public-cv-snapshot/*` + `GET /api/public/snapshot`) fue eliminado del código. Se mantiene la estrategia de mantener la base de producción activa (evitando el cold-start en origen) en vez de un fallback client-side; ver `docs/arquitectura/Snapshot-JSON-ColdStart.md` para el diseño histórico.
 
-Para el **cold start del frontend** (`frontend/public/snapshots/public-cvs-snapshot.json`), la base incluye tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` (integradas en `scripts/production/05_AzureSQL_CreateSchema.sql`). Cada cambio en un CV publicado marca el sitio como *stale*; un **admin** puede consultar `GET /api/admin/public-cv-snapshot/pending`, descargar el JSON consolidado con `GET /api/admin/public-cv-snapshot/download` y, tras commitear el archivo, llamar `POST /api/admin/public-cv-snapshot/ack`.
+Las tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` **siguen existiendo** en la base (no se borraron adrede, por si se retoma el enfoque más adelante), pero ya no se escriben ni se leen desde el código.
 
 ---
 

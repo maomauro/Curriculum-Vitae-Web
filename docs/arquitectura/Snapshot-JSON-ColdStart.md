@@ -1,5 +1,7 @@
 # Snapshot JSON para Cold Start (PortalCV)
 
+> ⚠️ **Retirado (2026-08-18).** Esta funcionalidad fue eliminada del código: se optó por mantener la base de producción activa en vez de un fallback client-side. Documento conservado como referencia histórica del diseño. Las tablas `PublicCvSnapshotExport`/`PublicStaticSnapshotState` siguen en la base pero ya no se usan.
+
 ## Objetivo
 
 Evitar pantalla vacía cuando la API/DB está en arranque o no disponible, mostrando contenido público desde `frontend/public/snapshots/public-cvs-snapshot.json` y convergiendo a datos en vivo cuando la API responde.

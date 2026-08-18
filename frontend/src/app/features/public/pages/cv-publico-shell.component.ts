@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TimeoutError } from 'rxjs';
-import { catchError, concat, distinctUntilChanged, finalize, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
+import { catchError, distinctUntilChanged, finalize, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
 import { PublicService, CvDetalleDto, ContactarDto } from '../../../core/services/public/public.service';
 import { getOrCreatePortalCvVisitorId } from '../../../core/utils/portal-cv-visitor-id.util';
 import { CvAnaliticasDetalleService } from '../../../core/services/cv/cv-analiticas-detalle.service';
@@ -15,10 +15,6 @@ import {
   primerNombrePublico,
 } from '../cv-publico.utils';
 import { cvPublicoMuestraPestanaDashboard } from '../../../core/utils/cv-dashboard-publico.util';
-import {
-  etiquetaOrigenSnapshot,
-  mostrarFechaGeneracionSnapshot,
-} from '../../../core/utils/public-snapshot-source-label';
 
 type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 
@@ -54,11 +50,6 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
 
   estado: ShellEstado = 'cargando';
   urlPublica = '';
-  usandoSnapshot = false;
-  snapshotActualizadoEn: string | null = null;
-  snapshotSourceVersion: string | null = null;
-  readonly etiquetaOrigenSnapshot = etiquetaOrigenSnapshot;
-  readonly mostrarFechaGeneracionSnapshot = mostrarFechaGeneracionSnapshot;
 
   modalContactoAbierto = false;
   contactoEnviado = false;
@@ -76,9 +67,6 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
           this.urlPublica = slug;
           this.estado = slug ? 'cargando' : 'no_encontrado';
           this.ctx.cv = null;
-          this.usandoSnapshot = false;
-          this.snapshotActualizadoEn = null;
-          this.snapshotSourceVersion = null;
           this.cerrarModalContactoSilencioso();
           this.contactoEnviado = false;
           this.contacto = contactoPublicoVacio();
@@ -192,45 +180,20 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
       this.estado = 'no_encontrado';
       return of(null);
     }
-    return this.publicService.getDetalleSnapshot(slug).pipe(
-      switchMap(snapshot => {
-        const snapshot$ = snapshot
-          ? of(snapshot.detalle).pipe(
-              tap(() => {
-                this.usandoSnapshot = true;
-                this.snapshotActualizadoEn = snapshot.generatedAtUtc;
-                this.snapshotSourceVersion = snapshot.sourceVersion ?? null;
-              })
-            )
-          : of<CvDetalleDto | null>(null);
-
-        const api$ = this.cvAnaliticasDetalle.detallePublicoParaAnaliticas$(slug).pipe(
-          timeout(25_000),
-          tap(() => {
-            this.usandoSnapshot = false;
-            this.snapshotActualizadoEn = null;
-            this.snapshotSourceVersion = null;
-          }),
-          catchError((err: unknown) => {
-            if (snapshot) {
-              this.estado = 'listo';
-              return of(null);
-            }
-            if (err instanceof TimeoutError) {
-              this.estado = 'error';
-              return of(null);
-            }
-            const httpErr = err as HttpErrorResponse;
-            if (httpErr.status === 404) {
-              this.estado = 'no_encontrado';
-            } else {
-              this.estado = 'error';
-            }
-            return of(null);
-          })
-        );
-
-        return snapshot ? concat(snapshot$, api$) : api$;
+    return this.cvAnaliticasDetalle.detallePublicoParaAnaliticas$(slug).pipe(
+      timeout(25_000),
+      catchError((err: unknown) => {
+        if (err instanceof TimeoutError) {
+          this.estado = 'error';
+          return of(null);
+        }
+        const httpErr = err as HttpErrorResponse;
+        if (httpErr.status === 404) {
+          this.estado = 'no_encontrado';
+        } else {
+          this.estado = 'error';
+        }
+        return of(null);
       })
     );
   }
