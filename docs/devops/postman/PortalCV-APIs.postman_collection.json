@@ -25,6 +25,24 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "GET /health/ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -88,6 +106,35 @@
           "response": []
         },
         {
+          "name": "POST /api/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo.usuario@example.com\",\n  \"password\": \"Password123\",\n  \"nombreCompleto\": \"Usuario Nuevo Demo\"\n}"
+            },
+            "description": "Crea un publicador nuevo + su Curriculum vacio. Cambiar el email si ya existe (409 Conflict)."
+          },
+          "response": []
+        },
+        {
           "name": "GET /api/auth/me",
           "request": {
             "method": "GET",
@@ -103,6 +150,84 @@
                 "me"
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/change-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{authPassword}}\",\n  \"newPassword\": \"NuevoPassword123\"\n}"
+            },
+            "description": "Requiere sesion iniciada (cookie). El backend valida la contraseña actual."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/forgot-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{authEmail}}\"\n}"
+            },
+            "description": "Respuesta generica siempre (no revela si el email existe)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Anonimo: funciona incluso con el token ya vencido. Borra la cookie portalcv_auth."
           },
           "response": []
         }
@@ -229,6 +354,64 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "POST /api/public/cvs/{urlPublica}/imprimir",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/cvs/{{publicSlug}}/imprimir?vid=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "cvs",
+                "{{publicSlug}}",
+                "imprimir"
+              ],
+              "query": [
+                {
+                  "key": "vid",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Registra que un visitante imprimio/descargo el PDF. Devuelve 204 sin body."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/public/acciones/imprimir-cv",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/acciones/imprimir-cv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "acciones",
+                "imprimir-cv"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"urlPublica\": \"{{publicSlug}}\",\n  \"visitanteAnonimoId\": null\n}"
+            },
+            "description": "Misma logica que el POST anterior, pero con la ruta estable via body (usada por el cliente)."
+          },
+          "response": []
         }
       ]
     },
@@ -236,79 +419,1419 @@
       "name": "03 - Privada (JWT Publicador/Admin)",
       "item": [
         {
-          "name": "GET /api/cv/personales",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cv/personales",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cv",
-                "personales"
-              ]
+          "name": "Personales",
+          "item": [
+            {
+              "name": "GET /api/cv/personales",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/personales",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "personales"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/personales",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/personales",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "personales"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipoIdentificacion\": \"Cedula\",\n  \"numeroDocumento\": \"1234567890\",\n  \"fechaExpedicion\": \"2010-01-15\",\n  \"lugarExpedicion\": \"Bogota\",\n  \"primerNombre\": \"Ana\",\n  \"segundoNombre\": null,\n  \"primerApellido\": \"Gomez\",\n  \"segundoApellido\": null,\n  \"fechaNacimiento\": \"1995-05-20\",\n  \"lugarNacimiento\": \"Bogota\",\n  \"genero\": \"Femenino\",\n  \"nacionalidad\": \"Colombiana\",\n  \"email\": \"ana.gomez@example.com\",\n  \"celular\": \"3001234567\",\n  \"pais\": \"Colombia\",\n  \"departamento\": \"Cundinamarca\",\n  \"ciudad\": \"Bogota\",\n  \"direccion\": \"Calle 1 # 2-3\",\n  \"fotoUrl\": null\n}"
+                },
+                "description": "Upsert completo de datos personales (todas las columnas del formulario)."
+              },
+              "response": []
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "GET /api/cv/perfiles",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cv/perfiles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cv",
-                "perfiles"
-              ]
+          "name": "Perfiles",
+          "item": [
+            {
+              "name": "GET /api/cv/perfiles",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/perfiles",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "perfiles"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/perfiles",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/perfiles",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "perfiles"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombrePerfil\": \"Desarrollador Backend\",\n  \"descripcionPerfil\": \"Especialista en .NET y SQL Server\",\n  \"experienciaPerfilAnios\": 5,\n  \"aspiracionSalarialPesos\": 6000000,\n  \"aspiracionSalarialDolares\": null,\n  \"esActivo\": true\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/perfiles/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/perfiles/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "perfiles",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombrePerfil\": \"Desarrollador Backend Senior\",\n  \"descripcionPerfil\": \"Actualizado\",\n  \"experienciaPerfilAnios\": 6,\n  \"aspiracionSalarialPesos\": 7000000,\n  \"aspiracionSalarialDolares\": null,\n  \"esActivo\": true\n}"
+                },
+                "description": "Reemplazar el 1 del path por un PerfilId real (ver GET)."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/perfiles/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/perfiles/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "perfiles",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un PerfilId real."
+              },
+              "response": []
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "GET /api/cv/formaciones",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cv/formaciones",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "cv",
-                "formaciones"
-              ]
+          "name": "Experiencia",
+          "item": [
+            {
+              "name": "GET /api/cv/experiencias",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/experiencias",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "experiencias"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/experiencias",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/experiencias",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "experiencias"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"empresa\": \"Empresa Demo SAS\",\n  \"cargo\": \"Desarrollador Backend\",\n  \"sector\": \"Tecnologia\",\n  \"fechaInicio\": \"2020-01-01\",\n  \"fechaFin\": null,\n  \"tipoContrato\": \"Termino indefinido\",\n  \"motivoRetiro\": null,\n  \"funciones\": \"Desarrollo y mantenimiento de APIs REST\",\n  \"esActual\": true,\n  \"adjuntoSoporte\": null,\n  \"mostrarEnCv\": true\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/experiencias/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/experiencias/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "experiencias",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"empresa\": \"Empresa Demo SAS\",\n  \"cargo\": \"Desarrollador Backend Senior\",\n  \"sector\": \"Tecnologia\",\n  \"fechaInicio\": \"2020-01-01\",\n  \"fechaFin\": null,\n  \"tipoContrato\": \"Termino indefinido\",\n  \"motivoRetiro\": null,\n  \"funciones\": \"Actualizado\",\n  \"esActual\": true,\n  \"adjuntoSoporte\": null,\n  \"mostrarEnCv\": true\n}"
+                },
+                "description": "Reemplazar el 1 del path por un ExperienciaId real."
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH /api/cv/experiencias/{id}/visibilidad",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/experiencias/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "experiencias",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/experiencias/{id}/visibilidad",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/experiencias/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "experiencias",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                },
+                "description": "Misma accion que el PATCH anterior; el backend acepta ambos verbos."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/experiencias/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/experiencias/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "experiencias",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un ExperienciaId real."
+              },
+              "response": []
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "GET /api/contactos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/contactos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "contactos"
-              ]
+          "name": "Formacion",
+          "item": [
+            {
+              "name": "GET /api/cv/formaciones",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/formaciones",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "formaciones"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/formaciones",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/formaciones",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "formaciones"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Ingenieria de Sistemas\",\n  \"institucion\": \"Universidad Demo\",\n  \"area\": \"Tecnologia\",\n  \"fechaInicio\": \"2013-01-01\",\n  \"fechaFin\": \"2018-12-01\",\n  \"tipoFormacion\": \"Pregrado\",\n  \"descripcion\": null,\n  \"adjuntoSoporte\": null,\n  \"fechaVigencia\": null,\n  \"duracionHoras\": null,\n  \"mostrarEnCv\": true\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/formaciones/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/formaciones/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "formaciones",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Ingenieria de Sistemas\",\n  \"institucion\": \"Universidad Demo\",\n  \"area\": \"Tecnologia\",\n  \"fechaInicio\": \"2013-01-01\",\n  \"fechaFin\": \"2018-12-01\",\n  \"tipoFormacion\": \"Pregrado\",\n  \"descripcion\": \"Actualizado\",\n  \"adjuntoSoporte\": null,\n  \"fechaVigencia\": null,\n  \"duracionHoras\": null,\n  \"mostrarEnCv\": true\n}"
+                },
+                "description": "Reemplazar el 1 del path por un FormacionId real."
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH /api/cv/formaciones/{id}/visibilidad",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/formaciones/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "formaciones",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/formaciones/{id}/visibilidad",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/formaciones/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "formaciones",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                },
+                "description": "Misma accion que el PATCH anterior; el backend acepta ambos verbos."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/formaciones/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/formaciones/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "formaciones",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un FormacionId real."
+              },
+              "response": []
             }
-          },
-          "response": []
+          ]
+        },
+        {
+          "name": "Habilidades",
+          "item": [
+            {
+              "name": "GET /api/cv/habilidades",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/habilidades",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "habilidades"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/habilidades",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/habilidades",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "habilidades"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"C#\",\n  \"tipo\": \"Tecnica\",\n  \"nivel\": \"Avanzado\",\n  \"descripcion\": null,\n  \"nivelLectura\": null,\n  \"nivelEscritura\": null,\n  \"nivelEscucha\": null,\n  \"nivelHabla\": null\n}"
+                },
+                "description": "Para tipo Idioma, usar nivelLectura/nivelEscritura/nivelEscucha/nivelHabla con valores A1-C2."
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/habilidades/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/habilidades/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "habilidades",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"C#\",\n  \"tipo\": \"Tecnica\",\n  \"nivel\": \"Experto\",\n  \"descripcion\": \"Actualizado\",\n  \"nivelLectura\": null,\n  \"nivelEscritura\": null,\n  \"nivelEscucha\": null,\n  \"nivelHabla\": null\n}"
+                },
+                "description": "Reemplazar el 1 del path por un HabilidadId real."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/habilidades/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/habilidades/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "habilidades",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un HabilidadId real."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Proyectos",
+          "item": [
+            {
+              "name": "GET /api/cv/proyectos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/proyectos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "proyectos"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/proyectos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/proyectos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "proyectos"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, Azure SQL\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start en capa gratuita de Azure\",\n  \"mostrarEnCv\": true\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/proyectos/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/proyectos/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "proyectos",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, Azure SQL\",\n  \"aporte\": \"Actualizado\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start\",\n  \"mostrarEnCv\": true\n}"
+                },
+                "description": "Reemplazar el 1 del path por un ProyectoId real."
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH /api/cv/proyectos/{id}/visibilidad",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/proyectos/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "proyectos",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/proyectos/{id}/visibilidad",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/proyectos/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "proyectos",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                },
+                "description": "Misma accion que el PATCH anterior; el backend acepta ambos verbos."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/proyectos/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/proyectos/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "proyectos",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un ProyectoId real."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Referencias",
+          "item": [
+            {
+              "name": "GET /api/cv/referencias",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/referencias",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "referencias"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/referencias",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/referencias",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "referencias"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipoReferencia\": \"Laboral\",\n  \"experienciaId\": null,\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Ruiz\",\n  \"email\": \"carlos.ruiz@example.com\",\n  \"telefono\": \"3009876543\",\n  \"parentesco\": null,\n  \"cargo\": \"Gerente de TI\",\n  \"empresa\": \"Empresa Demo SAS\",\n  \"relacion\": \"Jefe directo\",\n  \"observaciones\": null,\n  \"adjuntoSoporte\": null\n}"
+                },
+                "description": "tipoReferencia: \"Laboral\" o \"Personal\". Si es Laboral, experienciaId puede apuntar a la experiencia que avala."
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/referencias/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/referencias/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "referencias",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipoReferencia\": \"Laboral\",\n  \"experienciaId\": null,\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"Ruiz\",\n  \"email\": \"carlos.ruiz@example.com\",\n  \"telefono\": \"3009876543\",\n  \"parentesco\": null,\n  \"cargo\": \"Gerente de TI\",\n  \"empresa\": \"Empresa Demo SAS\",\n  \"relacion\": \"Jefe directo\",\n  \"observaciones\": \"Actualizado\",\n  \"adjuntoSoporte\": null\n}"
+                },
+                "description": "Reemplazar el 1 del path por un ReferenciaId real."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/referencias/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/referencias/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "referencias",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un ReferenciaId real."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Redes Sociales",
+          "item": [
+            {
+              "name": "GET /api/cv/redes-sociales",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/redes-sociales",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "redes-sociales"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/redes-sociales",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/redes-sociales",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "redes-sociales"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombreRed\": \"LinkedIn\",\n  \"linkPublico\": \"https://linkedin.com/in/usuario-demo\",\n  \"usuarioContacto\": null\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/redes-sociales/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/redes-sociales/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "redes-sociales",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombreRed\": \"LinkedIn\",\n  \"linkPublico\": \"https://linkedin.com/in/usuario-demo-actualizado\",\n  \"usuarioContacto\": null\n}"
+                },
+                "description": "Reemplazar el 1 del path por un RedSocialId real."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/redes-sociales/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/redes-sociales/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "redes-sociales",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un RedSocialId real."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Familiares",
+          "item": [
+            {
+              "name": "GET /api/cv/familiares",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/familiares",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "familiares"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/cv/familiares",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/familiares",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "familiares"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"parentesco\": \"Madre\",\n  \"nombres\": \"Maria\",\n  \"apellidos\": \"Gomez\",\n  \"email\": null,\n  \"telefono\": \"3001112233\",\n  \"esContactoPrincipal\": true\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/familiares/1",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/familiares/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "familiares",
+                    "1"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"parentesco\": \"Madre\",\n  \"nombres\": \"Maria\",\n  \"apellidos\": \"Gomez\",\n  \"email\": null,\n  \"telefono\": \"3001112233\",\n  \"esContactoPrincipal\": true\n}"
+                },
+                "description": "Reemplazar el 1 del path por un FamiliarId real."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/cv/familiares/1",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/familiares/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "familiares",
+                    "1"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un FamiliarId real."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Visibilidad",
+          "item": [
+            {
+              "name": "GET /api/cv/visibilidad",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "visibilidad"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/visibilidad",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "[\n  {\n    \"nombreSeccion\": \"Referencias\",\n    \"esVisible\": false\n  }\n]"
+                },
+                "description": "Actualizacion por lote: el body es un ARRAY de { nombreSeccion, esVisible }, una entrada por cada seccion a cambiar."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Presentacion",
+          "item": [
+            {
+              "name": "GET /api/cv/presentacion",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/presentacion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "presentacion"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/presentacion",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/presentacion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "presentacion"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"plantillaCodigo\": \"moderno\"\n}"
+                },
+                "description": "Cambia la plantilla visual del CV publico."
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/presentacion/publicacion",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/presentacion/publicacion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "presentacion",
+                    "publicacion"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"publicado\": true\n}"
+                },
+                "description": "Publica u oculta el CV en el portal (misma logica que el toggle de Mi CV)."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Alertas",
+          "item": [
+            {
+              "name": "GET /api/alertas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/alertas?soloNoLeidas=false&periodo=mes&page=1&pageSize=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "alertas"
+                  ],
+                  "query": [
+                    {
+                      "key": "soloNoLeidas",
+                      "value": "false"
+                    },
+                    {
+                      "key": "periodo",
+                      "value": "mes"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET /api/alertas/no-leidas/conteo",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/alertas/no-leidas/conteo",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "alertas",
+                    "no-leidas",
+                    "conteo"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/alertas/1/leer",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/alertas/1/leer",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "alertas",
+                    "1",
+                    "leer"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un AlertaVisitaId real."
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/alertas/leer-todas",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/alertas/leer-todas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "alertas",
+                    "leer-todas"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/alertas/leidas",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/alertas/leidas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "alertas",
+                    "leidas"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Contactos",
+          "item": [
+            {
+              "name": "GET /api/contactos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/contactos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "contactos"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/contactos/1/leer",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/contactos/1/leer",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "contactos",
+                    "1",
+                    "leer"
+                  ]
+                },
+                "description": "Reemplazar el 1 del path por un VisitanteContactoId real."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "GET /api/dashboard/stats",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/dashboard/stats",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "dashboard",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Notificaciones",
+          "item": [
+            {
+              "name": "GET /api/notificaciones",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/notificaciones?limite=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "notificaciones"
+                  ],
+                  "query": [
+                    {
+                      "key": "limite",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },
@@ -316,42 +1839,277 @@
       "name": "04 - Admin (JWT Admin)",
       "item": [
         {
-          "name": "GET /api/admin/roles",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/roles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "roles"
-              ]
+          "name": "Usuarios y Roles",
+          "item": [
+            {
+              "name": "GET /api/admin/roles",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/roles",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "roles"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET /api/admin/usuarios",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "usuarios"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/admin/usuarios/1/estado",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/usuarios/1/estado",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "usuarios",
+                    "1",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"activo\": false\n}"
+                },
+                "description": "Reemplazar el 1 del path por un UsuarioId real. Activa/desactiva el usuario."
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/admin/usuarios/1/cv-publicacion",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/usuarios/1/cv-publicacion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "usuarios",
+                    "1",
+                    "cv-publicacion"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"publicado\": true\n}"
+                },
+                "description": "Reemplazar el 1 del path por un UsuarioId real. Publica u oculta el CV del usuario."
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/admin/usuarios/{usuarioId}/roles/{rolId}",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/usuarios/1/roles/2",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "usuarios",
+                    "1",
+                    "roles",
+                    "2"
+                  ]
+                },
+                "description": "Asigna un rol a un usuario. Reemplazar los ids del path por valores reales (ver GET /roles y /usuarios)."
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE /api/admin/usuarios/{usuarioId}/roles/{rolId}",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/usuarios/1/roles/2",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "usuarios",
+                    "1",
+                    "roles",
+                    "2"
+                  ]
+                },
+                "description": "Quita un rol de un usuario. El backend protege que siempre quede al menos un Admin."
+              },
+              "response": []
             }
-          },
-          "response": []
+          ]
         },
         {
-          "name": "GET /api/admin/usuarios",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/usuarios",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "usuarios"
-              ]
+          "name": "Auditoria",
+          "item": [
+            {
+              "name": "GET /api/admin/auditoria",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/auditoria?page=1&pageSize=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "auditoria"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET /api/admin/auditoria-cv",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/auditoria-cv?page=1&pageSize=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "auditoria-cv"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET /api/admin/auditoria-auth",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/auditoria-auth?page=1&pageSize=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "auditoria-auth"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /api/admin/auditoria/purge",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/admin/auditoria/purge",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "auditoria",
+                    "purge"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tabla\": \"auth\",\n  \"modo\": \"anioMes\",\n  \"anio\": 2025,\n  \"mes\": 1,\n  \"confirmacion\": null\n}"
+                },
+                "description": "tabla: admin|cv|auth. modo: anioMes|anio|todo (todo requiere confirmacion = \"VACIAR_AUDITORIA\"). CUIDADO: borra filas reales."
+              },
+              "response": []
             }
-          },
-          "response": []
+          ]
         }
       ]
     }
