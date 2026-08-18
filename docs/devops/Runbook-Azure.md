@@ -321,6 +321,23 @@ Las tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` **siguen exist
 
 ---
 
+## 7.2 Ventanas de actividad e inactividad (cold start)
+
+Los dos componentes con capa gratuita/serverless se "duermen" de forma independiente cuando no hay tráfico, y cada uno tarda su propio tiempo en despertar. Valores confirmados el **2026-08-18** contra los recursos reales de producción (RG `CV-Mao`):
+
+| Componente | Config real | Se duerme tras | Tarda en despertar |
+|---|---|---|---|
+| **Backend** (`portalcv-api`, Container Apps) | `minReplicas: 0`, `maxReplicas: 1`, sin regla de escalado personalizada (`rules: null` → comportamiento HTTP por defecto de la plataforma) | Entre **~5 y ~9 minutos** sin requests (medido empíricamente: a los 5.5 min seguía caliente en 1.1s; a los 9 min ya estaba frío) | **~21 segundos** (medido: `200 OK` en 20.9s tras estar dormido) |
+| **Azure SQL** (`PortalCV`, tier `GP_S_Gen5` serverless/free-limit) | `autoPauseDelayInMinutes: 60` (leído directo del recurso vía `az sql db show`) | **60 minutos** exactos sin actividad | **10-30 segundos** (puede devolver un `500` transitorio en el primer intento; reintentar) |
+
+**Cómo se combinan en la práctica:**
+
+- El backend se duerme *mucho* antes que la base (minutos vs. una hora), así que el caso más común de "portal lento al entrar" es solo el cold start del contenedor (~20s), con la base ya despierta.
+- Solo si nadie visita el portal por **más de 60 minutos seguidos**, ambos están dormidos a la vez: el contenedor arranca (~20s) y, dentro de ese arranque, la primera consulta a la base puede sumar otros 10-30s (o un `500` transitorio que se resuelve solo al reintentar). Peor caso combinado estimado: **~30-50 segundos** hasta que el portal responde con normalidad.
+- Método de medición: se dejó de generar tráfico contra `$BACKEND/health` y se cronometró con `curl -w "%{time_total}"` el primer request tras cada ventana de espera. Para reproducirlo, repetir con distintos tiempos de espera y comparar contra una llamada en caliente (~1s) como referencia.
+
+---
+
 ## 8. Rollback rápido
 
 Estrategia mínima: reapuntar el Container App a una imagen previa de GHCR.
