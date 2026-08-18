@@ -72,6 +72,7 @@ export interface AuditoriaAuthListItemDto {
   accion: string;
   email: string;
   detalleJson: string | null;
+  ipOrigen: string | null;
 }
 
 export interface AuditoriaAuthPageDto {

@@ -9,4 +9,5 @@ public class AuditoriaAuthListItemDto
     public string Accion { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? DetalleJson { get; set; }
+    public string? IpOrigen { get; set; }
 }

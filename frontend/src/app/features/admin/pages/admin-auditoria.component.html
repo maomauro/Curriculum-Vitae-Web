@@ -359,6 +359,7 @@
             <th scope="col">EMAIL</th>
             <th scope="col">ACTOR</th>
             <th scope="col">ACCIÓN</th>
+            <th scope="col">IP</th>
             <th scope="col">DETALLE</th>
           </tr>
         </thead>
@@ -374,6 +375,7 @@
             <td>
               <span class="badge rounded-pill bg-light text-dark border">{{ etiquetaAccionAuth(row.accion) }}</span>
             </td>
+            <td class="small font-monospace text-nowrap">{{ row.ipOrigen || '—' }}</td>
             <td class="small font-monospace text-break" style="max-width: 28rem">{{ detalleLegible(row.detalleJson) }}</td>
           </tr>
         </tbody>

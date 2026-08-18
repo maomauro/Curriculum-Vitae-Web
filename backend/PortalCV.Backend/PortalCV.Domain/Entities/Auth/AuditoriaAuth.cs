@@ -12,5 +12,8 @@ public class AuditoriaAuth
     public string Email { get; set; } = string.Empty;
     public string? DetalleJson { get; set; }
 
+    /// <summary>IP del cliente (IPv4 o IPv6), para detectar fuerza bruta en login fallido.</summary>
+    public string? IpOrigen { get; set; }
+
     public Usuario? Actor { get; set; }
 }
