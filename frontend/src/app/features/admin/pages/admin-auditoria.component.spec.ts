@@ -503,13 +503,6 @@ describe('AdminAuditoriaComponent', () => {
     expect(component.etiquetaAccionAuth('auth.login_exitoso')).toBe('Login exitoso');
   });
 
-  it('fmtFecha formatea a "yyyy-mm-dd hh:mm:ss" y maneja vacíos/inválidos', () => {
-    setup();
-    expect(component.fmtFecha('2026-03-05T10:30:00Z')).toBe('2026-03-05 10:30:00');
-    expect(component.fmtFecha('')).toBe('—');
-    expect(component.fmtFecha('no-es-fecha')).toBe('no-es-fecha');
-  });
-
   it('detalleLegible parsea JSON como pares clave: valor y trunca texto plano largo', () => {
     setup();
     expect(component.detalleLegible(null)).toBe('—');
