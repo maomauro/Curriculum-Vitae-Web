@@ -109,7 +109,7 @@
         <thead class="table-light">
           <tr>
             <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
-            <th scope="col">FECHA (UTC)</th>
+            <th scope="col">FECHA</th>
             <th scope="col">ACTOR</th>
             <th scope="col">ACCIÓN</th>
             <th scope="col">ENTIDAD</th>
@@ -119,7 +119,7 @@
         <tbody>
           <tr *ngFor="let row of itemsAdmin; let i = index">
             <td class="text-end text-muted small">{{ (pageAdmin - 1) * pageSizeAdmin + i + 1 }}</td>
-            <td class="text-nowrap small">{{ fmtFecha(row.fechaUtc) }}</td>
+            <td class="text-nowrap small">{{ row.fechaUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
             <td class="small">
               <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
               <span *ngIf="!row.actorEmail" class="text-muted">—</span>
@@ -229,7 +229,7 @@
         <thead class="table-light">
           <tr>
             <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
-            <th scope="col">FECHA (UTC)</th>
+            <th scope="col">FECHA</th>
             <th scope="col">ACTOR</th>
             <th scope="col">CV (PROPIETARIO)</th>
             <th scope="col">ACCIÓN</th>
@@ -240,7 +240,7 @@
         <tbody>
           <tr *ngFor="let row of itemsCv; let i = index">
             <td class="text-end text-muted small">{{ (pageCv - 1) * pageSizeCv + i + 1 }}</td>
-            <td class="text-nowrap small">{{ fmtFecha(row.fechaUtc) }}</td>
+            <td class="text-nowrap small">{{ row.fechaUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
             <td class="small">
               <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
               <span *ngIf="!row.actorEmail" class="text-muted">—</span>
@@ -355,7 +355,7 @@
         <thead class="table-light">
           <tr>
             <th scope="col" class="text-end text-muted small text-nowrap" style="width: 3rem">#</th>
-            <th scope="col">FECHA (UTC)</th>
+            <th scope="col">FECHA</th>
             <th scope="col">EMAIL</th>
             <th scope="col">ACTOR</th>
             <th scope="col">ACCIÓN</th>
@@ -365,7 +365,7 @@
         <tbody>
           <tr *ngFor="let row of itemsAuth; let i = index">
             <td class="text-end text-muted small">{{ (pageAuth - 1) * pageSizeAuth + i + 1 }}</td>
-            <td class="text-nowrap small">{{ fmtFecha(row.fechaUtc) }}</td>
+            <td class="text-nowrap small">{{ row.fechaUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
             <td class="small">{{ row.email }}</td>
             <td class="small">
               <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
