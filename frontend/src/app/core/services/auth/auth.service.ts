@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { CV_ROL } from '../../constants/cv-roles';
 import { API_BASE_URL } from '../../constants/api-base-url';
+import { clearSessionHint, markSessionHint } from '../../constants/session-hint';
 
 export interface UserInfo {
   id: number;
@@ -77,7 +78,10 @@ export class AuthService {
 
   login(email: string, password: string): Observable<LoginApiResponse> {
     return this.http.post<LoginApiResponse>(`${this.API_URL}/login`, { email, password }).pipe(
-      tap(res => this.currentUserSubject.next(this.buildUserFromResponse(res)))
+      tap(res => {
+        this.currentUserSubject.next(this.buildUserFromResponse(res));
+        markSessionHint();
+      })
     );
   }
 
@@ -112,6 +116,7 @@ export class AuthService {
    */
   clearLocalSession(): void {
     this.currentUserSubject.next(null);
+    clearSessionHint();
   }
 
   isLoggedIn(): boolean {

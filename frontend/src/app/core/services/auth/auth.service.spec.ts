@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService, type MeApiResponse } from './auth.service';
 import { API_BASE_URL } from '../../constants/api-base-url';
+import { hasSessionHint } from '../../constants/session-hint';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -20,6 +21,7 @@ describe('AuthService', () => {
 
   afterEach(() => {
     delete window.__PORTALCV_SESSION__;
+    localStorage.clear();
     httpMock.verify();
   });
 
@@ -74,6 +76,7 @@ describe('AuthService', () => {
 
     expect(service.isLoggedIn()).toBeTrue();
     expect(service.currentUser?.email).toBe('demo@test.local');
+    expect(hasSessionHint()).toBeTrue();
   });
 
   it('logout() limpia el estado local de inmediato y dispara POST /logout en segundo plano', () => {
@@ -103,14 +106,17 @@ describe('AuthService', () => {
     expect(service.isLoggedIn()).toBeFalse();
   });
 
-  it('clearLocalSession() limpia el estado sin llamar al backend', () => {
+  it('clearLocalSession() limpia el estado y la bandera de sesion sin llamar al backend', () => {
     window.__PORTALCV_SESSION__ = meResponse;
     setup();
-    expect(service.isLoggedIn()).toBeTrue();
+    service.login('demo@test.local', 'secret').subscribe();
+    httpMock.expectOne(loginUrl).flush({ ...meResponse, expiracion: '2026-01-01T00:00:00Z' });
+    expect(hasSessionHint()).toBeTrue();
 
     service.clearLocalSession();
 
     expect(service.isLoggedIn()).toBeFalse();
+    expect(hasSessionHint()).toBeFalse();
     httpMock.expectNone(logoutUrl);
   });
 
