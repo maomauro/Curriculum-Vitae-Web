@@ -42,7 +42,8 @@ login siga disponible en las siguientes llamadas.
   no la API.
   - `https://portalcv-api.wittyriver-e6fd0cd4.brazilsouth.azurecontainerapps.io`
   - Si cambia el hostname del Container App, actualizar `baseUrl` en el environment de
-    Produccion (mismo valor que `apiBaseUrl` en `frontend/public/app-config.json`).
+    Produccion (mismo valor que la variable de repo `API_BASE_URL`, inyectada en el frontend
+    durante el build por `.github/workflows/deploy-frontend-swa.yml`).
 - Si algun request devuelve 401:
   - revisar en la pestaña Cookies de Postman si `portalcv_auth` sigue presente para el dominio
     de `baseUrl`; si no esta o vencio, volver a ejecutar login.

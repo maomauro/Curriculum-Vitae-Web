@@ -6,13 +6,16 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- APP_CONFIG_INJECT: en produccion, deploy-frontend-swa.yml reemplaza este comentario
+       por <script>window.__PORTALCV_CONFIG__ = {...}</script> luego del build, con la config
+       ya resuelta (sin red, sin XHR). Debe quedar ANTES del script de abajo y del bundle de
+       Angular: api-base-url.ts calcula API_BASE_URL como constante al importarse, sin esperar
+       a nada asincrono, asi que si la config no esta disponible en ese instante, la constante
+       queda congelada en el valor de fallback para siempre. -->
   <script>
-    // Carga sincrona (bloqueante) de la config runtime. Debe completarse ANTES de que
-    // el bundle de Angular evalue sus modulos: api-base-url.ts calcula API_BASE_URL como
-    // constante al importarse, sin esperar a un fetch asincrono, asi que si esta config
-    // no esta disponible en ese instante, la constante queda congelada en el valor de
-    // fallback para siempre (aunque app-config.json se cargue correctamente despues).
-    (function () {
+    // Respaldo solo para entornos donde no hubo inyeccion en build (p. ej. ng serve local):
+    // intenta una carga sincrona de app-config.json si nadie puso la config todavia.
+    if (!window.__PORTALCV_CONFIG__) {
       try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/app-config.json', false);
@@ -23,7 +26,7 @@
       } catch (err) {
         console.warn('No se pudo cargar app-config.json; se usara la configuracion por defecto.', err);
       }
-    })();
+    }
   </script>
 </head>
 <body>
