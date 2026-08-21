@@ -41,13 +41,13 @@
 </ul>
 
 <div *ngIf="pestana === 'admin'" class="seccion-card border-top-0 rounded-top-0">
-  <div *ngIf="loadingAdmin" class="text-center py-5">
+  <div *ngIf="admin.loading" class="text-center py-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando auditoría…</span>
     </div>
   </div>
 
-  <div *ngIf="!loadingAdmin">
+  <div *ngIf="!admin.loading">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
       <div class="seccion-titulo mb-0">Eventos de administración</div>
       <div class="d-flex flex-wrap align-items-center gap-2">
@@ -56,7 +56,7 @@
           <select
             id="admin-auditoria-filtro-accion"
             class="form-select form-select-sm admin-filter-select"
-            [(ngModel)]="filtroAccionAdmin"
+            [(ngModel)]="admin.filtroAccion"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onCambioFiltrosAdmin()">
             <option [ngValue]="''">Todas las acciones</option>
@@ -69,11 +69,11 @@
               type="text"
               class="form-control form-control-sm admin-search-input"
               placeholder="Buscar actor, entidad, detalle…"
-              [(ngModel)]="busquedaAdmin"
+              [(ngModel)]="admin.busqueda"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="onCambioFiltrosAdmin()" />
             <button
-              *ngIf="busquedaAdmin?.trim()"
+              *ngIf="admin.busqueda?.trim()"
               type="button"
               class="admin-search-clear"
               (click)="limpiarBusquedaAdmin()"
@@ -91,20 +91,20 @@
         </button>
       </div>
     </div>
-    <div *ngIf="errorAdmin" class="alert alert-danger py-2 small mb-3 mx-2">{{ errorAdmin }}</div>
+    <div *ngIf="admin.error" class="alert alert-danger py-2 small mb-3 mx-2">{{ admin.error }}</div>
 
-    <div *ngIf="!errorAdmin && !loadingAdmin && totalAdmin === 0">
-      <div *ngIf="!hayFiltrosAdmin" class="text-center text-muted py-5 px-2">
+    <div *ngIf="!admin.error && !admin.loading && admin.total === 0">
+      <div *ngIf="!admin.hayFiltros" class="text-center text-muted py-5 px-2">
         <i class="bi bi-inbox display-6 d-block mb-2"></i>
         <p class="mb-0">Aún no hay eventos de administración registrados.</p>
       </div>
-      <div *ngIf="hayFiltrosAdmin" class="text-center text-muted py-5 px-2">
+      <div *ngIf="admin.hayFiltros" class="text-center text-muted py-5 px-2">
         <i class="bi bi-search admin-search-icon"></i>
         <p class="mt-2 mb-0">No hay eventos que coincidan con el filtro o la búsqueda.</p>
       </div>
     </div>
 
-    <div *ngIf="!errorAdmin && !loadingAdmin && totalAdmin > 0" class="table-responsive admin-table-wrap">
+    <div *ngIf="!admin.error && !admin.loading && admin.total > 0" class="table-responsive admin-table-wrap">
       <table class="table table-hover align-middle w-100 mb-0">
         <thead class="table-light">
           <tr>
@@ -117,8 +117,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of itemsAdmin; let i = index">
-            <td class="text-end text-muted small">{{ (pageAdmin - 1) * pageSizeAdmin + i + 1 }}</td>
+          <tr *ngFor="let row of admin.items; let i = index">
+            <td class="text-end text-muted small">{{ (admin.page - 1) * admin.pageSize + i + 1 }}</td>
             <td class="text-nowrap small">{{ row.fechaUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
             <td class="small">
               <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
@@ -137,21 +137,21 @@
 
       <div
         class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
-        <span class="text-muted small"> {{ rangoTextoAdmin }} </span>
+        <span class="text-muted small"> {{ admin.rangoTexto }} </span>
         <div class="btn-group btn-group-sm">
           <button
             type="button"
             class="btn btn-outline-secondary"
-            [disabled]="pageAdmin <= 1"
-            (click)="irPaginaAdmin(pageAdmin - 1)">
+            [disabled]="admin.page <= 1"
+            (click)="irPaginaAdmin(admin.page - 1)">
             Anterior
           </button>
-          <button type="button" class="btn btn-outline-secondary" disabled>{{ pageAdmin }} / {{ totalPagesAdmin }}</button>
+          <button type="button" class="btn btn-outline-secondary" disabled>{{ admin.page }} / {{ admin.totalPages }}</button>
           <button
             type="button"
             class="btn btn-outline-secondary"
-            [disabled]="pageAdmin >= totalPagesAdmin"
-            (click)="irPaginaAdmin(pageAdmin + 1)">
+            [disabled]="admin.page >= admin.totalPages"
+            (click)="irPaginaAdmin(admin.page + 1)">
             Siguiente
           </button>
         </div>
@@ -161,13 +161,13 @@
 </div>
 
 <div *ngIf="pestana === 'cv'" class="seccion-card border-top-0 rounded-top-0">
-  <div *ngIf="loadingCv" class="text-center py-5">
+  <div *ngIf="cv.loading" class="text-center py-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando auditoría de CV…</span>
     </div>
   </div>
 
-  <div *ngIf="!loadingCv">
+  <div *ngIf="!cv.loading">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
       <div class="seccion-titulo mb-0">Eventos de edición de CV</div>
       <div class="d-flex flex-wrap align-items-center gap-2">
@@ -176,7 +176,7 @@
           <select
             id="admin-auditoria-cv-filtro-accion"
             class="form-select form-select-sm admin-filter-select"
-            [(ngModel)]="filtroAccionCv"
+            [(ngModel)]="cv.filtroAccion"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onCambioFiltrosCv()">
             <option [ngValue]="''">Todas las acciones</option>
@@ -189,11 +189,11 @@
               type="text"
               class="form-control form-control-sm admin-search-input"
               placeholder="Buscar actor, propietario, URL, detalle…"
-              [(ngModel)]="busquedaCv"
+              [(ngModel)]="cv.busqueda"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="onCambioFiltrosCv()" />
             <button
-              *ngIf="busquedaCv?.trim()"
+              *ngIf="cv.busqueda?.trim()"
               type="button"
               class="admin-search-clear"
               (click)="limpiarBusquedaCv()"
@@ -211,20 +211,20 @@
         </button>
       </div>
     </div>
-    <div *ngIf="errorCv" class="alert alert-danger py-2 small mb-3 mx-2">{{ errorCv }}</div>
+    <div *ngIf="cv.error" class="alert alert-danger py-2 small mb-3 mx-2">{{ cv.error }}</div>
 
-    <div *ngIf="!errorCv && !loadingCv && totalCv === 0">
-      <div *ngIf="!hayFiltrosCv" class="text-center text-muted py-5 px-2">
+    <div *ngIf="!cv.error && !cv.loading && cv.total === 0">
+      <div *ngIf="!cv.hayFiltros" class="text-center text-muted py-5 px-2">
         <i class="bi bi-inbox display-6 d-block mb-2"></i>
         <p class="mb-0">Aún no hay eventos de edición de CV registrados.</p>
       </div>
-      <div *ngIf="hayFiltrosCv" class="text-center text-muted py-5 px-2">
+      <div *ngIf="cv.hayFiltros" class="text-center text-muted py-5 px-2">
         <i class="bi bi-search admin-search-icon"></i>
         <p class="mt-2 mb-0">No hay eventos que coincidan con el filtro o la búsqueda.</p>
       </div>
     </div>
 
-    <div *ngIf="!errorCv && !loadingCv && totalCv > 0" class="table-responsive admin-table-wrap">
+    <div *ngIf="!cv.error && !cv.loading && cv.total > 0" class="table-responsive admin-table-wrap">
       <table class="table table-hover align-middle w-100 mb-0">
         <thead class="table-light">
           <tr>
@@ -238,8 +238,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of itemsCv; let i = index">
-            <td class="text-end text-muted small">{{ (pageCv - 1) * pageSizeCv + i + 1 }}</td>
+          <tr *ngFor="let row of cv.items; let i = index">
+            <td class="text-end text-muted small">{{ (cv.page - 1) * cv.pageSize + i + 1 }}</td>
             <td class="text-nowrap small">{{ row.fechaUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
             <td class="small">
               <span *ngIf="row.actorEmail">{{ row.actorEmail }}</span>
@@ -263,21 +263,21 @@
 
       <div
         class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
-        <span class="text-muted small"> {{ rangoTextoCv }} </span>
+        <span class="text-muted small"> {{ cv.rangoTexto }} </span>
         <div class="btn-group btn-group-sm">
           <button
             type="button"
             class="btn btn-outline-secondary"
-            [disabled]="pageCv <= 1"
-            (click)="irPaginaCv(pageCv - 1)">
+            [disabled]="cv.page <= 1"
+            (click)="irPaginaCv(cv.page - 1)">
             Anterior
           </button>
-          <button type="button" class="btn btn-outline-secondary" disabled>{{ pageCv }} / {{ totalPagesCv }}</button>
+          <button type="button" class="btn btn-outline-secondary" disabled>{{ cv.page }} / {{ cv.totalPages }}</button>
           <button
             type="button"
             class="btn btn-outline-secondary"
-            [disabled]="pageCv >= totalPagesCv"
-            (click)="irPaginaCv(pageCv + 1)">
+            [disabled]="cv.page >= cv.totalPages"
+            (click)="irPaginaCv(cv.page + 1)">
             Siguiente
           </button>
         </div>
@@ -287,13 +287,13 @@
 </div>
 
 <div *ngIf="pestana === 'auth'" class="seccion-card border-top-0 rounded-top-0">
-  <div *ngIf="loadingAuth" class="text-center py-5">
+  <div *ngIf="auth.loading" class="text-center py-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando auditoría de autenticación…</span>
     </div>
   </div>
 
-  <div *ngIf="!loadingAuth">
+  <div *ngIf="!auth.loading">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 pt-3 pb-2">
       <div class="seccion-titulo mb-0">Eventos de autenticación</div>
       <div class="d-flex flex-wrap align-items-center gap-2">
@@ -302,7 +302,7 @@
           <select
             id="admin-auditoria-auth-filtro-accion"
             class="form-select form-select-sm admin-filter-select"
-            [(ngModel)]="filtroAccionAuth"
+            [(ngModel)]="auth.filtroAccion"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onCambioFiltrosAuth()">
             <option [ngValue]="''">Todas las acciones</option>
@@ -315,11 +315,11 @@
               type="text"
               class="form-control form-control-sm admin-search-input"
               placeholder="Buscar email, actor, detalle…"
-              [(ngModel)]="busquedaAuth"
+              [(ngModel)]="auth.busqueda"
               [ngModelOptions]="{ standalone: true }"
               (ngModelChange)="onCambioFiltrosAuth()" />
             <button
-              *ngIf="busquedaAuth?.trim()"
+              *ngIf="auth.busqueda?.trim()"
               type="button"
               class="admin-search-clear"
               (click)="limpiarBusquedaAuth()"
@@ -337,20 +337,20 @@
         </button>
       </div>
     </div>
-    <div *ngIf="errorAuth" class="alert alert-danger py-2 small mb-3 mx-2">{{ errorAuth }}</div>
+    <div *ngIf="auth.error" class="alert alert-danger py-2 small mb-3 mx-2">{{ auth.error }}</div>
 
-    <div *ngIf="!errorAuth && !loadingAuth && totalAuth === 0">
-      <div *ngIf="!hayFiltrosAuth" class="text-center text-muted py-5 px-2">
+    <div *ngIf="!auth.error && !auth.loading && auth.total === 0">
+      <div *ngIf="!auth.hayFiltros" class="text-center text-muted py-5 px-2">
         <i class="bi bi-inbox display-6 d-block mb-2"></i>
         <p class="mb-0">Aún no hay eventos de autenticación registrados.</p>
       </div>
-      <div *ngIf="hayFiltrosAuth" class="text-center text-muted py-5 px-2">
+      <div *ngIf="auth.hayFiltros" class="text-center text-muted py-5 px-2">
         <i class="bi bi-search admin-search-icon"></i>
         <p class="mt-2 mb-0">No hay eventos que coincidan con el filtro o la búsqueda.</p>
       </div>
     </div>
 
-    <div *ngIf="!errorAuth && !loadingAuth && totalAuth > 0" class="table-responsive admin-table-wrap">
+    <div *ngIf="!auth.error && !auth.loading && auth.total > 0" class="table-responsive admin-table-wrap">
       <table class="table table-hover align-middle w-100 mb-0">
         <thead class="table-light">
           <tr>
@@ -364,8 +364,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of itemsAuth; let i = index">
-            <td class="text-end text-muted small">{{ (pageAuth - 1) * pageSizeAuth + i + 1 }}</td>
+          <tr *ngFor="let row of auth.items; let i = index">
+            <td class="text-end text-muted small">{{ (auth.page - 1) * auth.pageSize + i + 1 }}</td>
             <td class="text-nowrap small">{{ row.fechaUtc | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
             <td class="small">{{ row.email }}</td>
             <td class="small">
@@ -383,21 +383,21 @@
 
       <div
         class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-2 py-3 border-top bg-white rounded-bottom">
-        <span class="text-muted small"> {{ rangoTextoAuth }} </span>
+        <span class="text-muted small"> {{ auth.rangoTexto }} </span>
         <div class="btn-group btn-group-sm">
           <button
             type="button"
             class="btn btn-outline-secondary"
-            [disabled]="pageAuth <= 1"
-            (click)="irPaginaAuth(pageAuth - 1)">
+            [disabled]="auth.page <= 1"
+            (click)="irPaginaAuth(auth.page - 1)">
             Anterior
           </button>
-          <button type="button" class="btn btn-outline-secondary" disabled>{{ pageAuth }} / {{ totalPagesAuth }}</button>
+          <button type="button" class="btn btn-outline-secondary" disabled>{{ auth.page }} / {{ auth.totalPages }}</button>
           <button
             type="button"
             class="btn btn-outline-secondary"
-            [disabled]="pageAuth >= totalPagesAuth"
-            (click)="irPaginaAuth(pageAuth + 1)">
+            [disabled]="auth.page >= auth.totalPages"
+            (click)="irPaginaAuth(auth.page + 1)">
             Siguiente
           </button>
         </div>
@@ -406,7 +406,7 @@
   </div>
 </div>
 
-<ng-container *ngIf="modalMantenimientoAdmin">
+<ng-container *ngIf="admin.modalMantenimiento">
   <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAdmin()" (keydown)="cerrarModalMantenimientoAdmin()" aria-hidden="true"></div>
   <div
     id="modalMantenimientoAuditoriaAdmin"
@@ -449,14 +449,14 @@
               <select
                 id="admin-auditoria-purge-anio"
                 class="form-select form-select-sm mb-2"
-                [(ngModel)]="anioPurgeAdmin"
+                [(ngModel)]="admin.anioPurge"
                 [ngModelOptions]="{ standalone: true }">
                 <option *ngFor="let y of aniosPurge" [ngValue]="y">{{ y }}</option>
               </select>
               <button
                 type="button"
                 class="btn btn-sm btn-outline-danger w-100"
-                [disabled]="purgingAdmin"
+                [disabled]="admin.purging"
                 (click)="purgeAdmin('anio')">
                 Borrar año
               </button>
@@ -466,14 +466,14 @@
               <select
                 id="admin-auditoria-purge-mes"
                 class="form-select form-select-sm mb-2"
-                [(ngModel)]="mesPurgeAdmin"
+                [(ngModel)]="admin.mesPurge"
                 [ngModelOptions]="{ standalone: true }">
                 <option *ngFor="let m of mesesPurge" [ngValue]="m.v">{{ m.n }}</option>
               </select>
               <button
                 type="button"
                 class="btn btn-sm btn-outline-danger w-100"
-                [disabled]="purgingAdmin"
+                [disabled]="admin.purging"
                 (click)="purgeAdmin('anioMes')">
                 Borrar mes
               </button>
@@ -486,13 +486,13 @@
               id="admin-auditoria-purge-confirm"
               type="text"
               class="form-control form-control-sm admin-search-input"
-              [(ngModel)]="confirmVaciarAdmin"
+              [(ngModel)]="admin.confirmVaciar"
               (ngModelChange)="onConfirmVaciarAdminChange()"
               [ngModelOptions]="{ standalone: true }"
               [placeholder]="fraseVaciar"
               autocomplete="off" />
             <button
-              *ngIf="(confirmVaciarAdmin?.length ?? 0) > 0"
+              *ngIf="(admin.confirmVaciar?.length ?? 0) > 0"
               type="button"
               class="admin-search-clear"
               (click)="limpiarConfirmVaciarAdmin()"
@@ -500,13 +500,13 @@
               <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
           </div>
-          <div *ngIf="showConfirmErrorAdmin" class="alert alert-danger py-2 small mb-2">
+          <div *ngIf="admin.showConfirmError" class="alert alert-danger py-2 small mb-2">
             Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
           </div>
           <button
             type="button"
             class="btn btn-sm btn-danger"
-            [disabled]="purgingAdmin || !canVaciarAdminCompleto"
+            [disabled]="admin.purging || !admin.canVaciarCompleto"
             (click)="purgeAdmin('todo')">
             Vaciar tabla completa
           </button>
@@ -516,7 +516,7 @@
   </div>
 </ng-container>
 
-<ng-container *ngIf="modalMantenimientoCv">
+<ng-container *ngIf="cv.modalMantenimiento">
   <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoCv()" (keydown)="cerrarModalMantenimientoCv()" aria-hidden="true"></div>
   <div
     id="modalMantenimientoAuditoriaCv"
@@ -559,14 +559,14 @@
               <select
                 id="admin-auditoria-cv-purge-anio"
                 class="form-select form-select-sm mb-2"
-                [(ngModel)]="anioPurgeCv"
+                [(ngModel)]="cv.anioPurge"
                 [ngModelOptions]="{ standalone: true }">
                 <option *ngFor="let y of aniosPurge" [ngValue]="y">{{ y }}</option>
               </select>
               <button
                 type="button"
                 class="btn btn-sm btn-outline-danger w-100"
-                [disabled]="purgingCv"
+                [disabled]="cv.purging"
                 (click)="purgeCv('anio')">
                 Borrar año
               </button>
@@ -576,14 +576,14 @@
               <select
                 id="admin-auditoria-cv-purge-mes"
                 class="form-select form-select-sm mb-2"
-                [(ngModel)]="mesPurgeCv"
+                [(ngModel)]="cv.mesPurge"
                 [ngModelOptions]="{ standalone: true }">
                 <option *ngFor="let m of mesesPurge" [ngValue]="m.v">{{ m.n }}</option>
               </select>
               <button
                 type="button"
                 class="btn btn-sm btn-outline-danger w-100"
-                [disabled]="purgingCv"
+                [disabled]="cv.purging"
                 (click)="purgeCv('anioMes')">
                 Borrar mes
               </button>
@@ -596,13 +596,13 @@
               id="admin-auditoria-cv-purge-confirm"
               type="text"
               class="form-control form-control-sm admin-search-input"
-              [(ngModel)]="confirmVaciarCv"
+              [(ngModel)]="cv.confirmVaciar"
               (ngModelChange)="onConfirmVaciarCvChange()"
               [ngModelOptions]="{ standalone: true }"
               [placeholder]="fraseVaciar"
               autocomplete="off" />
             <button
-              *ngIf="(confirmVaciarCv?.length ?? 0) > 0"
+              *ngIf="(cv.confirmVaciar?.length ?? 0) > 0"
               type="button"
               class="admin-search-clear"
               (click)="limpiarConfirmVaciarCv()"
@@ -610,13 +610,13 @@
               <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
           </div>
-          <div *ngIf="showConfirmErrorCv" class="alert alert-danger py-2 small mb-2">
+          <div *ngIf="cv.showConfirmError" class="alert alert-danger py-2 small mb-2">
             Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
           </div>
           <button
             type="button"
             class="btn btn-sm btn-danger"
-            [disabled]="purgingCv || !canVaciarCvCompleto"
+            [disabled]="cv.purging || !cv.canVaciarCompleto"
             (click)="purgeCv('todo')">
             Vaciar tabla completa
           </button>
@@ -626,7 +626,7 @@
   </div>
 </ng-container>
 
-<ng-container *ngIf="modalMantenimientoAuth">
+<ng-container *ngIf="auth.modalMantenimiento">
   <div class="portal-modal__backdrop" (click)="cerrarModalMantenimientoAuth()" (keydown)="cerrarModalMantenimientoAuth()" aria-hidden="true"></div>
   <div
     id="modalMantenimientoAuditoriaAuth"
@@ -669,14 +669,14 @@
               <select
                 id="admin-auditoria-auth-purge-anio"
                 class="form-select form-select-sm mb-2"
-                [(ngModel)]="anioPurgeAuth"
+                [(ngModel)]="auth.anioPurge"
                 [ngModelOptions]="{ standalone: true }">
                 <option *ngFor="let y of aniosPurge" [ngValue]="y">{{ y }}</option>
               </select>
               <button
                 type="button"
                 class="btn btn-sm btn-outline-danger w-100"
-                [disabled]="purgingAuth"
+                [disabled]="auth.purging"
                 (click)="purgeAuth('anio')">
                 Borrar año
               </button>
@@ -686,14 +686,14 @@
               <select
                 id="admin-auditoria-auth-purge-mes"
                 class="form-select form-select-sm mb-2"
-                [(ngModel)]="mesPurgeAuth"
+                [(ngModel)]="auth.mesPurge"
                 [ngModelOptions]="{ standalone: true }">
                 <option *ngFor="let m of mesesPurge" [ngValue]="m.v">{{ m.n }}</option>
               </select>
               <button
                 type="button"
                 class="btn btn-sm btn-outline-danger w-100"
-                [disabled]="purgingAuth"
+                [disabled]="auth.purging"
                 (click)="purgeAuth('anioMes')">
                 Borrar mes
               </button>
@@ -706,13 +706,13 @@
               id="admin-auditoria-auth-purge-confirm"
               type="text"
               class="form-control form-control-sm admin-search-input"
-              [(ngModel)]="confirmVaciarAuth"
+              [(ngModel)]="auth.confirmVaciar"
               (ngModelChange)="onConfirmVaciarAuthChange()"
               [ngModelOptions]="{ standalone: true }"
               [placeholder]="fraseVaciar"
               autocomplete="off" />
             <button
-              *ngIf="(confirmVaciarAuth?.length ?? 0) > 0"
+              *ngIf="(auth.confirmVaciar?.length ?? 0) > 0"
               type="button"
               class="admin-search-clear"
               (click)="limpiarConfirmVaciarAuth()"
@@ -720,13 +720,13 @@
               <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
           </div>
-          <div *ngIf="showConfirmErrorAuth" class="alert alert-danger py-2 small mb-2">
+          <div *ngIf="auth.showConfirmError" class="alert alert-danger py-2 small mb-2">
             Debes escribir exactamente <code>{{ fraseVaciar }}</code> para habilitar el vaciado completo.
           </div>
           <button
             type="button"
             class="btn btn-sm btn-danger"
-            [disabled]="purgingAuth || !canVaciarAuthCompleto"
+            [disabled]="auth.purging || !auth.canVaciarCompleto"
             (click)="purgeAuth('todo')">
             Vaciar tabla completa
           </button>
