@@ -12,4 +12,5 @@ public class Perfil
     public bool EsActivo { get; set; } = true;
 
     public Curriculum Curriculum { get; set; } = null!;
+    public ICollection<Oferta> Ofertas { get; set; } = new List<Oferta>();
 }
