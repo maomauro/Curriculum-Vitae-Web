@@ -6,14 +6,72 @@
   </div>
 </div>
 
-<!-- Visibilidad del CV -->
+<!-- Publicación en el portal (Estado Publicado / Borrador en curriculum) -->
 <div class="seccion-card">
+  <div class="seccion-titulo">
+    <i class="bi bi-megaphone me-2 text-primary"></i>Publicación del CV
+  </div>
+  <p class="text-muted small mb-3">
+    Con el interruptor activo tu CV queda <strong>publicado</strong>: aparece en la búsqueda pública y el enlace de
+    "URL pública del CV" (más abajo) funciona para quien lo visite. Si lo desactivas, pasa a <strong>borrador</strong>:
+    solo tú lo ves en el portal privado; el enlace público ya no mostrará tu CV.
+  </p>
+  <div class="vis-row align-items-center py-1">
+    <div class="vis-info flex-grow-1 min-w-0">
+      <label class="vis-name" for="cfg_cv_publicado">Publicar mi CV en el portal</label>
+      <div class="vis-desc small text-muted mb-0">
+        Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
+      </div>
+    </div>
+    <div class="form-check form-switch mb-0 flex-shrink-0">
+      <input
+        class="form-check-input cv-switch-cursor"
+        type="checkbox"
+        role="switch"
+        id="cfg_cv_publicado"
+        [checked]="cvPublicado"
+        [disabled]="!presentacionLista || guardandoPublicacion"
+        (click)="onCvPublicacionClick($event)"
+        (keydown)="$event.stopPropagation()">
+    </div>
+  </div>
+  <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
+    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    Actualizando publicación…
+  </p>
+</div>
+
+<!-- Visibilidad del CV + vista previa en vivo -->
+<div class="row g-3">
+<div class="col-lg-5">
+<div class="seccion-card h-100">
   <div class="seccion-titulo"><i class="bi bi-eye-fill"></i>Visibilidad del CV</div>
   <div class="seccion-subtitulo">
     Clasifica la visibilidad por páginas ya implementadas. En cada sección se listan los atributos que se mostrarán
     en tu CV público cuando el switch esté activo.
     <strong class="d-block mt-2">Los cambios se guardan automáticamente</strong> al activar o desactivar cada opción.
   </div>
+
+  <!-- Pestañas del CV público: interruptores maestros, uno por tab -->
+  <div class="fw-semibold small text-muted mt-3 mb-1">Pestañas del CV público</div>
+  <div class="vis-row" *ngFor="let pestana of pestanasPublicasCv">
+    <div class="vis-info">
+      <div class="vis-icon" [ngClass]="pestana.iconStyle">
+        <i class="bi" [ngClass]="pestana.icon"></i>
+      </div>
+      <div>
+        <div class="vis-name">{{ pestana.label }}</div>
+        <div class="vis-desc">Muestra u oculta esta pestaña en tu CV público.</div>
+      </div>
+    </div>
+    <div class="form-check form-switch mb-0">
+      <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
+             [(ngModel)]="pestana.visible" [id]="'vis_' + pestana.key"
+             (change)="onToggleSeccion(pestana)">
+    </div>
+  </div>
+
+  <div class="fw-semibold small text-muted mt-4 mb-1">Contenido de cada pestaña</div>
   <div class="vis-accordion">
     <div class="vis-accordion-item" *ngFor="let grupo of visibilidadGrupos">
       <button
@@ -38,8 +96,9 @@
         role="region"
         [attr.aria-labelledby]="'vis-acc-trigger-' + grupo.id">
         <p *ngIf="grupo.id === 'dashboard-publico'" class="text-muted small mb-3 px-1">
-          Controla la pestaña <strong>Dashboard analítico</strong> en tu CV público. Si el interruptor principal está
-          activo pero desactivas <strong>métricas</strong> y <strong>gráficas</strong>, esa pestaña no se mostrará.
+          Si desactivas <strong>métricas</strong> y <strong>gráficas</strong>, la pestaña
+          <strong>Dashboard analítico</strong> (interruptor arriba, en "Pestañas del CV público") deja de mostrarse
+          aunque esté activa.
         </p>
         <ng-container *ngFor="let campo of grupo.items">
           <div class="vis-row" [class.vis-row--sin-switch-seccion]="campo.sinSwitchSeccion">
@@ -81,6 +140,14 @@
       </div>
     </div>
   </div>
+</div>
+</div>
+
+<div class="col-lg-7">
+<div class="seccion-card h-100 cv-preview-panel-card">
+  <app-preview-publico-panel></app-preview-publico-panel>
+</div>
+</div>
 </div>
 
 <!-- URL pública del CV -->
@@ -183,37 +250,192 @@
   </div>
 </div>
 
-<!-- Publicación en el portal (Estado Publicado / Borrador en curriculum) -->
+<!-- Proveedores de IA -->
 <div class="seccion-card">
-  <div class="seccion-titulo">
-    <i class="bi bi-megaphone me-2 text-primary"></i>Publicación del CV
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <div class="seccion-titulo mb-0">
+      <i class="bi bi-robot me-2 text-primary"></i>Proveedores de IA
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" *ngIf="!mostrarFormProveedorIa" (click)="abrirNuevaConexionIa()">
+      <i class="bi bi-plus-circle me-1"></i>Agregar conexión
+    </button>
   </div>
   <p class="text-muted small mb-3">
-    Con el interruptor activo tu CV queda <strong>publicado</strong>: aparece en la búsqueda pública y el enlace de arriba
-    funciona para quien lo visite. Si lo desactivas, pasa a <strong>borrador</strong>: solo tú lo ves en el portal privado;
-    el enlace público ya no mostrará tu CV.
+    Estas conexiones son las que usan <strong>Analizar Oferta</strong> y los prompts que administras en
+    <strong>Prompts de IA</strong> para invocar al modelo. Puedes guardar varias (Claude, OpenAI, Gemini, un
+    Ollama local, etc.) y elegir cuál está activa en cada momento. Las claves se guardan de forma segura en el
+    servidor — nunca vuelven a mostrarse una vez guardadas.
   </p>
-  <div class="vis-row align-items-center py-1">
-    <div class="vis-info flex-grow-1 min-w-0">
-      <label class="vis-name" for="cfg_cv_publicado">Publicar mi CV en el portal</label>
-      <div class="vis-desc small text-muted mb-0">
-        Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
-      </div>
-    </div>
-    <div class="form-check form-switch mb-0 flex-shrink-0">
-      <input
-        class="form-check-input cv-switch-cursor"
-        type="checkbox"
-        role="switch"
-        id="cfg_cv_publicado"
-        [checked]="cvPublicado"
-        [disabled]="!presentacionLista || guardandoPublicacion"
-        (click)="onCvPublicacionClick($event)"
-        (keydown)="$event.stopPropagation()">
+
+  <div *ngIf="loadingProveedoresIa" class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="visually-hidden">Cargando conexiones…</span>
     </div>
   </div>
-  <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
-    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-    Actualizando publicación…
-  </p>
+
+  <div *ngIf="!loadingProveedoresIa && proveedoresIa.length === 0 && !mostrarFormProveedorIa" class="text-muted small py-2">
+    Todavía no tienes ninguna conexión guardada.
+  </div>
+
+  <!-- Cabecera de columnas (solo escritorio) -- misma estructura de .row/col que cada
+       fila de datos, para que las columnas alineen exactamente. -->
+  <div *ngIf="proveedoresIa.length > 0" class="d-none d-md-block">
+    <div class="vis-row py-1">
+      <div class="row flex-grow-1 min-w-0 gx-2">
+        <div class="col-3 text-start small text-muted fw-semibold">Nombre</div>
+        <div class="col-2 text-start small text-muted fw-semibold">Proveedor</div>
+        <div class="col-3 text-start small text-muted fw-semibold">Modelo</div>
+        <div class="col-4 text-start small text-muted fw-semibold">Endpoint</div>
+      </div>
+      <div class="vis-ia-acciones" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- Lista de conexiones guardadas -->
+  <div *ngFor="let p of proveedoresIa; trackBy: trackByProveedorIa" class="vis-row align-items-center py-2">
+    <div class="row flex-grow-1 min-w-0 gx-2 align-items-center">
+      <div class="col-12 col-md-3 text-start text-truncate">
+        <span class="vis-name">{{ etiquetaConexionIa(p) }}</span>
+        <span class="badge rounded-pill ms-2" [class.badge-cv-publicado]="p.esActivo" [class.badge-cv-borrador]="!p.esActivo">
+          {{ p.esActivo ? 'Activa' : 'Inactiva' }}
+        </span>
+      </div>
+      <div class="col-6 col-md-2 small text-muted text-start text-truncate">{{ nombreProveedor(p.proveedor) }}</div>
+      <div class="col-6 col-md-3 small text-muted text-start text-truncate">
+        <code *ngIf="p.modelo">{{ p.modelo }}</code>
+      </div>
+      <div class="col-12 col-md-4 small text-muted text-start text-truncate">
+        <code *ngIf="p.endpoint">{{ p.endpoint }}</code>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0 vis-ia-acciones">
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm"
+        *ngIf="!p.esActivo"
+        title="Usar esta conexión"
+        [attr.aria-label]="'Usar esta conexión: ' + etiquetaConexionIa(p)"
+        [disabled]="activandoProveedorIaId === p.proveedorIaConfigId"
+        (click)="activarConexionIa(p)">
+        <span *ngIf="activandoProveedorIaId === p.proveedorIaConfigId" class="spinner-border spinner-border-sm"></span>
+        <i *ngIf="activandoProveedorIaId !== p.proveedorIaConfigId" class="bi bi-check2-circle"></i>
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        title="Probar conexión"
+        [attr.aria-label]="'Probar conexión: ' + etiquetaConexionIa(p)"
+        [disabled]="probandoGuardadaProveedorIaId === p.proveedorIaConfigId"
+        (click)="probarConexionGuardada(p)">
+        <span *ngIf="probandoGuardadaProveedorIaId === p.proveedorIaConfigId" class="spinner-border spinner-border-sm"></span>
+        <i *ngIf="probandoGuardadaProveedorIaId !== p.proveedorIaConfigId" class="bi bi-plug"></i>
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        title="Editar"
+        [attr.aria-label]="'Editar: ' + etiquetaConexionIa(p)"
+        (click)="editarConexionIa(p)">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-danger btn-sm"
+        title="Eliminar"
+        [attr.aria-label]="'Eliminar: ' + etiquetaConexionIa(p)"
+        [disabled]="eliminandoProveedorIaId === p.proveedorIaConfigId"
+        (click)="eliminarConexionIa(p)">
+        <span *ngIf="eliminandoProveedorIaId === p.proveedorIaConfigId" class="spinner-border spinner-border-sm"></span>
+        <i *ngIf="eliminandoProveedorIaId !== p.proveedorIaConfigId" class="bi bi-trash3"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario: agregar una conexión nueva o editar una existente -->
+  <div *ngIf="mostrarFormProveedorIa" class="row g-3 mt-1 pt-3 cv-border-t-soft">
+    <div class="col-md-4">
+      <label class="form-label" for="cfg_ia_proveedor">Proveedor <span class="text-danger">*</span></label>
+      <select
+        id="cfg_ia_proveedor"
+        class="form-select"
+        [(ngModel)]="proveedorIaForm.proveedor"
+        (ngModelChange)="onProveedorIaChange()">
+        <option value="claude">Claude (Anthropic)</option>
+        <option value="openai">OpenAI</option>
+        <option value="gemini">Gemini (Google)</option>
+        <option value="ollama">Ollama (local / self-hosted)</option>
+        <option value="otro">Otro (compatible con API REST)</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="cfg_ia_nombre">Nombre <small class="text-muted fw-normal">(opcional)</small></label>
+      <input
+        id="cfg_ia_nombre"
+        type="text"
+        class="form-control"
+        [(ngModel)]="proveedorIaForm.nombre"
+        placeholder="Ej: Cuenta personal">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="cfg_ia_modelo">Modelo <small class="text-muted fw-normal">(opcional)</small></label>
+      <input
+        id="cfg_ia_modelo"
+        type="text"
+        class="form-control"
+        [(ngModel)]="proveedorIaForm.modelo"
+        placeholder="Ej: claude-opus-4-20250514">
+    </div>
+    <div class="col-md-6" *ngIf="requiereEndpointIa">
+      <label class="form-label" for="cfg_ia_endpoint">URL del servidor <span class="text-danger">*</span></label>
+      <input
+        id="cfg_ia_endpoint"
+        type="text"
+        class="form-control"
+        [(ngModel)]="proveedorIaForm.endpoint"
+        placeholder="http://localhost:11434">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" for="cfg_ia_apikey">
+        Clave de API
+        <span class="text-danger" *ngIf="requiereApiKeyIa">*</span>
+        <small class="text-muted fw-normal" *ngIf="!requiereApiKeyIa">(opcional)</small>
+      </label>
+      <input
+        id="cfg_ia_apikey"
+        type="password"
+        class="form-control"
+        [(ngModel)]="proveedorIaForm.apiKey"
+        autocomplete="off"
+        [placeholder]="editandoProveedorIaId !== null ? 'Dejar en blanco para no cambiarla' : 'sk-ant-...'">
+    </div>
+
+    <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="probandoConexionIa"
+        (click)="probarConexionIa()">
+        <span *ngIf="probandoConexionIa" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!probandoConexionIa" class="bi bi-plug me-1"></i>Probar conexión
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="guardandoProveedorIa"
+        (click)="guardarConexionIa()">
+        <span *ngIf="guardandoProveedorIa" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!guardandoProveedorIa" class="bi bi-check2-circle me-1"></i>
+        {{ editandoProveedorIaId !== null ? 'Guardar cambios' : 'Agregar conexión' }}
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarFormProveedorIa()">
+        Cancelar
+      </button>
+      <span *ngIf="resultadoPruebaIa === 'ok'" class="small text-success">
+        <i class="bi bi-check-circle-fill me-1"></i>{{ mensajePruebaIa }}
+      </span>
+      <span *ngIf="resultadoPruebaIa === 'error'" class="small text-danger">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ mensajePruebaIa }}
+      </span>
+    </div>
+  </div>
 </div>

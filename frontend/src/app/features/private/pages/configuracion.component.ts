@@ -1,11 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CvEditorService } from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import {
+  ProveedorIaService,
+  ProveedorIaCodigo,
+  ProveedorIaConfigDto,
+} from '../../../core/services/private/proveedor-ia.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { APP_MESSAGES, DEFAULT_APP_LOCALE } from '../../../core/constants/messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
+import { PreviewPublicoPanelComponent } from './preview-publico-panel.component';
 
 interface ConfigVisItem {
   key: string;
@@ -34,6 +40,21 @@ interface ConfigVisGroup {
   accordionOpen: boolean;
 }
 
+interface ProveedorIaForm {
+  proveedor: ProveedorIaCodigo;
+  nombre: string;
+  modelo: string;
+  endpoint: string;
+  apiKey: string;
+}
+
+function proveedorIaFormVacio(): ProveedorIaForm {
+  return { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
+}
+
+const PROVEEDORES_SIN_API_KEY_OBLIGATORIA: readonly ProveedorIaCodigo[] = ['ollama', 'otro'];
+const PROVEEDORES_QUE_REQUIEREN_ENDPOINT: readonly ProveedorIaCodigo[] = ['ollama'];
+
 @Component({
   selector: 'app-configuracion',
   standalone: false,
@@ -41,6 +62,10 @@ interface ConfigVisGroup {
 })
 export class ConfiguracionComponent implements OnInit {
   readonly pwdFormMsg = APP_MESSAGES[DEFAULT_APP_LOCALE].forms.configuracion;
+
+  /** Panel de vista previa en vivo (Dashboard/Información profesional) -- se recarga
+   * después de cada cambio de visibilidad guardado, ver guardarVisibilidad(). */
+  @ViewChild(PreviewPublicoPanelComponent) previewPanel?: PreviewPublicoPanelComponent;
 
   /** URL absoluta del CV público (origen actual + /cv/{slug}). */
   urlCv = '';
@@ -56,6 +81,38 @@ export class ConfiguracionComponent implements OnInit {
   passwordNueva = '';
   passwordNueva2 = '';
   guardandoContrasena = false;
+
+  /** Conexiones con proveedores de IA que usan "Analizar Oferta" y "Prompts de IA" al
+   * invocar al modelo. Puede haber varias guardadas (Claude, OpenAI, Gemini, Ollama/
+   * self-hosted, otro); exactamente una queda marcada como activa a la vez. */
+  loadingProveedoresIa = true;
+  proveedoresIa: ProveedorIaConfigDto[] = [];
+  mostrarFormProveedorIa = false;
+  editandoProveedorIaId: number | null = null;
+  proveedorIaForm: ProveedorIaForm = proveedorIaFormVacio();
+  guardandoProveedorIa = false;
+  probandoConexionIa = false;
+  resultadoPruebaIa: 'ok' | 'error' | null = null;
+  mensajePruebaIa: string | null = null;
+  activandoProveedorIaId: number | null = null;
+  eliminandoProveedorIaId: number | null = null;
+  probandoGuardadaProveedorIaId: number | null = null;
+
+  readonly modelosSugeridosPorProveedor: Record<ProveedorIaCodigo, string> = {
+    claude: 'claude-opus-4-20250514',
+    openai: 'gpt-4.1',
+    gemini: 'gemini-flash-latest',
+    ollama: 'llama3.1',
+    otro: '',
+  };
+
+  readonly nombresProveedor: Record<ProveedorIaCodigo, string> = {
+    claude: 'Claude (Anthropic)',
+    openai: 'OpenAI',
+    gemini: 'Gemini (Google)',
+    ollama: 'Ollama (local / self-hosted)',
+    otro: 'Otro (compatible con API REST)',
+  };
 
   /** Hay texto en “repetir” y no coincide con “nueva” (validación mientras escribe). */
   get repetirContrasenaMismatchEnVivo(): boolean {
@@ -82,7 +139,63 @@ export class ConfiguracionComponent implements OnInit {
     return this.repetirContrasenaMismatchEnVivo;
   }
 
+  /** Interruptores maestros: si la pestaña existe en el CV público. Mismo orden que los
+   * tabs (Dashboard -> Profesional -> Hoja de vida). Se guardan igual que cualquier otro
+   * ConfigVisItem (ver allVisItems/onToggleSeccion) -- solo se muestran fuera del
+   * acordeón, sin agrupar, porque no tienen atributos propios. */
+  pestanasPublicasCv: ConfigVisItem[] = [
+    {
+      key: 'dashboard.publico',
+      label: 'Dashboard analítico',
+      icon: 'bi-bar-chart-line',
+      iconStyle: 'vis-icon--perfil',
+      visible: true,
+      atributos: [],
+    },
+    {
+      key: 'profesional.publico',
+      label: 'Información profesional',
+      icon: 'bi-person-lines-fill',
+      iconStyle: 'vis-icon--datos',
+      visible: true,
+      atributos: [],
+    },
+    {
+      key: 'hoja-de-vida.publico',
+      label: 'Hoja de vida',
+      icon: 'bi-file-earmark-person',
+      iconStyle: 'vis-icon--proyectos',
+      visible: true,
+      atributos: [],
+    },
+  ];
+
   visibilidadGrupos: ConfigVisGroup[] = [
+    {
+      id: 'dashboard-publico',
+      titulo: 'Contenido del Dashboard analítico',
+      icon: 'bi-bar-chart-steps',
+      clase: 'vis-group-label--profesional',
+      accordionOpen: false,
+      items: [
+        {
+          key: 'dashboard.metricas',
+          label: 'Tarjetas de métricas (3)',
+          icon: 'bi-speedometer2',
+          iconStyle: 'vis-icon--datos',
+          visible: true,
+          atributos: [],
+        },
+        {
+          key: 'dashboard.graficas',
+          label: 'Gráficas analíticas (4)',
+          icon: 'bi-pie-chart-fill',
+          iconStyle: 'vis-icon--proyectos',
+          visible: true,
+          atributos: [],
+        },
+      ],
+    },
     {
       id: 'personal',
       titulo: 'Información Personal',
@@ -102,7 +215,6 @@ export class ConfiguracionComponent implements OnInit {
             { key: 'datos-personales.email', label: 'Correo electrónico', visible: true },
             { key: 'datos-personales.telefono', label: 'Teléfono', visible: true },
             { key: 'datos-personales.ciudad-pais', label: 'Ciudad y país', visible: true },
-            { key: 'datos-personales.linkedin', label: 'LinkedIn', visible: true },
           ],
         },
       ],
@@ -195,69 +307,6 @@ export class ConfiguracionComponent implements OnInit {
             },
           ],
         },
-        {
-          key: 'proyectos',
-          label: 'Proyectos',
-          icon: 'bi-kanban-fill',
-          iconStyle: 'vis-icon--proyectos',
-          visible: true,
-          atributos: [
-            { key: 'proyectos.nombre', label: 'Nombre', visible: true },
-            { key: 'proyectos.rol', label: 'Rol', visible: true },
-            { key: 'proyectos.equipo', label: 'Tamaño del equipo', visible: true },
-            { key: 'proyectos.duracion', label: 'Duración', visible: true },
-            { key: 'proyectos.stack', label: 'Stack tecnológico', visible: true },
-            { key: 'proyectos.aporte', label: 'Aporte', visible: true },
-            { key: 'proyectos.logro', label: 'Logro', visible: true },
-            { key: 'proyectos.desafio', label: 'Desafío', visible: true },
-          ],
-        },
-        {
-          key: 'habilidades',
-          label: 'Habilidades',
-          icon: 'bi-stars',
-          iconStyle: 'vis-icon--habilidades',
-          visible: true,
-          atributos: [
-            { key: 'habilidades.nombre', label: 'Nombre', visible: true },
-            { key: 'habilidades.tipo', label: 'Tipo', visible: true },
-            { key: 'habilidades.nivel', label: 'Nivel', visible: true },
-            { key: 'habilidades.descripcion', label: 'Descripción', visible: true },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'dashboard-publico',
-      titulo: 'Dashboard en CV público',
-      icon: 'bi-bar-chart-steps',
-      clase: 'vis-group-label--profesional',
-      accordionOpen: false,
-      items: [
-        {
-          key: 'dashboard.publico',
-          label: 'Dashboard analítico (interruptor principal)',
-          icon: 'bi-bar-chart-line',
-          iconStyle: 'vis-icon--perfil',
-          visible: true,
-          atributos: [],
-        },
-        {
-          key: 'dashboard.metricas',
-          label: 'Tarjetas de métricas (3)',
-          icon: 'bi-speedometer2',
-          iconStyle: 'vis-icon--datos',
-          visible: true,
-          atributos: [],
-        },
-        {
-          key: 'dashboard.graficas',
-          label: 'Gráficas analíticas (4)',
-          icon: 'bi-pie-chart-fill',
-          iconStyle: 'vis-icon--proyectos',
-          visible: true,
-          atributos: [],
-        },
       ],
     },
   ];
@@ -273,6 +322,7 @@ export class ConfiguracionComponent implements OnInit {
   constructor(
     private cvEditorService: CvEditorService,
     private authService: AuthService,
+    private proveedorIaService: ProveedorIaService,
     private notificationService: NotificationService
   ) {}
 
@@ -339,10 +389,26 @@ export class ConfiguracionComponent implements OnInit {
       },
       error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
+
+    this.cargarProveedoresIa();
+  }
+
+  private cargarProveedoresIa(): void {
+    this.loadingProveedoresIa = true;
+    this.proveedorIaService.getConfigs().subscribe({
+      next: data => {
+        this.proveedoresIa = data;
+        this.loadingProveedoresIa = false;
+      },
+      error: () => {
+        this.loadingProveedoresIa = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      },
+    });
   }
 
   private allVisItems(): ConfigVisItem[] {
-    return this.visibilidadGrupos.flatMap(g => g.items);
+    return [...this.pestanasPublicasCv, ...this.visibilidadGrupos.flatMap(g => g.items)];
   }
 
   private normalizeSeccionKey(seccion: string | null | undefined): string {
@@ -375,10 +441,6 @@ export class ConfiguracionComponent implements OnInit {
         return 'certificaciones';
       case 'cursos':
         return 'cursos';
-      case 'habilidades':
-        return 'habilidades';
-      case 'proyectos':
-        return 'proyectos';
       default:
         return raw;
     }
@@ -388,6 +450,7 @@ export class ConfiguracionComponent implements OnInit {
     this.cvEditorService.updateVisibilidad(cambios).subscribe({
       next: () => {
         this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        this.previewPanel?.recargar();
       },
       error: (error: HttpErrorResponse) =>
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError),
@@ -518,5 +581,184 @@ export class ConfiguracionComponent implements OnInit {
     if (!slug || typeof window === 'undefined') return '';
     const origin = window.location.origin.replace(/\/$/, '');
     return `${origin}/cv/${encodeURIComponent(slug)}`;
+  }
+
+  trackByProveedorIa(_index: number, p: ProveedorIaConfigDto): number {
+    return p.proveedorIaConfigId;
+  }
+
+  nombreProveedor(codigo: ProveedorIaCodigo): string {
+    return this.nombresProveedor[codigo];
+  }
+
+  etiquetaConexionIa(p: ProveedorIaConfigDto): string {
+    return p.nombre?.trim() || this.nombresProveedor[p.proveedor];
+  }
+
+  get requiereEndpointIa(): boolean {
+    return PROVEEDORES_QUE_REQUIEREN_ENDPOINT.includes(this.proveedorIaForm.proveedor);
+  }
+
+  get requiereApiKeyIa(): boolean {
+    return !PROVEEDORES_SIN_API_KEY_OBLIGATORIA.includes(this.proveedorIaForm.proveedor);
+  }
+
+  onProveedorIaChange(): void {
+    this.resultadoPruebaIa = null;
+    this.mensajePruebaIa = null;
+    if (!this.proveedorIaForm.modelo.trim()) {
+      this.proveedorIaForm.modelo = this.modelosSugeridosPorProveedor[this.proveedorIaForm.proveedor];
+    }
+  }
+
+  abrirNuevaConexionIa(): void {
+    this.editandoProveedorIaId = null;
+    this.proveedorIaForm = proveedorIaFormVacio();
+    this.resultadoPruebaIa = null;
+    this.mensajePruebaIa = null;
+    this.mostrarFormProveedorIa = true;
+  }
+
+  editarConexionIa(p: ProveedorIaConfigDto): void {
+    this.editandoProveedorIaId = p.proveedorIaConfigId;
+    this.proveedorIaForm = {
+      proveedor: p.proveedor,
+      nombre: p.nombre ?? '',
+      modelo: p.modelo ?? '',
+      endpoint: p.endpoint ?? '',
+      apiKey: '',
+    };
+    this.resultadoPruebaIa = null;
+    this.mensajePruebaIa = null;
+    this.mostrarFormProveedorIa = true;
+  }
+
+  cancelarFormProveedorIa(): void {
+    this.mostrarFormProveedorIa = false;
+  }
+
+  probarConexionIa(): void {
+    if (this.probandoConexionIa) return;
+    if (this.requiereEndpointIa && !this.proveedorIaForm.endpoint.trim()) {
+      this.notificationService.warning('La URL del servidor es requerida para este proveedor.');
+      return;
+    }
+
+    this.probandoConexionIa = true;
+    this.resultadoPruebaIa = null;
+    this.mensajePruebaIa = null;
+    this.proveedorIaService
+      .probarConexion({
+        proveedor: this.proveedorIaForm.proveedor,
+        modelo: this.proveedorIaForm.modelo.trim() || null,
+        endpoint: this.proveedorIaForm.endpoint.trim() || null,
+        apiKey: this.proveedorIaForm.apiKey.trim() || null,
+      })
+      .subscribe({
+        next: res => {
+          this.probandoConexionIa = false;
+          this.resultadoPruebaIa = res.ok ? 'ok' : 'error';
+          this.mensajePruebaIa = res.mensaje;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.probandoConexionIa = false;
+          this.resultadoPruebaIa = 'error';
+          this.mensajePruebaIa = extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError;
+        },
+      });
+  }
+
+  guardarConexionIa(): void {
+    if (this.guardandoProveedorIa) return;
+    if (this.requiereEndpointIa && !this.proveedorIaForm.endpoint.trim()) {
+      this.notificationService.warning('La URL del servidor es requerida para este proveedor.');
+      return;
+    }
+    if (this.editandoProveedorIaId === null && this.requiereApiKeyIa && !this.proveedorIaForm.apiKey.trim()) {
+      this.notificationService.warning('La clave de API es requerida para este proveedor.');
+      return;
+    }
+
+    const payload = {
+      proveedor: this.proveedorIaForm.proveedor,
+      nombre: this.proveedorIaForm.nombre.trim() || null,
+      modelo: this.proveedorIaForm.modelo.trim() || null,
+      endpoint: this.proveedorIaForm.endpoint.trim() || null,
+      apiKey: this.proveedorIaForm.apiKey.trim() || null,
+    };
+
+    this.guardandoProveedorIa = true;
+    const guardado$ = this.editandoProveedorIaId !== null
+      ? this.proveedorIaService.actualizarConfig(this.editandoProveedorIaId, payload)
+      : this.proveedorIaService.crearConfig(payload);
+
+    guardado$.subscribe({
+      next: () => {
+        this.guardandoProveedorIa = false;
+        this.mostrarFormProveedorIa = false;
+        this.notificationService.success(
+          this.editandoProveedorIaId !== null ? NOTIFICATION_MESSAGES.updateSuccess : NOTIFICATION_MESSAGES.createSuccess
+        );
+        this.cargarProveedoresIa();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoProveedorIa = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  activarConexionIa(p: ProveedorIaConfigDto): void {
+    if (p.esActivo || this.activandoProveedorIaId) return;
+
+    this.activandoProveedorIaId = p.proveedorIaConfigId;
+    this.proveedorIaService.activarConfig(p.proveedorIaConfigId).subscribe({
+      next: () => {
+        this.activandoProveedorIaId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        this.cargarProveedoresIa();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.activandoProveedorIaId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  probarConexionGuardada(p: ProveedorIaConfigDto): void {
+    if (this.probandoGuardadaProveedorIaId) return;
+
+    this.probandoGuardadaProveedorIaId = p.proveedorIaConfigId;
+    this.proveedorIaService.probarConexionGuardada(p.proveedorIaConfigId).subscribe({
+      next: res => {
+        this.probandoGuardadaProveedorIaId = null;
+        if (res.ok) {
+          this.notificationService.success(res.mensaje);
+        } else {
+          this.notificationService.warning(res.mensaje);
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.probandoGuardadaProveedorIaId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.loadError);
+      },
+    });
+  }
+
+  eliminarConexionIa(p: ProveedorIaConfigDto): void {
+    if (!confirm(`¿Eliminar la conexión "${this.etiquetaConexionIa(p)}"?`)) return;
+
+    this.eliminandoProveedorIaId = p.proveedorIaConfigId;
+    this.proveedorIaService.eliminarConfig(p.proveedorIaConfigId).subscribe({
+      next: () => {
+        this.eliminandoProveedorIaId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
+        this.cargarProveedoresIa();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.eliminandoProveedorIaId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.deleteError);
+      },
+    });
   }
 }

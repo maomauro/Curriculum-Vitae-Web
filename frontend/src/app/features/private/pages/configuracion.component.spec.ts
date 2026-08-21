@@ -4,21 +4,37 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ConfiguracionComponent } from './configuracion.component';
 import { CvEditorService, PresentacionCvDto, VisibilidadSeccionDto } from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { ProveedorIaService, ProveedorIaConfigDto } from '../../../core/services/private/proveedor-ia.service';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
 describe('ConfiguracionComponent', () => {
   let component: ConfiguracionComponent;
   let cvEditorService: jasmine.SpyObj<CvEditorService>;
   let authService: jasmine.SpyObj<AuthService>;
+  let proveedorIaService: jasmine.SpyObj<ProveedorIaService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const presentacion: PresentacionCvDto = {
     plantillaCodigo: 'clasico', experienciaLaboralMesesAcumulados: 0, urlPublica: 'ana-cv', publicado: true,
   };
 
+  function proveedorIaItem(over: Partial<ProveedorIaConfigDto> = {}): ProveedorIaConfigDto {
+    return {
+      proveedorIaConfigId: 1,
+      proveedor: 'claude',
+      nombre: null,
+      modelo: 'claude-opus-4-20250514',
+      endpoint: null,
+      esActivo: true,
+      fechaActualizacion: '2026-08-19T00:00:00Z',
+      ...over,
+    };
+  }
+
   function setup(
     presentacionResult = of(presentacion),
     visibilidadResult = of<VisibilidadSeccionDto[]>([]),
+    proveedorIaResult = of<ProveedorIaConfigDto[]>([]),
   ): void {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
       'getPresentacion', 'getVisibilidad', 'updateVisibilidad', 'updateCurriculumPublicacion',
@@ -26,6 +42,11 @@ describe('ConfiguracionComponent', () => {
     cvEditorService.getPresentacion.and.returnValue(presentacionResult);
     cvEditorService.getVisibilidad.and.returnValue(visibilidadResult);
     authService = jasmine.createSpyObj('AuthService', ['changePassword']);
+    proveedorIaService = jasmine.createSpyObj('ProveedorIaService', [
+      'getConfigs', 'crearConfig', 'actualizarConfig', 'eliminarConfig', 'activarConfig', 'probarConexion',
+      'probarConexionGuardada',
+    ]);
+    proveedorIaService.getConfigs.and.returnValue(proveedorIaResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
 
     TestBed.configureTestingModule({
@@ -33,6 +54,7 @@ describe('ConfiguracionComponent', () => {
         ConfiguracionComponent,
         { provide: CvEditorService, useValue: cvEditorService },
         { provide: AuthService, useValue: authService },
+        { provide: ProveedorIaService, useValue: proveedorIaService },
         { provide: NotificationService, useValue: notificationService },
       ],
     });
@@ -40,6 +62,8 @@ describe('ConfiguracionComponent', () => {
   }
 
   function itemByKey(key: string) {
+    const pestana = component.pestanasPublicasCv.find(i => i.key === key);
+    if (pestana) return pestana;
     for (const g of component.visibilidadGrupos) {
       const item = g.items.find(i => i.key === key);
       if (item) return item;
@@ -101,7 +125,7 @@ describe('ConfiguracionComponent', () => {
 
     it('los demas interruptores nunca se deshabilitan por esta regla', () => {
       setup();
-      expect(component.interruptorVisibilidadDeshabilitado(itemByKey('proyectos'))).toBeFalse();
+      expect(component.interruptorVisibilidadDeshabilitado(itemByKey('diplomados'))).toBeFalse();
     });
   });
 
@@ -136,14 +160,14 @@ describe('ConfiguracionComponent', () => {
 
     it('aplica la visibilidad guardada a los items correspondientes', () => {
       setup(of(presentacion), of([
-        { seccion: 'proyectos', visible: false },
-        { seccion: 'proyectos.nombre', visible: false },
+        { seccion: 'diplomados', visible: false },
+        { seccion: 'diplomados.descargar-soporte-certificado', visible: false },
       ]));
       component.ngOnInit();
 
-      const proyectos = itemByKey('proyectos');
-      expect(proyectos.visible).toBeFalse();
-      expect(proyectos.atributos.find(a => a.key === 'proyectos.nombre')?.visible).toBeFalse();
+      const diplomados = itemByKey('diplomados');
+      expect(diplomados.visible).toBeFalse();
+      expect(diplomados.atributos.find(a => a.key === 'diplomados.descargar-soporte-certificado')?.visible).toBeFalse();
     });
 
     it('las secciones sinSwitchSeccion siempre quedan visibles', () => {
@@ -174,12 +198,12 @@ describe('ConfiguracionComponent', () => {
     it('al desactivar una seccion, apaga tambien todos sus atributos y guarda', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const proyectos = itemByKey('proyectos');
-      proyectos.visible = false;
+      const diplomados = itemByKey('diplomados');
+      diplomados.visible = false;
 
-      component.onToggleSeccion(proyectos);
+      component.onToggleSeccion(diplomados);
 
-      expect(proyectos.atributos.every(a => !a.visible)).toBeTrue();
+      expect(diplomados.atributos.every(a => !a.visible)).toBeTrue();
       expect(cvEditorService.updateVisibilidad).toHaveBeenCalled();
       expect(notificationService.success).toHaveBeenCalled();
     });
@@ -187,9 +211,9 @@ describe('ConfiguracionComponent', () => {
     it('notifica error si falla el guardado', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-      const proyectos = itemByKey('proyectos');
+      const diplomados = itemByKey('diplomados');
 
-      component.onToggleSeccion(proyectos);
+      component.onToggleSeccion(diplomados);
 
       expect(notificationService.error).toHaveBeenCalled();
     });
@@ -199,26 +223,26 @@ describe('ConfiguracionComponent', () => {
     it('activar un atributo enciende la seccion si estaba apagada', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const proyectos = itemByKey('proyectos');
-      proyectos.visible = false;
-      const attr = proyectos.atributos[0];
+      const diplomados = itemByKey('diplomados');
+      diplomados.visible = false;
+      const attr = diplomados.atributos[0];
       attr.visible = true;
 
-      component.onToggleAtributo(proyectos, attr);
+      component.onToggleAtributo(diplomados, attr);
 
-      expect(proyectos.visible).toBeTrue();
+      expect(diplomados.visible).toBeTrue();
     });
 
     it('si ningun atributo queda visible, apaga la seccion', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const proyectos = itemByKey('proyectos');
-      proyectos.visible = true;
-      proyectos.atributos.forEach(a => (a.visible = false));
+      const diplomados = itemByKey('diplomados');
+      diplomados.visible = true;
+      diplomados.atributos.forEach(a => (a.visible = false));
 
-      component.onToggleAtributo(proyectos, proyectos.atributos[0]);
+      component.onToggleAtributo(diplomados, diplomados.atributos[0]);
 
-      expect(proyectos.visible).toBeFalse();
+      expect(diplomados.visible).toBeFalse();
     });
 
     it('para secciones sinSwitchSeccion, siempre queda visible=true', () => {
@@ -389,6 +413,304 @@ describe('ConfiguracionComponent', () => {
 
       expect(component.guardandoContrasena).toBeFalse();
       expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('proveedor de IA', () => {
+    it('onProveedorIaChange sugiere el modelo por defecto si el campo esta vacio', () => {
+      setup();
+      component.proveedorIaForm.proveedor = 'openai';
+      component.proveedorIaForm.modelo = '';
+
+      component.onProveedorIaChange();
+
+      expect(component.proveedorIaForm.modelo).toBe('gpt-4.1');
+    });
+
+    it('onProveedorIaChange no pisa un modelo ya escrito por el usuario', () => {
+      setup();
+      component.proveedorIaForm.proveedor = 'claude';
+      component.proveedorIaForm.modelo = 'modelo-custom';
+
+      component.onProveedorIaChange();
+
+      expect(component.proveedorIaForm.modelo).toBe('modelo-custom');
+    });
+
+    it('requiereEndpointIa es true solo para ollama', () => {
+      setup();
+      component.proveedorIaForm.proveedor = 'ollama';
+      expect(component.requiereEndpointIa).toBeTrue();
+      component.proveedorIaForm.proveedor = 'claude';
+      expect(component.requiereEndpointIa).toBeFalse();
+    });
+
+    it('requiereApiKeyIa es false para ollama y otro, true para el resto', () => {
+      setup();
+      component.proveedorIaForm.proveedor = 'ollama';
+      expect(component.requiereApiKeyIa).toBeFalse();
+      component.proveedorIaForm.proveedor = 'otro';
+      expect(component.requiereApiKeyIa).toBeFalse();
+      component.proveedorIaForm.proveedor = 'gemini';
+      expect(component.requiereApiKeyIa).toBeTrue();
+    });
+
+    describe('cargarProveedoresIa (via ngOnInit)', () => {
+      it('sin conexiones guardadas, deja la lista vacia', () => {
+        setup(of(presentacion), of([]), of([]));
+        component.ngOnInit();
+
+        expect(component.loadingProveedoresIa).toBeFalse();
+        expect(component.proveedoresIa).toEqual([]);
+      });
+
+      it('con conexiones guardadas, las carga', () => {
+        setup(of(presentacion), of([]), of([proveedorIaItem(), proveedorIaItem({ proveedorIaConfigId: 2, proveedor: 'openai', esActivo: false })]));
+        component.ngOnInit();
+
+        expect(component.proveedoresIa.length).toBe(2);
+      });
+
+      it('notifica error si falla la carga', () => {
+        setup(of(presentacion), of([]), throwError(() => new Error('boom')));
+        component.ngOnInit();
+
+        expect(component.loadingProveedoresIa).toBeFalse();
+        expect(notificationService.error).toHaveBeenCalled();
+      });
+    });
+
+    it('abrirNuevaConexionIa limpia el formulario y lo muestra', () => {
+      setup();
+      component.editandoProveedorIaId = 5;
+      component.proveedorIaForm.nombre = 'algo viejo';
+
+      component.abrirNuevaConexionIa();
+
+      expect(component.editandoProveedorIaId).toBeNull();
+      expect(component.proveedorIaForm.nombre).toBe('');
+      expect(component.mostrarFormProveedorIa).toBeTrue();
+    });
+
+    it('editarConexionIa precarga el formulario sin la clave', () => {
+      setup();
+      const item = proveedorIaItem({ nombre: 'Cuenta trabajo', endpoint: null });
+
+      component.editarConexionIa(item);
+
+      expect(component.editandoProveedorIaId).toBe(item.proveedorIaConfigId);
+      expect(component.proveedorIaForm).toEqual({
+        proveedor: 'claude', nombre: 'Cuenta trabajo', modelo: 'claude-opus-4-20250514', endpoint: '', apiKey: '',
+      });
+      expect(component.mostrarFormProveedorIa).toBeTrue();
+    });
+
+    it('cancelarFormProveedorIa oculta el formulario', () => {
+      setup();
+      component.mostrarFormProveedorIa = true;
+
+      component.cancelarFormProveedorIa();
+
+      expect(component.mostrarFormProveedorIa).toBeFalse();
+    });
+
+    describe('probarConexionIa', () => {
+      it('avisa si el proveedor requiere endpoint y falta', () => {
+        setup();
+        component.proveedorIaForm.proveedor = 'ollama';
+        component.proveedorIaForm.endpoint = '';
+
+        component.probarConexionIa();
+
+        expect(notificationService.warning).toHaveBeenCalled();
+        expect(proveedorIaService.probarConexion).not.toHaveBeenCalled();
+      });
+
+      it('exitosa muestra el mensaje del backend', () => {
+        setup();
+        component.proveedorIaForm.apiKey = 'sk-ant-test';
+        proveedorIaService.probarConexion.and.returnValue(of({ ok: true, mensaje: 'Conexión exitosa.' }));
+
+        component.probarConexionIa();
+
+        expect(component.probandoConexionIa).toBeFalse();
+        expect(component.resultadoPruebaIa).toBe('ok');
+        expect(component.mensajePruebaIa).toBe('Conexión exitosa.');
+      });
+
+      it('con Ok=false muestra el error del backend', () => {
+        setup();
+        component.proveedorIaForm.apiKey = 'sk-ant-test';
+        proveedorIaService.probarConexion.and.returnValue(of({ ok: false, mensaje: 'La clave de API no es válida.' }));
+
+        component.probarConexionIa();
+
+        expect(component.resultadoPruebaIa).toBe('error');
+        expect(component.mensajePruebaIa).toBe('La clave de API no es válida.');
+      });
+
+      it('notifica error si la peticion falla', () => {
+        setup();
+        component.proveedorIaForm.apiKey = 'sk-ant-test';
+        proveedorIaService.probarConexion.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        component.probarConexionIa();
+
+        expect(component.probandoConexionIa).toBeFalse();
+        expect(component.resultadoPruebaIa).toBe('error');
+        expect(component.mensajePruebaIa).toBeTruthy();
+      });
+    });
+
+    describe('guardarConexionIa', () => {
+      it('avisa si el proveedor requiere endpoint y falta', () => {
+        setup();
+        component.proveedorIaForm.proveedor = 'ollama';
+        component.proveedorIaForm.endpoint = '';
+
+        component.guardarConexionIa();
+
+        expect(notificationService.warning).toHaveBeenCalled();
+        expect(proveedorIaService.crearConfig).not.toHaveBeenCalled();
+      });
+
+      it('al crear, avisa si falta la clave de API para un proveedor que la requiere', () => {
+        setup();
+        component.proveedorIaForm = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
+
+        component.guardarConexionIa();
+
+        expect(notificationService.warning).toHaveBeenCalled();
+        expect(proveedorIaService.crearConfig).not.toHaveBeenCalled();
+      });
+
+      it('crea una conexion nueva y recarga la lista', () => {
+        setup();
+        component.proveedorIaForm = { proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: '', apiKey: 'sk-ant-test' };
+        proveedorIaService.crearConfig.and.returnValue(of(proveedorIaItem()));
+        proveedorIaService.getConfigs.and.returnValue(of([proveedorIaItem()]));
+
+        component.guardarConexionIa();
+
+        expect(proveedorIaService.crearConfig).toHaveBeenCalledWith({
+          proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: null, apiKey: 'sk-ant-test',
+        });
+        expect(component.guardandoProveedorIa).toBeFalse();
+        expect(component.mostrarFormProveedorIa).toBeFalse();
+        expect(notificationService.success).toHaveBeenCalled();
+      });
+
+      it('al editar, no exige la clave de API (se mantiene la anterior si se deja en blanco)', () => {
+        setup();
+        component.editandoProveedorIaId = 7;
+        component.proveedorIaForm = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
+        proveedorIaService.actualizarConfig.and.returnValue(of(proveedorIaItem()));
+
+        component.guardarConexionIa();
+
+        expect(proveedorIaService.actualizarConfig).toHaveBeenCalledWith(7, jasmine.objectContaining({ apiKey: null }));
+        expect(notificationService.warning).not.toHaveBeenCalled();
+      });
+
+      it('notifica error si el backend rechaza la solicitud', () => {
+        setup();
+        component.proveedorIaForm = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: 'sk-ant-test' };
+        proveedorIaService.crearConfig.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+        component.guardarConexionIa();
+
+        expect(component.guardandoProveedorIa).toBeFalse();
+        expect(notificationService.error).toHaveBeenCalled();
+      });
+    });
+
+    describe('activarConexionIa', () => {
+      it('no hace nada si ya esta activa', () => {
+        setup();
+        component.activarConexionIa(proveedorIaItem({ esActivo: true }));
+        expect(proveedorIaService.activarConfig).not.toHaveBeenCalled();
+      });
+
+      it('activa y recarga la lista', () => {
+        setup();
+        proveedorIaService.activarConfig.and.returnValue(of(proveedorIaItem({ esActivo: true })));
+
+        component.activarConexionIa(proveedorIaItem({ proveedorIaConfigId: 2, esActivo: false }));
+
+        expect(proveedorIaService.activarConfig).toHaveBeenCalledWith(2);
+        expect(notificationService.success).toHaveBeenCalled();
+      });
+
+      it('notifica error si falla', () => {
+        setup();
+        proveedorIaService.activarConfig.and.returnValue(throwError(() => new Error('boom')));
+
+        component.activarConexionIa(proveedorIaItem({ esActivo: false }));
+
+        expect(notificationService.error).toHaveBeenCalled();
+      });
+    });
+
+    describe('probarConexionGuardada', () => {
+      it('prueba una conexion guardada y notifica exito si responde ok', () => {
+        setup();
+        proveedorIaService.probarConexionGuardada.and.returnValue(of({ ok: true, mensaje: 'Conexión exitosa.' }));
+
+        component.probarConexionGuardada(proveedorIaItem({ proveedorIaConfigId: 2 }));
+
+        expect(proveedorIaService.probarConexionGuardada).toHaveBeenCalledWith(2);
+        expect(notificationService.success).toHaveBeenCalledWith('Conexión exitosa.');
+        expect(component.probandoGuardadaProveedorIaId).toBeNull();
+      });
+
+      it('notifica warning si el backend responde ok:false', () => {
+        setup();
+        proveedorIaService.probarConexionGuardada.and.returnValue(of({ ok: false, mensaje: 'La clave de API no es válida.' }));
+
+        component.probarConexionGuardada(proveedorIaItem());
+
+        expect(notificationService.warning).toHaveBeenCalledWith('La clave de API no es válida.');
+      });
+
+      it('notifica error si la solicitud falla', () => {
+        setup();
+        proveedorIaService.probarConexionGuardada.and.returnValue(throwError(() => new Error('boom')));
+
+        component.probarConexionGuardada(proveedorIaItem());
+
+        expect(notificationService.error).toHaveBeenCalled();
+      });
+    });
+
+    describe('eliminarConexionIa', () => {
+      it('no hace nada si se cancela la confirmacion', () => {
+        setup();
+        spyOn(window, 'confirm').and.returnValue(false);
+
+        component.eliminarConexionIa(proveedorIaItem());
+
+        expect(proveedorIaService.eliminarConfig).not.toHaveBeenCalled();
+      });
+
+      it('elimina y recarga la lista si se confirma y el backend responde bien', () => {
+        setup();
+        spyOn(window, 'confirm').and.returnValue(true);
+        proveedorIaService.eliminarConfig.and.returnValue(of(undefined));
+
+        component.eliminarConexionIa(proveedorIaItem());
+
+        expect(notificationService.success).toHaveBeenCalled();
+      });
+
+      it('notifica error si el backend falla', () => {
+        setup();
+        spyOn(window, 'confirm').and.returnValue(true);
+        proveedorIaService.eliminarConfig.and.returnValue(throwError(() => new Error('boom')));
+
+        component.eliminarConexionIa(proveedorIaItem());
+
+        expect(notificationService.error).toHaveBeenCalled();
+      });
     });
   });
 });
