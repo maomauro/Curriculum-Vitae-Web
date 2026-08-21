@@ -15,6 +15,9 @@ import {
   primerNombrePublico,
 } from '../cv-publico.utils';
 import { cvPublicoMuestraPestanaDashboard } from '../../../core/utils/cv-dashboard-publico.util';
+import { cvPublicoMuestraPestanaProfesional } from '../../../core/utils/cv-profesional-publico.util';
+import { cvPublicoMuestraPestanaHojaDeVida } from '../../../core/utils/cv-hoja-de-vida-publico.util';
+import { pestanaPublicaDeRespaldo, type PestanaPublicaPath } from '../../../core/utils/cv-pestanas-publico.util';
 
 type ShellEstado = 'cargando' | 'listo' | 'no_encontrado' | 'error';
 
@@ -42,10 +45,18 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
     return cvPublicoMuestraPestanaDashboard(this.ctx.cv);
   }
 
-  /** Solo en la pestaña Hoja de vida (misma vista previa que Mi CV). */
+  get mostrarPestanaProfesional(): boolean {
+    return cvPublicoMuestraPestanaProfesional(this.ctx.cv);
+  }
+
+  get mostrarPestanaHojaDeVida(): boolean {
+    return cvPublicoMuestraPestanaHojaDeVida(this.ctx.cv);
+  }
+
+  /** Solo en la pestaña Información profesional (el consolidado imprimible). */
   get mostrarBotonImprimirCv(): boolean {
     const path = this.router.url.split('?')[0].replace(/\/$/, '') || '/';
-    return /^\/cv\/[^/]+$/.test(path);
+    return /^\/cv\/[^/]+\/profesional$/.test(path);
   }
 
   estado: ShellEstado = 'cargando';
@@ -78,6 +89,7 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
         if (data) {
           this.ctx.cv = data;
           this.estado = 'listo';
+          this.redirigirSiPestanaOculta();
         } else if (this.estado === 'cargando') {
           this.ctx.cv = null;
           this.estado = 'no_encontrado';
@@ -168,10 +180,25 @@ export class CvPublicoShellComponent implements OnInit, OnDestroy {
       if (data) {
         this.ctx.cv = data;
         this.estado = 'listo';
+        this.redirigirSiPestanaOculta();
       } else {
         this.ctx.cv = null;
       }
     });
+  }
+
+  /** Un interruptor de pestaña apagado en Configuración no debe ser solo cosmético: si
+   * llegan por link directo a una pestaña oculta, los mandamos a la primera habilitada
+   * (mismo orden que el menú) -- o al listado si el postulante apagó las tres. */
+  private redirigirSiPestanaOculta(): void {
+    const pathActual = (this.route.firstChild?.snapshot.routeConfig?.path ?? '') as PestanaPublicaPath;
+    const destino = pestanaPublicaDeRespaldo(pathActual, this.ctx.cv);
+    if (destino === pathActual) return;
+    if (destino === null) {
+      this.router.navigate(['/cvs']);
+      return;
+    }
+    this.router.navigate(['/cv', this.urlPublica, ...(destino ? [destino] : [])]);
   }
 
   /** GET detalle público; en error HTTP fija `estado` y emite null. */

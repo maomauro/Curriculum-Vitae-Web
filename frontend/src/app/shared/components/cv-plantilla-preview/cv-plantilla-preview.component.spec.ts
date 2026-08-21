@@ -230,15 +230,32 @@ describe('CvPlantillaPreviewComponent', () => {
     expect(component.formacionesCurso.map(f => f.formacionId)).toEqual([4]);
   });
 
-  it('linkedin y githubDisplay buscan por nombre de red (case-insensitive)', () => {
+  it('redesSociales expone todas las redes del vm (no solo LinkedIn/GitHub)', () => {
     component.vm = vmBase({
       redesSociales: [
         { redSocialId: 1, nombreRed: 'LinkedIn', linkPublico: 'https://li/ana', usuarioContacto: null },
         { redSocialId: 2, nombreRed: 'GitHub', linkPublico: null, usuarioContacto: 'ana-dev' },
+        { redSocialId: 3, nombreRed: 'Portafolio', linkPublico: 'https://ana.dev', usuarioContacto: null },
       ],
     });
-    expect(component.linkedin).toBe('https://li/ana');
-    expect(component.githubDisplay).toBe('ana-dev');
+    expect(component.redesSociales.length).toBe(3);
+  });
+
+  it('textoRed prioriza linkPublico sobre usuarioContacto; null si no hay ninguno', () => {
+    expect(component.textoRed({ redSocialId: 1, nombreRed: 'LinkedIn', linkPublico: 'https://li/ana', usuarioContacto: 'ana' }))
+      .toBe('https://li/ana');
+    expect(component.textoRed({ redSocialId: 2, nombreRed: 'GitHub', linkPublico: null, usuarioContacto: 'ana-dev' }))
+      .toBe('ana-dev');
+    expect(component.textoRed({ redSocialId: 3, nombreRed: 'X', linkPublico: null, usuarioContacto: null }))
+      .toBeNull();
+  });
+
+  it('iconoRed reconoce redes conocidas (case-insensitive) y usa un icono generico para las demas', () => {
+    expect(component.iconoRed('LinkedIn')).toBe('bi-linkedin');
+    expect(component.iconoRed('github')).toBe('bi-github');
+    expect(component.iconoRed('Portafolio')).toBe('bi-globe');
+    expect(component.iconoRed('Blog personal')).toBe('bi-link-45deg');
+    expect(component.iconoRed(null)).toBe('bi-link-45deg');
   });
 
   it('ciudadPais combina ambos, uno solo, o null', () => {
@@ -335,11 +352,12 @@ describe('CvPlantillaPreviewComponent', () => {
     });
   });
 
-  it('textoGraduacionAcademica respeta attrSafe("educacion","fechas")', () => {
+  it('textoGraduacionAcademica siempre devuelve el año de graduación cuando hay fechaFin', () => {
     component.vm = vmBase();
-    component.vis = mockVis({ attrSafe: false });
     const f = { formacionId: 1, titulo: 'Ing', institucion: 'U', tipoFormacion: 'Pregrado', fechaInicio: null, fechaFin: '2020-06-01' };
-    expect(component.textoGraduacionAcademica(f)).toBeNull();
+
+    component.vis = mockVis({ attrSafe: false });
+    expect(component.textoGraduacionAcademica(f)).toBe('Graduado en 2020');
 
     component.vis = null;
     expect(component.textoGraduacionAcademica(f)).toBe('Graduado en 2020');

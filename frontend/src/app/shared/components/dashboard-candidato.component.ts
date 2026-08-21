@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   inject,
+  Input,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -558,6 +559,11 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   mostrarMetricas = true;
   mostrarGraficas = true;
 
+  /** Panel de vista previa en Configuración: respeta los switches de visibilidad igual
+   * que el CV público real, pero sin el redirect si el dashboard completo queda oculto
+   * (no tiene sentido navegar fuera de Configuración). */
+  @Input() modoVistaPrevia = false;
+
   /** Chart.js tipa cada chart por tipo; guardamos solo instancias con destroy(). */
   private chartInstances: { destroy(): void }[] = [];
 
@@ -565,7 +571,10 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     const detalle = this.shellCtx.cv;
     if (!detalle) return;
 
-    if (this.esRutaCvPublicoDashboard()) {
+    if (this.modoVistaPrevia) {
+      this.mostrarMetricas = detalle.dashboardMostrarMetricas ?? true;
+      this.mostrarGraficas = detalle.dashboardMostrarGraficas ?? true;
+    } else if (this.esRutaCvPublicoDashboard()) {
       if (!cvPublicoMuestraPestanaDashboard(detalle)) {
         const slug = this.slugCvPublicoDesdeUrl();
         if (slug) {

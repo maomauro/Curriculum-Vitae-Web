@@ -49,6 +49,21 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
                 c.Usuario.Estado == UsuarioEstados.Activo,
                 ct);
 
+    public async Task<Curriculum?> GetParaPreviewPublicoPorIdAsync(int curriculumId, CancellationToken ct = default)
+        => await _dbSet
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(c => c.Personales)
+            .Include(c => c.Perfiles)
+            .Include(c => c.Experiencias)
+            .Include(c => c.Formaciones)
+            .Include(c => c.Habilidades)
+            .Include(c => c.Proyectos)
+            .Include(c => c.Referencias)
+            .Include(c => c.RedesSociales)
+            .Include(c => c.VisibilidadesSeccion)
+            .FirstOrDefaultAsync(c => c.CurriculumId == curriculumId, ct);
+
     public async Task<Curriculum?> GetByUsuarioIdAsync(int usuarioId, CancellationToken ct = default)
         => await _dbSet
             .FirstOrDefaultAsync(c => c.UsuarioId == usuarioId, ct);

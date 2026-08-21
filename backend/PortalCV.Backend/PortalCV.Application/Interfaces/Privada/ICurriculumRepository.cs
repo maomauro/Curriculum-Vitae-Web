@@ -8,6 +8,11 @@ public interface ICurriculumRepository : IRepository<Curriculum>
 
     /// <summary>CV publicado con mismos includes que <see cref="GetByUrlPublicaAsync"/> (portal activo).</summary>
     Task<Curriculum?> GetPublicadoPorIdAsync(int curriculumId, CancellationToken ct = default);
+
+    /// <summary>Mismos includes que <see cref="GetPublicadoPorIdAsync"/>, pero sin exigir
+    /// Estado=Publicado -- para que el dueño del CV pueda previsualizar cómo se vería su
+    /// perfil público antes de publicarlo.</summary>
+    Task<Curriculum?> GetParaPreviewPublicoPorIdAsync(int curriculumId, CancellationToken ct = default);
     Task<Curriculum?> GetByUsuarioIdAsync(int usuarioId, CancellationToken ct = default);
     Task<bool> UrlPublicaExisteAsync(string urlPublica, int? excludeCurriculumId = null, CancellationToken ct = default);
     Task<(IReadOnlyList<Curriculum> Items, int Total)> BuscarPublicosAsync(

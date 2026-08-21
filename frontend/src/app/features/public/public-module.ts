@@ -7,7 +7,8 @@ import { PublicRoutingModule } from './public-routing-module';
 import { HomeComponent } from './pages/home.component';
 import { BuscarCvsComponent } from './pages/buscar-cvs.component';
 import { CvPublicoShellComponent } from './pages/cv-publico-shell.component';
-import { DetalleCvComponent } from './pages/detalle-cv.component';
+import { HojaDeVidaComponent } from './pages/hoja-de-vida.component';
+import { InformacionProfesionalComponent } from './pages/informacion-profesional.component';
 import { SharedModule } from '../../shared/shared-module';
 
 @NgModule({
@@ -15,7 +16,8 @@ import { SharedModule } from '../../shared/shared-module';
     HomeComponent,
     BuscarCvsComponent,
     CvPublicoShellComponent,
-    DetalleCvComponent,
+    HojaDeVidaComponent,
+    InformacionProfesionalComponent,
   ],
   imports: [
     CommonModule,

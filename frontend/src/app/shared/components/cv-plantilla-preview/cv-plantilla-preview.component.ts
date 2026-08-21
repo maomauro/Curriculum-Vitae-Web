@@ -7,9 +7,22 @@ import type {
   CvPreviewPerfilVm,
   CvPreviewProyectoVm,
   CvPreviewReferenciaVm,
+  CvPreviewRedVm,
   CvPreviewVisibilidad,
   CvPreviewVm,
 } from '../../models/cv-preview-vm';
+
+/** Icono por red social conocida (mismo criterio que redes-sociales.component.ts). */
+const ICONOS_RED: Record<string, string> = {
+  linkedin: 'bi-linkedin',
+  github: 'bi-github',
+  x: 'bi-twitter-x',
+  twitter: 'bi-twitter-x',
+  instagram: 'bi-instagram',
+  facebook: 'bi-facebook',
+  youtube: 'bi-youtube',
+  portafolio: 'bi-globe',
+};
 
 /**
  * Vista de plantilla de CV (mismas clases CSS que Mi CV: `cv-mi-preview`, `cv-tpl--*`).
@@ -152,7 +165,6 @@ export class CvPlantillaPreviewComponent {
 
   get sidebarClasicoTieneContenido(): boolean {
     if (this.plantillaCodigo !== 'clasico') return false;
-    if (!this.sec('habilidades')) return false;
     return (
       this.habilidadesTecnicas.length > 0 ||
       this.habilidadesBlandas.length > 0 ||
@@ -218,18 +230,17 @@ export class CvPlantillaPreviewComponent {
     return this.formaciones.filter(f => (f.tipoFormacion ?? '').trim() === 'Curso');
   }
 
-  get linkedin(): string | null {
-    const item = (this.vm.redesSociales ?? []).find(r =>
-      (r.nombreRed ?? '').toLowerCase().includes('linkedin')
-    );
-    return item?.linkPublico?.trim() || item?.usuarioContacto?.trim() || null;
+  get redesSociales(): CvPreviewRedVm[] {
+    return this.vm.redesSociales ?? [];
   }
 
-  get githubDisplay(): string | null {
-    const item = (this.vm.redesSociales ?? []).find(r =>
-      (r.nombreRed ?? '').toLowerCase().includes('github')
-    );
-    return item?.linkPublico?.trim() || item?.usuarioContacto?.trim() || null;
+  textoRed(red: CvPreviewRedVm): string | null {
+    return red.linkPublico?.trim() || red.usuarioContacto?.trim() || null;
+  }
+
+  iconoRed(nombreRed: string | null | undefined): string {
+    const key = (nombreRed ?? '').trim().toLowerCase();
+    return ICONOS_RED[key] ?? 'bi-link-45deg';
   }
 
   get ciudadPais(): string | null {
@@ -295,11 +306,10 @@ export class CvPlantillaPreviewComponent {
   textoBlandaProfesional(h: CvPreviewHabilidadVm): string | null {
     const n = h.nombre?.trim();
     const d = h.descripcion?.trim();
-    const showDesc = this.attr('habilidades', 'descripcion');
     if (!n && !d) return null;
-    if (n && d && showDesc) return `${n} — ${d}`;
+    if (n && d) return `${n} — ${d}`;
     if (n) return n;
-    return showDesc ? d ?? null : null;
+    return d ?? null;
   }
 
   lineaEmpresaContrato(exp: CvPreviewExperienciaVm): string | null {
@@ -340,7 +350,6 @@ export class CvPlantillaPreviewComponent {
   }
 
   textoGraduacionAcademica(f: CvPreviewFormacionVm): string | null {
-    if (!this.attrSafe('educacion', 'fechas')) return null;
     const y = this.anioDesdeFechaIso(f.fechaFin);
     if (y) return `Graduado en ${y}`;
     return null;
@@ -362,21 +371,21 @@ export class CvPlantillaPreviewComponent {
 
   lineaProyectoMeta(pr: CvPreviewProyectoVm): string | null {
     const parts: string[] = [];
-    if (this.attr('proyectos', 'rol') && pr.rol?.trim()) parts.push(`Rol: ${pr.rol.trim()}`);
-    if (this.attr('proyectos', 'equipo') && pr.equipoTamano != null && pr.equipoTamano > 0) {
+    if (pr.rol?.trim()) parts.push(`Rol: ${pr.rol.trim()}`);
+    if (pr.equipoTamano != null && pr.equipoTamano > 0) {
       parts.push(`Equipo: ${pr.equipoTamano} persona${pr.equipoTamano === 1 ? '' : 's'}`);
     }
-    if (this.attr('proyectos', 'duracion') && pr.duracionMeses != null && pr.duracionMeses > 0) {
+    if (pr.duracionMeses != null && pr.duracionMeses > 0) {
       parts.push(`${pr.duracionMeses} mes${pr.duracionMeses === 1 ? '' : 'es'}`);
     }
     return parts.length ? parts.join(' · ') : null;
   }
 
   textoProyecto(pr: CvPreviewProyectoVm): string | null {
-    if (this.attr('proyectos', 'aporte') && pr.aporte?.trim()) return pr.aporte.trim();
-    if (this.attr('proyectos', 'logro') && pr.logro?.trim()) return pr.logro.trim();
-    if (this.attr('proyectos', 'desafio') && pr.desafio?.trim()) return pr.desafio.trim();
-    if (this.attr('proyectos', 'stack') && pr.stackTecnologico?.trim()) {
+    if (pr.aporte?.trim()) return pr.aporte.trim();
+    if (pr.logro?.trim()) return pr.logro.trim();
+    if (pr.desafio?.trim()) return pr.desafio.trim();
+    if (pr.stackTecnologico?.trim()) {
       const s = pr.stackTecnologico.trim();
       if (!this.stackTags(s).length) return s;
     }

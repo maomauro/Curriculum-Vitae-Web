@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Net.Mail;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PortalCV.Application;
+using PortalCV.Application.DTOs.Privada;
 using PortalCV.Application.DTOs.Publica;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
@@ -41,7 +43,7 @@ public class PublicCvService : IPublicCvService
             c.UrlPublica,
             c.Personales is null ? null
                 : $"{c.Personales.PrimerNombre} {c.Personales.PrimerApellido}".Trim(),
-            c.Personales?.FotoUrl,
+            ResolverFotoUrlPublica(c.Personales, c.UrlPublica),
             c.Personales?.Ciudad,
             c.Personales?.Pais,
             c.Perfiles.FirstOrDefault()?.NombrePerfil,
@@ -82,6 +84,51 @@ public class PublicCvService : IPublicCvService
         }
 
         return dto;
+    }
+
+    public async Task<ArchivoContenidoDto?> GetFotoPersonalesPublicaAsync(string urlPublica, CancellationToken ct = default)
+    {
+        var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct);
+        if (cv?.Personales?.FotoBytes is null || cv.Personales.FotoContentType is null) return null;
+        if (!VisibilidadAtributoVisible(cv.VisibilidadesSeccion, VisPersonalesFoto)) return null;
+
+        return new ArchivoContenidoDto(cv.Personales.FotoBytes, cv.Personales.FotoContentType);
+    }
+
+    public async Task<ArchivoContenidoDto?> GetAdjuntoExperienciaPublicaAsync(
+        string urlPublica, int experienciaId, CancellationToken ct = default)
+    {
+        var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct);
+        var e = cv?.Experiencias.FirstOrDefault(x => x.ExperienciaId == experienciaId);
+        if (e is null || !e.MostrarEnCv || e.AdjuntoSoporteBytes is null || e.AdjuntoSoporteContentType is null)
+            return null;
+        if (!VisibilidadAtributoVisible(cv!.VisibilidadesSeccion, VisExperienciaSoporte)) return null;
+
+        return new ArchivoContenidoDto(e.AdjuntoSoporteBytes, e.AdjuntoSoporteContentType);
+    }
+
+    public async Task<ArchivoContenidoDto?> GetAdjuntoFormacionPublicaAsync(
+        string urlPublica, int formacionId, CancellationToken ct = default)
+    {
+        var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct);
+        var f = cv?.Formaciones.FirstOrDefault(x => x.FormacionId == formacionId);
+        if (f is null || !f.MostrarEnCv || f.AdjuntoSoporteBytes is null || f.AdjuntoSoporteContentType is null)
+            return null;
+        if (!VisibleDescargarSoporteFormacion(cv!.VisibilidadesSeccion, f.TipoFormacion)) return null;
+
+        return new ArchivoContenidoDto(f.AdjuntoSoporteBytes, f.AdjuntoSoporteContentType);
+    }
+
+    public async Task<CvDetalleDto?> GetPreviewPrivadoAsync(int curriculumId, CancellationToken ct = default)
+    {
+        var cv = await _curriculumRepo.GetParaPreviewPublicoPorIdAsync(curriculumId, ct);
+        if (cv is null) return null;
+
+        var expVisibles = ExperienciasVisiblesOrdenadas(cv.Experiencias);
+        var mesesAcum = ExperienciaLaboralAcumulada.CalcularMeses(
+            expVisibles.Select(e => (e.FechaInicio, e.FechaFin, e.EsActual)));
+
+        return MapToDetalle(cv, mesesAcum, expVisibles);
     }
 
     public async Task<CvEstadisticasDto?> GetEstadisticasAsync(string urlPublica, CancellationToken ct = default)
@@ -135,6 +182,8 @@ public class PublicCvService : IPublicCvService
 
     public async Task ContactarAsync(string urlPublica, ContactarCvRequest request, CancellationToken ct = default)
     {
+        ValidarContactoRequest(request);
+
         var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct)
             ?? throw new KeyNotFoundException($"CV '{urlPublica}' no encontrado.");
         var curriculumId = cv.CurriculumId;
@@ -169,6 +218,37 @@ public class PublicCvService : IPublicCvService
 
         // Contadores y EstadisticasPublicas: triggers trg_*_SyncEstadisticas.
         await _context.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Valida formato/longitud antes de tocar la BD -- sin esto, un correo mal
+    /// formado o un campo demasiado largo llegaba intacto hasta el INSERT y fallaba con
+    /// un 500 genérico (MaxLength de columna) en vez de un 400 con mensaje claro.</summary>
+    private static void ValidarContactoRequest(ContactarCvRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Correo))
+            throw new ArgumentException("El correo de contacto es obligatorio.");
+
+        try
+        {
+            _ = new MailAddress(request.Correo);
+        }
+        catch (FormatException)
+        {
+            throw new ArgumentException("El correo de contacto no tiene un formato válido.");
+        }
+
+        if (request.Correo.Length > 150)
+            throw new ArgumentException("El correo de contacto no puede superar 150 caracteres.");
+        if (request.Nombre?.Length > 100)
+            throw new ArgumentException("El nombre no puede superar 100 caracteres.");
+        if (request.Empresa?.Length > 150)
+            throw new ArgumentException("La empresa no puede superar 150 caracteres.");
+        if (request.MotivoContacto?.Length > 100)
+            throw new ArgumentException("El motivo de contacto no puede superar 100 caracteres.");
+        if (request.Asunto?.Length > 200)
+            throw new ArgumentException("El asunto no puede superar 200 caracteres.");
+        if (request.ComoMeEncontraste?.Length > 100)
+            throw new ArgumentException("El campo \"cómo me encontraste\" no puede superar 100 caracteres.");
     }
 
     public async Task RegistrarImpresionPdfAsync(string urlPublica, string? visitanteAnonimoId = null, CancellationToken ct = default)
@@ -253,8 +333,14 @@ public class PublicCvService : IPublicCvService
     private const string VisDashboardPublico = "dashboard.publico";
     private const string VisDashboardMetricas = "dashboard.metricas";
     private const string VisDashboardGraficas = "dashboard.graficas";
+    private const string VisProfesionalPublico = "profesional.publico";
+    private const string VisHojaDeVidaPublico = "hoja-de-vida.publico";
     private const string VisPersonalesEmail = "datos-personales.email";
     private const string VisPersonalesTelefono = "datos-personales.telefono";
+    private const string VisPersonalesFoto = "datos-personales.foto";
+    private const string VisPersonalesCiudadPais = "datos-personales.ciudad-pais";
+    private const string VisExperienciaSoporte = "experiencia.soporte-certificacion-laboral";
+    private const string VisEducacion = "educacion";
 
     /// <summary>Visibilidad fina (VisibilidadSeccion). Sin fila = visible por defecto.</summary>
     private static bool VisibilidadAtributoVisible(IEnumerable<VisibilidadSeccion>? vis, string nombreSeccion, bool defaultVisible = true)
@@ -288,6 +374,72 @@ public class PublicCvService : IPublicCvService
         return (m, m && me, m && g);
     }
 
+    /// <summary>URL efectiva de la foto: el endpoint binario si hay una subida, o la URL
+    /// legacy pegada por el usuario si no.</summary>
+    private static string? ResolverFotoUrlPublica(Personales? personales, string urlPublica) =>
+        personales is null ? null
+        : personales.FotoBytes is not null ? $"/api/public/cvs/{urlPublica}/foto"
+        : personales.FotoUrl;
+
+    private static string? ResolverAdjuntoUrlExperienciaPublica(Experiencia e, string urlPublica) =>
+        e.AdjuntoSoporteBytes is not null
+            ? $"/api/public/cvs/{urlPublica}/experiencias/{e.ExperienciaId}/adjunto"
+            : e.AdjuntoSoporte;
+
+    private static string? ResolverAdjuntoUrlFormacionPublica(Formacion f, string urlPublica) =>
+        f.AdjuntoSoporteBytes is not null
+            ? $"/api/public/cvs/{urlPublica}/formaciones/{f.FormacionId}/adjunto"
+            : f.AdjuntoSoporte;
+
+    /// <summary>Mismo criterio de clasificación que usa el frontend para agrupar Formacion en
+    /// bloques de la vista previa (cv-plantilla-preview.component.ts: formacionesDiplomado/
+    /// formacionesCertificacion/formacionesCurso; el resto cae en formación académica).</summary>
+    private static string BloqueFormacion(string? tipoFormacion) => (tipoFormacion ?? string.Empty).Trim() switch
+    {
+        "Diplomado" => "diplomados",
+        "Certificacion" => "certificaciones",
+        "Curso" => "cursos",
+        _ => "formacion-academica",
+    };
+
+    /// <summary>Mismo criterio que VisibilidadSeccionResolver.visibleBloqueFormacion en el
+    /// frontend: "formacion-academica" siempre visible; los demás bloques usan su propia fila
+    /// si existe, o heredan del interruptor general "educacion" si no.</summary>
+    private static bool VisibleBloqueFormacion(IEnumerable<VisibilidadSeccion>? vis, string bloque)
+    {
+        if (bloque == "formacion-academica") return true;
+        var visList = vis ?? Array.Empty<VisibilidadSeccion>();
+        return visList.Any(v => v.NombreSeccion == bloque)
+            ? VisibilidadAtributoVisible(visList, bloque)
+            : VisibilidadAtributoVisible(visList, VisEducacion);
+    }
+
+    /// <summary>Mismo criterio que VisibilidadSeccionResolver.visibleDescargarSoporte en el
+    /// frontend (ver visibilidad-seccion-resolver.ts).</summary>
+    private static bool VisibleDescargarSoporteFormacion(IEnumerable<VisibilidadSeccion>? vis, string? tipoFormacion)
+    {
+        var bloque = BloqueFormacion(tipoFormacion);
+        if (!VisibleBloqueFormacion(vis, bloque)) return false;
+        var attr = bloque == "formacion-academica" ? "descargar-soporte" : "descargar-soporte-certificado";
+        return VisibilidadAtributoVisible(vis, $"{bloque}.{attr}");
+    }
+
+    /// <summary>Interruptor maestro de la pestaña "Información profesional" en el CV público
+    /// (VisibilidadSeccion <c>profesional.publico</c>). Sin fila = visible por defecto.</summary>
+    private static bool ResolverFlagProfesionalPublico(Curriculum c)
+    {
+        var vis = c.VisibilidadesSeccion ?? Array.Empty<VisibilidadSeccion>();
+        return vis.FirstOrDefault(v => v.NombreSeccion == VisProfesionalPublico)?.EsVisible ?? true;
+    }
+
+    /// <summary>Interruptor maestro de la pestaña "Hoja de vida" en el CV público
+    /// (VisibilidadSeccion <c>hoja-de-vida.publico</c>). Sin fila = visible por defecto.</summary>
+    private static bool ResolverFlagHojaDeVidaPublico(Curriculum c)
+    {
+        var vis = c.VisibilidadesSeccion ?? Array.Empty<VisibilidadSeccion>();
+        return vis.FirstOrDefault(v => v.NombreSeccion == VisHojaDeVidaPublico)?.EsVisible ?? true;
+    }
+
     private static CvDetalleDto MapToDetalle(
         Curriculum c,
         int experienciaLaboralMesesAcumulados,
@@ -295,9 +447,13 @@ public class PublicCvService : IPublicCvService
     {
         var plantilla = CvPlantillaCodigos.NormalizeOrDefault(c.PlantillaCodigo);
         var dash = ResolverFlagsDashboardPublico(c);
+        var profesionalPublico = ResolverFlagProfesionalPublico(c);
+        var hojaDeVidaPublico = ResolverFlagHojaDeVidaPublico(c);
         var vis = c.VisibilidadesSeccion;
         var mostrarEmail = VisibilidadAtributoVisible(vis, VisPersonalesEmail);
         var mostrarTelefono = VisibilidadAtributoVisible(vis, VisPersonalesTelefono);
+        var mostrarFoto = VisibilidadAtributoVisible(vis, VisPersonalesFoto);
+        var mostrarCiudadPais = VisibilidadAtributoVisible(vis, VisPersonalesCiudadPais);
         var idsExpVisibles = experienciasVisibles.Select(e => e.ExperienciaId).ToHashSet();
         return new CvDetalleDto(
         c.CurriculumId,
@@ -308,18 +464,20 @@ public class PublicCvService : IPublicCvService
             string.IsNullOrWhiteSpace($"{c.Personales.PrimerNombre} {c.Personales.PrimerApellido}".Trim())
                 ? null
                 : $"{c.Personales.PrimerNombre} {c.Personales.PrimerApellido}".Trim(),
-            c.Personales.FotoUrl,
-            c.Personales.Ciudad,
-            c.Personales.Pais,
+            mostrarFoto ? ResolverFotoUrlPublica(c.Personales, c.UrlPublica) : null,
+            mostrarCiudadPais ? c.Personales.Ciudad : null,
+            mostrarCiudadPais ? c.Personales.Pais : null,
             mostrarTelefono ? c.Personales.Celular : null,
             mostrarEmail ? c.Personales.Email : null),
         c.Perfiles.Select(p => new PerfilPublicoDto(p.PerfilId, p.NombrePerfil, p.DescripcionPerfil,
             p.AspiracionSalarialPesos, p.AspiracionSalarialDolares, p.EsActivo)),
         experienciasVisibles.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
-            e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones, e.TipoContrato)),
+            e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones, e.TipoContrato,
+            VisibilidadAtributoVisible(vis, VisExperienciaSoporte) ? ResolverAdjuntoUrlExperienciaPublica(e, c.UrlPublica) : null)),
         c.Formaciones.Where(f => f.MostrarEnCv).Select(f => new FormacionPublicoDto(f.FormacionId, f.Titulo, f.Institucion,
-            f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin)),
-        c.Habilidades.Select(h => new HabilidadPublicoDto(h.HabilidadId, h.Nombre, h.Tipo, MapHabilidadNivelPublico(h.Nivel), h.Descripcion,
+            f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin,
+            VisibleDescargarSoporteFormacion(vis, f.TipoFormacion) ? ResolverAdjuntoUrlFormacionPublica(f, c.UrlPublica) : null)),
+        c.Habilidades.Where(h => h.MostrarEnCv).Select(h => new HabilidadPublicoDto(h.HabilidadId, h.Nombre, h.Tipo, MapHabilidadNivelPublico(h.Nivel), h.Descripcion,
             h.NivelLectura, h.NivelEscritura, h.NivelEscucha, h.NivelHabla)),
         c.Proyectos.Where(p => p.MostrarEnCv).Select(p => new ProyectoPublicoDto(p.ProyectoId, p.NombreProyecto, p.Rol,
             p.StackTecnologico, p.Aporte, p.Logro, p.EquipoTamano, p.DuracionMeses)),
@@ -327,11 +485,15 @@ public class PublicCvService : IPublicCvService
             && (r.ExperienciaId is null || idsExpVisibles.Contains(r.ExperienciaId.Value)))
             .Select(r => new ReferenciaPublicoDto(r.ReferenciaId, r.TipoReferencia, r.Nombre,
                 r.Apellido, r.Cargo, r.Empresa)),
-        c.RedesSociales.Select(r => new RedSocialPublicoDto(r.RedSocialId, r.NombreRed,
+        c.RedesSociales.Where(r => r.MostrarEnCv).Select(r => new RedSocialPublicoDto(r.RedSocialId, r.NombreRed,
             r.LinkPublico, r.UsuarioContacto)),
         dash.Activo,
         dash.Metricas,
-        dash.Graficas
+        dash.Graficas,
+        profesionalPublico,
+        hojaDeVidaPublico,
+        (vis ?? Array.Empty<VisibilidadSeccion>())
+            .Select(v => new VisibilidadSeccionPublicaDto(v.NombreSeccion, v.EsVisible))
     );
     }
 }
