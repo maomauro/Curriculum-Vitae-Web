@@ -184,6 +184,64 @@ describe('ProyectosComponent', () => {
     });
   });
 
+  describe('activarTodos / inactivarTodos', () => {
+    const proyectoOculto: ProyectoDto = { ...proyecto, proyectoId: 2, mostrarEnCv: false };
+
+    it('hayProyectosOcultos/hayProyectosVisibles reflejan el estado cargado', () => {
+      setup(of([{ ...proyecto }, { ...proyectoOculto }]));
+      component.ngOnInit();
+
+      expect(component.hayProyectosOcultos).toBeTrue();
+      expect(component.hayProyectosVisibles).toBeTrue();
+    });
+
+    it('activarTodos solo llama al backend para los ocultos', () => {
+      setup(of([{ ...proyecto }, { ...proyectoOculto }]));
+      cvEditorService.updateProyectoVisibilidad.and.returnValue(of({ ...proyectoOculto, mostrarEnCv: true }));
+      component.ngOnInit();
+
+      component.activarTodos();
+
+      expect(cvEditorService.updateProyectoVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateProyectoVisibilidad).toHaveBeenCalledWith(2, { mostrarEnCv: true });
+      expect(component.proyectos.find(p => p.proyectoId === 2)?.form.mostrarEnCv).toBeTrue();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('inactivarTodos solo llama al backend para los visibles', () => {
+      setup(of([{ ...proyecto }, { ...proyectoOculto }]));
+      cvEditorService.updateProyectoVisibilidad.and.returnValue(of({ ...proyecto, mostrarEnCv: false }));
+      component.ngOnInit();
+
+      component.inactivarTodos();
+
+      expect(cvEditorService.updateProyectoVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateProyectoVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+    });
+
+    it('no llama al backend si no hay nada que cambiar', () => {
+      setup(of([{ ...proyecto }]));
+      component.ngOnInit();
+
+      component.activarTodos();
+
+      expect(cvEditorService.updateProyectoVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('notifica error si falla el guardado en bloque', () => {
+      setup(of([{ ...proyectoOculto }]));
+      cvEditorService.updateProyectoVisibilidad.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+      component.ngOnInit();
+
+      component.activarTodos();
+
+      expect(component.guardandoVisibilidadBloque).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
   describe('agregar / cancelarBorrador', () => {
     it('crea un borrador vacio con equipo y duracion en 1', () => {
       setup();
