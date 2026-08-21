@@ -49,6 +49,23 @@ public static class ApiMessages
     }
 
     /// <summary>
+    /// Prompts de IA del área privada (propios de cada Publicador).
+    /// </summary>
+    public static class PromptIa
+    {
+        public const string CodigoRequerido = "El código del prompt es requerido.";
+        public const string CodigoInvalido =
+            "El código del prompt solo puede tener letras, números y guion bajo (p. ej. EXTRACTOR_OFERTA).";
+        public const string CodigoDuplicado = "Ya tienes un prompt con ese código.";
+        public const string NombreRequerido = "El nombre del prompt es requerido.";
+        public const string RolContextoRequerido = "El rol/contexto del prompt es requerido.";
+        public const string TareaRequerida = "La tarea del prompt es requerida.";
+        public const string FormatoSalidaRequerido = "El formato de salida del prompt es requerido.";
+        public const string NoEncontrado = "No existe un prompt activo con ese código.";
+        public const string VersionNoEncontrada = "No existe esa versión de prompt.";
+    }
+
+    /// <summary>
     /// Autenticación y registro.
     /// </summary>
     public static class Auth
