@@ -3,11 +3,13 @@ import { of, throwError } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { CvAnaliticasDetalleService } from '../../../core/services/cv/cv-analiticas-detalle.service';
 import { CvDetalleVistaContext } from '../../../shared/contexts/cv-detalle-vista.context';
+import { DashboardService, DashboardStatsDto } from '../../../core/services/private/dashboard.service';
 import type { CvDetalleDto } from '../../../core/services/public/public.service';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let cvAnaliticasDetalle: jasmine.SpyObj<CvAnaliticasDetalleService>;
+  let dashboardService: jasmine.SpyObj<DashboardService>;
   let cvDetalleCtx: CvDetalleVistaContext;
 
   const cvDetalle: CvDetalleDto = {
@@ -25,15 +27,27 @@ describe('DashboardComponent', () => {
     redesSociales: [],
   };
 
-  function setup(detalleResult = of(cvDetalle)): void {
+  const statsDto: DashboardStatsDto = {
+    totalVisitas: 42,
+    totalContactos: 3,
+    alertasNoLeidas: 2,
+    porcentajeCompletitud: 80,
+    ultimaVisita: '2026-08-20T10:00:00Z',
+    fechaActualizacion: '2026-08-20T10:00:00Z',
+  };
+
+  function setup(detalleResult = of(cvDetalle), statsResult = of(statsDto)): void {
     cvAnaliticasDetalle = jasmine.createSpyObj('CvAnaliticasDetalleService', ['detallePrivadoParaAnaliticas$']);
     cvAnaliticasDetalle.detallePrivadoParaAnaliticas$.and.returnValue(detalleResult);
+    dashboardService = jasmine.createSpyObj('DashboardService', ['getStats']);
+    dashboardService.getStats.and.returnValue(statsResult);
 
     TestBed.configureTestingModule({
       providers: [
         DashboardComponent,
         CvDetalleVistaContext,
         { provide: CvAnaliticasDetalleService, useValue: cvAnaliticasDetalle },
+        { provide: DashboardService, useValue: dashboardService },
       ],
     });
     component = TestBed.inject(DashboardComponent);
@@ -65,5 +79,24 @@ describe('DashboardComponent', () => {
     expect(component.loadingCvAnaliticas).toBeFalse();
     expect(component.cvAnaliticasError).toBeTrue();
     expect(component.cvAnaliticasListo).toBeFalse();
+  });
+
+  it('ngOnInit carga las estadisticas de actividad (visitas/contactos/alertas)', () => {
+    setup();
+    component.ngOnInit();
+
+    expect(dashboardService.getStats).toHaveBeenCalled();
+    expect(component.loadingStats).toBeFalse();
+    expect(component.statsError).toBeFalse();
+    expect(component.stats).toEqual(statsDto);
+  });
+
+  it('ngOnInit marca statsError y detiene la carga si /dashboard/stats falla', () => {
+    setup(of(cvDetalle), throwError(() => new Error('boom')));
+    component.ngOnInit();
+
+    expect(component.loadingStats).toBeFalse();
+    expect(component.statsError).toBeTrue();
+    expect(component.stats).toBeNull();
   });
 });

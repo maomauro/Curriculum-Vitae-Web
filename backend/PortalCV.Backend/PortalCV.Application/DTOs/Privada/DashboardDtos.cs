@@ -1,6 +1,6 @@
 ﻿namespace PortalCV.Application.DTOs.Privada;
 
-// â”€â”€ Dashboard stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Dashboard stats ─────────────────────────────────────────────────────────
 
 public record DashboardStatsDto(
     int TotalVisitas,
@@ -10,7 +10,7 @@ public record DashboardStatsDto(
     DateTime? UltimaVisita,
     DateTime FechaActualizacion);
 
-// â”€â”€ Contactos recibidos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Contactos recibidos ──────────────────────────────────────────────────────
 
 public record ContactoDto(
     int VisitanteContactoId,
@@ -23,7 +23,7 @@ public record ContactoDto(
     DateTime FechaContacto,
     bool EsLeido);
 
-// â”€â”€ Notificaciones (campanita) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Notificaciones (campanita) ───────────────────────────────────────────────
 
 public record NotificacionItemDto(
     int AlertaVisitaId,
