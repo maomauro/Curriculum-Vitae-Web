@@ -158,9 +158,28 @@
       </select>
     </div>
     <div class="col-12">
-      <label class="form-label" for="dp-foto-url">URL de foto de perfil</label>
-      <input id="dp-foto-url" type="url" class="form-control" placeholder="https://..."
-             [(ngModel)]="p.fotoUrl">
+      <label class="form-label d-block" for="dp-foto-input">Foto de perfil</label>
+      <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center justify-content-center rounded-circle bg-light border overflow-hidden flex-shrink-0"
+             style="width:72px;height:72px;">
+          <img *ngIf="fotoUrlActual" [src]="fotoUrlActual" alt="Foto de perfil" class="w-100 h-100 object-fit-cover" style="object-position: center 20%;">
+          <i *ngIf="!fotoUrlActual" class="bi bi-person-fill text-muted" style="font-size:1.75rem;" aria-hidden="true"></i>
+        </div>
+        <div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="subiendoFoto" (click)="fotoInput.click()">
+              <span *ngIf="subiendoFoto" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!subiendoFoto" class="bi bi-upload me-1"></i>{{ fotoUrlActual ? 'Cambiar foto' : 'Subir foto' }}
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" *ngIf="fotoUrlActual"
+                    [disabled]="subiendoFoto" (click)="eliminarFoto()">
+              <i class="bi bi-trash3 me-1"></i>Quitar
+            </button>
+          </div>
+          <div class="text-muted small mt-1">JPG, PNG o WEBP. Máximo 1 MB.</div>
+        </div>
+        <input #fotoInput id="dp-foto-input" type="file" accept="image/jpeg,image/png,image/webp" class="d-none" (change)="onFotoSeleccionada($event)">
+      </div>
     </div>
   </div>
 </div>

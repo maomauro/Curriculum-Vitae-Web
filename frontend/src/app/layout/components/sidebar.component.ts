@@ -5,7 +5,9 @@ import { filter } from 'rxjs';
 import { CV_ROL } from '../../core/constants/cv-roles';
 import { AuthService, UserInfo } from '../../core/services/auth/auth.service';
 import { AlertasConteoRefreshService } from '../../core/services/private/alertas-conteo-refresh.service';
+import { CvEditorService } from '../../core/services/private/cv-editor.service';
 import { DashboardService } from '../../core/services/private/dashboard.service';
+import { PersonalesFotoRefreshService } from '../../core/services/private/personales-foto-refresh.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -21,6 +23,8 @@ export class SidebarComponent implements OnInit {
   currentUser: UserInfo | null = null;
   /** Misma métrica que la campana del topbar: alertas de CV sin leer. */
   conteoAlertasNoLeidas = 0;
+  /** Foto de perfil (Personales.FotoUrl) si el usuario es publicador y la tiene subida. */
+  fotoUrl: string | null = null;
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -49,9 +53,11 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private cvEditorService: CvEditorService,
     private dashboardService: DashboardService,
     private router: Router,
-    private alertasConteoRefresh: AlertasConteoRefreshService
+    private alertasConteoRefresh: AlertasConteoRefreshService,
+    private personalesFotoRefresh: PersonalesFotoRefreshService
   ) {}
 
   ngOnInit(): void {
@@ -59,8 +65,10 @@ export class SidebarComponent implements OnInit {
       this.currentUser = user;
       if (user && this.authService.hasRol(CV_ROL.publicador)) {
         this.refrescarConteoAlertas();
+        this.refrescarFoto();
       } else {
         this.conteoAlertasNoLeidas = 0;
+        this.fotoUrl = null;
       }
     });
 
@@ -82,12 +90,31 @@ export class SidebarComponent implements OnInit {
           this.refrescarConteoAlertas();
         }
       });
+
+    this.personalesFotoRefresh.refreshRequested$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.currentUser && this.authService.hasRol(CV_ROL.publicador)) {
+          this.refrescarFoto();
+        }
+      });
   }
 
   private refrescarConteoAlertas(): void {
     this.dashboardService.getNotificaciones(1).subscribe({
       next: d => {
         this.conteoAlertasNoLeidas = d.conteoNoLeidas;
+      },
+    });
+  }
+
+  private refrescarFoto(): void {
+    this.cvEditorService.getPersonales().subscribe({
+      next: p => {
+        this.fotoUrl = p.fotoUrl;
+      },
+      error: () => {
+        this.fotoUrl = null;
       },
     });
   }

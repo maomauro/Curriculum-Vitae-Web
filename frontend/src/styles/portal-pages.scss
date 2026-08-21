@@ -456,6 +456,32 @@
 .cv-border-t-soft {
   border-top: 1px solid #f0f0f0;
 }
+// Ancho fijo -- igual en el encabezado (vacio) y en cada fila (3 o 4 botones segun
+// esActivo) -- para que las columnas de info alineen entre filas sin importar cuantos
+// botones tenga cada una.
+.vis-ia-acciones {
+  width: 172px;
+  justify-content: flex-end;
+}
+
+// Panel de vista previa en vivo (Configuración -> Visibilidad del CV). Fijo al hacer
+// scroll en pantallas grandes; en angostas se apila debajo de los controles (columna
+// Bootstrap col-lg-* ya se encarga de eso).
+.cv-preview-panel-card {
+  @media (min-width: 992px) {
+    position: sticky;
+    top: 12px;
+  }
+}
+.cv-preview-panel-tabs .nav-link {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.cv-preview-panel-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
 .cv-actions-row-soft {
   border-top: 1px solid #f0f0f0;
 }
@@ -773,6 +799,9 @@
   font-size: 0.85rem;
   opacity: 0.85;
 }
+.cv-preview-meta-red {
+  flex: 1 0 100%;
+}
 .cv-preview-sidebar {
   background: #f8f9fa;
   border-right: 1px solid #dee2e6;
@@ -951,6 +980,9 @@
 
   .cv-mi-photo-img {
     object-fit: cover;
+    // Sesga el recorte hacia arriba: en fotos tipo retrato, centrar al 50% vertical
+    // suele cortar la frente/parte superior de la cabeza.
+    object-position: center 20%;
     display: block;
   }
 
@@ -2447,27 +2479,19 @@
     min-width: 0;
   }
 
-  .skill-actions {
-    flex: 0 0 40px;
-    text-align: right;
+  .skill-visible {
+    flex: 0 0 84px;
+    text-align: center;
   }
-}
 
-.hab-tecnica-block .btn-hab-del,
-.hab-blanda-block .btn-hab-del,
-.hab-idioma-block .btn-hab-del {
-  background: none;
-  border: none;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 0.9rem;
-  border-radius: 4px;
-  padding: 4px 6px;
-  line-height: 1;
+  .skill-row--oculta {
+    opacity: 0.55;
+  }
 
-  &:hover {
-    background: #fff5f5;
-    color: #dc3545;
+  .skill-actions {
+    flex: 0 0 auto;
+    min-width: 110px;
+    text-align: right;
   }
 }
 
@@ -2647,6 +2671,44 @@
   font-size: 0.85rem;
   margin-right: auto;
   max-width: 520px;
+}
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
 }
 .cv-notif-dropdown {
   width: 340px;

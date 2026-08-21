@@ -42,6 +42,8 @@ public class PersonalesConfiguration : IEntityTypeConfiguration<Personales>
         builder.Property(p => p.Direccion).HasMaxLength(200);
         builder.Property(p => p.TipoResidencia).HasMaxLength(30);
         builder.Property(p => p.FotoUrl).HasMaxLength(500);
+        builder.Property(p => p.FotoBytes).HasColumnType("varbinary(max)");
+        builder.Property(p => p.FotoContentType).HasMaxLength(100);
 
         builder.HasOne(p => p.Curriculum)
             .WithOne(c => c.Personales)

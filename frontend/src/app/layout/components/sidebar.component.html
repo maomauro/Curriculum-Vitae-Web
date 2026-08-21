@@ -12,7 +12,10 @@
   </div>
 
   <div class="sidebar-user" *ngIf="currentUser">
-    <div class="sidebar-avatar">{{ initials }}</div>
+    <div class="sidebar-avatar">
+      <img *ngIf="fotoUrl" [src]="fotoUrl" alt="Foto de perfil">
+      <ng-container *ngIf="!fotoUrl">{{ initials }}</ng-container>
+    </div>
     <div class="cv-sidebar-user-text text-center">
       <div class="sidebar-user-email" [title]="currentUser.email">{{ currentUser.email }}</div>
       <div class="sidebar-role">{{ currentUser.rol }}</div>
@@ -22,6 +25,20 @@
   <nav class="mt-2">
     <ul class="nav sidebar-menu flex-column" role="menu">
       <ng-container *ngIf="mostrarMenuPublicador">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/alertas" routerLinkActive="active">
+            <i class="nav-icon bi bi-bell-fill"></i>
+            <p class="mb-0">
+              Alertas
+              <span class="nav-badge" *ngIf="conteoAlertasNoLeidas > 0">{{ conteoAlertasNoLeidas }}</span>
+            </p>
+          </a>
+        </li>
+
+        <li class="nav-item cv-sidebar-divider-li px-3">
+          <hr class="cv-sidebar-hr my-2" />
+        </li>
+
         <li class="nav-item">
           <a
             class="nav-link"
@@ -33,12 +50,9 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/alertas" routerLinkActive="active">
-            <i class="nav-icon bi bi-bell-fill"></i>
-            <p class="mb-0">
-              Alertas
-              <span class="nav-badge" *ngIf="conteoAlertasNoLeidas > 0">{{ conteoAlertasNoLeidas }}</span>
-            </p>
+          <a class="nav-link" routerLink="/profesional" routerLinkActive="active">
+            <i class="nav-icon bi bi-person-workspace"></i>
+            <p class="mb-0">Profesional</p>
           </a>
         </li>
         <li class="nav-item">
@@ -86,6 +100,23 @@
           <a class="nav-link" routerLink="/habilidades" routerLinkActive="active">
             <i class="nav-icon bi bi-stars"></i>
             <p class="mb-0">Habilidades</p>
+          </a>
+        </li>
+
+        <li class="nav-item cv-sidebar-divider-li px-3">
+          <hr class="cv-sidebar-hr my-2" />
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/analizar-oferta" routerLinkActive="active">
+            <i class="nav-icon bi bi-magic"></i>
+            <p class="mb-0">Analizar Oferta</p>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/prompts-ia" routerLinkActive="active">
+            <i class="nav-icon bi bi-robot"></i>
+            <p class="mb-0">Prompts de IA</p>
           </a>
         </li>
       </ng-container>
