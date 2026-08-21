@@ -4,13 +4,13 @@
     <h4><i class="bi bi-people-fill me-2 text-primary"></i>Referencias personales</h4>
     <span class="text-muted small">Personas que pueden dar fe de tu trayectoria (solo referencias de tipo personal)</span>
   </div>
-  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregar()">
+  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
     <i class="bi bi-plus-circle me-1"></i>Agregar referencia
   </button>
 </div>
 
 <div class="d-flex justify-content-end mb-2" *ngIf="embedded">
-  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregar()">
+  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
     <i class="bi bi-plus-circle me-1"></i>Agregar referencia
   </button>
 </div>
@@ -116,7 +116,7 @@
         </button>
         <button *ngIf="ref.referenciaId !== 0" type="button" class="btn btn-outline-danger btn-sm"
                 (click)="eliminar(ref)">
-          <i class="bi bi-trash me-1"></i>Eliminar
+          <i class="bi bi-trash3 me-1"></i>Eliminar
         </button>
         <button type="button" class="btn btn-primary btn-sm" (click)="guardar(ref)" [disabled]="guardando">
           <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
