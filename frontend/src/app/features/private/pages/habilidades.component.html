@@ -35,12 +35,26 @@
         <div class="seccion-subtitulo mb-0">{{ sec.subtitulo }}</div>
       </div>
     </div>
-    <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0"
-            (click)="onAgregarHabilidadClick($event, sec.tipo)"
-            [disabled]="hayBorradorDe(sec.tipo)"
-            [attr.title]="hayBorradorDe(sec.tipo) ? 'Completa o cancela la fila nueva antes de agregar otra.' : null">
-      <i class="bi bi-plus-circle me-1"></i>{{ sec.botonLabel }}
-    </button>
+    <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="activarTodasDe(sec.tipo)"
+              *ngIf="guardadasDe(sec.tipo).length > 0"
+              [disabled]="guardandoVisibilidadBloque || !hayOcultasDe(sec.tipo)"
+              title="Muestra en el CV todos los registros de esta sección">
+        <i class="bi bi-eye me-1"></i>Activar todas
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="inactivarTodasDe(sec.tipo)"
+              *ngIf="guardadasDe(sec.tipo).length > 0"
+              [disabled]="guardandoVisibilidadBloque || !hayVisiblesDe(sec.tipo)"
+              title="Oculta del CV todos los registros de esta sección">
+        <i class="bi bi-eye-slash me-1"></i>Inactivar todas
+      </button>
+      <button type="button" class="btn btn-primary btn-sm"
+              (click)="onAgregarHabilidadClick($event, sec.tipo)"
+              [disabled]="hayBorradorDe(sec.tipo)"
+              [attr.title]="hayBorradorDe(sec.tipo) ? 'Completa o cancela la fila nueva antes de agregar otra.' : null">
+        <i class="bi bi-plus-circle me-1"></i>{{ sec.botonLabel }}
+      </button>
+    </div>
   </div>
 
   <div *ngIf="isAccordionOpen(sec.tipo)" id="hab-panel-{{ sec.claseId }}" role="region"
@@ -51,10 +65,11 @@
       <div class="skill-name"><small class="text-muted fw-bold">Nombre</small></div>
       <div class="skill-level"><small class="text-muted fw-bold">Nivel</small></div>
       <div class="skill-desc"><small class="text-muted fw-bold">Descripción (opcional)</small></div>
+      <div class="skill-visible"><small class="text-muted fw-bold">En CV</small></div>
       <div class="skill-actions" aria-hidden="true"></div>
     </div>
 
-    <div class="skill-row" *ngFor="let skill of guardadasDe(sec.tipo)">
+    <div class="skill-row" [class.skill-row--oculta]="!skill.mostrarEnCv" *ngFor="let skill of guardadasDe(sec.tipo)">
       <div class="skill-name">
         <input type="text" class="form-control form-control-sm" [(ngModel)]="skill.nombre"
                [attr.aria-label]="sec.nombreAriaLabel"
@@ -72,9 +87,22 @@
                (blur)="onSkillFieldCommit(skill)"
                placeholder="Descripción opcional">
       </div>
+      <div class="skill-visible">
+        <div class="form-check form-switch mb-0 d-inline-block">
+          <input class="form-check-input" type="checkbox" role="switch"
+                 aria-label="Mostrar en Mi CV"
+                 [ngModel]="skill.mostrarEnCv"
+                 (ngModelChange)="onMostrarEnCvChange(skill, $event)"
+                 [disabled]="guardandoVisibilidadHabilidadId === skill.habilidadId">
+        </div>
+        <div class="mt-1">
+          <span *ngIf="skill.mostrarEnCv" class="badge-active"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>En CV</span>
+          <span *ngIf="!skill.mostrarEnCv" class="badge-inactive">No visible</span>
+        </div>
+      </div>
       <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="eliminar(skill)" [attr.title]="sec.eliminarTitle">
-          <i class="bi bi-trash3"></i>
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminar(skill)" [attr.title]="sec.eliminarTitle">
+          <i class="bi bi-trash3 me-1"></i>Eliminar
         </button>
       </div>
     </div>
@@ -97,10 +125,11 @@
                (blur)="onSkillFieldCommit(draft)"
                placeholder="Descripción opcional">
       </div>
+      <div class="skill-visible" aria-hidden="true"></div>
       <div class="skill-actions">
-        <button type="button" class="btn-hab-del" (click)="cancelarBorrador(draft)"
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarBorrador(draft)"
                 title="Cancelar fila nueva (sin guardar)">
-          <i class="bi bi-x-lg"></i>
+          <i class="bi bi-x-lg me-1"></i>Cancelar
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { CvEditorService, RedSocialDto, UpsertRedSocialRequest } from '../../../core/services/private/cv-editor.service';
 import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
@@ -34,6 +35,8 @@ export class RedesSocialesComponent implements OnInit {
   redesOpciones = REDES_OPCIONES;
   loading = false;
   guardando = false;
+  guardandoVisibilidadRedSocialId: number | null = null;
+  guardandoVisibilidadBloque = false;
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -59,7 +62,12 @@ export class RedesSocialesComponent implements OnInit {
   }
 
   toForm(r: RedSocialDto): UpsertRedSocialRequest {
-    return { nombreRed: r.nombreRed, linkPublico: r.linkPublico, usuarioContacto: r.usuarioContacto };
+    return {
+      nombreRed: r.nombreRed,
+      linkPublico: r.linkPublico,
+      usuarioContacto: r.usuarioContacto,
+      mostrarEnCv: r.mostrarEnCv !== false,
+    };
   }
 
   agregar(): void {
@@ -68,8 +76,81 @@ export class RedesSocialesComponent implements OnInit {
       nombreRed: 'LinkedIn',
       linkPublico: null,
       usuarioContacto: null,
+      mostrarEnCv: true,
       editando: true,
-      form: { nombreRed: 'LinkedIn', linkPublico: null, usuarioContacto: null },
+      form: { nombreRed: 'LinkedIn', linkPublico: null, usuarioContacto: null, mostrarEnCv: true },
+    });
+  }
+
+  onMostrarEnCvChange(red: RedSocialUI, visible: boolean): void {
+    if (red.redSocialId === 0) {
+      return;
+    }
+    const prev = !visible;
+    if (this.guardandoVisibilidadRedSocialId === red.redSocialId) {
+      return;
+    }
+    this.guardandoVisibilidadRedSocialId = red.redSocialId;
+    this.cvEditorService.updateRedSocialVisibilidad(red.redSocialId, { mostrarEnCv: visible }).subscribe({
+      next: actualizada => {
+        Object.assign(red, actualizada, { editando: red.editando, form: this.toForm(actualizada) });
+        this.guardandoVisibilidadRedSocialId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        red.form.mostrarEnCv = prev;
+        this.guardandoVisibilidadRedSocialId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  get hayRedesGuardadas(): boolean {
+    return this.redes.some(r => r.redSocialId !== 0);
+  }
+
+  get hayRedesOcultas(): boolean {
+    return this.redes.some(r => r.redSocialId !== 0 && !r.form.mostrarEnCv);
+  }
+
+  get hayRedesVisibles(): boolean {
+    return this.redes.some(r => r.redSocialId !== 0 && r.form.mostrarEnCv);
+  }
+
+  activarTodas(): void {
+    this.actualizarVisibilidadEnBloque(true);
+  }
+
+  inactivarTodas(): void {
+    this.actualizarVisibilidadEnBloque(false);
+  }
+
+  private actualizarVisibilidadEnBloque(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloque) {
+      return;
+    }
+    const objetivo = this.redes.filter(r => r.redSocialId !== 0 && r.form.mostrarEnCv !== mostrar);
+    if (objetivo.length === 0) {
+      return;
+    }
+    this.guardandoVisibilidadBloque = true;
+    forkJoin(
+      objetivo.map(r => this.cvEditorService.updateRedSocialVisibilidad(r.redSocialId, { mostrarEnCv: mostrar }))
+    ).subscribe({
+      next: actualizadas => {
+        actualizadas.forEach(actualizada => {
+          const red = this.redes.find(r => r.redSocialId === actualizada.redSocialId);
+          if (red) {
+            Object.assign(red, actualizada, { editando: red.editando, form: this.toForm(actualizada) });
+          }
+        });
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
     });
   }
 
@@ -83,6 +164,7 @@ export class RedesSocialesComponent implements OnInit {
       nombreRed,
       linkPublico: red.form.linkPublico?.trim() || null,
       usuarioContacto: red.form.usuarioContacto?.trim() || null,
+      mostrarEnCv: red.form.mostrarEnCv,
     };
 
     this.guardando = true;

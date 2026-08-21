@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { CvEditorService, HabilidadDto, UpsertHabilidadRequest } from '../../../core/services/private/cv-editor.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { FORM_MESSAGES } from '../../../core/constants/form-messages';
@@ -41,6 +42,8 @@ export class HabilidadesComponent implements OnInit {
   private readonly savedFingerprintByKey = new Map<string, string>();
   private readonly savingKeys = new Set<string>();
   private readonly pendingAutosaveKeys = new Set<string>();
+  guardandoVisibilidadHabilidadId: number | null = null;
+  guardandoVisibilidadBloque = false;
 
   niveles = ['Básico', 'Intermedio', 'Avanzado', 'Experto'];
 
@@ -217,8 +220,79 @@ export class HabilidadesComponent implements OnInit {
       nivelEscritura: null,
       nivelEscucha: null,
       nivelHabla: null,
+      mostrarEnCv: true,
     };
     this.habilidades.push(nueva);
+  }
+
+  onMostrarEnCvChange(skill: HabilidadUI, visible: boolean): void {
+    if (skill.habilidadId === 0) {
+      return;
+    }
+    const prev = !visible;
+    if (this.guardandoVisibilidadHabilidadId === skill.habilidadId) {
+      return;
+    }
+    this.guardandoVisibilidadHabilidadId = skill.habilidadId;
+    this.cvEditorService.updateHabilidadVisibilidad(skill.habilidadId, { mostrarEnCv: visible }).subscribe({
+      next: actualizada => {
+        Object.assign(skill, actualizada);
+        this.markSkillSynced(skill);
+        this.guardandoVisibilidadHabilidadId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        skill.mostrarEnCv = prev;
+        this.guardandoVisibilidadHabilidadId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  hayOcultasDe(tipo: HabilidadTipoCv): boolean {
+    return this.guardadasDe(tipo).some(h => !h.mostrarEnCv);
+  }
+
+  hayVisiblesDe(tipo: HabilidadTipoCv): boolean {
+    return this.guardadasDe(tipo).some(h => h.mostrarEnCv);
+  }
+
+  activarTodasDe(tipo: HabilidadTipoCv): void {
+    this.actualizarVisibilidadEnBloque(tipo, true);
+  }
+
+  inactivarTodasDe(tipo: HabilidadTipoCv): void {
+    this.actualizarVisibilidadEnBloque(tipo, false);
+  }
+
+  private actualizarVisibilidadEnBloque(tipo: HabilidadTipoCv, mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloque) {
+      return;
+    }
+    const objetivo = this.guardadasDe(tipo).filter(h => h.mostrarEnCv !== mostrar);
+    if (objetivo.length === 0) {
+      return;
+    }
+    this.guardandoVisibilidadBloque = true;
+    forkJoin(
+      objetivo.map(h => this.cvEditorService.updateHabilidadVisibilidad(h.habilidadId, { mostrarEnCv: mostrar }))
+    ).subscribe({
+      next: actualizadas => {
+        actualizadas.forEach(actualizada => {
+          const skill = this.habilidades.find(h => h.habilidadId === actualizada.habilidadId);
+          if (skill) {
+            Object.assign(skill, actualizada);
+            this.markSkillSynced(skill);
+          }
+        });
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
   }
 
   /** Quita la fila borrador (habilidadId === 0) sin confirmación. */
@@ -238,6 +312,7 @@ export class HabilidadesComponent implements OnInit {
       nivelEscritura: skill.nivelEscritura,
       nivelEscucha: skill.nivelEscucha,
       nivelHabla: skill.nivelHabla,
+      mostrarEnCv: skill.mostrarEnCv,
     };
   }
 

@@ -24,6 +24,8 @@ public class HabilidadConfiguration : IEntityTypeConfiguration<Habilidad>
         builder.Property(h => h.NivelEscucha).HasMaxLength(5);
         builder.Property(h => h.NivelHabla).HasMaxLength(5);
 
+        builder.Property(h => h.MostrarEnCv).HasDefaultValue(true);
+
         builder.HasOne(h => h.Curriculum)
             .WithMany(c => c.Habilidades)
             .HasForeignKey(h => h.CurriculumId)

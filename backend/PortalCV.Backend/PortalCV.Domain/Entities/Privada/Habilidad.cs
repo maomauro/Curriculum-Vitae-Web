@@ -14,6 +14,7 @@ public class Habilidad
     public string? NivelEscritura { get; set; }
     public string? NivelEscucha { get; set; }
     public string? NivelHabla { get; set; }
+    public bool MostrarEnCv { get; set; } = true;
 
     public Curriculum Curriculum { get; set; } = null!;
 }

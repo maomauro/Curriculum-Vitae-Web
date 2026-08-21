@@ -29,6 +29,14 @@ public class HabilidadController : CvControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpsertHabilidadRequest request, CancellationToken ct = default)
         => Ok(await _editor.UpdateHabilidadAsync(GetCurriculumId(), id, request, ct));
 
+    [HttpPatch("{id:int}/visibilidad")]
+    [HttpPut("{id:int}/visibilidad")]
+    public async Task<IActionResult> UpdateVisibilidad(
+        int id,
+        [FromBody] UpdateHabilidadVisibilidadRequest request,
+        CancellationToken ct = default)
+        => Ok(await _editor.UpdateHabilidadVisibilidadAsync(GetCurriculumId(), id, request, ct));
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
