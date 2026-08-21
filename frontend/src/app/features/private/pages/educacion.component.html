@@ -3,9 +3,23 @@
     <h4><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Formación Académica</h4>
     <p class="text-muted small mb-0">Registra títulos, certificaciones y estudios; elige el tipo en cada tarjeta. Cada registro se guarda por separado.</p>
   </div>
-  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
-    <i class="bi bi-plus-circle me-1"></i>Agregar formación
-  </button>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="activarTodas()"
+            *ngIf="hayFormacionesGuardadas"
+            [disabled]="guardandoVisibilidadBloque || !hayFormacionesOcultas"
+            title="Muestra en el CV todos los registros de formación">
+      <i class="bi bi-eye me-1"></i>Activar todas
+    </button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="inactivarTodas()"
+            *ngIf="hayFormacionesGuardadas"
+            [disabled]="guardandoVisibilidadBloque || !hayFormacionesVisibles"
+            title="Oculta del CV todos los registros de formación">
+      <i class="bi bi-eye-slash me-1"></i>Inactivar todas
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+      <i class="bi bi-plus-circle me-1"></i>Agregar formación
+    </button>
+  </div>
 </div>
 
 <div *ngIf="loading" class="text-center py-5">
@@ -104,17 +118,33 @@
           <label class="form-label" [for]="'edu-fecha-vigencia-'+i">Vigencia hasta</label>
           <input [id]="'edu-fecha-vigencia-'+i" type="date" class="form-control" [(ngModel)]="edu.form.fechaVigencia">
         </div>
-        <div class="col-md-6 col-lg-4" *ngIf="!esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label" [for]="'edu-soporte-'+i">Soporte / diploma</label>
-          <input [id]="'edu-soporte-'+i" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
-                 [title]="hintAdjuntoSoporte">
-          <small class="text-muted">{{ notaAdjuntoSoporte }}</small>
-        </div>
-        <div class="col-md-6 col-lg-4" *ngIf="esCertificacion(edu.form.tipoFormacion)">
-          <label class="form-label" [for]="'edu-soporte-'+i">Archivo del certificado</label>
-          <input [id]="'edu-soporte-'+i" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
-                 [title]="hintAdjuntoSoporte">
-          <small class="text-muted">{{ notaAdjuntoSoporte }}</small>
+        <div class="col-md-6 col-lg-4">
+          <label class="form-label d-block" [for]="'edu-soporte-'+i">
+            {{ esCertificacion(edu.form.tipoFormacion) ? 'Archivo del certificado' : 'Soporte / diploma' }}
+          </label>
+          <ng-container *ngIf="edu.formacionId !== 0; else eduSoporteNuevoHint">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <a *ngIf="edu.adjuntoSoporte" [href]="edu.adjuntoSoporte" target="_blank" rel="noopener"
+                 class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Ver actual
+              </a>
+              <button type="button" class="btn btn-outline-secondary btn-sm"
+                      [disabled]="subiendoAdjuntoFormacionId === edu.formacionId" (click)="soporteInput.click()">
+                <span *ngIf="subiendoAdjuntoFormacionId === edu.formacionId" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="subiendoAdjuntoFormacionId !== edu.formacionId" class="bi bi-upload me-1"></i>{{ edu.adjuntoSoporte ? 'Cambiar' : 'Subir' }}
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-sm" *ngIf="edu.adjuntoSoporte"
+                      [disabled]="subiendoAdjuntoFormacionId === edu.formacionId" (click)="eliminarAdjunto(edu)">
+                <i class="bi bi-trash3 me-1"></i>Quitar
+              </button>
+            </div>
+            <input #soporteInput [id]="'edu-soporte-'+i" type="file" class="d-none" accept="application/pdf"
+                   (change)="onAdjuntoSeleccionado($event, edu)">
+            <small class="text-muted d-block mt-1">Solo PDF, máximo 3 MB.</small>
+          </ng-container>
+          <ng-template #eduSoporteNuevoHint>
+            <small class="text-muted d-block">Guarda el registro primero para poder adjuntar el archivo.</small>
+          </ng-template>
         </div>
         <div class="col-12">
           <label class="form-label" [for]="'edu-descripcion-'+i">Descripción adicional</label>

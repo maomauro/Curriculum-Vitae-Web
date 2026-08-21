@@ -70,6 +70,7 @@ export interface ExperienciaPublicoDto {
   esActual: boolean;
   funciones: string | null;
   tipoContrato: string | null;
+  adjuntoSoporte: string | null;
 }
 
 export interface FormacionPublicoDto {
@@ -80,6 +81,7 @@ export interface FormacionPublicoDto {
   tipoFormacion: string | null;
   fechaInicio: string | null;
   fechaFin: string | null;
+  adjuntoSoporte: string | null;
 }
 
 export interface HabilidadPublicoDto {
@@ -140,6 +142,18 @@ export interface CvDetalleDto {
   dashboardMostrarMetricas?: boolean;
   /** Gráficas (4) en el dashboard público. */
   dashboardMostrarGraficas?: boolean;
+  /** Pestaña "Información profesional" del CV público (default true si la API no envía el campo). */
+  informacionProfesionalPublicaActiva?: boolean;
+  /** Pestaña "Hoja de vida" del CV público (default true si la API no envía el campo). */
+  hojaDeVidaPublicaActiva?: boolean;
+  /** Filas crudas de VisibilidadSeccion -- para filtrar el consolidado (Información
+   * Personal/Profesional) igual que hacía antes la vista privada. */
+  visibilidadSeccion?: VisibilidadSeccionPublicaDto[];
+}
+
+export interface VisibilidadSeccionPublicaDto {
+  seccion: string;
+  visible: boolean;
 }
 
 /** Espejo de CvEstadisticasDto (backend). */
@@ -169,6 +183,14 @@ export interface BuscarCvsParams {
 
 // ── Servicio ─────────────────────────────────────────────────────────────────
 
+/** El backend devuelve `fotoUrl`/`adjuntoSoporte` como ruta relativa (p. ej.
+ * `/api/public/cvs/{slug}/foto`) cuando hay un archivo subido como binario -- se
+ * antepone API_BASE_URL para que sea usable directo en `<img [src]>` / `<a [href]>`.
+ * Las URLs legacy pegadas por el usuario ya son absolutas y se dejan intactas. */
+function absolutizarUrl(url: string | null): string | null {
+  return url?.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PublicService {
   private readonly BASE = `${API_BASE_URL}/api/public`;
@@ -183,7 +205,12 @@ export class PublicService {
     if (params.page)      httpParams = httpParams.set('page', String(params.page));
     if (params.pageSize)  httpParams = httpParams.set('pageSize', String(params.pageSize));
 
-    return this.http.get<CvListadoResponse>(`${this.BASE}/cvs`, { params: httpParams });
+    return this.http.get<CvListadoResponse>(`${this.BASE}/cvs`, { params: httpParams }).pipe(
+      map(res => ({
+        ...res,
+        items: res.items.map(item => ({ ...item, fotoUrl: absolutizarUrl(item.fotoUrl) })),
+      }))
+    );
   }
 
   getDetalle(urlPublica: string): Observable<CvDetalleDto> {
@@ -194,7 +221,17 @@ export class PublicService {
     }
     return this.http
       .get<unknown>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}`, { params })
-      .pipe(map(raw => deepToCamel(raw) as CvDetalleDto));
+      .pipe(
+        map(raw => deepToCamel(raw) as CvDetalleDto),
+        map(dto => ({
+          ...dto,
+          personales: dto.personales
+            ? { ...dto.personales, fotoUrl: absolutizarUrl(dto.personales.fotoUrl) }
+            : dto.personales,
+          experiencias: dto.experiencias.map(e => ({ ...e, adjuntoSoporte: absolutizarUrl(e.adjuntoSoporte) })),
+          formaciones: dto.formaciones.map(f => ({ ...f, adjuntoSoporte: absolutizarUrl(f.adjuntoSoporte) })),
+        }))
+      );
   }
 
   getEstadisticas(urlPublica: string): Observable<CvEstadisticasDto> {

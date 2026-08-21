@@ -19,6 +19,8 @@ public class ExperienciaConfiguration : IEntityTypeConfiguration<Experiencia>
         builder.Property(e => e.MotivoRetiro).HasMaxLength(200);
         builder.Property(e => e.Funciones).HasColumnType("nvarchar(max)");
         builder.Property(e => e.AdjuntoSoporte).HasMaxLength(500);
+        builder.Property(e => e.AdjuntoSoporteBytes).HasColumnType("varbinary(max)");
+        builder.Property(e => e.AdjuntoSoporteContentType).HasMaxLength(100);
         builder.Property(e => e.EsActual).HasDefaultValue(false);
         builder.Property(e => e.MostrarEnCv).HasDefaultValue(true);
         builder.Property(e => e.FechaRegistro).HasDefaultValueSql("GETUTCDATE()");

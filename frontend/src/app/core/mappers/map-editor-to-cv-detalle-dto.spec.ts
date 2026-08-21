@@ -2,6 +2,7 @@ import { mapEditorToCvDetalleDto } from './map-editor-to-cv-detalle-dto';
 import type {
   ExperienciaDto,
   FormacionDto,
+  HabilidadDto,
   PresentacionCvDto,
   ProyectoDto,
   ReferenciaDto,
@@ -210,6 +211,39 @@ describe('mapEditorToCvDetalleDto', () => {
     const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], formaciones, [], [], [], []);
     expect(dto.formaciones.length).toBe(1);
     expect(dto.formaciones[0].formacionId).toBe(1);
+  });
+
+  it('excluye habilidades con mostrarEnCv false', () => {
+    const habilidades = [
+      {
+        habilidadId: 20,
+        nombre: 'Visible',
+        tipo: 'Tecnica',
+        nivel: 'Avanzado',
+        descripcion: null,
+        nivelLectura: null,
+        nivelEscritura: null,
+        nivelEscucha: null,
+        nivelHabla: null,
+        mostrarEnCv: true,
+      },
+      {
+        habilidadId: 21,
+        nombre: 'Oculta',
+        tipo: 'Tecnica',
+        nivel: 'Avanzado',
+        descripcion: null,
+        nivelLectura: null,
+        nivelEscritura: null,
+        nivelEscucha: null,
+        nivelHabla: null,
+        mostrarEnCv: false,
+      },
+    ] as HabilidadDto[];
+
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], habilidades, [], [], []);
+    expect(dto.habilidades.length).toBe(1);
+    expect(dto.habilidades[0].habilidadId).toBe(20);
   });
 
   it('excluye proyectos con mostrarEnCv false', () => {

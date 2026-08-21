@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -25,6 +26,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     public const string TestJwtIssuer = "PortalCV.Api.Tests";
     public const string TestJwtAudience = "PortalCV.Client.Tests";
 
+    // Clave AES-256 (32 bytes) solo para tests, en base64 — ver AesGcmApiKeyCipher.
+    public static readonly string TestEncryptionKeyBase64 =
+        Convert.ToBase64String(Encoding.UTF8.GetBytes("TestEncryptionKey32BytesLong!!!!"));
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -38,6 +43,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Key", TestJwtKey);
         builder.UseSetting("Jwt:Issuer", TestJwtIssuer);
         builder.UseSetting("Jwt:Audience", TestJwtAudience);
+        builder.UseSetting("Encryption:Key", TestEncryptionKeyBase64);
 
         builder.ConfigureTestServices(services =>
         {

@@ -25,6 +25,7 @@ function experiencia(over: Partial<ExperienciaPublicoDto>): ExperienciaPublicoDt
     esActual: false,
     funciones: null,
     tipoContrato: null,
+    adjuntoSoporte: null,
     ...over,
   };
 }
@@ -38,6 +39,7 @@ function formacion(over: Partial<FormacionPublicoDto>): FormacionPublicoDto {
     tipoFormacion: 'Pregrado',
     fechaInicio: '2015-01-01',
     fechaFin: '2019-01-01',
+    adjuntoSoporte: null,
     ...over,
   };
 }
