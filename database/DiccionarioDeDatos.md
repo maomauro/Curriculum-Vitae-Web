@@ -86,9 +86,11 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | CodigoPostal         | varchar(20)      | Código postal                               |                               |
 | Direccion            | varchar(255)     | Dirección                                   |                               |
 | TipoResidencia       | varchar(50)      | Tipo de residencia                          |                               |
-| FotoUrl              | varchar(500)     | URL de la foto de perfil                    |                               |
-| PrivacidadEmail      | varchar(20)      | Visibilidad del email en el CV público      | not null, default: 'Publico'; IN ('Publico','SoloFormulario','Oculto') |
-| PrivacidadTelefono   | varchar(20)      | Visibilidad del teléfono en el CV público   | not null, default: 'Publico'; IN ('Publico','Parcial','Oculto') |
+| FotoUrl              | varchar(500)     | URL de foto pegada por el usuario (legacy). Se ignora si FotoBytes tiene valor |  |
+| FotoBytes            | varbinary(max)   | Foto de perfil subida como archivo (máx. 1 MB, validado en aplicación) |       |
+| FotoContentType      | varchar(100)     | Tipo MIME de FotoBytes (image/jpeg, image/png, image/webp) |               |
+
+> **Visibilidad de Email/Celular en el CV público:** no son columnas propias de `Personales` — se controlan con filas genéricas en `VisibilidadSeccion` (claves `datos-personales.email` / `datos-personales.telefono`, ver tabla más abajo). Sin fila guardada, el atributo se considera visible por defecto.
 
 ---
 
@@ -137,6 +139,7 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | NombreRed       | varchar(50)    | Nombre de la red social                     | not null                     |
 | LinkPublico     | varchar(500)   | Enlace público al perfil                    |                               |
 | UsuarioContacto | varchar(100)   | Usuario/contacto en la red                  |                               |
+| MostrarEnCv     | bit            | Si la red social se muestra en el CV público | not null, default 1          |
 
 ---
 
@@ -147,9 +150,32 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | CurriculumId           | int              | CV asociado                                 | FK Curriculum.CurriculumId, not null |
 | NombrePerfil           | varchar(100)     | Nombre del perfil profesional                |                               |
 | DescripcionPerfil      | text             | Descripción del perfil                       |                               |
+| ExperienciaPerfilAnios | decimal(5,2)     | Años de experiencia asociados a este perfil  |                               |
 | AspiracionSalarialPesos| decimal(18,2)    | Aspiración salarial en pesos                 |                               |
 | AspiracionSalarialDolares| decimal(18,2)  | Aspiración salarial en dólares               |                               |
 | EsActivo               | boolean        | Indica si el perfil está activo/habilitado   | not null, default: 1          |
+
+---
+
+## Tabla: Oferta
+Historial de ofertas laborales analizadas por el postulante (flujo Oferta → Perfil → CV generado, ver `docs/arquitectura/Roadmap-Ofertas-IA.md`).
+
+| Columna          | Tipo           | Descripción                                        | Reglas                                        |
+|------------------|----------------|------------------------------------------------------|------------------------------------------------|
+| OfertaId         | int            | Identificador único                                   | PK, autoincrement, not null                    |
+| CurriculumId     | int            | CV asociado                                           | FK Curriculum.CurriculumId, not null, ON DELETE CASCADE |
+| Cargo            | varchar(150)   | Cargo de la oferta                                     | not null                                       |
+| Empresa          | varchar(150)   | Empresa que publica la oferta                          | not null                                       |
+| Descripcion      | text           | Descripción de la oferta                               |                                                 |
+| CorreoReclutador | varchar(150)   | Correo del reclutador                                   |                                                 |
+| NombreReclutador | varchar(150)   | Nombre del reclutador                                   |                                                 |
+| TextoOriginal    | text           | Texto pegado por el usuario, o texto detectado si vino de imagen | not null                             |
+| OrigenEntrada    | varchar(20)    | Cómo se entregó la oferta                               | not null, CHECK IN ('texto', 'imagen')         |
+| Estado           | varchar(20)    | Etapa del flujo Oferta → Perfil → CV                    | not null, CHECK IN ('Analizada', 'PerfilAsignado', 'CvGenerado') |
+| PerfilId         | int            | Perfil asignado a esta oferta (se llena en el paso 6 del flujo) | FK Perfil.PerfilId, NULL, ON DELETE NO ACTION |
+| FechaAnalisis    | datetime       | Fecha en que se analizó la oferta                       | not null, default: now()                       |
+
+Duplicados: el back-end valida a nivel de aplicación que no exista otra oferta con el mismo `(CurriculumId, Cargo, Empresa)` normalizado (trim + mayúsculas) antes de crear/actualizar — no es un índice único en la base de datos.
 
 ---
 
@@ -167,7 +193,10 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | MotivoRetiro   | varchar(255)   | Motivo de retiro                             |                               |
 | Funciones      | text           | Funciones realizadas                         |                               |
 | EsActual       | boolean        | Indica si es el trabajo actual (sin FechaFin)| not null, default: 0          |
-| AdjuntoSoporte | varchar(500)   | URL de soporte adjunto (carta laboral, etc.) |                               |
+| MostrarEnCv    | boolean        | Incluir este registro en el CV (Mi CV / detalle público) | not null, default: 1 |
+| AdjuntoSoporte | varchar(500)   | URL de soporte pegada por el usuario (legacy). Se ignora si AdjuntoSoporteBytes tiene valor |  |
+| AdjuntoSoporteBytes | varbinary(max) | Soporte subido como archivo (carta laboral, contrato — solo PDF, máx. 3 MB) |          |
+| AdjuntoSoporteContentType | varchar(100) | Tipo MIME de AdjuntoSoporteBytes (siempre application/pdf) |                    |
 | FechaRegistro  | datetime       | Fecha de registro                            | not null, default: now()      |
 
 ---
@@ -184,9 +213,12 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | FechaFin       | date           | Fecha de finalización                        |                               |
 | TipoFormacion  | varchar(50)    | Tipo de formación                            |                               |
 | Descripcion    | text           | Descripción adicional                        |                               |
-| AdjuntoSoporte | varchar(500)   | Soporte adjunto                              |                               |
+| AdjuntoSoporte | varchar(500)   | URL de soporte pegada por el usuario (legacy). Se ignora si AdjuntoSoporteBytes tiene valor |  |
+| AdjuntoSoporteBytes | varbinary(max) | Soporte subido como archivo (diploma, certificado — solo PDF, máx. 3 MB) |         |
+| AdjuntoSoporteContentType | varchar(100) | Tipo MIME de AdjuntoSoporteBytes (siempre application/pdf) |                    |
 | FechaVigencia  | date           | Fecha de vigencia/expiración del certificado |                               |
 | DuracionHoras  | int            | Duración en horas (para cursos)              |                               |
+| MostrarEnCv    | boolean        | Incluir este registro en el CV (Mi CV / detalle público) | not null, default: 1 |
 
 ---
 
@@ -203,6 +235,7 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | NivelEscritura | varchar(5)     | Nivel de escritura CEFR (solo idiomas)      | IN ('A1','A2','B1','B2','C1','C2') o NULL |
 | NivelEscucha   | varchar(5)     | Nivel de escucha CEFR (solo idiomas)        | IN ('A1','A2','B1','B2','C1','C2') o NULL |
 | NivelHabla     | varchar(5)     | Nivel de habla CEFR (solo idiomas)          | IN ('A1','A2','B1','B2','C1','C2') o NULL |
+| MostrarEnCv    | bit            | Si la habilidad se muestra en el CV público | not null, default 1          |
 
 ---
 
@@ -319,3 +352,48 @@ Registro append-only de cambios realizados sobre el CV desde el área privada.
 | EntidadTipo     | varchar(40)    | Tipo de entidad afectada (p. ej. sección del CV) | not null                |
 | EntidadId       | int            | Id de la entidad afectada                   |                               |
 | DetalleJson     | text           | Detalle adicional en JSON                   |                               |
+
+---
+
+## Tabla: PromptIa
+Prompts del asistente de IA, propios de cada CV y editables desde su área privada sin necesidad de desplegar. Cada edición inserta una fila nueva (mismo `CurriculumId`+`Codigo`, `Version+1`) y desactiva la anterior — ninguna columna de una fila existente se sobrescribe, así queda historial completo y se puede reactivar una versión previa.
+
+| Columna                 | Tipo           | Descripción                                 | Reglas                        |
+|--------------------------|----------------|---------------------------------------------|-------------------------------|
+| PromptIaId               | int            | Identificador único de la fila (versión)    | PK, autoincrement, not null   |
+| CurriculumId             | int            | Dueño del prompt                            | FK Curriculum.CurriculumId, not null, ON DELETE CASCADE |
+| Codigo                   | varchar(50)    | Identifica el prompt para su dueño, p. ej. `EXTRACTOR_OFERTA` | not null, repetido entre versiones y entre CV distintos |
+| Nombre                   | varchar(150)   | Nombre visible en la página de administración | not null                   |
+| Descripcion              | varchar(500)   | Descripción de uso del prompt               |                               |
+| RolContexto              | text           | Quién es la IA, para qué sistema trabaja    | not null                     |
+| Tarea                    | text           | Qué debe hacer exactamente, incluye dónde va el marcador de entrada (p. ej. `{{OFERTA_TEXTO}}`) | not null |
+| Reglas                   | text           | Restricciones y casos especiales            | opcional                     |
+| FormatoSalida            | text           | Schema/ejemplo exacto de la respuesta esperada | not null                  |
+| Ejemplos                 | text           | Ejemplos few-shot                           | opcional                     |
+| Contenido                | text           | Texto final ensamblado por la app a partir de las 5 columnas de arriba | not null, nunca se edita a mano |
+| Version                  | int            | Número de versión dentro del mismo `Codigo` (por CV) | not null, default: 1 |
+| EsActivo                 | bit            | Si es la versión vigente para ese `Codigo`  | not null, default: 1, solo una fila activa por (`CurriculumId`, `Codigo`) |
+| FechaCreacion            | datetime2(0)   | Momento en que se creó esta versión, en UTC | not null, default: SYSUTCDATETIME() |
+| ActualizadoPorUsuarioId  | int            | Usuario que creó esta versión (siempre el propio dueño, self-service) | FK Usuario.UsuarioId, NULL si el actor fue eliminado |
+
+Índices únicos `(CurriculumId, Codigo)` filtrado por `EsActivo=1` y `(CurriculumId, Codigo, Version)`, más `(CurriculumId, Codigo)` de apoyo para listar el historial — la unicidad de `Codigo` es siempre relativa a cada CV, nunca global.
+
+---
+
+## Tabla: ProveedorIaConfig
+Conexiones con proveedores de IA propias de cada CV (self-service, `/configuracion`) — la(s) clave(s) que usan "Analizar Oferta" y los prompts de `PromptIa` para invocar al modelo. Un CV puede guardar **varias** conexiones (Claude, OpenAI, Gemini, Ollama/self-hosted, otro) y siempre tiene como máximo una marcada `EsActivo=1` — esa es la que usa el flujo de Ofertas. No versionado: editar una conexión sobrescribe sus columnas.
+
+| Columna             | Tipo           | Descripción                                 | Reglas                        |
+|----------------------|----------------|-----------------------------------------------|-------------------------------|
+| ProveedorIaConfigId  | int            | Identificador único                          | PK, autoincrement, not null   |
+| CurriculumId         | int            | CV dueño de la conexión                       | FK Curriculum.CurriculumId, not null, ON DELETE CASCADE |
+| Proveedor            | varchar(20)    | Proveedor de IA elegido                       | not null, CHECK IN ('claude', 'openai', 'gemini', 'ollama', 'otro') |
+| Nombre               | varchar(100)   | Alias opcional para distinguir varias conexiones del mismo proveedor (p. ej. "Cuenta trabajo" vs "Cuenta personal") | opcional |
+| Modelo               | varchar(100)   | Modelo a usar (p. ej. `claude-opus-4-20250514`) | opcional, si se omite se usa el modelo por defecto del proveedor |
+| Endpoint             | varchar(500)   | URL del servidor                              | opcional; **obligatorio** para proveedores self-hosted (hoy, `ollama`) |
+| ApiKeyCifrada        | text           | Clave de API, cifrada con AES-256-GCM (`AesGcmApiKeyCipher`, clave en `Encryption:Key`) | opcional (Ollama local normalmente no la requiere); **nunca se devuelve al front-end** ni cifrada ni en texto plano; requerida para claude/openai/gemini |
+| EsActivo             | bit            | Si es la conexión que usa el flujo de Ofertas | not null, default: 0, a lo sumo una activa por CV (índice único filtrado) |
+| FechaCreacion        | datetime2(0)   | Momento en que se guardó esta conexión, en UTC | not null, default: SYSUTCDATETIME() |
+| FechaActualizacion   | datetime2(0)   | Momento del último guardado, en UTC          | not null, default: SYSUTCDATETIME() |
+
+Índice único `CurriculumId` filtrado por `EsActivo=1` (mismo patrón que la unicidad de versión activa en `PromptIa`) — garantiza que nunca haya dos conexiones activas al mismo tiempo para un CV. Si se elimina la conexión activa y quedan otras, el backend activa automáticamente la más reciente.

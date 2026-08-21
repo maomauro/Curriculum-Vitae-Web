@@ -9,15 +9,13 @@ Se organizo el directorio en dos grupos:
 
 Ejecutar solo:
 
-- `production/05_AzureSQL_CreateSchema.sql` (esquema completo y roles base al final del script). Incluye las tablas `PublicCvSnapshotExport` / `PublicStaticSnapshotState`, pero esa funcionalidad de snapshot está **retirada del código** (ver `docs/devops/Runbook-Azure.md` §7.1); las tablas se mantienen en el esquema sin uso, por si se retoma el enfoque más adelante.
+- `production/05_AzureSQL_CreateSchema.sql` (esquema completo y roles base al final del script).
 
-## Escenario: base Azure ya existente (creada antes del export de snapshot)
+## Escenario: base Azure ya existente con las tablas de snapshot sin uso
 
-Actualmente el esquema de snapshot ya está integrado en:
+La Épica 6 "Resiliencia Cold Start (Snapshot JSON)" se implementó y luego se eliminó del código (2026-08-18, ver `docs/arquitectura/Backlog.md`). `05_AzureSQL_CreateSchema.sql` ya no crea `dbo.PublicCvSnapshotExport` / `dbo.PublicStaticSnapshotState`. Para eliminarlas de una base existente que las tenga, ejecutar:
 
-- `production/05_AzureSQL_CreateSchema.sql`
-
-Para bases existentes, usar migración controlada del mismo esquema (sin re-ejecutar `05` completo con datos productivos).
+- `production/13_DropSnapshotTables.sql`
 
 ## Escenario: agregar una tabla nueva a una base Azure ya existente
 
@@ -25,12 +23,16 @@ Para bases existentes, usar migración controlada del mismo esquema (sin re-ejec
 
 - `production/06_AddAuditoriaAuth.sql`: agrega `dbo.AuditoriaAuth` (auditoría de login/logout). Precedente a seguir para futuras migraciones incrementales.
 - `production/07_AddIpOrigenAuditoriaAuth.sql`: agrega la columna `IpOrigen` a `dbo.AuditoriaAuth` (IP del cliente, para detectar fuerza bruta en login fallido).
+- `production/08_AddPromptIa.sql`: agrega `dbo.PromptIa` (prompts del asistente de IA, propios de cada CV y versionados; cada edición inserta una fila nueva en vez de sobrescribir).
+- `production/09_AddOferta.sql`: agrega `dbo.Oferta` (historial de ofertas laborales analizadas por el postulante, flujo Oferta → Perfil → CV generado — ver `docs/arquitectura/Roadmap-Ofertas-IA.md`).
+- `production/10_AddProveedorIaConfig.sql`: agrega `dbo.ProveedorIaConfig` (conexión con el proveedor de IA propia de cada CV — proveedor, modelo, clave de API cifrada). Requiere configurar `Encryption__Key` en el backend (ver el propio script).
+- `production/13_DropSnapshotTables.sql`: elimina `dbo.PublicCvSnapshotExport` y `dbo.PublicStaticSnapshotState` (tablas de la Épica 6 de snapshot, retirada del código — ver `docs/arquitectura/Backlog.md`).
 
 ## Scripts fuera de produccion (`manual/`)
 
 Los exports ad-hoc de SSMS no se versionan aqui: el modelo de referencia son `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql`.
 
-- `manual/01_CreateSchema.sql`: bootstrap local con `USE [PortalCV]` (mismo esquema que producción, incluye las tablas de snapshot sin uso — ver nota arriba).
+- `manual/01_CreateSchema.sql`: bootstrap local con `USE [PortalCV]` (mismo esquema que producción).
 - `manual/02_InsertTestData.sql`: datos de prueba (incluye roles si aplica).
 - `manual/03_PublicQueries.sql`: consultas de ejemplo.
 - `manual/04_PerformanceAndIndexes.sql`: benchmark y ajuste manual de indices.

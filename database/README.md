@@ -10,7 +10,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 | `DiccionarioDeDatos.md` | Diccionario de datos con descripción y reglas de cada columna. |
 | `Diagrama ER.jpeg` | Diagrama entidad-relación exportado. |
 
-> Los scripts DDL ejecutables están en [`scripts/manual/`](../scripts/manual/) (local) y [`scripts/production/`](../scripts/production/) (Azure). Esquema completo: `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql` (incluye `PublicCvSnapshotExport`, `PublicStaticSnapshotState` y roles base al final). Datos de prueba local: `manual/02_InsertTestData.sql`.
+> Los scripts DDL ejecutables están en [`scripts/manual/`](../scripts/manual/) (local) y [`scripts/production/`](../scripts/production/) (Azure). Esquema completo: `manual/01_CreateSchema.sql` y `production/05_AzureSQL_CreateSchema.sql` (incluye roles base al final). Datos de prueba local: `manual/02_InsertTestData.sql`.
 
 ## Cómo visualizar el modelo DBML
 
@@ -29,6 +29,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
   - **Interacción**: `VisitanteContacto`, `AlertaVisita`, `VisibilidadSeccion`
   - **Estadísticas**: `EstadisticasPublicas`
   - **Auditoría** (append-only): `AuditoriaAdmin`, `AuditoriaAuth`, `AuditoriaCv`
+  - **IA (área privada, por CV)**: `PromptIa`
 - **Índices** en columnas usadas en búsquedas y FKs.
 - **Datos iniciales previstos**: roles `Visitante`, `Publicador`, `Admin` (a insertar en el SQL).
 
@@ -44,6 +45,7 @@ Scripts y modelo de base de datos del portal. El modelo se mantiene alineado con
 - **VisitanteContacto** tiene `Asunto` para el asunto del formulario de contacto público.
 - **AlertaVisita** tiene `TipoVisita` con cuatro valores (`Vista` | `Contacto` | `Descarga` | `Sistema`), campos `EsLeida`, `Titulo`, `Descripcion`, `Ciudad` y `Pais`.
 - **AuditoriaAdmin** / **AuditoriaAuth** / **AuditoriaCv** son tablas append-only (solo INSERT + purga manual desde el panel admin, nunca UPDATE). **AuditoriaAuth** incluye `IpOrigen` para detectar intentos de fuerza bruta en `login_fallido`.
+- **PromptIa** es propia de cada CV (`CurriculumId`, `ON DELETE CASCADE`), igual que `Perfil`/`Experiencia`/`AuditoriaCv`, y también append-only en la práctica: editar un prompt inserta una fila nueva (mismo `CurriculumId`+`Codigo`, `Version+1`) y desactiva la anterior (`EsActivo=0`) en vez de sobrescribir columnas. `Contenido` se ensambla automáticamente desde `RolContexto`/`Tarea`/`Reglas`/`FormatoSalida`/`Ejemplos` y nunca se edita a mano. El backend cachea en memoria la versión activa por (`CurriculumId`, `Codigo`) y la invalida al crear o activar una versión (ver `backend/README.md`).
 - Para **SQL Server local** (instalación en Windows), define `ConnectionStrings:DefaultConnection` en `dotnet user-secrets` o variables de entorno locales (no versionar secretos).
 
 ## Ver también

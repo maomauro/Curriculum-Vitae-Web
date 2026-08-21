@@ -40,11 +40,12 @@ IF OBJECT_ID(N'dbo.Proyecto', N'U') IS NOT NULL              DROP TABLE dbo.Proy
 IF OBJECT_ID(N'dbo.Habilidad', N'U') IS NOT NULL              DROP TABLE dbo.Habilidad;
 IF OBJECT_ID(N'dbo.Formacion', N'U') IS NOT NULL             DROP TABLE dbo.Formacion;
 IF OBJECT_ID(N'dbo.Experiencia', N'U') IS NOT NULL            DROP TABLE dbo.Experiencia;
+IF OBJECT_ID(N'dbo.Oferta', N'U') IS NOT NULL                 DROP TABLE dbo.Oferta;
 IF OBJECT_ID(N'dbo.Perfil', N'U') IS NOT NULL                 DROP TABLE dbo.Perfil;
 IF OBJECT_ID(N'dbo.Personales', N'U') IS NOT NULL            DROP TABLE dbo.Personales;
 IF OBJECT_ID(N'dbo.AuditoriaCv', N'U') IS NOT NULL           DROP TABLE dbo.AuditoriaCv;
-IF OBJECT_ID(N'dbo.PublicCvSnapshotExport', N'U') IS NOT NULL DROP TABLE dbo.PublicCvSnapshotExport;
-IF OBJECT_ID(N'dbo.PublicStaticSnapshotState', N'U') IS NOT NULL DROP TABLE dbo.PublicStaticSnapshotState;
+IF OBJECT_ID(N'dbo.PromptIa', N'U') IS NOT NULL               DROP TABLE dbo.PromptIa;
+IF OBJECT_ID(N'dbo.ProveedorIaConfig', N'U') IS NOT NULL      DROP TABLE dbo.ProveedorIaConfig;
 IF OBJECT_ID(N'dbo.Curriculum', N'U') IS NOT NULL              DROP TABLE dbo.Curriculum;
 IF OBJECT_ID(N'dbo.AuditoriaAdmin', N'U') IS NOT NULL        DROP TABLE dbo.AuditoriaAdmin;
 IF OBJECT_ID(N'dbo.AuditoriaAuth', N'U') IS NOT NULL         DROP TABLE dbo.AuditoriaAuth;
@@ -115,25 +116,6 @@ CREATE NONCLUSTERED INDEX IX_Curriculum_Estado_Visitas ON dbo.Curriculum (Estado
     INCLUDE (UrlPublica);
 
 -- -----------------------------------------------------------------------------
--- B.1 EXPORT SNAPSHOT ESTÁTICO (JSON por CV publicado + flag global stale)
--- -----------------------------------------------------------------------------
-CREATE TABLE dbo.PublicStaticSnapshotState (
-    Id TINYINT NOT NULL CONSTRAINT PK_PublicStaticSnapshotState PRIMARY KEY,
-    SiteSnapshotStale BIT NOT NULL CONSTRAINT DF_PublicStaticSnapshotState_Stale DEFAULT (0),
-    CONSTRAINT CK_PublicStaticSnapshotState_Singleton CHECK (Id = 1)
-);
-
-INSERT INTO dbo.PublicStaticSnapshotState (Id, SiteSnapshotStale) VALUES (1, 0);
-
-CREATE TABLE dbo.PublicCvSnapshotExport (
-    CurriculumId INT NOT NULL CONSTRAINT PK_PublicCvSnapshotExport PRIMARY KEY,
-    ItemJson NVARCHAR(MAX) NOT NULL,
-    UpdatedAtUtc DATETIME2 NOT NULL,
-    CONSTRAINT FK_PublicCvSnapshotExport_Curriculum
-        FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
-);
-
--- -----------------------------------------------------------------------------
 -- C. INFORMACIÓN PERSONAL (Personales - 1 a 1 con Curriculum)
 -- -----------------------------------------------------------------------------
 
@@ -178,6 +160,8 @@ CREATE TABLE dbo.Personales (
     Direccion          NVARCHAR(255) NULL,
     TipoResidencia     NVARCHAR(50) NULL,
     FotoUrl            NVARCHAR(500) NULL,
+    FotoBytes          VARBINARY(MAX) NULL,
+    FotoContentType    VARCHAR(100) NULL,
     CONSTRAINT PK_Personales PRIMARY KEY CLUSTERED (PersonalesId),
     CONSTRAINT FK_Personales_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT UQ_Personales_CurriculumId UNIQUE (CurriculumId)
@@ -257,6 +241,32 @@ CREATE TABLE dbo.Perfil (
 );
 
 -- -----------------------------------------------------------------------------
+-- E2. OFERTAS ANALIZADAS (IA) — historial de ofertas laborales analizadas
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE dbo.Oferta (
+    OfertaId         INT NOT NULL IDENTITY(1,1),
+    CurriculumId     INT NOT NULL,
+    Cargo            NVARCHAR(150) NOT NULL,
+    Empresa          NVARCHAR(150) NOT NULL,
+    Descripcion      NVARCHAR(MAX) NULL,
+    CorreoReclutador NVARCHAR(150) NULL,
+    NombreReclutador NVARCHAR(150) NULL,
+    TextoOriginal    NVARCHAR(MAX) NOT NULL,
+    OrigenEntrada    NVARCHAR(20)  NOT NULL,
+    Estado           NVARCHAR(20)  NOT NULL,
+    PerfilId         INT NULL,
+    FechaAnalisis    DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_Oferta PRIMARY KEY CLUSTERED (OfertaId),
+    CONSTRAINT FK_Oferta_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
+    CONSTRAINT FK_Oferta_Perfil FOREIGN KEY (PerfilId) REFERENCES dbo.Perfil (PerfilId) ON DELETE NO ACTION,
+    CONSTRAINT CK_Oferta_OrigenEntrada CHECK (OrigenEntrada IN (N'texto', N'imagen')),
+    CONSTRAINT CK_Oferta_Estado CHECK (Estado IN (N'Analizada', N'PerfilAsignado', N'CvGenerado'))
+);
+
+CREATE NONCLUSTERED INDEX IX_Oferta_CurriculumId ON dbo.Oferta (CurriculumId);
+
+-- -----------------------------------------------------------------------------
 -- F. EXPERIENCIA LABORAL
 -- -----------------------------------------------------------------------------
 
@@ -274,6 +284,8 @@ CREATE TABLE dbo.Experiencia (
     EsActual       BIT           NOT NULL DEFAULT 0,
     MostrarEnCv    BIT           NOT NULL DEFAULT 1,
     AdjuntoSoporte NVARCHAR(500) NULL,
+    AdjuntoSoporteBytes VARBINARY(MAX) NULL,
+    AdjuntoSoporteContentType VARCHAR(100) NULL,
     FechaRegistro  DATETIME2(0) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Experiencia PRIMARY KEY CLUSTERED (ExperienciaId),
     CONSTRAINT FK_Experiencia_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
@@ -303,6 +315,8 @@ CREATE TABLE dbo.Formacion (
     TipoFormacion  NVARCHAR(50) NULL,
     Descripcion    NVARCHAR(MAX) NULL,
     AdjuntoSoporte NVARCHAR(500) NULL,
+    AdjuntoSoporteBytes VARBINARY(MAX) NULL,
+    AdjuntoSoporteContentType VARCHAR(100) NULL,
     FechaVigencia  DATE          NULL,
     DuracionHoras  INT           NULL,
     MostrarEnCv    BIT           NOT NULL DEFAULT 1,
@@ -501,6 +515,79 @@ CREATE TABLE dbo.AuditoriaCv (
 );
 
 CREATE NONCLUSTERED INDEX IX_AuditoriaCv_CurriculumId ON dbo.AuditoriaCv (CurriculumId);
+GO
+
+CREATE TABLE dbo.PromptIa (
+    PromptIaId               INT NOT NULL IDENTITY(1,1),
+    CurriculumId              INT NOT NULL,
+    Codigo                    NVARCHAR(50)   NOT NULL,
+    Nombre                    NVARCHAR(150)  NOT NULL,
+    Descripcion               NVARCHAR(500)  NULL,
+
+    -- Estructura del prompt (anatomia): cada seccion es una columna propia
+    RolContexto               NVARCHAR(MAX)  NOT NULL,
+    Tarea                     NVARCHAR(MAX)  NOT NULL,
+    Reglas                    NVARCHAR(MAX)  NULL,
+    FormatoSalida             NVARCHAR(MAX)  NOT NULL,
+    Ejemplos                  NVARCHAR(MAX)  NULL,
+
+    -- Ensamblado por la aplicacion a partir de las 5 columnas de arriba (nunca se edita a mano)
+    Contenido                 NVARCHAR(MAX)  NOT NULL,
+
+    Version                   INT            NOT NULL CONSTRAINT DF_PromptIa_Version DEFAULT (1),
+    EsActivo                  BIT            NOT NULL CONSTRAINT DF_PromptIa_EsActivo DEFAULT (1),
+    FechaCreacion             DATETIME2(0)   NOT NULL CONSTRAINT DF_PromptIa_FechaCreacion DEFAULT (SYSUTCDATETIME()),
+    ActualizadoPorUsuarioId   INT NULL,
+
+    CONSTRAINT PK_PromptIa PRIMARY KEY CLUSTERED (PromptIaId),
+    CONSTRAINT FK_PromptIa_Curriculum FOREIGN KEY (CurriculumId)
+        REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
+    CONSTRAINT FK_PromptIa_Usuario_Actualizo FOREIGN KEY (ActualizadoPorUsuarioId)
+        REFERENCES dbo.Usuario (UsuarioId) ON DELETE NO ACTION
+);
+
+-- Solo una version activa por (CurriculumId, Codigo)
+CREATE UNIQUE NONCLUSTERED INDEX UQ_PromptIa_Curriculum_Codigo_Activo
+    ON dbo.PromptIa (CurriculumId, Codigo)
+    WHERE EsActivo = 1;
+
+-- Evita duplicar el numero de version dentro de un mismo (CurriculumId, Codigo)
+CREATE UNIQUE NONCLUSTERED INDEX UQ_PromptIa_Curriculum_Codigo_Version
+    ON dbo.PromptIa (CurriculumId, Codigo, Version);
+
+-- Historial completo de un (CurriculumId, Codigo)
+CREATE NONCLUSTERED INDEX IX_PromptIa_Curriculum_Codigo ON dbo.PromptIa (CurriculumId, Codigo);
+GO
+
+-- Conexiones con proveedores de IA propias de cada CV (self-service): un CV puede
+-- guardar varias (Claude, OpenAI, Gemini, Ollama/self-hosted, otro), con exactamente
+-- una activa a la vez (indice unico filtrado, mismo patron que
+-- UQ_PromptIa_Curriculum_Codigo_Activo). La clave se guarda cifrada (AES-256-GCM, ver
+-- AesGcmApiKeyCipher) y nunca se devuelve al front-end; es opcional porque Ollama local
+-- normalmente no la requiere. Endpoint es obligatorio solo para proveedores self-hosted.
+CREATE TABLE dbo.ProveedorIaConfig (
+    ProveedorIaConfigId INT NOT NULL IDENTITY(1,1),
+    CurriculumId         INT NOT NULL,
+    Proveedor            NVARCHAR(20)  NOT NULL,
+    Nombre               NVARCHAR(100) NULL,
+    Modelo               NVARCHAR(100) NULL,
+    Endpoint             NVARCHAR(500) NULL,
+    ApiKeyCifrada        NVARCHAR(MAX) NULL,
+    EsActivo             BIT           NOT NULL DEFAULT 0,
+    FechaCreacion        DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaActualizacion   DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_ProveedorIaConfig PRIMARY KEY CLUSTERED (ProveedorIaConfigId),
+    CONSTRAINT FK_ProveedorIaConfig_Curriculum FOREIGN KEY (CurriculumId)
+        REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
+    CONSTRAINT CK_ProveedorIaConfig_Proveedor CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'ollama', N'otro'))
+);
+
+CREATE NONCLUSTERED INDEX IX_ProveedorIaConfig_CurriculumId ON dbo.ProveedorIaConfig (CurriculumId);
+
+-- Solo una conexion activa por CV a la vez
+CREATE UNIQUE NONCLUSTERED INDEX UQ_ProveedorIaConfig_Curriculum_Activo
+    ON dbo.ProveedorIaConfig (CurriculumId)
+    WHERE EsActivo = 1;
 GO
 
 -- -----------------------------------------------------------------------------

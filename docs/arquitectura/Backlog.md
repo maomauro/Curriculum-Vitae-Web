@@ -2,6 +2,7 @@
 
 - **Documentación del producto:** [Documentacion.md](Documentacion.md)  
 - **Modelo de datos:** [Modelo.md](Modelo.md)  
+- **Roadmap del flujo Ofertas + IA:** [Roadmap-Ofertas-IA.md](Roadmap-Ofertas-IA.md)  
 - **Script BD SQL Server (local):** [../../scripts/manual/01_CreateSchema.sql](../../scripts/manual/01_CreateSchema.sql) · **Azure:** [../../scripts/production/05_AzureSQL_CreateSchema.sql](../../scripts/production/05_AzureSQL_CreateSchema.sql)  
 - **Despliegue / CI-CD:** [../devops/Despliegue.md](../devops/Despliegue.md)  
 - **Git (ramas, commits, flujo):** [../guias/Guia-git.md](../guias/Guia-git.md)
@@ -302,7 +303,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | **HS-48** | Historia Usuario | Editor de referencias | Como publicador quiero gestionar referencias personales y laborales (tipo, datos de contacto, parentesco/cargo según tipo) | HS-39 | 3 |
 | **HS-49** | Historia Usuario | Editor de redes sociales | Como publicador quiero añadir enlaces a redes (LinkedIn, GitHub, etc.) | HS-40 | 3 |
 | **HS-49b** | Historia Usuario | Editor de contactos familiares | Como publicador quiero gestionar contactos de emergencia (parentesco, nombre, teléfono, email) | HS-40b | 2 |
-| **HS-50** | Historia Usuario | Mi CV — vista previa e inicio de edición | Como publicador quiero ver una vista previa de mi CV con botones "Editar →" para acceder a cada sección desde un punto central | HS-11 | 5 |
+| **HS-50** | Historia Usuario | Profesional — vista previa del CV | Como publicador quiero ver una vista previa de mi CV tal como la vería un visitante, respetando la visibilidad configurada. *(Nota 2026-08-21: implementada como la vista "Profesional", `profesional.component.ts` — la navegación a cada sección es vía el sidebar, no botones "Editar →" embebidos en la vista previa; "Mi CV" pasó a ser una vista distinta, ver Épica de Ofertas-IA.)* | HS-11 | 5 |
 | **HS-51** | Historia Usuario | Barra de progreso | Como publicador quiero ver el grado de completitud de mi CV para saber qué secciones completar | - | 2 |
 
 **Criterios de aceptación (resumen):** Cada editor permite crear, editar y eliminar ítems de su sección; los datos se persisten vía API; validaciones en frontend y mensajes de error claros; vista previa (HS-50) refleja visibilidad configurada; barra de progreso (HS-51) se actualiza según secciones completadas.
@@ -330,7 +331,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | **HS-53** | Historia Técnica | API: Lista de contactos | `GET /api/contactos` | 3 |
 | **HS-54** | Historia Técnica | API: Marcar contacto leído | `PUT /api/contactos/{id}/leer` | 2 |
 | **HS-55** | Historia Técnica | API: Notificaciones | `GET /api/notificaciones` | 3 |
-| **HS-56** | Historia Técnica | API: Visibilidad secciones | `GET /api/visibilidad`<br>`PUT /api/visibilidad` | 3 |
+| **HS-56** | Historia Técnica | API: Visibilidad secciones | `GET /api/cv/visibilidad`<br>`PUT /api/cv/visibilidad` | 3 |
 
 **Criterios de aceptación (resumen):** Dashboard stats (HS-52) devuelve métricas del CV del usuario; contactos (HS-53) listado paginado; marcar leído (HS-54) actualiza estado; notificaciones (HS-55) listado reciente; visibilidad (HS-56) GET/PUT por sección, solo dueño del CV.
 
@@ -417,7 +418,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 ## ÉPICA 6: RESILIENCIA COLD START (SNAPSHOT JSON)
 
-> ⚠️ **Retirado (2026-08-18).** Se implementó y luego se eliminó del código: se optó por mantener la base de producción activa (evitando el cold-start en origen, posiblemente vía un proceso automático externo) en vez de un fallback client-side. Las tablas `PublicCvSnapshotExport`/`PublicStaticSnapshotState` siguen en el esquema pero sin uso. Sección conservada como referencia histórica.
+> ⚠️ **Retirado (2026-08-18).** Se implementó y luego se eliminó del código: se optó por mantener la base de producción activa (evitando el cold-start en origen, posiblemente vía un proceso automático externo) en vez de un fallback client-side. Las tablas `PublicCvSnapshotExport`/`PublicStaticSnapshotState` fueron eliminadas del esquema (2026-08-20, `scripts/production/13_DropSnapshotTables.sql`). Sección conservada como referencia histórica.
 
 **Prioridad:** SHOULD HAVE  
 **Dependencia:** Épica 1 (módulo público) + `health/ready` operativo.

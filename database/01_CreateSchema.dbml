@@ -36,17 +36,6 @@ Table Curriculum {
   }
 }
 
-Table PublicStaticSnapshotState {
-  Id tinyint [pk, not null, note: 'Solo fila Id=1']
-  SiteSnapshotStale bit [not null, default: 0]
-}
-
-Table PublicCvSnapshotExport {
-  CurriculumId int [pk, not null]
-  ItemJson text [not null]
-  UpdatedAtUtc datetime [not null]
-}
-
 Table Personales {
   PersonalesId int [pk, increment, not null]
   CurriculumId int [not null]
@@ -83,7 +72,9 @@ Table Personales {
   CodigoPostal varchar(20)
   Direccion varchar(255)
   TipoResidencia varchar(50)
-  FotoUrl varchar(500)
+  FotoUrl varchar(500) [note: 'Legacy: URL pegada por el usuario. Ignorada si FotoBytes tiene valor.']
+  FotoBytes blob
+  FotoContentType varchar(100)
 }
 
 Table Referencia {
@@ -125,6 +116,7 @@ Table RedSocial {
   NombreRed varchar(50) [not null]
   LinkPublico varchar(500)
   UsuarioContacto varchar(100)
+  MostrarEnCv boolean [not null, default: 1]
 }
 
 Table Perfil {
@@ -132,9 +124,25 @@ Table Perfil {
   CurriculumId int [not null]
   NombrePerfil varchar(100)
   DescripcionPerfil text
+  ExperienciaPerfilAnios decimal(5,2)
   AspiracionSalarialPesos decimal(18,2)
   AspiracionSalarialDolares decimal(18,2)
   EsActivo boolean [not null, default: 1]
+}
+
+Table Oferta {
+  OfertaId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Cargo varchar(150) [not null]
+  Empresa varchar(150) [not null]
+  Descripcion text
+  CorreoReclutador varchar(150)
+  NombreReclutador varchar(150)
+  TextoOriginal text [not null]
+  OrigenEntrada varchar(20) [not null, note: 'texto | imagen']
+  Estado varchar(20) [not null, note: 'Analizada | PerfilAsignado | CvGenerado']
+  PerfilId int
+  FechaAnalisis datetime [not null]
 }
 
 Table Experiencia {
@@ -150,7 +158,9 @@ Table Experiencia {
   Funciones text
   EsActual boolean [not null, default: 0]
   MostrarEnCv boolean [not null, default: 1]
-  AdjuntoSoporte varchar(500)
+  AdjuntoSoporte varchar(500) [note: 'Legacy: URL pegada por el usuario. Ignorada si AdjuntoSoporteBytes tiene valor.']
+  AdjuntoSoporteBytes blob
+  AdjuntoSoporteContentType varchar(100)
   FechaRegistro datetime [not null, default: `now()`]
   indexes {
     (CurriculumId) [name: "IX_Experiencia_CurriculumId"]
@@ -167,7 +177,9 @@ Table Formacion {
   FechaFin date
   TipoFormacion varchar(50)
   Descripcion text
-  AdjuntoSoporte varchar(500)
+  AdjuntoSoporte varchar(500) [note: 'Legacy: URL pegada por el usuario. Ignorada si AdjuntoSoporteBytes tiene valor.']
+  AdjuntoSoporteBytes blob
+  AdjuntoSoporteContentType varchar(100)
   FechaVigencia date
   DuracionHoras int
   MostrarEnCv boolean [not null, default: 1]
@@ -184,6 +196,7 @@ Table Habilidad {
   NivelEscritura varchar(5)
   NivelEscucha varchar(5)
   NivelHabla varchar(5)
+  MostrarEnCv boolean [not null, default: 1]
   indexes {
     (CurriculumId) [name: "IX_Habilidad_CurriculumId"]
     (Nombre) [name: "IX_Habilidad_Nombre"]
@@ -292,16 +305,57 @@ Table AuditoriaCv {
   DetalleJson text
 }
 
+Table PromptIa {
+  PromptIaId int [pk, increment, not null]
+  CurriculumId int [not null, note: 'Dueño del prompt: cada CV administra los suyos']
+  Codigo varchar(50) [not null, note: 'Identifica el prompt para su dueño, p. ej. EXTRACTOR_OFERTA. Repetido entre versiones y entre CV distintos']
+  Nombre varchar(150) [not null]
+  Descripcion varchar(500)
+  RolContexto text [not null, note: 'Quién es la IA, para qué sistema trabaja']
+  Tarea text [not null, note: 'Qué debe hacer, incluye dónde va el marcador de entrada (ej. {{OFERTA_TEXTO}})']
+  Reglas text [note: 'Restricciones y casos especiales (opcional)']
+  FormatoSalida text [not null, note: 'Schema/ejemplo exacto de la respuesta esperada']
+  Ejemplos text [note: 'Ejemplos few-shot (opcional)']
+  Contenido text [not null, note: 'Ensamblado por la app desde las 5 columnas de arriba; nunca se edita a mano']
+  Version int [not null, default: 1]
+  EsActivo boolean [not null, default: true, note: 'Solo una fila activa por (CurriculumId, Codigo)']
+  FechaCreacion datetime [not null, default: `now()`]
+  ActualizadoPorUsuarioId int
+  indexes {
+    (CurriculumId, Codigo) [unique, name: "UQ_PromptIa_Curriculum_Codigo_Activo", note: 'Filtrado por EsActivo=1']
+    (CurriculumId, Codigo, Version) [unique, name: "UQ_PromptIa_Curriculum_Codigo_Version"]
+    (CurriculumId, Codigo) [name: "IX_PromptIa_Curriculum_Codigo"]
+  }
+}
+
+Table ProveedorIaConfig {
+  ProveedorIaConfigId int [pk, increment, not null]
+  CurriculumId int [not null, note: 'Un CV puede tener varias conexiones guardadas']
+  Proveedor varchar(20) [not null, note: 'claude | openai | gemini | ollama | otro']
+  Nombre varchar(100) [note: 'Alias opcional para distinguir varias conexiones del mismo proveedor']
+  Modelo varchar(100)
+  Endpoint varchar(500) [note: 'URL del servidor; obligatorio para proveedores self-hosted (ollama)']
+  ApiKeyCifrada text [note: 'AES-256-GCM (AesGcmApiKeyCipher); opcional (ollama local no siempre la requiere); nunca se devuelve al front-end']
+  EsActivo boolean [not null, default: false, note: 'Solo una conexion activa por CV a la vez — la que usa el flujo de Ofertas']
+  FechaCreacion datetime [not null, default: `now()`]
+  FechaActualizacion datetime [not null, default: `now()`]
+  indexes {
+    CurriculumId [name: "IX_ProveedorIaConfig_CurriculumId"]
+    CurriculumId [unique, name: "UQ_ProveedorIaConfig_Curriculum_Activo", note: 'Filtrado por EsActivo=1']
+  }
+}
+
 Ref: UsuarioRol.UsuarioId > Usuario.UsuarioId
 Ref: UsuarioRol.RolId > Rol.RolId
 Ref: Curriculum.UsuarioId > Usuario.UsuarioId
-Ref: PublicCvSnapshotExport.CurriculumId > Curriculum.CurriculumId
 Ref: Personales.CurriculumId > Curriculum.CurriculumId
 Ref: Referencia.CurriculumId > Curriculum.CurriculumId
 Ref: Referencia.ExperienciaId > Experiencia.ExperienciaId
 Ref: FamiliarContacto.CurriculumId > Curriculum.CurriculumId
 Ref: RedSocial.CurriculumId > Curriculum.CurriculumId
 Ref: Perfil.CurriculumId > Curriculum.CurriculumId
+Ref: Oferta.CurriculumId > Curriculum.CurriculumId
+Ref: Oferta.PerfilId > Perfil.PerfilId
 Ref: Experiencia.CurriculumId > Curriculum.CurriculumId
 Ref: Formacion.CurriculumId > Curriculum.CurriculumId
 Ref: Habilidad.CurriculumId > Curriculum.CurriculumId
@@ -314,3 +368,6 @@ Ref: AuditoriaAdmin.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaAuth.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaCv.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaCv.CurriculumId > Curriculum.CurriculumId
+Ref: PromptIa.CurriculumId > Curriculum.CurriculumId
+Ref: PromptIa.ActualizadoPorUsuarioId > Usuario.UsuarioId
+Ref: ProveedorIaConfig.CurriculumId > Curriculum.CurriculumId

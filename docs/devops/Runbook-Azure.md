@@ -317,7 +317,7 @@ az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 
 ⚠️ **Funcionalidad retirada.** El mecanismo de resiliencia ante cold-start (snapshot en memoria + export estático `frontend/public/snapshots/public-cvs-snapshot.json` + endpoints `GET/POST /api/admin/public-cv-snapshot/*` + `GET /api/public/snapshot`) fue eliminado del código. Se mantiene la estrategia de mantener la base de producción activa (evitando el cold-start en origen) en vez de un fallback client-side; ver `docs/archivo/Snapshot-JSON-ColdStart.md` para el diseño histórico.
 
-Las tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` **siguen existiendo** en la base (no se borraron adrede, por si se retoma el enfoque más adelante), pero ya no se escriben ni se leen desde el código.
+Las tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` fueron eliminadas de la base (2026-08-20, `scripts/production/13_DropSnapshotTables.sql`). Para una base Azure existente que aún las tenga, ejecutar ese script.
 
 ---
 

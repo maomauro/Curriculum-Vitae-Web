@@ -61,6 +61,7 @@ Entities/
 | `Privada/` | `AlertaVisita.cs` | Notificación generada al recibir una visita o contacto |
 | `Privada/` | `EstadisticasPublicas.cs` | Totales acumulados de visitas/contactos por CV |
 | `Privada/` | `AuditoriaCv.cs` | Registro append-only de cambios sobre el CV desde el área privada |
+| `Privada/` | `PromptIa.cs` | Prompt del asistente de IA, propio de un CV y versionado: cada edición inserta una fila nueva y desactiva la anterior |
 | `Publica/` | `VisitanteContacto.cs` | Registro de cada mensaje enviado por un reclutador (origen: zona pública) |
 
 > `Enums/` está reservado para uso futuro. `Exceptions/` ya tiene contenido real: `ForbiddenOperationException.cs`.
@@ -93,6 +94,8 @@ Interfaces/
 | `Privada/` | `IRepository<T>` | Repositorio genérico: GetById, GetAll, Find, Add, Update, Remove |
 | `Privada/` | `IAlertaService` | Consultar y marcar alertas de visitas/contactos |
 | `Privada/` | `IDashboardService` | Estadísticas del dashboard del publicador |
+| `Privada/` | `IPromptIaRepository` | Acceso a datos de `PromptIa`, acotado al CV dueño; lee la versión activa con caché en memoria |
+| `Privada/` | `IPromptIaService` | Valida, ensambla `Contenido` y versiona los prompts de IA del CV autenticado |
 | *(raíz)* | `IAdminAuditoriaService` | Registrar, listar y purgar auditoría de administración |
 | *(raíz)* | `ICvAuditoriaService` | Registrar, listar y purgar auditoría de cambios del CV |
 
@@ -133,6 +136,7 @@ DTOs/
 | `VisibilidadDtos.cs` | `VisibilidadSeccionDto`, `UpdateVisibilidadRequest` |
 | `AlertasDtos.cs` | `AlertaVisitaDto` |
 | `DashboardDtos.cs` | `DashboardStatsDto`, `ContactoDto`, `NotificacionItemDto`, `NotificacionesResumenDto` |
+| `PromptIaDtos.cs` | `PromptIaListItemDto` (fila de la tabla: Código + versión activa), `PromptIaVersionDto` (una versión con su estructura completa), `CrearPromptIaRequest`, `CrearVersionPromptIaRequest` |
 
 ---
 
@@ -155,6 +159,7 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 |---------|---------|
 | `GenericRepository<T>.cs` | Implementación base: GetByIdAsync, GetAllAsync, FindAsync, AddAsync, Update, Remove, SaveChangesAsync |
 | `CurriculumRepository.cs` | Extiende el genérico: cargar CV completo con eager loading, buscar por URL pública, paginación con filtros de ciudad/habilidad/palabra clave |
+| `PromptIaRepository.cs` | Todo acotado a `CurriculumId`. Lee la versión activa por (Curriculum, Código) desde `IMemoryCache` (30 min); guardar una nueva versión o activar una anterior invalida la caché del (Curriculum, Código) afectado |
 
 ### Servicios (`Services/`)
 
@@ -174,6 +179,7 @@ Services/
 | `Privada/` | `CvEditorService.cs` | CRUD completo de las 10 secciones del CV: Personales, Perfil, Experiencia, Formación, Habilidades, Proyectos, Referencias, Redes Sociales, Familiares, Visibilidad |
 | `Privada/` | `AlertaService.cs` | Listar alertas (paginado), marcar leída, marcar todas leídas, limpiar leídas, conteo no leídas; alineado con contactos cuando aplica |
 | `Privada/` | `DashboardService.cs` | Estadísticas agregadas del publicador: visitas, contactos y métricas del CV |
+| `Privada/` | `PromptIaService.cs` | Valida, ensambla `Contenido` (RolContexto+Tarea+Reglas+FormatoSalida+Ejemplos) y versiona los prompts de IA propios del CV; audita en `AuditoriaCv` |
 | `Publica/` | `PublicCvService.cs` | Búsqueda paginada, detalle (+ registrar visita), estadísticas, filtros disponibles, formulario de contacto |
 | `Publica/` | `PublicCvVisitaRegistroService.cs` | Registra la visita a un CV público en un scope de DI propio (usado por `PublicCvService`) |
 | *(raíz)* | `AdminAuditoriaService.cs` | Registra, lista y purga `AuditoriaAdmin` |
@@ -205,9 +211,9 @@ Controllers/
 |-------------|-----------|--------|----------|
 | `Admin/AdminController` | `/api/admin` | Solo Admin | Gestión de usuarios, roles y asignaciones; auditoría de administración/CV/autenticación (`/auditoria`, `/auditoria-cv`, `/auditoria-auth`, `/auditoria/purge`) |
 | `Auth/AuthController` | `/api/auth` | Público | Login, registro, me, recuperar contraseña |
-| `Publica/PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar |
+| `Publica/PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar, foto de perfil (`GET cvs/{urlPublica}/foto`) |
 | `Privada/CvControllerBase` | *(base)* | — | Clase base: extrae `UsuarioId` y `CurriculumId` del JWT |
-| `Privada/PersonalesController` | `/api/cv/personales` | Publicador/Admin | GET y PUT de datos personales |
+| `Privada/PersonalesController` | `/api/cv/personales` | Publicador/Admin | GET y PUT de datos personales; foto de perfil como binario (`PUT/DELETE/GET .../foto`, máx. 1 MB) |
 | `Privada/PerfilController` | `/api/cv/perfiles` | Publicador/Admin | CRUD de perfiles profesionales |
 | `Privada/ExperienciaController` | `/api/cv/experiencias` | Publicador/Admin | CRUD de experiencia laboral |
 | `Privada/FormacionController` | `/api/cv/formaciones` | Publicador/Admin | CRUD de formación académica |
@@ -221,6 +227,8 @@ Controllers/
 | `Privada/DashboardController` | `/api/dashboard` | Publicador/Admin | Estadísticas del dashboard |
 | `Privada/ContactosController` | `/api/contactos` | Publicador/Admin | Lista de contactos recibidos y marcar leído |
 | `Privada/NotificacionesController` | `/api/notificaciones` | Publicador/Admin | Notificaciones recientes |
+| `Privada/PromptsIaController` | `/api/prompts-ia` | Publicador/Admin | CRUD versionado de los prompts de IA propios del CV: listar (versión activa), historial por Código, crear Código nuevo, crear versión nueva, activar una versión anterior |
+| `Privada/ProveedorIaController` | `/api/cv/proveedor-ia` | Publicador/Admin | CRUD de conexiones a proveedores de IA propias del CV (varias guardadas, una activa), activar una conexión, probar conexión (nueva o ya guardada) — la clave de API nunca se devuelve, ni cifrada ni en texto plano |
 
 ### Contratos (`Contracts/Auth/`)
 
@@ -276,15 +284,23 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 
 Variables sensibles que debes configurar localmente:
 
-- `ConnectionStrings__DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
-- `Jwt__Key` (mínimo 32 caracteres)
+- `ConnectionStrings:DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
+- `Jwt:Key` (mínimo 32 caracteres)
+- `Encryption:Key` (clave AES-256 de 32 bytes en base64 — cifra la clave de API de cada conexión en `ProveedorIaConfig`, ver `AesGcmApiKeyCipher`). Sin ella, cualquier endpoint de `api/cv/proveedor-ia` responde 500 al construir el servicio.
 
-Para el flujo nativo, inicializa `user-secrets` una sola vez:
+Para el flujo nativo, inicializa `user-secrets` una sola vez. **Importante:** `dotnet user-secrets set` guarda en un JSON plano, así que la jerarquía va con **dos puntos** (`Seccion:Clave`) — la sintaxis con doble guion bajo (`Seccion__Clave`) es solo para variables de entorno (Docker, `launchSettings.json`, Azure) y `dotnet user-secrets` la guarda tal cual, literal, sin traducirla, así que no la reconoce como configuración:
 
 ```bash
 cd backend/PortalCV.Backend/PortalCV.Api
 dotnet user-secrets init
-dotnet user-secrets set "Jwt__Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
+dotnet user-secrets set "Jwt:Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
+dotnet user-secrets set "Encryption:Key" "TU_CLAVE_AES256_DE_32_BYTES_EN_BASE64"
+```
+
+Para generar una clave AES-256 válida (32 bytes en base64) — `openssl rand -base64 32`, o en PowerShell:
+
+```powershell
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
 ```
 
 Para el flujo Docker, copia la plantilla y completa valores reales:
