@@ -13,12 +13,13 @@ describe('PerfilComponent', () => {
   const activo: PerfilDto = {
     perfilId: 1, nombrePerfil: 'Backend Developer', descripcionPerfil: null,
     experienciaPerfilAnios: 5, aspiracionSalarialPesos: null, aspiracionSalarialDolares: null, esActivo: true,
+    mostrarExperienciaPerfil: true, mostrarAspiracionSalarial: true,
   };
   const inactivo: PerfilDto = { ...activo, perfilId: 2, nombrePerfil: 'Data Analyst', esActivo: false };
 
   function setup(getResult = of([{ ...activo }, { ...inactivo }])): void {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
-      'getPerfiles', 'createPerfil', 'updatePerfil', 'deletePerfil',
+      'getPerfiles', 'createPerfil', 'updatePerfil', 'deletePerfil', 'generarPerfilConIa', 'sugerirEnfoquesPerfil',
     ]);
     cvEditorService.getPerfiles.and.returnValue(getResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
@@ -146,6 +147,100 @@ describe('PerfilComponent', () => {
       expect(component.guardando).toBeFalse();
       expect(notificationService.error).toHaveBeenCalled();
       expect(cvEditorService.getPerfiles).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('generarConIa', () => {
+    it('no hace nada si el enfoque esta vacio', () => {
+      setup();
+      component.abrirNuevo();
+      component.enfoqueIa = '   ';
+
+      component.generarConIa();
+
+      expect(cvEditorService.generarPerfilConIa).not.toHaveBeenCalled();
+    });
+
+    it('precarga nombre y descripcion con el borrador de la IA', () => {
+      setup();
+      cvEditorService.generarPerfilConIa.and.returnValue(
+        of({ nombrePerfil: 'Arquitecto de Datos', descripcionPerfil: 'Ingeniero con experiencia en ETL.', promptPorDefecto: true })
+      );
+      component.abrirNuevo();
+      component.enfoqueIa = 'Arquitecto de Datos';
+
+      component.generarConIa();
+
+      expect(cvEditorService.generarPerfilConIa).toHaveBeenCalledWith('Arquitecto de Datos');
+      expect(component.formNuevo.nombrePerfil).toBe('Arquitecto de Datos');
+      expect(component.formNuevo.descripcionPerfil).toBe('Ingeniero con experiencia en ETL.');
+      expect(component.promptGeneradorPorDefecto).toBeTrue();
+      expect(component.generandoConIa).toBeFalse();
+    });
+
+    it('notifica warning si falla la generacion', () => {
+      setup();
+      cvEditorService.generarPerfilConIa.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+      component.abrirNuevo();
+      component.enfoqueIa = 'Arquitecto de Datos';
+
+      component.generarConIa();
+
+      expect(component.generandoConIa).toBeFalse();
+      expect(notificationService.warning).toHaveBeenCalled();
+    });
+  });
+
+  describe('sugerirEnfoques', () => {
+    const sugerencias = [
+      { nombre: 'Arquitecto de Datos', razon: 'Varios proyectos de ETL.' },
+      { nombre: 'Backend .NET', razon: 'Experiencia reciente con C#.' },
+    ];
+
+    it('completa sugerenciasEnfoque con la respuesta del backend', () => {
+      setup();
+      cvEditorService.sugerirEnfoquesPerfil.and.returnValue(of({ sugerencias, promptPorDefecto: true }));
+      component.abrirNuevo();
+
+      component.sugerirEnfoques();
+
+      expect(cvEditorService.sugerirEnfoquesPerfil).toHaveBeenCalled();
+      expect(component.sugiriendoEnfoques).toBeFalse();
+      expect(component.sugerenciasEnfoque).toEqual(sugerencias);
+      expect(component.promptSugeridorPorDefecto).toBeTrue();
+    });
+
+    it('no dispara una segunda llamada si ya esta sugiriendo', () => {
+      setup();
+      cvEditorService.sugerirEnfoquesPerfil.and.returnValue(of({ sugerencias, promptPorDefecto: false }));
+      component.abrirNuevo();
+      component.sugiriendoEnfoques = true;
+
+      component.sugerirEnfoques();
+
+      expect(cvEditorService.sugerirEnfoquesPerfil).not.toHaveBeenCalled();
+    });
+
+    it('notifica warning si falla la sugerencia', () => {
+      setup();
+      cvEditorService.sugerirEnfoquesPerfil.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+      component.abrirNuevo();
+
+      component.sugerirEnfoques();
+
+      expect(component.sugiriendoEnfoques).toBeFalse();
+      expect(notificationService.warning).toHaveBeenCalled();
+    });
+
+    it('usarSugerenciaEnfoque precarga el campo enfoque y limpia la lista', () => {
+      setup();
+      component.abrirNuevo();
+      component.sugerenciasEnfoque = sugerencias;
+
+      component.usarSugerenciaEnfoque(sugerencias[0]);
+
+      expect(component.enfoqueIa).toBe('Arquitecto de Datos');
+      expect(component.sugerenciasEnfoque).toEqual([]);
     });
   });
 

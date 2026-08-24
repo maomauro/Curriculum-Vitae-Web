@@ -2,9 +2,18 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConfiguracionComponent } from './configuracion.component';
-import { CvEditorService, PresentacionCvDto, VisibilidadSeccionDto } from '../../../core/services/private/cv-editor.service';
+import {
+  CvEditorService,
+  ExperienciaDto,
+  FormacionDto,
+  HabilidadDto,
+  PresentacionCvDto,
+  ProyectoDto,
+  VisibilidadSeccionDto,
+} from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
-import { ProveedorIaService, ProveedorIaConfigDto } from '../../../core/services/private/proveedor-ia.service';
+import { ProveedorIaService, ProveedorIaDto } from '../../../core/services/private/proveedor-ia.service';
+import { ConfiguracionCorreoService, ConfiguracionCorreoDto } from '../../../core/services/private/configuracion-correo.service';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
 describe('ConfiguracionComponent', () => {
@@ -12,15 +21,16 @@ describe('ConfiguracionComponent', () => {
   let cvEditorService: jasmine.SpyObj<CvEditorService>;
   let authService: jasmine.SpyObj<AuthService>;
   let proveedorIaService: jasmine.SpyObj<ProveedorIaService>;
+  let configuracionCorreoService: jasmine.SpyObj<ConfiguracionCorreoService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const presentacion: PresentacionCvDto = {
     plantillaCodigo: 'clasico', experienciaLaboralMesesAcumulados: 0, urlPublica: 'ana-cv', publicado: true,
   };
 
-  function proveedorIaItem(over: Partial<ProveedorIaConfigDto> = {}): ProveedorIaConfigDto {
+  function proveedorIaItem(over: Partial<ProveedorIaDto> = {}): ProveedorIaDto {
     return {
-      proveedorIaConfigId: 1,
+      proveedorIaId: 1,
       proveedor: 'claude',
       nombre: null,
       modelo: 'claude-opus-4-20250514',
@@ -31,22 +41,44 @@ describe('ConfiguracionComponent', () => {
     };
   }
 
+  function configuracionCorreoDto(over: Partial<ConfiguracionCorreoDto> = {}): ConfiguracionCorreoDto {
+    return {
+      configuracionCorreoId: 0,
+      host: 'smtp.gmail.com',
+      puerto: 587,
+      usarTls: true,
+      tieneConfiguracion: false,
+      fechaActualizacion: null,
+      ...over,
+    };
+  }
+
   function setup(
     presentacionResult = of(presentacion),
     visibilidadResult = of<VisibilidadSeccionDto[]>([]),
-    proveedorIaResult = of<ProveedorIaConfigDto[]>([]),
+    proveedorIaResult = of<ProveedorIaDto[]>([]),
+    configuracionCorreoResult = of(configuracionCorreoDto()),
   ): void {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
       'getPresentacion', 'getVisibilidad', 'updateVisibilidad', 'updateCurriculumPublicacion',
+      'getExperiencias', 'getFormaciones', 'getProyectos', 'getHabilidades',
+      'updateExperienciaVisibilidad', 'updateFormacionVisibilidad', 'updateProyectoVisibilidad',
+      'updateHabilidadVisibilidad',
     ]);
     cvEditorService.getPresentacion.and.returnValue(presentacionResult);
     cvEditorService.getVisibilidad.and.returnValue(visibilidadResult);
+    cvEditorService.getExperiencias.and.returnValue(of([]));
+    cvEditorService.getFormaciones.and.returnValue(of([]));
+    cvEditorService.getProyectos.and.returnValue(of([]));
+    cvEditorService.getHabilidades.and.returnValue(of([]));
     authService = jasmine.createSpyObj('AuthService', ['changePassword']);
     proveedorIaService = jasmine.createSpyObj('ProveedorIaService', [
       'getConfigs', 'crearConfig', 'actualizarConfig', 'eliminarConfig', 'activarConfig', 'probarConexion',
       'probarConexionGuardada',
     ]);
     proveedorIaService.getConfigs.and.returnValue(proveedorIaResult);
+    configuracionCorreoService = jasmine.createSpyObj('ConfiguracionCorreoService', ['getConfig', 'guardarConfig']);
+    configuracionCorreoService.getConfig.and.returnValue(configuracionCorreoResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
 
     TestBed.configureTestingModule({
@@ -55,6 +87,7 @@ describe('ConfiguracionComponent', () => {
         { provide: CvEditorService, useValue: cvEditorService },
         { provide: AuthService, useValue: authService },
         { provide: ProveedorIaService, useValue: proveedorIaService },
+        { provide: ConfiguracionCorreoService, useValue: configuracionCorreoService },
         { provide: NotificationService, useValue: notificationService },
       ],
     });
@@ -125,7 +158,7 @@ describe('ConfiguracionComponent', () => {
 
     it('los demas interruptores nunca se deshabilitan por esta regla', () => {
       setup();
-      expect(component.interruptorVisibilidadDeshabilitado(itemByKey('diplomados'))).toBeFalse();
+      expect(component.interruptorVisibilidadDeshabilitado(itemByKey('datos-personales'))).toBeFalse();
     });
   });
 
@@ -160,30 +193,19 @@ describe('ConfiguracionComponent', () => {
 
     it('aplica la visibilidad guardada a los items correspondientes', () => {
       setup(of(presentacion), of([
-        { seccion: 'diplomados', visible: false },
-        { seccion: 'diplomados.descargar-soporte-certificado', visible: false },
+        { seccion: 'datos-personales.email', visible: false },
       ]));
       component.ngOnInit();
 
-      const diplomados = itemByKey('diplomados');
-      expect(diplomados.visible).toBeFalse();
-      expect(diplomados.atributos.find(a => a.key === 'diplomados.descargar-soporte-certificado')?.visible).toBeFalse();
+      const datosPersonales = itemByKey('datos-personales');
+      expect(datosPersonales.atributos.find(a => a.key === 'datos-personales.email')?.visible).toBeFalse();
     });
 
     it('las secciones sinSwitchSeccion siempre quedan visibles', () => {
-      setup(of(presentacion), of([{ seccion: 'perfil', visible: false }]));
+      setup(of(presentacion), of([{ seccion: 'datos-personales', visible: false }]));
       component.ngOnInit();
 
-      expect(itemByKey('perfil').visible).toBeTrue();
-    });
-
-    it('aplica el valor legado "educacion" a las 4 sub-secciones si no tienen valor propio', () => {
-      setup(of(presentacion), of([{ seccion: 'educacion', visible: false }]));
-      component.ngOnInit();
-
-      expect(itemByKey('diplomados').visible).toBeFalse();
-      expect(itemByKey('certificaciones').visible).toBeFalse();
-      expect(itemByKey('cursos').visible).toBeFalse();
+      expect(itemByKey('datos-personales').visible).toBeTrue();
     });
 
     it('notifica error si falla la carga de visibilidad', () => {
@@ -198,12 +220,12 @@ describe('ConfiguracionComponent', () => {
     it('al desactivar una seccion, apaga tambien todos sus atributos y guarda', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const diplomados = itemByKey('diplomados');
-      diplomados.visible = false;
+      const metricas = itemByKey('dashboard.metricas');
+      metricas.visible = false;
 
-      component.onToggleSeccion(diplomados);
+      component.onToggleSeccion(metricas);
 
-      expect(diplomados.atributos.every(a => !a.visible)).toBeTrue();
+      expect(metricas.atributos.every(a => !a.visible)).toBeTrue();
       expect(cvEditorService.updateVisibilidad).toHaveBeenCalled();
       expect(notificationService.success).toHaveBeenCalled();
     });
@@ -211,9 +233,9 @@ describe('ConfiguracionComponent', () => {
     it('notifica error si falla el guardado', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-      const diplomados = itemByKey('diplomados');
+      const metricas = itemByKey('dashboard.metricas');
 
-      component.onToggleSeccion(diplomados);
+      component.onToggleSeccion(metricas);
 
       expect(notificationService.error).toHaveBeenCalled();
     });
@@ -223,36 +245,37 @@ describe('ConfiguracionComponent', () => {
     it('activar un atributo enciende la seccion si estaba apagada', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const diplomados = itemByKey('diplomados');
-      diplomados.visible = false;
-      const attr = diplomados.atributos[0];
-      attr.visible = true;
+      const item = {
+        key: 'test-item', label: 'Test', icon: '', iconStyle: '', visible: false,
+        atributos: [{ key: 'test-item.attr', label: 'Attr', visible: true }],
+      };
 
-      component.onToggleAtributo(diplomados, attr);
+      component.onToggleAtributo(item, item.atributos[0]);
 
-      expect(diplomados.visible).toBeTrue();
+      expect(item.visible).toBeTrue();
     });
 
     it('si ningun atributo queda visible, apaga la seccion', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const diplomados = itemByKey('diplomados');
-      diplomados.visible = true;
-      diplomados.atributos.forEach(a => (a.visible = false));
+      const item = {
+        key: 'test-item', label: 'Test', icon: '', iconStyle: '', visible: true,
+        atributos: [{ key: 'test-item.attr', label: 'Attr', visible: false }],
+      };
 
-      component.onToggleAtributo(diplomados, diplomados.atributos[0]);
+      component.onToggleAtributo(item, item.atributos[0]);
 
-      expect(diplomados.visible).toBeFalse();
+      expect(item.visible).toBeFalse();
     });
 
     it('para secciones sinSwitchSeccion, siempre queda visible=true', () => {
       setup();
       cvEditorService.updateVisibilidad.and.returnValue(of([]));
-      const perfil = itemByKey('perfil');
+      const datosPersonales = itemByKey('datos-personales');
 
-      component.onToggleAtributo(perfil, perfil.atributos[0]);
+      component.onToggleAtributo(datosPersonales, datosPersonales.atributos[0]);
 
-      expect(perfil.visible).toBeTrue();
+      expect(datosPersonales.visible).toBeTrue();
     });
   });
 
@@ -465,7 +488,7 @@ describe('ConfiguracionComponent', () => {
       });
 
       it('con conexiones guardadas, las carga', () => {
-        setup(of(presentacion), of([]), of([proveedorIaItem(), proveedorIaItem({ proveedorIaConfigId: 2, proveedor: 'openai', esActivo: false })]));
+        setup(of(presentacion), of([]), of([proveedorIaItem(), proveedorIaItem({ proveedorIaId: 2, proveedor: 'openai', esActivo: false })]));
         component.ngOnInit();
 
         expect(component.proveedoresIa.length).toBe(2);
@@ -498,7 +521,7 @@ describe('ConfiguracionComponent', () => {
 
       component.editarConexionIa(item);
 
-      expect(component.editandoProveedorIaId).toBe(item.proveedorIaConfigId);
+      expect(component.editandoProveedorIaId).toBe(item.proveedorIaId);
       expect(component.proveedorIaForm).toEqual({
         proveedor: 'claude', nombre: 'Cuenta trabajo', modelo: 'claude-opus-4-20250514', endpoint: '', apiKey: '',
       });
@@ -635,7 +658,7 @@ describe('ConfiguracionComponent', () => {
         setup();
         proveedorIaService.activarConfig.and.returnValue(of(proveedorIaItem({ esActivo: true })));
 
-        component.activarConexionIa(proveedorIaItem({ proveedorIaConfigId: 2, esActivo: false }));
+        component.activarConexionIa(proveedorIaItem({ proveedorIaId: 2, esActivo: false }));
 
         expect(proveedorIaService.activarConfig).toHaveBeenCalledWith(2);
         expect(notificationService.success).toHaveBeenCalled();
@@ -656,7 +679,7 @@ describe('ConfiguracionComponent', () => {
         setup();
         proveedorIaService.probarConexionGuardada.and.returnValue(of({ ok: true, mensaje: 'Conexión exitosa.' }));
 
-        component.probarConexionGuardada(proveedorIaItem({ proveedorIaConfigId: 2 }));
+        component.probarConexionGuardada(proveedorIaItem({ proveedorIaId: 2 }));
 
         expect(proveedorIaService.probarConexionGuardada).toHaveBeenCalledWith(2);
         expect(notificationService.success).toHaveBeenCalledWith('Conexión exitosa.');
@@ -711,6 +734,211 @@ describe('ConfiguracionComponent', () => {
 
         expect(notificationService.error).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('configuración de correo (SMTP para Analizar Oferta -> Enviar correo)', () => {
+    it('ngOnInit carga la configuración y precarga el formulario sin la contraseña', () => {
+      setup(undefined, undefined, undefined, of(configuracionCorreoDto({
+        configuracionCorreoId: 3, host: 'smtp.gmail.com', puerto: 587, usarTls: true, tieneConfiguracion: true,
+      })));
+
+      component.ngOnInit();
+
+      expect(component.loadingCorreo).toBeFalse();
+      expect(component.correoConfig?.tieneConfiguracion).toBeTrue();
+      expect(component.correoForm.host).toBe('smtp.gmail.com');
+      expect(component.correoForm.password).toBe('');
+    });
+
+    describe('guardarConfiguracionCorreo', () => {
+      it('avisa si el host esta vacio', () => {
+        setup();
+        component.ngOnInit();
+        component.correoForm.host = '  ';
+
+        component.guardarConfiguracionCorreo();
+
+        expect(notificationService.warning).toHaveBeenCalled();
+        expect(configuracionCorreoService.guardarConfig).not.toHaveBeenCalled();
+      });
+
+      it('avisa si es la primera vez y falta la contraseña', () => {
+        setup();
+        component.ngOnInit();
+        component.correoForm.password = '';
+
+        component.guardarConfiguracionCorreo();
+
+        expect(notificationService.warning).toHaveBeenCalled();
+        expect(configuracionCorreoService.guardarConfig).not.toHaveBeenCalled();
+      });
+
+      it('guarda y limpia la contraseña del formulario', () => {
+        setup();
+        component.ngOnInit();
+        component.correoForm.password = 'clave-de-aplicacion';
+        configuracionCorreoService.guardarConfig.and.returnValue(of(configuracionCorreoDto({ tieneConfiguracion: true })));
+
+        component.guardarConfiguracionCorreo();
+
+        expect(configuracionCorreoService.guardarConfig).toHaveBeenCalledWith({
+          host: 'smtp.gmail.com', puerto: 587, usarTls: true, password: 'clave-de-aplicacion',
+        });
+        expect(component.correoForm.password).toBe('');
+        expect(component.guardandoCorreo).toBeFalse();
+        expect(notificationService.success).toHaveBeenCalled();
+      });
+
+      it('al editar una ya configurada, no exige contraseña (se mantiene la anterior si se deja en blanco)', () => {
+        setup(undefined, undefined, undefined, of(configuracionCorreoDto({ tieneConfiguracion: true })));
+        component.ngOnInit();
+        configuracionCorreoService.guardarConfig.and.returnValue(of(configuracionCorreoDto({ tieneConfiguracion: true })));
+
+        component.guardarConfiguracionCorreo();
+
+        expect(configuracionCorreoService.guardarConfig).toHaveBeenCalledWith(
+          jasmine.objectContaining({ password: null })
+        );
+        expect(notificationService.warning).not.toHaveBeenCalled();
+      });
+
+      it('notifica error si el backend rechaza la solicitud', () => {
+        setup();
+        component.ngOnInit();
+        component.correoForm.password = 'clave-de-aplicacion';
+        configuracionCorreoService.guardarConfig.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+        component.guardarConfiguracionCorreo();
+
+        expect(component.guardandoCorreo).toBeFalse();
+        expect(notificationService.error).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('acciones en bloque de Información Profesional', () => {
+    const expOculta: ExperienciaDto = {
+      experienciaId: 1, empresa: 'Acme', cargo: 'Dev', sector: null, fechaInicio: null, fechaFin: null,
+      tipoContrato: null, motivoRetiro: null, funciones: null, esActual: false, mostrarEnCv: false,
+      adjuntoSoporte: null, fechaRegistro: '2026-01-01T00:00:00Z',
+    };
+    const formVisible: FormacionDto = {
+      formacionId: 1, titulo: 'Ing.', institucion: 'U', area: null, fechaInicio: null, fechaFin: null,
+      tipoFormacion: 'Pregrado', descripcion: null, adjuntoSoporte: null, fechaVigencia: null,
+      duracionHoras: null, mostrarEnCv: true,
+    };
+    const proyOculto: ProyectoDto = {
+      proyectoId: 1, nombreProyecto: 'X', rol: null, equipoTamano: null, duracionMeses: null,
+      stackTecnologico: null, aporte: null, logro: null, desafio: null, mostrarEnCv: false,
+    };
+    const habVisible: HabilidadDto = {
+      habilidadId: 1, nombre: 'Angular', tipo: 'Tecnica', nivel: null, descripcion: null,
+      nivelLectura: null, nivelEscritura: null, nivelEscucha: null, nivelHabla: null, mostrarEnCv: true,
+    };
+
+    it('carga las 4 listas y refleja ocultas/visibles', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expOculta }]));
+      cvEditorService.getFormaciones.and.returnValue(of([{ ...formVisible }]));
+      cvEditorService.getProyectos.and.returnValue(of([{ ...proyOculto }]));
+      cvEditorService.getHabilidades.and.returnValue(of([{ ...habVisible }]));
+
+      component.ngOnInit();
+
+      expect(component.hayExperienciasOcultas).toBeTrue();
+      expect(component.hayExperienciasVisibles).toBeFalse();
+      expect(component.hayFormacionesVisibles).toBeTrue();
+      expect(component.hayProyectosOcultos).toBeTrue();
+      expect(component.hayHabilidadesVisibles).toBeTrue();
+    });
+
+    it('activarTodasExperiencias solo llama al backend para las ocultas', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expOculta }]));
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(of({ ...expOculta, mostrarEnCv: true }));
+      component.ngOnInit();
+
+      component.activarTodasExperiencias();
+
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: true });
+      expect(component.experiencias[0].mostrarEnCv).toBeTrue();
+      expect(component.guardandoVisibilidadBloqueExperiencia).toBeFalse();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('onToggleBloqueExperiencias(true) activa todas; onToggleBloqueExperiencias(false) inactiva todas', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expOculta }]));
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(of({ ...expOculta, mostrarEnCv: true }));
+      component.ngOnInit();
+
+      component.onToggleBloqueExperiencias(true);
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: true });
+
+      cvEditorService.updateExperienciaVisibilidad.calls.reset();
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(of({ ...expOculta, mostrarEnCv: false }));
+      component.onToggleBloqueExperiencias(false);
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+    });
+
+    it('inactivarTodasHabilidades agrupa Tecnica/Blanda/Idioma en un solo control', () => {
+      const habBlanda: HabilidadDto = { ...habVisible, habilidadId: 2, tipo: 'Blanda' };
+      const habIdioma: HabilidadDto = { ...habVisible, habilidadId: 3, tipo: 'Idioma' };
+      setup();
+      cvEditorService.getHabilidades.and.returnValue(of([{ ...habVisible }, habBlanda, habIdioma]));
+      cvEditorService.updateHabilidadVisibilidad.and.callFake((id: number) =>
+        of({ ...habVisible, habilidadId: id, mostrarEnCv: false })
+      );
+      component.ngOnInit();
+
+      component.inactivarTodasHabilidades();
+
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledTimes(3);
+      expect(component.hayHabilidadesVisibles).toBeFalse();
+    });
+
+    it('no llama al backend si no hay nada que cambiar', () => {
+      setup();
+      cvEditorService.getProyectos.and.returnValue(of([{ ...proyOculto, mostrarEnCv: true }]));
+      component.ngOnInit();
+
+      component.activarTodosProyectos();
+
+      expect(cvEditorService.updateProyectoVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('onToggleBloqueFormaciones/Proyectos/Habilidades delegan en activar/inactivar segun el checked', () => {
+      setup();
+      cvEditorService.getFormaciones.and.returnValue(of([{ ...formVisible, mostrarEnCv: false }]));
+      cvEditorService.getProyectos.and.returnValue(of([{ ...proyOculto }]));
+      cvEditorService.getHabilidades.and.returnValue(of([{ ...habVisible }]));
+      cvEditorService.updateFormacionVisibilidad.and.returnValue(of({ ...formVisible, mostrarEnCv: true }));
+      cvEditorService.updateProyectoVisibilidad.and.returnValue(of({ ...proyOculto, mostrarEnCv: true }));
+      cvEditorService.updateHabilidadVisibilidad.and.returnValue(of({ ...habVisible, mostrarEnCv: false }));
+      component.ngOnInit();
+
+      component.onToggleBloqueFormaciones(true);
+      component.onToggleBloqueProyectos(true);
+      component.onToggleBloqueHabilidades(false);
+
+      expect(cvEditorService.updateFormacionVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: true });
+      expect(cvEditorService.updateProyectoVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: true });
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+    });
+
+    it('notifica error si falla el guardado en bloque', () => {
+      setup();
+      cvEditorService.getFormaciones.and.returnValue(of([{ ...formVisible, mostrarEnCv: false }]));
+      cvEditorService.updateFormacionVisibilidad.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+      component.ngOnInit();
+
+      component.activarTodasFormaciones();
+
+      expect(component.guardandoVisibilidadBloqueFormacion).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
     });
   });
 });

@@ -20,6 +20,7 @@ describe('ExperienciaComponent', () => {
     referenciaId: 10, tipoReferencia: 'Laboral', experienciaId: 1, nombre: 'Jefe',
     apellido: 'Directo', email: null, telefono: null, parentesco: null, cargo: 'Gerente', empresa: 'Acme',
     relacion: null, observaciones: null, adjuntoSoporte: null, fechaRegistro: '2020-01-01T00:00:00Z',
+    mostrarEnCv: true,
   };
 
   function setup(

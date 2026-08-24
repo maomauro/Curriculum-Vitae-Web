@@ -51,7 +51,7 @@ BEGIN
         CONSTRAINT PK_ProveedorIaConfig PRIMARY KEY CLUSTERED (ProveedorIaConfigId),
         CONSTRAINT FK_ProveedorIaConfig_Curriculum FOREIGN KEY (CurriculumId)
             REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
-        CONSTRAINT CK_ProveedorIaConfig_Proveedor CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'ollama', N'otro'))
+        CONSTRAINT CK_ProveedorIaConfig_Proveedor CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'groq', N'ollama', N'otro'))
     );
 
     CREATE NONCLUSTERED INDEX IX_ProveedorIaConfig_CurriculumId ON dbo.ProveedorIaConfig (CurriculumId);
@@ -124,16 +124,18 @@ BEGIN
         PRINT 'Indice UQ_ProveedorIaConfig_Curriculum_Activo creado.';
     END
 
-    -- El CHECK de Proveedor de la version anterior no incluia 'gemini' ni 'ollama'.
+    -- El CHECK de Proveedor de versiones anteriores no incluia 'gemini'/'ollama', y luego
+    -- tampoco 'groq' -- se recrea siempre con la lista completa vigente.
     IF EXISTS (
         SELECT 1 FROM sys.check_constraints
         WHERE name = 'CK_ProveedorIaConfig_Proveedor' AND parent_object_id = OBJECT_ID('dbo.ProveedorIaConfig')
+        AND definition NOT LIKE '%groq%'
     )
     BEGIN
         ALTER TABLE dbo.ProveedorIaConfig DROP CONSTRAINT CK_ProveedorIaConfig_Proveedor;
         ALTER TABLE dbo.ProveedorIaConfig ADD CONSTRAINT CK_ProveedorIaConfig_Proveedor
-            CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'ollama', N'otro'));
-        PRINT 'Restriccion CK_ProveedorIaConfig_Proveedor actualizada (agrega gemini/ollama).';
+            CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'groq', N'ollama', N'otro'));
+        PRINT 'Restriccion CK_ProveedorIaConfig_Proveedor actualizada (agrega groq).';
     END
 
     PRINT 'Verificacion de dbo.ProveedorIaConfig completada.';

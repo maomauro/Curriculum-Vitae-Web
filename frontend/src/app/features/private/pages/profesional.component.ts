@@ -139,9 +139,9 @@ export class ProfesionalComponent implements OnInit, CvPreviewVisibilidad {
         nombrePerfil: x.nombrePerfil,
         descripcionPerfil: x.descripcionPerfil,
         esActivo: x.esActivo,
-        aspiracionSalarialPesos: x.aspiracionSalarialPesos,
-        aspiracionSalarialDolares: x.aspiracionSalarialDolares,
-        experienciaPerfilAnios: x.experienciaPerfilAnios,
+        aspiracionSalarialPesos: x.mostrarAspiracionSalarial ? x.aspiracionSalarialPesos : null,
+        aspiracionSalarialDolares: x.mostrarAspiracionSalarial ? x.aspiracionSalarialDolares : null,
+        experienciaPerfilAnios: x.mostrarExperienciaPerfil ? x.experienciaPerfilAnios : null,
       })),
       experiencias: this.experiencias
         .filter(e => e.mostrarEnCv !== false)
@@ -194,7 +194,7 @@ export class ProfesionalComponent implements OnInit, CvPreviewVisibilidad {
         usuarioContacto: r.usuarioContacto,
       })),
       referenciasLaborales: this.referencias
-        .filter(r => (r.tipoReferencia ?? '').toLowerCase() === 'laboral')
+        .filter(r => (r.tipoReferencia ?? '').toLowerCase() === 'laboral' && r.mostrarEnCv !== false)
         .map(r => ({
           referenciaId: r.referenciaId,
           experienciaId: r.experienciaId,
@@ -225,17 +225,6 @@ export class ProfesionalComponent implements OnInit, CvPreviewVisibilidad {
 
   visibleAtributoSafe(seccion: string, attr: string): boolean {
     return this.visibilidad.visibleAtributoSafe(seccion, attr);
-  }
-
-  visibleBloqueFormacion(bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos'): boolean {
-    return this.visibilidad.visibleBloqueFormacion(bloque);
-  }
-
-  visibleDescargarSoporte(
-    bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos',
-    attr: string
-  ): boolean {
-    return this.visibilidad.visibleDescargarSoporte(bloque, attr);
   }
 
   private cargarDatos(): void {

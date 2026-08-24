@@ -18,6 +18,7 @@ public class OllamaAiProviderClientTests
         private readonly string _body;
 
         public HttpRequestMessage? UltimaSolicitud { get; private set; }
+        public string? UltimaSolicitudCuerpo { get; private set; }
 
         public FakeHandler(HttpStatusCode status, string body = "{\"models\":[]}")
         {
@@ -25,11 +26,11 @@ public class OllamaAiProviderClientTests
             _body = body;
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             UltimaSolicitud = request;
-            var response = new HttpResponseMessage(_status) { Content = new StringContent(_body) };
-            return Task.FromResult(response);
+            UltimaSolicitudCuerpo = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(_status) { Content = new StringContent(_body) };
         }
     }
 
@@ -135,5 +136,55 @@ public class OllamaAiProviderClientTests
     {
         var (cliente, _) = ClienteConRespuesta(HttpStatusCode.OK);
         Assert.Equal("ollama", cliente.Proveedor);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_SinModelo_DevuelveOkFalseSinLlamarARed()
+    {
+        var (cliente, handler) = ClienteConRespuesta(HttpStatusCode.OK);
+
+        var (ok, texto, error) = await cliente.GenerarTextoAsync(null, EndpointValido, null, "prompt", null, null);
+
+        Assert.False(ok);
+        Assert.Null(texto);
+        Assert.False(string.IsNullOrWhiteSpace(error));
+        Assert.Null(handler.UltimaSolicitud);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_ConRespuesta200_DevuelveElCampoResponse()
+    {
+        var (cliente, _) = ClienteConRespuesta(HttpStatusCode.OK, "{\"response\":\"{\\\"cargo\\\":\\\"Dev\\\"}\"}");
+
+        var (ok, texto, error) = await cliente.GenerarTextoAsync("llama3.1", EndpointValido, null, "prompt", null, null);
+
+        Assert.True(ok);
+        Assert.Equal("{\"cargo\":\"Dev\"}", texto);
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_ApuntaAlPathApiGenerate()
+    {
+        var (cliente, handler) = ClienteConRespuesta(HttpStatusCode.OK, "{\"response\":\"ok\"}");
+
+        await cliente.GenerarTextoAsync("llama3.1", EndpointValido, null, "prompt", null, null);
+
+        Assert.NotNull(handler.UltimaSolicitud);
+        Assert.Equal("/api/generate", handler.UltimaSolicitud!.RequestUri!.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_ConImagenAdjunta_IncluyeElArrayImages()
+    {
+        var (cliente, handler) = ClienteConRespuesta(HttpStatusCode.OK, "{\"response\":\"ok\"}");
+        var imagen = new byte[] { 1, 2, 3, 4 };
+
+        await cliente.GenerarTextoAsync("llava", EndpointValido, null, "prompt", imagen, "image/png");
+
+        var cuerpo = handler.UltimaSolicitudCuerpo;
+        Assert.NotNull(cuerpo);
+        Assert.Contains("\"images\"", cuerpo);
+        Assert.Contains(Convert.ToBase64String(imagen), cuerpo);
     }
 }

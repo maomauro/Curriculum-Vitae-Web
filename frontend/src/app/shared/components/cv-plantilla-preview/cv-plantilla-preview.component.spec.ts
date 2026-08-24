@@ -404,25 +404,21 @@ describe('CvPlantillaPreviewComponent', () => {
     expect(component.textoReferenciaLaboral(refs[0])).toBe('Juan Pérez · CTO · 555');
   });
 
-  describe('gates de visibilidad (sec/attr/attrSafe/bloqueForm/descarga)', () => {
-    it('sin vis, todo visible por defecto salvo descarga', () => {
+  describe('gates de visibilidad (sec/attr/attrSafe)', () => {
+    it('sin vis, todo visible por defecto', () => {
       component.vm = vmBase();
       component.vis = null;
       expect(component.sec('experiencia')).toBeTrue();
       expect(component.attr('experiencia', 'x')).toBeTrue();
       expect(component.attrSafe('experiencia', 'x')).toBeTrue();
-      expect(component.bloqueForm('cursos')).toBeTrue();
-      expect(component.descarga('cursos', 'x')).toBeFalse();
     });
 
     it('con vis, delega en los métodos del objeto de visibilidad', () => {
       component.vm = vmBase();
-      component.vis = mockVis({ sec: false, attr: false, attrSafe: false, bloqueForm: false, descarga: true });
+      component.vis = mockVis({ sec: false, attr: false, attrSafe: false });
       expect(component.sec('experiencia')).toBeFalse();
       expect(component.attr('experiencia', 'x')).toBeFalse();
       expect(component.attrSafe('experiencia', 'x')).toBeFalse();
-      expect(component.bloqueForm('cursos')).toBeFalse();
-      expect(component.descarga('cursos', 'x')).toBeTrue();
     });
   });
 
@@ -430,15 +426,11 @@ describe('CvPlantillaPreviewComponent', () => {
     sec?: boolean;
     attr?: boolean;
     attrSafe?: boolean;
-    bloqueForm?: boolean;
-    descarga?: boolean;
   }): CvPreviewVisibilidad {
     return {
       visibleSeccion: () => opts.sec ?? true,
       visibleAtributo: () => opts.attr ?? true,
       visibleAtributoSafe: () => opts.attrSafe ?? true,
-      visibleBloqueFormacion: () => opts.bloqueForm ?? true,
-      visibleDescargarSoporte: () => opts.descarga ?? false,
     };
   }
 });

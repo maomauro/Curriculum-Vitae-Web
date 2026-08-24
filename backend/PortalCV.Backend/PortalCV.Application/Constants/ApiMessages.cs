@@ -66,6 +66,29 @@ public static class ApiMessages
     }
 
     /// <summary>
+    /// Compartidos por cualquier paso del flujo de Ofertas que invoque a la IA
+    /// (extracción, selección de perfil, generación de CV) -- ver IIaPromptInvoker.
+    /// </summary>
+    public static class Ia
+    {
+        public const string SinProveedorActivo = "Configura un proveedor de IA activo en Configuración antes de continuar.";
+        public const string RespuestaNoEsJsonValido = "La IA no devolvió un formato válido. Intenta de nuevo.";
+
+        public static string ProveedorSinClienteReal(string proveedor) =>
+            $"El proveedor \"{proveedor}\" todavía no tiene análisis real implementado.";
+    }
+
+    /// <summary>
+    /// Extracción de datos de una oferta laboral con IA (POST /api/cv/ofertas/analizar).
+    /// </summary>
+    public static class OfertaAnalisis
+    {
+        public const string SinEntrada = "Debes pegar el texto de la oferta, adjuntar una imagen, o ambos.";
+        public const string ImagenNoSoportada = "Formato de imagen no soportado. Usa JPG, PNG o WEBP.";
+        public const string ImagenDemasiadoGrande = "La imagen no puede superar 5 MB.";
+    }
+
+    /// <summary>
     /// Autenticación y registro.
     /// </summary>
     public static class Auth

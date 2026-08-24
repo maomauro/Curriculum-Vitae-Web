@@ -101,6 +101,10 @@
 </div>
 
 <ng-container *ngIf="!loading">
+  <h6 *ngIf="prompts.length > 0" class="d-flex align-items-center gap-2">
+    <i class="bi bi-person-check text-primary"></i>Prompts personalizados
+  </h6>
+
   <div *ngIf="prompts.length === 0 && !mostrarFormNuevo" class="text-center py-5 text-muted">
     <i class="bi bi-robot display-5"></i>
     <p class="mt-3">Todavía no tienes prompts configurados. Crea el primero.</p>
@@ -208,6 +212,67 @@
         <span *ngIf="p.guardando" class="spinner-border spinner-border-sm me-1"></span>
         <i *ngIf="!p.guardando" class="bi bi-floppy-fill me-2"></i>Guardar nueva versión
       </button>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <hr class="cv-sidebar-hr">
+    <h6 class="d-flex align-items-center gap-2">
+      <i class="bi bi-journal-text text-primary"></i>Prompts del sistema
+    </h6>
+    <p class="text-muted small mb-3">
+      Todos los prompts que usa el asistente de IA, personalizados o no. Los que ya tenés como propios se editan arriba, en
+      "Prompts personalizados" -- acá podés verlos igual como referencia, o usar uno como base para crear tu versión.
+    </p>
+
+    <div *ngFor="let c of catalogo; trackBy: trackByCatalogo" class="profile-card">
+      <div class="profile-card-header">
+        <div class="profile-name cv-cursor-pointer"
+             role="button"
+             tabindex="0"
+             [attr.aria-expanded]="isCatalogoExpandido(c.codigo)"
+             [attr.aria-controls]="'catalogo-panel-' + c.codigo"
+             (click)="toggleCatalogoExpandido(c.codigo)"
+             (keydown.enter)="toggleCatalogoExpandido(c.codigo)"
+             (keydown.space)="$event.preventDefault(); toggleCatalogoExpandido(c.codigo)">
+          <i class="bi cv-chevron-muted" aria-hidden="true"
+             [class.bi-chevron-down]="!isCatalogoExpandido(c.codigo)"
+             [class.bi-chevron-up]="isCatalogoExpandido(c.codigo)"></i>
+          <code>{{ c.codigo }}</code>
+          <span class="badge rounded-pill ms-2" [class.badge-cv-publicado]="estaPersonalizado(c.codigo)" [class.cv-badge-neutral]="!estaPersonalizado(c.codigo)">
+            {{ estaPersonalizado(c.codigo) ? 'Personalizado' : 'Por defecto' }}
+          </span>
+        </div>
+        <div class="text-muted small">{{ c.descripcion }}</div>
+      </div>
+
+      <div *ngIf="isCatalogoExpandido(c.codigo)" [id]="'catalogo-panel-' + c.codigo" role="region" class="row g-3 px-1">
+        <div class="col-12">
+          <div class="fw-semibold small text-muted mb-1">Rol y contexto</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.rolContexto }}</pre>
+        </div>
+        <div class="col-12">
+          <div class="fw-semibold small text-muted mb-1">Tarea</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.tarea }}</pre>
+        </div>
+        <div class="col-12" *ngIf="c.reglas">
+          <div class="fw-semibold small text-muted mb-1">Reglas</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.reglas }}</pre>
+        </div>
+        <div class="col-12">
+          <div class="fw-semibold small text-muted mb-1">Formato de salida</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.formatoSalida }}</pre>
+        </div>
+      </div>
+
+      <div *ngIf="isCatalogoExpandido(c.codigo)" class="perfil-action-row">
+        <button type="button" class="btn btn-outline-primary px-4" *ngIf="!estaPersonalizado(c.codigo)" (click)="usarComoBase(c)">
+          <i class="bi bi-copy me-2"></i>Usar como base
+        </button>
+        <span *ngIf="estaPersonalizado(c.codigo)" class="text-muted small">
+          <i class="bi bi-info-circle me-1"></i>Ya tenés tu propia versión -- la encontrás arriba, en "Prompts personalizados".
+        </span>
+      </div>
     </div>
   </div>
 </ng-container>

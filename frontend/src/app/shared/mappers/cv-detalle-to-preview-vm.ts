@@ -28,6 +28,7 @@ export function cvDetalleDtoToPreviewVm(d: CvDetalleDto): CvPreviewVm {
     nombrePerfil: x.nombrePerfil,
     descripcionPerfil: x.descripcionPerfil,
     esActivo: x.esActivo,
+    experienciaPerfilAnios: x.experienciaPerfilAnios,
     aspiracionSalarialPesos: x.aspiracionSalarialPesos,
     aspiracionSalarialDolares: x.aspiracionSalarialDolares,
   }));

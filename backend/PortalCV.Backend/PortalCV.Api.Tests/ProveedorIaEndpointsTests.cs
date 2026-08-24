@@ -125,7 +125,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
         var cipher = scope.ServiceProvider.GetRequiredService<IApiKeyCipher>();
-        var fila = await db.ProveedoresIaConfig.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
+        var fila = await db.ProveedoresIa.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
 
         Assert.NotNull(fila.ApiKeyCifrada);
         Assert.NotEqual(apiKey, fila.ApiKeyCifrada);
@@ -145,7 +145,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
-        var activas = await db.ProveedoresIaConfig.CountAsync(p => p.CurriculumId == curriculumId && p.EsActivo);
+        var activas = await db.ProveedoresIa.CountAsync(p => p.CurriculumId == curriculumId && p.EsActivo);
         Assert.Equal(1, activas);
     }
 
@@ -198,7 +198,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         var (client, curriculumId) = await CreateAuthenticatedClientAsync("provia-mantiene-clave");
         const string apiKeyOriginal = "clave-original-123";
         var creado = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude", apiKey: apiKeyOriginal), CamelCase);
-        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         var response = await client.PutAsJsonAsync(
             $"/api/cv/proveedor-ia/{id}", new { proveedor = "claude", nombre = (string?)null, modelo = "modelo-nuevo", endpoint = (string?)null, apiKey = (string?)null }, CamelCase);
@@ -208,7 +208,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
         var cipher = scope.ServiceProvider.GetRequiredService<IApiKeyCipher>();
-        var fila = await db.ProveedoresIaConfig.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
+        var fila = await db.ProveedoresIa.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
         Assert.Equal(apiKeyOriginal, cipher.Decrypt(fila.ApiKeyCifrada!));
         Assert.Equal("modelo-nuevo", fila.Modelo);
     }
@@ -218,7 +218,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
     {
         var (client, curriculumId) = await CreateAuthenticatedClientAsync("provia-reemplaza-clave");
         var creado = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude", apiKey: "clave-vieja"), CamelCase);
-        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         await client.PutAsJsonAsync(
             $"/api/cv/proveedor-ia/{id}", new { proveedor = "claude", nombre = (string?)null, modelo = (string?)null, endpoint = (string?)null, apiKey = "clave-nueva" }, CamelCase);
@@ -226,7 +226,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
         var cipher = scope.ServiceProvider.GetRequiredService<IApiKeyCipher>();
-        var fila = await db.ProveedoresIaConfig.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
+        var fila = await db.ProveedoresIa.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
         Assert.Equal("clave-nueva", cipher.Decrypt(fila.ApiKeyCifrada!));
     }
 
@@ -236,7 +236,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         var (clientA, _) = await CreateAuthenticatedClientAsync("provia-upd-ownerA");
         var (clientB, _) = await CreateAuthenticatedClientAsync("provia-upd-ownerB");
         var creado = await clientA.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         var response = await clientB.PutAsJsonAsync(
             $"/api/cv/proveedor-ia/{id}", new { proveedor = "claude", nombre = (string?)null, modelo = (string?)null, endpoint = (string?)null, apiKey = "hackeada" }, CamelCase);
@@ -260,7 +260,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
     {
         var (client, curriculumId) = await CreateAuthenticatedClientAsync("provia-elim-reactiva");
         var primera = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var primeraId = JsonDocument.Parse(await primera.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var primeraId = JsonDocument.Parse(await primera.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
         await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("openai"), CamelCase);
 
         var deleteResponse = await client.DeleteAsync($"/api/cv/proveedor-ia/{primeraId}");
@@ -268,7 +268,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
-        var restante = await db.ProveedoresIaConfig.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
+        var restante = await db.ProveedoresIa.AsNoTracking().SingleAsync(p => p.CurriculumId == curriculumId);
         Assert.Equal("openai", restante.Proveedor);
         Assert.True(restante.EsActivo);
     }
@@ -278,7 +278,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
     {
         var (client, _) = await CreateAuthenticatedClientAsync("provia-elim-unica");
         var creado = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         var deleteResponse = await client.DeleteAsync($"/api/cv/proveedor-ia/{id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
@@ -293,14 +293,14 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         var (clientA, curriculumIdA) = await CreateAuthenticatedClientAsync("provia-del-ownerA");
         var (clientB, _) = await CreateAuthenticatedClientAsync("provia-del-ownerB");
         var creado = await clientA.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         var response = await clientB.DeleteAsync($"/api/cv/proveedor-ia/{id}");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
-        Assert.Equal(1, await db.ProveedoresIaConfig.CountAsync(p => p.CurriculumId == curriculumIdA));
+        Assert.Equal(1, await db.ProveedoresIa.CountAsync(p => p.CurriculumId == curriculumIdA));
     }
 
     [Fact]
@@ -308,9 +308,9 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
     {
         var (client, curriculumId) = await CreateAuthenticatedClientAsync("provia-activar");
         var primera = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var primeraId = JsonDocument.Parse(await primera.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var primeraId = JsonDocument.Parse(await primera.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
         var segunda = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("openai"), CamelCase);
-        var segundaId = JsonDocument.Parse(await segunda.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var segundaId = JsonDocument.Parse(await segunda.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         var response = await client.PutAsync($"/api/cv/proveedor-ia/{segundaId}/activar", null);
 
@@ -320,24 +320,24 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
-        var filas = await db.ProveedoresIaConfig.AsNoTracking().Where(p => p.CurriculumId == curriculumId).ToListAsync();
+        var filas = await db.ProveedoresIa.AsNoTracking().Where(p => p.CurriculumId == curriculumId).ToListAsync();
         Assert.Single(filas, p => p.EsActivo);
-        Assert.True(filas.Single(p => p.ProveedorIaConfigId == segundaId).EsActivo);
-        Assert.False(filas.Single(p => p.ProveedorIaConfigId == primeraId).EsActivo);
+        Assert.True(filas.Single(p => p.ProveedorIaId == segundaId).EsActivo);
+        Assert.False(filas.Single(p => p.ProveedorIaId == primeraId).EsActivo);
     }
 
     [Fact]
     public async Task Activar_LaDeMenorIdMientrasOtraDeMayorIdEstaActiva_NoFallaPorElIndiceUnico()
     {
         // Regresion: activar la fila de MENOR id mientras la de MAYOR id esta activa
-        // reproducia "Cannot insert duplicate key row ... UQ_ProveedorIaConfig_Curriculum_Activo"
+        // reproducia "Cannot insert duplicate key row ... UQ_ProveedorIa_Curriculum_Activo"
         // -- EF Core no garantiza que el UPDATE de "desactivar" salga antes que el de
         // "activar" dentro de un mismo SaveChanges cuando el orden por id no coincide.
         var (client, curriculumId) = await CreateAuthenticatedClientAsync("provia-activar-orden");
         var primera = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var primeraId = JsonDocument.Parse(await primera.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var primeraId = JsonDocument.Parse(await primera.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
         var segunda = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("openai"), CamelCase);
-        var segundaId = JsonDocument.Parse(await segunda.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var segundaId = JsonDocument.Parse(await segunda.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
         await client.PutAsync($"/api/cv/proveedor-ia/{segundaId}/activar", null); // ahora la de mayor id (segundaId) esta activa
 
         var response = await client.PutAsync($"/api/cv/proveedor-ia/{primeraId}/activar", null); // reactivar la de menor id
@@ -345,9 +345,9 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
-        var filas = await db.ProveedoresIaConfig.AsNoTracking().Where(p => p.CurriculumId == curriculumId).ToListAsync();
+        var filas = await db.ProveedoresIa.AsNoTracking().Where(p => p.CurriculumId == curriculumId).ToListAsync();
         Assert.Single(filas, p => p.EsActivo);
-        Assert.True(filas.Single(p => p.ProveedorIaConfigId == primeraId).EsActivo);
+        Assert.True(filas.Single(p => p.ProveedorIaId == primeraId).EsActivo);
     }
 
     [Fact]
@@ -356,7 +356,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         var (clientA, _) = await CreateAuthenticatedClientAsync("provia-act-ownerA");
         var (clientB, _) = await CreateAuthenticatedClientAsync("provia-act-ownerB");
         var creado = await clientA.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaConfigId").GetInt32();
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
 
         var response = await clientB.PutAsync($"/api/cv/proveedor-ia/{id}/activar", null);
 
@@ -406,7 +406,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
     {
         var (client, _) = await CreateAuthenticatedClientAsync("provia-probarguardada-openai");
         var creado = await client.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("openai", apiKey: "clave"), CamelCase);
-        var id = (await creado.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("proveedorIaConfigId").GetInt32();
+        var id = (await creado.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("proveedorIaId").GetInt32();
 
         var response = await client.PostAsync($"/api/cv/proveedor-ia/{id}/probar", null);
 
@@ -421,7 +421,7 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         var (clientA, _) = await CreateAuthenticatedClientAsync("provia-probarguardada-ownerA");
         var (clientB, _) = await CreateAuthenticatedClientAsync("provia-probarguardada-ownerB");
         var creado = await clientA.PostAsJsonAsync("/api/cv/proveedor-ia", CrearBody("claude"), CamelCase);
-        var id = (await creado.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("proveedorIaConfigId").GetInt32();
+        var id = (await creado.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("proveedorIaId").GetInt32();
 
         var response = await clientB.PostAsync($"/api/cv/proveedor-ia/{id}/probar", null);
 

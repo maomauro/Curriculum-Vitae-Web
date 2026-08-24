@@ -79,6 +79,57 @@ public class OllamaAiProviderClient : IAiProviderClient
         }
     }
 
+    public async Task<(bool Ok, string? Texto, string? Error)> GenerarTextoAsync(
+        string? modelo, string? endpoint, string? apiKey, string prompt,
+        byte[]? imagenBytes, string? imagenContentType, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+            return (false, null, "La URL del servidor Ollama es requerida.");
+        if (string.IsNullOrWhiteSpace(modelo))
+            return (false, null, "Debes indicar el modelo de Ollama a usar.");
+
+        if (!Uri.TryCreate(endpoint.Trim(), UriKind.Absolute, out var baseUri) ||
+            (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
+            return (false, null, "La URL del servidor Ollama no es válida.");
+
+        if (HostsBloqueados.Contains(baseUri.Host, StringComparer.OrdinalIgnoreCase))
+            return (false, null, "Esa dirección no está permitida como endpoint.");
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(baseUri, "/api/generate"));
+            if (!string.IsNullOrWhiteSpace(apiKey))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+            var body = imagenBytes is { Length: > 0 }
+                ? new { model = modelo.Trim(), prompt, images = new[] { Convert.ToBase64String(imagenBytes) }, stream = false }
+                : (object)new { model = modelo.Trim(), prompt, stream = false };
+            request.Content = JsonContent.Create(body);
+
+            using var response = await _http.SendAsync(request, ct);
+
+            if (!response.IsSuccessStatusCode)
+                return (false, null, $"El servidor Ollama respondió con un error ({(int)response.StatusCode}).");
+
+            var cuerpo = await response.Content.ReadFromJsonAsync<OllamaGenerateResponse>(cancellationToken: ct);
+            return string.IsNullOrWhiteSpace(cuerpo?.Response)
+                ? (false, null, "El servidor Ollama respondió sin contenido de texto.")
+                : (true, cuerpo.Response, null);
+        }
+        catch (TaskCanceledException)
+        {
+            return (false, null, "Tiempo de espera agotado al conectar con el servidor Ollama.");
+        }
+        catch (HttpRequestException)
+        {
+            return (false, null, "No se pudo conectar con el servidor Ollama. Verifica que esté corriendo y accesible.");
+        }
+        catch (JsonException)
+        {
+            return (false, null, "El servidor respondió, pero no con el formato esperado de Ollama.");
+        }
+    }
+
     private sealed class OllamaTagsResponse
     {
         public List<OllamaModelo>? Models { get; set; }
@@ -87,5 +138,10 @@ public class OllamaAiProviderClient : IAiProviderClient
     private sealed class OllamaModelo
     {
         public string? Name { get; set; }
+    }
+
+    private sealed class OllamaGenerateResponse
+    {
+        public string? Response { get; set; }
     }
 }

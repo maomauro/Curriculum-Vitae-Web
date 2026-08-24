@@ -53,7 +53,7 @@ BEGIN
             REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
         CONSTRAINT FK_Oferta_Perfil FOREIGN KEY (PerfilId)
             REFERENCES dbo.Perfil (PerfilId) ON DELETE NO ACTION,
-        CONSTRAINT CK_Oferta_OrigenEntrada CHECK (OrigenEntrada IN (N'texto', N'imagen')),
+        CONSTRAINT CK_Oferta_OrigenEntrada CHECK (OrigenEntrada IN (N'texto', N'imagen', N'ambos')),
         CONSTRAINT CK_Oferta_Estado CHECK (Estado IN (N'Analizada', N'PerfilAsignado', N'CvGenerado'))
     );
 

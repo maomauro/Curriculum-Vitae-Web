@@ -8,6 +8,11 @@ namespace PortalCV.Infrastructure.Repositories;
 
 public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRepository
 {
+    /// <summary>Placeholder de 1 byte usado en las proyecciones "SinAdjuntos" -- nunca se
+    /// expone al cliente, solo sirve para que "AdjuntoSoporteBytes is not null" siga dando
+    /// el resultado correcto sin transferir el archivo real (puede pesar varios MB).</summary>
+    private static readonly byte[] MarcadorAdjuntoPresente = { 1 };
+
     public CurriculumRepository(PortalCvDbContext context) : base(context) { }
 
     public async Task<Curriculum?> GetByUrlPublicaAsync(string urlPublica, CancellationToken ct = default)
@@ -63,6 +68,90 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .Include(c => c.RedesSociales)
             .Include(c => c.VisibilidadesSeccion)
             .FirstOrDefaultAsync(c => c.CurriculumId == curriculumId, ct);
+
+    /// <summary>Mismo motivo que CvEditorService.GetExperienciasAsync/GetFormacionesAsync: el
+    /// consolidado de "Información profesional" (pública, preview de Configuración) solo
+    /// necesita saber si hay adjunto para armar el link de descarga, no los bytes en sí -- un
+    /// Include normal de EF materializa igual el archivo completo por cada fila con soporte.</summary>
+    public async Task<Curriculum?> GetByUrlPublicaSinAdjuntosAsync(string urlPublica, CancellationToken ct = default)
+    {
+        var cv = await _dbSet
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(c => c.Personales)
+            .Include(c => c.Perfiles)
+            .Include(c => c.Habilidades)
+            .Include(c => c.Proyectos)
+            .Include(c => c.Referencias)
+            .Include(c => c.RedesSociales)
+            .Include(c => c.VisibilidadesSeccion)
+            .FirstOrDefaultAsync(c =>
+                c.UrlPublica == urlPublica &&
+                c.Estado == CurriculumEstados.Publicado &&
+                c.Usuario.Estado == UsuarioEstados.Activo,
+                ct);
+        if (cv is not null) await CargarExperienciasYFormacionesSinAdjuntosAsync(cv, ct);
+        return cv;
+    }
+
+    /// <summary>Ver <see cref="GetByUrlPublicaSinAdjuntosAsync"/>.</summary>
+    public async Task<Curriculum?> GetParaPreviewPublicoPorIdSinAdjuntosAsync(int curriculumId, CancellationToken ct = default)
+    {
+        var cv = await _dbSet
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(c => c.Personales)
+            .Include(c => c.Perfiles)
+            .Include(c => c.Habilidades)
+            .Include(c => c.Proyectos)
+            .Include(c => c.Referencias)
+            .Include(c => c.RedesSociales)
+            .Include(c => c.VisibilidadesSeccion)
+            .FirstOrDefaultAsync(c => c.CurriculumId == curriculumId, ct);
+        if (cv is not null) await CargarExperienciasYFormacionesSinAdjuntosAsync(cv, ct);
+        return cv;
+    }
+
+    private async Task CargarExperienciasYFormacionesSinAdjuntosAsync(Curriculum cv, CancellationToken ct)
+    {
+        cv.Experiencias = await _context.Experiencias.AsNoTracking()
+            .Where(e => e.CurriculumId == cv.CurriculumId)
+            .Select(e => new Experiencia
+            {
+                ExperienciaId = e.ExperienciaId,
+                CurriculumId = e.CurriculumId,
+                Empresa = e.Empresa,
+                Cargo = e.Cargo,
+                Sector = e.Sector,
+                FechaInicio = e.FechaInicio,
+                FechaFin = e.FechaFin,
+                TipoContrato = e.TipoContrato,
+                Funciones = e.Funciones,
+                EsActual = e.EsActual,
+                MostrarEnCv = e.MostrarEnCv,
+                AdjuntoSoporte = e.AdjuntoSoporte,
+                AdjuntoSoporteBytes = e.AdjuntoSoporteBytes != null ? MarcadorAdjuntoPresente : null,
+            })
+            .ToListAsync(ct);
+
+        cv.Formaciones = await _context.Formaciones.AsNoTracking()
+            .Where(f => f.CurriculumId == cv.CurriculumId)
+            .Select(f => new Formacion
+            {
+                FormacionId = f.FormacionId,
+                CurriculumId = f.CurriculumId,
+                Titulo = f.Titulo,
+                Institucion = f.Institucion,
+                Area = f.Area,
+                FechaInicio = f.FechaInicio,
+                FechaFin = f.FechaFin,
+                TipoFormacion = f.TipoFormacion,
+                MostrarEnCv = f.MostrarEnCv,
+                AdjuntoSoporte = f.AdjuntoSoporte,
+                AdjuntoSoporteBytes = f.AdjuntoSoporteBytes != null ? MarcadorAdjuntoPresente : null,
+            })
+            .ToListAsync(ct);
+    }
 
     public async Task<Curriculum?> GetByUsuarioIdAsync(int usuarioId, CancellationToken ct = default)
         => await _dbSet

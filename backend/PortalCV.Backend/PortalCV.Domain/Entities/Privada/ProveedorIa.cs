@@ -1,8 +1,8 @@
 namespace PortalCV.Domain.Entities;
 
-public class ProveedorIaConfig
+public class ProveedorIa
 {
-    public int ProveedorIaConfigId { get; set; }
+    public int ProveedorIaId { get; set; }
     public int CurriculumId { get; set; }
     public string Proveedor { get; set; } = string.Empty;
     public string? Nombre { get; set; }

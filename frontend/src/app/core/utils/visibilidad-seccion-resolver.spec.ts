@@ -44,21 +44,6 @@ describe('VisibilidadSeccionResolver', () => {
     expect(vis.visibleAtributoSafe('proyectos', 'aporte')).toBeFalse();
   });
 
-  it('visibleBloqueFormacion usa el bloque especifico si existe, si no cae a "educacion"', () => {
-    const vis = new VisibilidadSeccionResolver([
-      { seccion: 'diplomados', visible: false },
-      { seccion: 'educacion', visible: true },
-    ]);
-
-    expect(vis.visibleBloqueFormacion('diplomados')).toBeFalse();
-    expect(vis.visibleBloqueFormacion('cursos')).toBeTrue();
-  });
-
-  it('visibleDescargarSoporte depende del bloque de formacion y del atributo puntual', () => {
-    const vis = new VisibilidadSeccionResolver([{ seccion: 'diplomados', visible: false }]);
-    expect(vis.visibleDescargarSoporte('diplomados', 'adjuntoSoporte')).toBeFalse();
-  });
-
   it('con datos null/undefined todo se considera visible salvo las nunca-visibles-por-defecto', () => {
     const vis = new VisibilidadSeccionResolver(null);
     expect(vis.visibleSeccion('proyectos')).toBeTrue();

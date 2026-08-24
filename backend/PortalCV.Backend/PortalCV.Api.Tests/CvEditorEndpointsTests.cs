@@ -230,6 +230,12 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
             Relacion: null, Observaciones: null, AdjuntoSoporte: null)));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
 
+        var visibilidadResponse = await client.PutAsync($"/api/cv/referencias/{id}/visibilidad",
+            JsonPayload(new UpdateReferenciaVisibilidadRequest { MostrarEnCv = false }));
+        Assert.Equal(HttpStatusCode.OK, visibilidadResponse.StatusCode);
+        var visibilidadActualizada = JsonDocument.Parse(await visibilidadResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.False(visibilidadActualizada.GetProperty("mostrarEnCv").GetBoolean());
+
         var deleteResponse = await client.DeleteAsync($"/api/cv/referencias/{id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
     }
@@ -567,6 +573,28 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Perfil_MostrarExperienciaYAspiracionSalarial_PorDefectoTrueYPersisteCambio()
+    {
+        var client = await CreateAuthenticatedClientAsync("perfil-visibilidad");
+
+        var createResponse = await client.PostAsync("/api/cv/perfiles", PerfilPayload("Backend Developer", 5));
+        var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.True(created.GetProperty("mostrarExperienciaPerfil").GetBoolean());
+        Assert.True(created.GetProperty("mostrarAspiracionSalarial").GetBoolean());
+        var perfilId = created.GetProperty("perfilId").GetInt32();
+
+        var updateResponse = await client.PutAsync($"/api/cv/perfiles/{perfilId}", new StringContent(
+            "{\"nombrePerfil\":\"Backend Developer\",\"descripcionPerfil\":null,\"experienciaPerfilAnios\":5," +
+            "\"aspiracionSalarialPesos\":null,\"aspiracionSalarialDolares\":null,\"esActivo\":true," +
+            "\"mostrarExperienciaPerfil\":false,\"mostrarAspiracionSalarial\":false}",
+            Encoding.UTF8, "application/json"));
+        var updated = JsonDocument.Parse(await updateResponse.Content.ReadAsStringAsync()).RootElement;
+
+        Assert.False(updated.GetProperty("mostrarExperienciaPerfil").GetBoolean());
+        Assert.False(updated.GetProperty("mostrarAspiracionSalarial").GetBoolean());
+    }
+
+    [Fact]
     public async Task Perfil_Update_DeOtroUsuario_Retorna403()
     {
         var clientA = await CreateAuthenticatedClientAsync("perfil-owner");
@@ -647,6 +675,30 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
 
         var getFinal = await client.GetAsync("/api/cv/ofertas");
         Assert.Equal("[]", (await getFinal.Content.ReadAsStringAsync()).Trim());
+    }
+
+    [Fact]
+    public async Task Oferta_CrudGuardaYDevuelveLosAtributosDetallados()
+    {
+        var client = await CreateAuthenticatedClientAsync("oferta-atributos");
+
+        var payload = JsonPayload(new UpsertOfertaRequest(
+            Cargo: "Software Engineer", Empresa: "Knezevic", Descripcion: null, CorreoReclutador: null, NombreReclutador: null,
+            TextoOriginal: "Texto de prueba.", OrigenEntrada: "texto", Estado: "Analizada", PerfilId: null,
+            Modalidad: "100% remoto", TipoContrato: "Contractor", Moneda: "USD", Duracion: "6 meses",
+            Horario: "CST", ExperienciaRequerida: "3 a 5 años", StackTecnologico: "C#, .NET, React", NivelIdioma: "Inglés B2+"));
+
+        var createResponse = await client.PostAsync("/api/cv/ofertas", payload);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal("100% remoto", created.GetProperty("modalidad").GetString());
+        Assert.Equal("Contractor", created.GetProperty("tipoContrato").GetString());
+        Assert.Equal("C#, .NET, React", created.GetProperty("stackTecnologico").GetString());
+        Assert.Equal("Inglés B2+", created.GetProperty("nivelIdioma").GetString());
+
+        var lista = JsonDocument.Parse(await (await client.GetAsync("/api/cv/ofertas")).Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal("USD", lista[0].GetProperty("moneda").GetString());
+        Assert.Equal("3 a 5 años", lista[0].GetProperty("experienciaRequerida").GetString());
     }
 
     [Fact]

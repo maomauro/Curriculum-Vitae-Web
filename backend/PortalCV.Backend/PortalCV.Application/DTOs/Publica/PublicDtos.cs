@@ -66,6 +66,7 @@ public record PerfilPublicoDto(
     int PerfilId,
     string? NombrePerfil,
     string? DescripcionPerfil,
+    decimal? ExperienciaPerfilAnios,
     decimal? AspiracionSalarialPesos,
     decimal? AspiracionSalarialDolares,
     bool EsActivo);

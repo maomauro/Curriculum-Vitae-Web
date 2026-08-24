@@ -40,21 +40,6 @@ export class VisibilidadSeccionResolver implements CvPreviewVisibilidad {
     return this.mapa.get(key) === true;
   }
 
-  visibleBloqueFormacion(bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos'): boolean {
-    if (this.mapa.has(bloque)) return this.isVisible(bloque);
-    return this.isVisible('educacion');
-  }
-
-  visibleDescargarSoporte(
-    bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos',
-    attr: string
-  ): boolean {
-    if (!this.visibleBloqueFormacion(bloque)) return false;
-    const key = `${bloque}.${attr}`;
-    if (!this.mapa.has(key)) return true;
-    return this.mapa.get(key) === true;
-  }
-
   private isVisible(key: string): boolean {
     const k = key.trim().toLowerCase();
     if (seccionSiempreVisible(k)) return true;

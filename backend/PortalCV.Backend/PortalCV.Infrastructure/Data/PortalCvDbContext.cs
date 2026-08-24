@@ -32,7 +32,9 @@ public class PortalCvDbContext : DbContext
     public DbSet<AuditoriaAuth> AuditoriasAuth => Set<AuditoriaAuth>();
     public DbSet<PromptIa> PromptsIa => Set<PromptIa>();
     public DbSet<Oferta> Ofertas => Set<Oferta>();
-    public DbSet<ProveedorIaConfig> ProveedoresIaConfig => Set<ProveedorIaConfig>();
+    public DbSet<ProveedorIa> ProveedoresIa => Set<ProveedorIa>();
+    public DbSet<CvGenerado> CvsGenerados => Set<CvGenerado>();
+    public DbSet<ConfiguracionCorreo> ConfiguracionesCorreo => Set<ConfiguracionCorreo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,7 +60,9 @@ public class PortalCvDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AuditoriaAuthConfiguration());
         modelBuilder.ApplyConfiguration(new PromptIaConfiguration());
         modelBuilder.ApplyConfiguration(new OfertaConfiguration());
-        modelBuilder.ApplyConfiguration(new ProveedorIaConfigConfiguration());
+        modelBuilder.ApplyConfiguration(new ProveedorIaConfiguration());
+        modelBuilder.ApplyConfiguration(new CvGeneradoConfiguration());
+        modelBuilder.ApplyConfiguration(new ConfiguracionCorreoConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

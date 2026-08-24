@@ -27,6 +27,10 @@ La Épica 6 "Resiliencia Cold Start (Snapshot JSON)" se implementó y luego se e
 - `production/09_AddOferta.sql`: agrega `dbo.Oferta` (historial de ofertas laborales analizadas por el postulante, flujo Oferta → Perfil → CV generado — ver `docs/arquitectura/Roadmap-Ofertas-IA.md`).
 - `production/10_AddProveedorIaConfig.sql`: agrega `dbo.ProveedorIaConfig` (conexión con el proveedor de IA propia de cada CV — proveedor, modelo, clave de API cifrada). Requiere configurar `Encryption__Key` en el backend (ver el propio script).
 - `production/13_DropSnapshotTables.sql`: elimina `dbo.PublicCvSnapshotExport` y `dbo.PublicStaticSnapshotState` (tablas de la Épica 6 de snapshot, retirada del código — ver `docs/arquitectura/Backlog.md`).
+- `production/23_RenameProveedorIaConfigAProveedorIa.sql`: renombra `dbo.ProveedorIaConfig` a `dbo.ProveedorIa` (tabla, PK, constraints e índices) vía `sp_rename` — preserva las filas existentes.
+- `production/24_AddOfertaAtributosDetallados.sql`: agrega a `dbo.Oferta` 8 columnas de texto libre (Modalidad, TipoContrato, Moneda, Duracion, Horario, ExperienciaRequerida, StackTecnologico, NivelIdioma) que `EXTRACTOR_OFERTA` extrae cuando están presentes en la oferta.
+- `production/25_AddReferenciaMostrarEnCv.sql`: agrega la columna `MostrarEnCv` a `dbo.Referencia` (mismo patrón que Experiencia/Formacion/Proyecto/RedSocial) — reemplaza el interruptor global "Referencia laboral" que antes vivía en Configuración por un control por registro, editable en la vista de Experiencia.
+- `production/26_AddPerfilVisibilidadPorPerfil.sql`: agrega las columnas `MostrarExperienciaPerfil` y `MostrarAspiracionSalarial` a `dbo.Perfil` — reemplaza los interruptores globales "Experiencia (perfil)"/"Salarios" que antes vivían en Configuración (afectaban a todos los perfiles por igual) por un control independiente por cada perfil, editable en la vista Perfil.
 
 ## Scripts fuera de produccion (`manual/`)
 

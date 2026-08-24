@@ -337,6 +337,16 @@
               <div class="cv-accordion-sub-primary">{{ subtituloLaboralCabecera(ref) }}</div>
             </div>
             <span class="badge rounded-pill badge-ref-type badge-ref-type--laboral">Laboral</span>
+            <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+              <span class="profile-toggle-label">Mostrar en Mi CV</span>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       [id]="'exp-ref-cv-'+ref.referenciaId"
+                       [(ngModel)]="ref.mostrarEnCv"
+                       (ngModelChange)="onMostrarEnCvChangeRef(ref, $event)"
+                       [disabled]="guardandoRef || guardandoVisibilidadRefId === ref.referenciaId">
+              </div>
+            </div>
             <i class="bi ms-2 cv-chevron-muted flex-shrink-0"
                [class.bi-chevron-down]="!getLaborRefUi(ref).expanded"
                [class.bi-chevron-up]="getLaborRefUi(ref).expanded" aria-hidden="true"></i>

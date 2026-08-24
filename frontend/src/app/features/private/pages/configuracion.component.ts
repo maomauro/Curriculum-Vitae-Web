@@ -1,12 +1,23 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CvEditorService } from '../../../core/services/private/cv-editor.service';
+import { forkJoin, Observable } from 'rxjs';
+import {
+  CvEditorService,
+  ExperienciaDto,
+  FormacionDto,
+  HabilidadDto,
+  ProyectoDto,
+} from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import {
   ProveedorIaService,
   ProveedorIaCodigo,
-  ProveedorIaConfigDto,
+  ProveedorIaDto,
 } from '../../../core/services/private/proveedor-ia.service';
+import {
+  ConfiguracionCorreoService,
+  ConfiguracionCorreoDto,
+} from '../../../core/services/private/configuracion-correo.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { APP_MESSAGES, DEFAULT_APP_LOCALE } from '../../../core/constants/messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
@@ -52,6 +63,17 @@ function proveedorIaFormVacio(): ProveedorIaForm {
   return { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
 }
 
+interface ConfiguracionCorreoForm {
+  host: string;
+  puerto: number;
+  usarTls: boolean;
+  password: string;
+}
+
+function configuracionCorreoFormVacio(): ConfiguracionCorreoForm {
+  return { host: 'smtp.gmail.com', puerto: 587, usarTls: true, password: '' };
+}
+
 const PROVEEDORES_SIN_API_KEY_OBLIGATORIA: readonly ProveedorIaCodigo[] = ['ollama', 'otro'];
 const PROVEEDORES_QUE_REQUIEREN_ENDPOINT: readonly ProveedorIaCodigo[] = ['ollama'];
 
@@ -86,7 +108,7 @@ export class ConfiguracionComponent implements OnInit {
    * invocar al modelo. Puede haber varias guardadas (Claude, OpenAI, Gemini, Ollama/
    * self-hosted, otro); exactamente una queda marcada como activa a la vez. */
   loadingProveedoresIa = true;
-  proveedoresIa: ProveedorIaConfigDto[] = [];
+  proveedoresIa: ProveedorIaDto[] = [];
   mostrarFormProveedorIa = false;
   editandoProveedorIaId: number | null = null;
   proveedorIaForm: ProveedorIaForm = proveedorIaFormVacio();
@@ -98,10 +120,56 @@ export class ConfiguracionComponent implements OnInit {
   eliminandoProveedorIaId: number | null = null;
   probandoGuardadaProveedorIaId: number | null = null;
 
+  /** Configuración SMTP para enviar correos a reclutadores desde Analizar Oferta ->
+   * Enviar correo. Una sola por CV -- el remitente/login SMTP siempre es el correo de
+   * Información Personal, no se pide otro dato acá. */
+  loadingCorreo = true;
+  correoConfig: ConfiguracionCorreoDto | null = null;
+  correoForm: ConfiguracionCorreoForm = configuracionCorreoFormVacio();
+  guardandoCorreo = false;
+
+  /** Listas completas de Experiencia/Educación/Proyectos/Habilidades -- solo para los
+   * controles "Activar todos"/"Inactivar todos" en bloque de acá abajo (accesos rápidos
+   * a la misma acción que ya existe en cada vista de edición; no se editan acá). */
+  experiencias: ExperienciaDto[] = [];
+  formaciones: FormacionDto[] = [];
+  proyectos: ProyectoDto[] = [];
+  habilidades: HabilidadDto[] = [];
+  guardandoVisibilidadBloqueExperiencia = false;
+  guardandoVisibilidadBloqueFormacion = false;
+  guardandoVisibilidadBloqueProyecto = false;
+  guardandoVisibilidadBloqueHabilidad = false;
+
+  get hayExperienciasOcultas(): boolean {
+    return this.experiencias.some(e => !e.mostrarEnCv);
+  }
+  get hayExperienciasVisibles(): boolean {
+    return this.experiencias.some(e => e.mostrarEnCv);
+  }
+  get hayFormacionesOcultas(): boolean {
+    return this.formaciones.some(f => !f.mostrarEnCv);
+  }
+  get hayFormacionesVisibles(): boolean {
+    return this.formaciones.some(f => f.mostrarEnCv);
+  }
+  get hayProyectosOcultos(): boolean {
+    return this.proyectos.some(p => !p.mostrarEnCv);
+  }
+  get hayProyectosVisibles(): boolean {
+    return this.proyectos.some(p => p.mostrarEnCv);
+  }
+  get hayHabilidadesOcultas(): boolean {
+    return this.habilidades.some(h => !h.mostrarEnCv);
+  }
+  get hayHabilidadesVisibles(): boolean {
+    return this.habilidades.some(h => h.mostrarEnCv);
+  }
+
   readonly modelosSugeridosPorProveedor: Record<ProveedorIaCodigo, string> = {
     claude: 'claude-opus-4-20250514',
     openai: 'gpt-4.1',
     gemini: 'gemini-flash-latest',
+    groq: 'openai/gpt-oss-120b',
     ollama: 'llama3.1',
     otro: '',
   };
@@ -110,6 +178,7 @@ export class ConfiguracionComponent implements OnInit {
     claude: 'Claude (Anthropic)',
     openai: 'OpenAI',
     gemini: 'Gemini (Google)',
+    groq: 'Groq',
     ollama: 'Ollama (local / self-hosted)',
     otro: 'Otro (compatible con API REST)',
   };
@@ -225,89 +294,7 @@ export class ConfiguracionComponent implements OnInit {
       icon: 'bi-briefcase-fill',
       clase: 'vis-group-label--profesional',
       accordionOpen: false,
-      items: [
-        {
-          key: 'perfil',
-          label: 'Perfil',
-          icon: 'bi-person-badge-fill',
-          iconStyle: 'vis-icon--perfil',
-          visible: true,
-          sinSwitchSeccion: true,
-          atributos: [
-            { key: 'perfil.experiencia-perfil', label: 'Experiencia (perfil)', visible: true },
-            { key: 'perfil.aspiracion-salarial', label: 'Salarios', visible: true },
-          ],
-        },
-        {
-          key: 'experiencia',
-          label: 'Experiencia',
-          icon: 'bi-briefcase-fill',
-          iconStyle: 'vis-icon--experiencia',
-          visible: true,
-          sinSwitchSeccion: true,
-          atributos: [
-            { key: 'experiencia.referencia-laboral', label: 'Referencia laboral', visible: true },
-            {
-              key: 'experiencia.soporte-certificacion-laboral',
-              label: 'Soportes certificación laboral',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'formacion-academica',
-          label: 'Formación Académica',
-          icon: 'bi-mortarboard-fill',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          sinSwitchSeccion: true,
-          atributos: [
-            { key: 'formacion-academica.descargar-soporte', label: 'Descargar soporte', visible: true },
-          ],
-        },
-        {
-          key: 'diplomados',
-          label: 'Diplomados',
-          icon: 'bi-award-fill',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          atributos: [
-            {
-              key: 'diplomados.descargar-soporte-certificado',
-              label: 'Descargar soporte certificado',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'certificaciones',
-          label: 'Certificaciones',
-          icon: 'bi-patch-check-fill',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          atributos: [
-            {
-              key: 'certificaciones.descargar-soporte-certificado',
-              label: 'Descargar soporte certificado',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'cursos',
-          label: 'Cursos',
-          icon: 'bi-book-half',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          atributos: [
-            {
-              key: 'cursos.descargar-soporte-certificado',
-              label: 'Descargar soporte certificado',
-              visible: true,
-            },
-          ],
-        },
-      ],
+      items: [],
     },
   ];
 
@@ -323,6 +310,7 @@ export class ConfiguracionComponent implements OnInit {
     private cvEditorService: CvEditorService,
     private authService: AuthService,
     private proveedorIaService: ProveedorIaService,
+    private configuracionCorreoService: ConfiguracionCorreoService,
     private notificationService: NotificationService
   ) {}
 
@@ -372,25 +360,206 @@ export class ConfiguracionComponent implements OnInit {
             campo.visible = false;
           }
         });
-
-        const educLegacy = map.get('educacion');
-        const subFormKeys = ['formacion-academica', 'diplomados', 'certificaciones', 'cursos'] as const;
-        if (educLegacy != null) {
-          subFormKeys.forEach(k => {
-            if (map.has(k)) return;
-            const item = this.allVisItems().find(i => i.key === k);
-            if (!item) return;
-            item.visible = educLegacy;
-            item.atributos.forEach(a => {
-              if (!map.has(a.key)) a.visible = educLegacy;
-            });
-          });
-        }
       },
       error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
 
     this.cargarProveedoresIa();
+    this.cargarConfiguracionCorreo();
+    this.cargarListasProfesional();
+  }
+
+  private cargarListasProfesional(): void {
+    forkJoin({
+      experiencias: this.cvEditorService.getExperiencias(),
+      formaciones: this.cvEditorService.getFormaciones(),
+      proyectos: this.cvEditorService.getProyectos(),
+      habilidades: this.cvEditorService.getHabilidades(),
+    }).subscribe({
+      next: ({ experiencias, formaciones, proyectos, habilidades }) => {
+        this.experiencias = experiencias;
+        this.formaciones = formaciones;
+        this.proyectos = proyectos;
+        this.habilidades = habilidades;
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
+    });
+  }
+
+  private actualizarVisibilidadEnBloque<T extends { mostrarEnCv: boolean }>(
+    items: T[],
+    getId: (item: T) => number,
+    mostrar: boolean,
+    actualizarUno: (id: number) => Observable<T>,
+    aplicarResultado: (items: T[], actualizado: T) => void,
+    guardando: (valor: boolean) => void
+  ): void {
+    const objetivo = items.filter(i => i.mostrarEnCv !== mostrar);
+    if (objetivo.length === 0) {
+      return;
+    }
+    guardando(true);
+    forkJoin(objetivo.map(i => actualizarUno(getId(i)))).subscribe({
+      next: actualizados => {
+        actualizados.forEach(actualizado => aplicarResultado(items, actualizado));
+        guardando(false);
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        this.previewPanel?.recargar();
+      },
+      error: (error: HttpErrorResponse) => {
+        guardando(false);
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  activarTodasExperiencias(): void {
+    this.actualizarVisibilidadEnBloqueExperiencia(true);
+  }
+  inactivarTodasExperiencias(): void {
+    this.actualizarVisibilidadEnBloqueExperiencia(false);
+  }
+  /** Switch único "Experiencia" del bloque de acciones: ON = mostrar todas, OFF = ocultar todas. */
+  onToggleBloqueExperiencias(checked: boolean): void {
+    if (checked) this.activarTodasExperiencias();
+    else this.inactivarTodasExperiencias();
+  }
+  private actualizarVisibilidadEnBloqueExperiencia(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueExperiencia) return;
+    this.actualizarVisibilidadEnBloque(
+      this.experiencias,
+      e => e.experienciaId,
+      mostrar,
+      id => this.cvEditorService.updateExperienciaVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(e => e.experienciaId === actualizado.experienciaId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueExperiencia = v)
+    );
+  }
+
+  activarTodasFormaciones(): void {
+    this.actualizarVisibilidadEnBloqueFormacion(true);
+  }
+  inactivarTodasFormaciones(): void {
+    this.actualizarVisibilidadEnBloqueFormacion(false);
+  }
+  onToggleBloqueFormaciones(checked: boolean): void {
+    if (checked) this.activarTodasFormaciones();
+    else this.inactivarTodasFormaciones();
+  }
+  private actualizarVisibilidadEnBloqueFormacion(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueFormacion) return;
+    this.actualizarVisibilidadEnBloque(
+      this.formaciones,
+      f => f.formacionId,
+      mostrar,
+      id => this.cvEditorService.updateFormacionVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(f => f.formacionId === actualizado.formacionId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueFormacion = v)
+    );
+  }
+
+  activarTodosProyectos(): void {
+    this.actualizarVisibilidadEnBloqueProyecto(true);
+  }
+  inactivarTodosProyectos(): void {
+    this.actualizarVisibilidadEnBloqueProyecto(false);
+  }
+  onToggleBloqueProyectos(checked: boolean): void {
+    if (checked) this.activarTodosProyectos();
+    else this.inactivarTodosProyectos();
+  }
+  private actualizarVisibilidadEnBloqueProyecto(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueProyecto) return;
+    this.actualizarVisibilidadEnBloque(
+      this.proyectos,
+      p => p.proyectoId,
+      mostrar,
+      id => this.cvEditorService.updateProyectoVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(p => p.proyectoId === actualizado.proyectoId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueProyecto = v)
+    );
+  }
+
+  activarTodasHabilidades(): void {
+    this.actualizarVisibilidadEnBloqueHabilidad(true);
+  }
+  inactivarTodasHabilidades(): void {
+    this.actualizarVisibilidadEnBloqueHabilidad(false);
+  }
+  onToggleBloqueHabilidades(checked: boolean): void {
+    if (checked) this.activarTodasHabilidades();
+    else this.inactivarTodasHabilidades();
+  }
+  private actualizarVisibilidadEnBloqueHabilidad(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueHabilidad) return;
+    this.actualizarVisibilidadEnBloque(
+      this.habilidades,
+      h => h.habilidadId,
+      mostrar,
+      id => this.cvEditorService.updateHabilidadVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(h => h.habilidadId === actualizado.habilidadId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueHabilidad = v)
+    );
+  }
+
+  private cargarConfiguracionCorreo(): void {
+    this.loadingCorreo = true;
+    this.configuracionCorreoService.getConfig().subscribe({
+      next: data => {
+        this.correoConfig = data;
+        this.correoForm = { host: data.host, puerto: data.puerto, usarTls: data.usarTls, password: '' };
+        this.loadingCorreo = false;
+      },
+      error: () => {
+        this.loadingCorreo = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      },
+    });
+  }
+
+  guardarConfiguracionCorreo(): void {
+    if (this.guardandoCorreo) return;
+    if (!this.correoForm.host.trim()) {
+      this.notificationService.warning('El host SMTP es requerido.');
+      return;
+    }
+    if (!this.correoConfig?.tieneConfiguracion && !this.correoForm.password.trim()) {
+      this.notificationService.warning('La contraseña es requerida para configurar el correo por primera vez.');
+      return;
+    }
+
+    this.guardandoCorreo = true;
+    this.configuracionCorreoService
+      .guardarConfig({
+        host: this.correoForm.host.trim(),
+        puerto: this.correoForm.puerto,
+        usarTls: this.correoForm.usarTls,
+        password: this.correoForm.password.trim() || null,
+      })
+      .subscribe({
+        next: data => {
+          this.correoConfig = data;
+          this.correoForm = { host: data.host, puerto: data.puerto, usarTls: data.usarTls, password: '' };
+          this.guardandoCorreo = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardandoCorreo = false;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+        },
+      });
   }
 
   private cargarProveedoresIa(): void {
@@ -423,24 +592,6 @@ export class ConfiguracionComponent implements OnInit {
       case 'email':
       case 'telefono':
         return 'datos-personales';
-      case 'perfil':
-      case 'salario':
-        return 'perfil';
-      case 'experiencia':
-      case 'experiencia-laboral':
-        return 'experiencia';
-      case 'formacion':
-      case 'educacion':
-        return 'educacion';
-      case 'formacion-academica':
-      case 'formacionacademica':
-        return 'formacion-academica';
-      case 'diplomados':
-        return 'diplomados';
-      case 'certificaciones':
-        return 'certificaciones';
-      case 'cursos':
-        return 'cursos';
       default:
         return raw;
     }
@@ -583,15 +734,15 @@ export class ConfiguracionComponent implements OnInit {
     return `${origin}/cv/${encodeURIComponent(slug)}`;
   }
 
-  trackByProveedorIa(_index: number, p: ProveedorIaConfigDto): number {
-    return p.proveedorIaConfigId;
+  trackByProveedorIa(_index: number, p: ProveedorIaDto): number {
+    return p.proveedorIaId;
   }
 
   nombreProveedor(codigo: ProveedorIaCodigo): string {
     return this.nombresProveedor[codigo];
   }
 
-  etiquetaConexionIa(p: ProveedorIaConfigDto): string {
+  etiquetaConexionIa(p: ProveedorIaDto): string {
     return p.nombre?.trim() || this.nombresProveedor[p.proveedor];
   }
 
@@ -619,8 +770,8 @@ export class ConfiguracionComponent implements OnInit {
     this.mostrarFormProveedorIa = true;
   }
 
-  editarConexionIa(p: ProveedorIaConfigDto): void {
-    this.editandoProveedorIaId = p.proveedorIaConfigId;
+  editarConexionIa(p: ProveedorIaDto): void {
+    this.editandoProveedorIaId = p.proveedorIaId;
     this.proveedorIaForm = {
       proveedor: p.proveedor,
       nombre: p.nombre ?? '',
@@ -708,11 +859,11 @@ export class ConfiguracionComponent implements OnInit {
     });
   }
 
-  activarConexionIa(p: ProveedorIaConfigDto): void {
+  activarConexionIa(p: ProveedorIaDto): void {
     if (p.esActivo || this.activandoProveedorIaId) return;
 
-    this.activandoProveedorIaId = p.proveedorIaConfigId;
-    this.proveedorIaService.activarConfig(p.proveedorIaConfigId).subscribe({
+    this.activandoProveedorIaId = p.proveedorIaId;
+    this.proveedorIaService.activarConfig(p.proveedorIaId).subscribe({
       next: () => {
         this.activandoProveedorIaId = null;
         this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
@@ -725,11 +876,11 @@ export class ConfiguracionComponent implements OnInit {
     });
   }
 
-  probarConexionGuardada(p: ProveedorIaConfigDto): void {
+  probarConexionGuardada(p: ProveedorIaDto): void {
     if (this.probandoGuardadaProveedorIaId) return;
 
-    this.probandoGuardadaProveedorIaId = p.proveedorIaConfigId;
-    this.proveedorIaService.probarConexionGuardada(p.proveedorIaConfigId).subscribe({
+    this.probandoGuardadaProveedorIaId = p.proveedorIaId;
+    this.proveedorIaService.probarConexionGuardada(p.proveedorIaId).subscribe({
       next: res => {
         this.probandoGuardadaProveedorIaId = null;
         if (res.ok) {
@@ -745,11 +896,11 @@ export class ConfiguracionComponent implements OnInit {
     });
   }
 
-  eliminarConexionIa(p: ProveedorIaConfigDto): void {
+  eliminarConexionIa(p: ProveedorIaDto): void {
     if (!confirm(`¿Eliminar la conexión "${this.etiquetaConexionIa(p)}"?`)) return;
 
-    this.eliminandoProveedorIaId = p.proveedorIaConfigId;
-    this.proveedorIaService.eliminarConfig(p.proveedorIaConfigId).subscribe({
+    this.eliminandoProveedorIaId = p.proveedorIaId;
+    this.proveedorIaService.eliminarConfig(p.proveedorIaId).subscribe({
       next: () => {
         this.eliminandoProveedorIaId = null;
         this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);

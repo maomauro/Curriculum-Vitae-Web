@@ -9,8 +9,8 @@ namespace PortalCV.Infrastructure.Services;
 
 public class ProveedorIaService : IProveedorIaService
 {
-    private static readonly string[] ProveedoresValidos = { "claude", "openai", "gemini", "ollama", "otro" };
-    private static readonly string[] ProveedoresQueRequierenApiKey = { "claude", "openai", "gemini" };
+    private static readonly string[] ProveedoresValidos = { "claude", "openai", "gemini", "groq", "ollama", "otro" };
+    private static readonly string[] ProveedoresQueRequierenApiKey = { "claude", "openai", "gemini", "groq" };
     private static readonly string[] ProveedoresQueRequierenEndpoint = { "ollama" };
 
     private readonly PortalCvDbContext _context;
@@ -24,24 +24,24 @@ public class ProveedorIaService : IProveedorIaService
         _aiClients = aiClients;
     }
 
-    public async Task<IReadOnlyList<ProveedorIaConfigDto>> ListarAsync(int curriculumId, CancellationToken ct = default)
-        => await _context.ProveedoresIaConfig.AsNoTracking()
+    public async Task<IReadOnlyList<ProveedorIaDto>> ListarAsync(int curriculumId, CancellationToken ct = default)
+        => await _context.ProveedoresIa.AsNoTracking()
             .Where(p => p.CurriculumId == curriculumId)
             .OrderByDescending(p => p.EsActivo)
             .ThenByDescending(p => p.FechaActualizacion)
             .Select(p => Map(p))
             .ToListAsync(ct);
 
-    public async Task<ProveedorIaConfigDto> CrearAsync(
-        int curriculumId, CrearProveedorIaConfigRequest r, CancellationToken ct = default)
+    public async Task<ProveedorIaDto> CrearAsync(
+        int curriculumId, CrearProveedorIaRequest r, CancellationToken ct = default)
     {
         ValidarProveedor(r.Proveedor);
         ValidarApiKeyRequerida(r.Proveedor, r.ApiKey);
         ValidarEndpointRequerido(r.Proveedor, r.Endpoint);
 
-        var esPrimera = !await _context.ProveedoresIaConfig.AnyAsync(p => p.CurriculumId == curriculumId, ct);
+        var esPrimera = !await _context.ProveedoresIa.AnyAsync(p => p.CurriculumId == curriculumId, ct);
 
-        var e = new ProveedorIaConfig
+        var e = new ProveedorIa
         {
             CurriculumId = curriculumId,
             Proveedor = r.Proveedor,
@@ -53,13 +53,13 @@ public class ProveedorIaService : IProveedorIaService
             FechaCreacion = DateTime.UtcNow,
             FechaActualizacion = DateTime.UtcNow,
         };
-        _context.ProveedoresIaConfig.Add(e);
+        _context.ProveedoresIa.Add(e);
         await _context.SaveChangesAsync(ct);
         return Map(e);
     }
 
-    public async Task<ProveedorIaConfigDto> ActualizarAsync(
-        int curriculumId, int id, ActualizarProveedorIaConfigRequest r, CancellationToken ct = default)
+    public async Task<ProveedorIaDto> ActualizarAsync(
+        int curriculumId, int id, ActualizarProveedorIaRequest r, CancellationToken ct = default)
     {
         var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
         ValidarProveedor(r.Proveedor);
@@ -81,12 +81,12 @@ public class ProveedorIaService : IProveedorIaService
     {
         var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
         var eraActiva = e.EsActivo;
-        _context.ProveedoresIaConfig.Remove(e);
+        _context.ProveedoresIa.Remove(e);
         await _context.SaveChangesAsync(ct);
 
         if (!eraActiva) return;
 
-        var siguiente = await _context.ProveedoresIaConfig
+        var siguiente = await _context.ProveedoresIa
             .Where(p => p.CurriculumId == curriculumId)
             .OrderByDescending(p => p.FechaActualizacion)
             .FirstOrDefaultAsync(ct);
@@ -96,7 +96,7 @@ public class ProveedorIaService : IProveedorIaService
         await _context.SaveChangesAsync(ct);
     }
 
-    public async Task<ProveedorIaConfigDto> ActivarAsync(int curriculumId, int id, CancellationToken ct = default)
+    public async Task<ProveedorIaDto> ActivarAsync(int curriculumId, int id, CancellationToken ct = default)
     {
         var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
         if (!e.EsActivo)
@@ -107,7 +107,7 @@ public class ProveedorIaService : IProveedorIaService
             // SaveChangesAsync, EF Core no garantiza el orden de los UPDATE dentro del
             // lote y puede mandar primero el "activar", chocando con la fila que aún
             // sigue activa.
-            var activasActuales = await _context.ProveedoresIaConfig
+            var activasActuales = await _context.ProveedoresIa
                 .Where(p => p.CurriculumId == curriculumId && p.EsActivo)
                 .ToListAsync(ct);
             foreach (var activa in activasActuales) activa.EsActivo = false;
@@ -143,13 +143,13 @@ public class ProveedorIaService : IProveedorIaService
         return new ProbarConexionIaResponse(ok, mensaje);
     }
 
-    private async Task<ProveedorIaConfig> GetOwnedOrThrowAsync(int curriculumId, int id, CancellationToken ct)
+    private async Task<ProveedorIa> GetOwnedOrThrowAsync(int curriculumId, int id, CancellationToken ct)
     {
-        var entity = await _context.ProveedoresIaConfig.FirstOrDefaultAsync(p => p.ProveedorIaConfigId == id, ct)
-            ?? throw new KeyNotFoundException($"ProveedorIaConfig {id} no encontrado.");
+        var entity = await _context.ProveedoresIa.FirstOrDefaultAsync(p => p.ProveedorIaId == id, ct)
+            ?? throw new KeyNotFoundException($"ProveedorIa {id} no encontrado.");
 
         if (entity.CurriculumId != curriculumId)
-            throw new ForbiddenOperationException($"ProveedorIaConfig {id} no pertenece al curriculum {curriculumId}.");
+            throw new ForbiddenOperationException($"ProveedorIa {id} no pertenece al curriculum {curriculumId}.");
 
         return entity;
     }
@@ -172,6 +172,6 @@ public class ProveedorIaService : IProveedorIaService
             throw new ArgumentException("Este proveedor requiere la URL del servidor.");
     }
 
-    private static ProveedorIaConfigDto Map(ProveedorIaConfig e) => new(
-        e.ProveedorIaConfigId, e.Proveedor, e.Nombre, e.Modelo, e.Endpoint, e.EsActivo, e.FechaActualizacion);
+    private static ProveedorIaDto Map(ProveedorIa e) => new(
+        e.ProveedorIaId, e.Proveedor, e.Nombre, e.Modelo, e.Endpoint, e.EsActivo, e.FechaActualizacion);
 }

@@ -10,8 +10,8 @@ public class OfertaConfiguration : IEntityTypeConfiguration<Oferta>
     {
         builder.ToTable("Oferta", t =>
         {
-            t.HasCheckConstraint("CK_Oferta_OrigenEntrada", "OrigenEntrada IN ('texto', 'imagen')");
-            t.HasCheckConstraint("CK_Oferta_Estado", "Estado IN ('Analizada', 'PerfilAsignado', 'CvGenerado')");
+            t.HasCheckConstraint("CK_Oferta_OrigenEntrada", "OrigenEntrada IN ('texto', 'imagen', 'ambos')");
+            t.HasCheckConstraint("CK_Oferta_Estado", "Estado IN ('Analizada', 'PerfilAsignado', 'EnviadaPorCorreo')");
         });
 
         builder.HasKey(o => o.OfertaId);
@@ -21,6 +21,14 @@ public class OfertaConfiguration : IEntityTypeConfiguration<Oferta>
         builder.Property(o => o.Descripcion).HasColumnType("nvarchar(max)");
         builder.Property(o => o.CorreoReclutador).HasMaxLength(150);
         builder.Property(o => o.NombreReclutador).HasMaxLength(150);
+        builder.Property(o => o.Modalidad).HasMaxLength(150);
+        builder.Property(o => o.TipoContrato).HasMaxLength(100);
+        builder.Property(o => o.Moneda).HasMaxLength(20);
+        builder.Property(o => o.Duracion).HasMaxLength(150);
+        builder.Property(o => o.Horario).HasMaxLength(100);
+        builder.Property(o => o.ExperienciaRequerida).HasMaxLength(100);
+        builder.Property(o => o.StackTecnologico).HasColumnType("nvarchar(max)");
+        builder.Property(o => o.NivelIdioma).HasMaxLength(100);
         builder.Property(o => o.TextoOriginal).IsRequired().HasColumnType("nvarchar(max)");
         builder.Property(o => o.OrigenEntrada).IsRequired().HasMaxLength(20);
         builder.Property(o => o.Estado).IsRequired().HasMaxLength(20);

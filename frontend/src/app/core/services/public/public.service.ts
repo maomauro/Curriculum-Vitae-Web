@@ -55,6 +55,7 @@ export interface PerfilPublicoDto {
   perfilId: number;
   nombrePerfil: string | null;
   descripcionPerfil: string | null;
+  experienciaPerfilAnios: number | null;
   aspiracionSalarialPesos: number | null;
   aspiracionSalarialDolares: number | null;
   esActivo: boolean;

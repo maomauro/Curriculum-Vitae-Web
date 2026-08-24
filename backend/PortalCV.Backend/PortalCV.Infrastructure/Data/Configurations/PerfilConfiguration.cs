@@ -18,6 +18,8 @@ public class PerfilConfiguration : IEntityTypeConfiguration<Perfil>
         builder.Property(p => p.AspiracionSalarialPesos).HasColumnType("decimal(18,2)");
         builder.Property(p => p.AspiracionSalarialDolares).HasColumnType("decimal(18,2)");
         builder.Property(p => p.EsActivo).HasDefaultValue(true);
+        builder.Property(p => p.MostrarExperienciaPerfil).HasDefaultValue(true);
+        builder.Property(p => p.MostrarAspiracionSalarial).HasDefaultValue(true);
 
         builder.HasOne(p => p.Curriculum)
             .WithMany(c => c.Perfiles)

@@ -92,6 +92,7 @@ Table Referencia {
   Relacion varchar(100)
   Observaciones varchar(500)
   AdjuntoSoporte varchar(500)
+  MostrarEnCv boolean [not null, default: true]
   FechaRegistro datetime [not null, default: `now()`]
   indexes {
     (CurriculumId) [name: "IX_Referencia_CurriculumId"]
@@ -128,6 +129,8 @@ Table Perfil {
   AspiracionSalarialPesos decimal(18,2)
   AspiracionSalarialDolares decimal(18,2)
   EsActivo boolean [not null, default: 1]
+  MostrarExperienciaPerfil boolean [not null, default: true]
+  MostrarAspiracionSalarial boolean [not null, default: true]
 }
 
 Table Oferta {
@@ -138,11 +141,20 @@ Table Oferta {
   Descripcion text
   CorreoReclutador varchar(150)
   NombreReclutador varchar(150)
+  Modalidad varchar(150) [note: 'Texto libre, ej: "100% remoto desde México o Colombia"']
+  TipoContrato varchar(100) [note: 'Texto libre, ej: "Contractor"']
+  Moneda varchar(20) [note: 'Texto libre, ej: "USD"']
+  Duracion varchar(150) [note: 'Texto libre, ej: "6 meses + posibilidad de extensión"']
+  Horario varchar(100) [note: 'Texto libre, ej: "CST"']
+  ExperienciaRequerida varchar(100) [note: 'Texto libre, ej: "3 a 5 años"']
+  StackTecnologico text [note: 'Texto libre, lista de tecnologías/herramientas pedidas']
+  NivelIdioma varchar(100) [note: 'Texto libre, ej: "Inglés B2+/C1"']
   TextoOriginal text [not null]
-  OrigenEntrada varchar(20) [not null, note: 'texto | imagen']
-  Estado varchar(20) [not null, note: 'Analizada | PerfilAsignado | CvGenerado']
+  OrigenEntrada varchar(20) [not null, note: 'texto | imagen | ambos']
+  Estado varchar(20) [not null, note: 'Analizada | PerfilAsignado | EnviadaPorCorreo']
   PerfilId int
   FechaAnalisis datetime [not null]
+  FechaEnvioCorreo datetime [note: 'Cuándo se envió el correo con el CV adjunto -- null si todavía no se envió']
 }
 
 Table Experiencia {
@@ -328,8 +340,8 @@ Table PromptIa {
   }
 }
 
-Table ProveedorIaConfig {
-  ProveedorIaConfigId int [pk, increment, not null]
+Table ProveedorIa {
+  ProveedorIaId int [pk, increment, not null]
   CurriculumId int [not null, note: 'Un CV puede tener varias conexiones guardadas']
   Proveedor varchar(20) [not null, note: 'claude | openai | gemini | ollama | otro']
   Nombre varchar(100) [note: 'Alias opcional para distinguir varias conexiones del mismo proveedor']
@@ -340,8 +352,8 @@ Table ProveedorIaConfig {
   FechaCreacion datetime [not null, default: `now()`]
   FechaActualizacion datetime [not null, default: `now()`]
   indexes {
-    CurriculumId [name: "IX_ProveedorIaConfig_CurriculumId"]
-    CurriculumId [unique, name: "UQ_ProveedorIaConfig_Curriculum_Activo", note: 'Filtrado por EsActivo=1']
+    CurriculumId [name: "IX_ProveedorIa_CurriculumId"]
+    CurriculumId [unique, name: "UQ_ProveedorIa_Curriculum_Activo", note: 'Filtrado por EsActivo=1']
   }
 }
 
@@ -370,4 +382,4 @@ Ref: AuditoriaCv.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaCv.CurriculumId > Curriculum.CurriculumId
 Ref: PromptIa.CurriculumId > Curriculum.CurriculumId
 Ref: PromptIa.ActualizadoPorUsuarioId > Usuario.UsuarioId
-Ref: ProveedorIaConfig.CurriculumId > Curriculum.CurriculumId
+Ref: ProveedorIa.CurriculumId > Curriculum.CurriculumId

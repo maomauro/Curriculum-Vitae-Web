@@ -209,6 +209,28 @@ describe('ProfesionalComponent', () => {
       expect(component.previewVm.proyectos.length).toBe(1);
     });
 
+    it('oculta experiencia/aspiracion salarial del perfil segun sus propios interruptores', () => {
+      const perfiles = [{
+        perfilId: 1, nombrePerfil: 'Backend', esActivo: true,
+        experienciaPerfilAnios: 7, aspiracionSalarialPesos: 8000000, aspiracionSalarialDolares: 2000,
+        mostrarExperienciaPerfil: false, mostrarAspiracionSalarial: true,
+      }, {
+        perfilId: 2, nombrePerfil: 'Frontend', esActivo: false,
+        experienciaPerfilAnios: 3, aspiracionSalarialPesos: 6000000, aspiracionSalarialDolares: 1500,
+        mostrarExperienciaPerfil: true, mostrarAspiracionSalarial: false,
+      }] as PerfilDto[];
+      setup();
+      setupCargaOk({ perfiles });
+      component.ngOnInit();
+
+      const [backend, frontend] = component.previewVm.perfiles;
+      expect(backend.experienciaPerfilAnios).toBeNull();
+      expect(backend.aspiracionSalarialPesos).toBe(8000000);
+      expect(frontend.experienciaPerfilAnios).toBe(3);
+      expect(frontend.aspiracionSalarialPesos).toBeNull();
+      expect(frontend.aspiracionSalarialDolares).toBeNull();
+    });
+
     it('solo incluye referencias de tipo Laboral', () => {
       const referencias = [
         { referenciaId: 1, tipoReferencia: 'Personal' },
@@ -233,8 +255,6 @@ describe('ProfesionalComponent', () => {
 
       expect(component.visibleSeccion('proyectos')).toBeTrue();
       expect(component.visibleAtributo('experiencia', 'funciones')).toBeTrue();
-      expect(component.visibleBloqueFormacion('diplomados')).toBeTrue();
-      expect(component.visibleDescargarSoporte('diplomados', 'adjuntoSoporte')).toBeTrue();
     });
 
     it('visibleSeccion refleja una seccion apagada en Configuración', () => {
@@ -269,16 +289,6 @@ describe('ProfesionalComponent', () => {
 
       expect(component.visibleSeccion('datos-personales')).toBeTrue();
       expect(component.visibleSeccion('perfil')).toBeTrue();
-    });
-
-    it('visibleBloqueFormacion/visibleDescargarSoporte reflejan Configuración', () => {
-      setup();
-      setupCargaOk({ visibilidadSeccion: [{ seccion: 'diplomados', visible: false }] });
-      component.ngOnInit();
-
-      expect(component.visibleBloqueFormacion('diplomados')).toBeFalse();
-      expect(component.visibleDescargarSoporte('diplomados', 'adjuntoSoporte')).toBeFalse();
-      expect(component.visibleBloqueFormacion('cursos')).toBeTrue();
     });
   });
 });

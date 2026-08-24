@@ -59,7 +59,7 @@ public class PublicCvService : IPublicCvService
     {
         var swTotal = Stopwatch.StartNew();
         var sw = Stopwatch.StartNew();
-        var cv = await _curriculumRepo.GetByUrlPublicaAsync(urlPublica, ct);
+        var cv = await _curriculumRepo.GetByUrlPublicaSinAdjuntosAsync(urlPublica, ct);
         var msQuery = sw.ElapsedMilliseconds;
         if (cv is null) return null;
 
@@ -121,7 +121,7 @@ public class PublicCvService : IPublicCvService
 
     public async Task<CvDetalleDto?> GetPreviewPrivadoAsync(int curriculumId, CancellationToken ct = default)
     {
-        var cv = await _curriculumRepo.GetParaPreviewPublicoPorIdAsync(curriculumId, ct);
+        var cv = await _curriculumRepo.GetParaPreviewPublicoPorIdSinAdjuntosAsync(curriculumId, ct);
         if (cv is null) return null;
 
         var expVisibles = ExperienciasVisiblesOrdenadas(cv.Experiencias);
@@ -470,7 +470,10 @@ public class PublicCvService : IPublicCvService
             mostrarTelefono ? c.Personales.Celular : null,
             mostrarEmail ? c.Personales.Email : null),
         c.Perfiles.Select(p => new PerfilPublicoDto(p.PerfilId, p.NombrePerfil, p.DescripcionPerfil,
-            p.AspiracionSalarialPesos, p.AspiracionSalarialDolares, p.EsActivo)),
+            p.MostrarExperienciaPerfil ? p.ExperienciaPerfilAnios : null,
+            p.MostrarAspiracionSalarial ? p.AspiracionSalarialPesos : null,
+            p.MostrarAspiracionSalarial ? p.AspiracionSalarialDolares : null,
+            p.EsActivo)),
         experienciasVisibles.Select(e => new ExperienciaPublicoDto(e.ExperienciaId, e.Empresa, e.Cargo,
             e.Sector, e.FechaInicio, e.FechaFin, e.EsActual, e.Funciones, e.TipoContrato,
             VisibilidadAtributoVisible(vis, VisExperienciaSoporte) ? ResolverAdjuntoUrlExperienciaPublica(e, c.UrlPublica) : null)),
@@ -481,7 +484,7 @@ public class PublicCvService : IPublicCvService
             h.NivelLectura, h.NivelEscritura, h.NivelEscucha, h.NivelHabla)),
         c.Proyectos.Where(p => p.MostrarEnCv).Select(p => new ProyectoPublicoDto(p.ProyectoId, p.NombreProyecto, p.Rol,
             p.StackTecnologico, p.Aporte, p.Logro, p.EquipoTamano, p.DuracionMeses)),
-        c.Referencias.Where(r => r.TipoReferencia == "Laboral"
+        c.Referencias.Where(r => r.TipoReferencia == "Laboral" && r.MostrarEnCv
             && (r.ExperienciaId is null || idsExpVisibles.Contains(r.ExperienciaId.Value)))
             .Select(r => new ReferenciaPublicoDto(r.ReferenciaId, r.TipoReferencia, r.Nombre,
                 r.Apellido, r.Cargo, r.Empresa)),

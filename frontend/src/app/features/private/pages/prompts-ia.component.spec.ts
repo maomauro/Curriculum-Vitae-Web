@@ -365,4 +365,51 @@ describe('PromptsIaComponent', () => {
       expect(component.versionExpandidaId).toBeNull();
     });
   });
+
+  describe('estaPersonalizado', () => {
+    it('es true para un codigo con version propia, false para el resto', () => {
+      setup();
+      component.ngOnInit();
+
+      expect(component.estaPersonalizado('EXTRACTOR_OFERTA')).toBeTrue();
+      expect(component.estaPersonalizado('SUGERIDOR_ENFOQUE_PERFIL')).toBeFalse();
+    });
+
+    it('es false para todos si el usuario no personalizo ninguno', () => {
+      setup(of([]));
+      component.ngOnInit();
+
+      expect(component.catalogo.every(c => !component.estaPersonalizado(c.codigo))).toBeTrue();
+    });
+  });
+
+  describe('toggleCatalogoExpandido / isCatalogoExpandido', () => {
+    it('alterna el estado expandido de un codigo del catalogo', () => {
+      setup();
+
+      expect(component.isCatalogoExpandido('GENERADOR_CV_PERFIL')).toBeFalse();
+
+      component.toggleCatalogoExpandido('GENERADOR_CV_PERFIL');
+      expect(component.isCatalogoExpandido('GENERADOR_CV_PERFIL')).toBeTrue();
+
+      component.toggleCatalogoExpandido('GENERADOR_CV_PERFIL');
+      expect(component.isCatalogoExpandido('GENERADOR_CV_PERFIL')).toBeFalse();
+    });
+  });
+
+  describe('usarComoBase', () => {
+    it('abre el formulario de nuevo prompt precargado con el contenido por defecto', () => {
+      setup();
+      const item = component.catalogo.find(c => c.codigo === 'SELECTOR_PERFIL')!;
+
+      component.usarComoBase(item);
+
+      expect(component.mostrarFormNuevo).toBeTrue();
+      expect(component.formNuevo.codigo).toBe('SELECTOR_PERFIL');
+      expect(component.formNuevo.rolContexto).toBe(item.rolContexto);
+      expect(component.formNuevo.tarea).toBe(item.tarea);
+      expect(component.formNuevo.reglas).toBe(item.reglas);
+      expect(component.formNuevo.formatoSalida).toBe(item.formatoSalida);
+    });
+  });
 });

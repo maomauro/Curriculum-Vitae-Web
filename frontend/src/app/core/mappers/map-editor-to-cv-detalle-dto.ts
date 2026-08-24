@@ -56,8 +56,9 @@ export function mapEditorToCvDetalleDto(
       perfilId: p.perfilId,
       nombrePerfil: p.nombrePerfil,
       descripcionPerfil: p.descripcionPerfil,
-      aspiracionSalarialPesos: p.aspiracionSalarialPesos,
-      aspiracionSalarialDolares: p.aspiracionSalarialDolares,
+      experienciaPerfilAnios: p.mostrarExperienciaPerfil ? p.experienciaPerfilAnios : null,
+      aspiracionSalarialPesos: p.mostrarAspiracionSalarial ? p.aspiracionSalarialPesos : null,
+      aspiracionSalarialDolares: p.mostrarAspiracionSalarial ? p.aspiracionSalarialDolares : null,
       esActivo: p.esActivo,
     })),
     experiencias: experienciasVisibles.map(e => ({
@@ -106,9 +107,10 @@ export function mapEditorToCvDetalleDto(
     referencias: referencias
       .filter(
         r =>
-          r.tipoReferencia !== 'Laboral' ||
-          r.experienciaId == null ||
-          idsExpCv.has(r.experienciaId)
+          r.mostrarEnCv !== false &&
+          (r.tipoReferencia !== 'Laboral' ||
+            r.experienciaId == null ||
+            idsExpCv.has(r.experienciaId))
       )
       .map(r => ({
         referenciaId: r.referenciaId,

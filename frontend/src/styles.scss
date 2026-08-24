@@ -356,6 +356,15 @@ body.sidebar-mini.sidebar-collapse .cv-sidebar {
   body {
     background: #fff !important;
   }
+
+  /* CV generado (Analizar Oferta, Fase 4): se imprime como un documento plano, sin la
+   * tarjeta/borde/fondo que tiene en pantalla. */
+  .cv-ats-imprimible {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 11pt;
+  }
 }
 
 // ── Page header ───────────────────────────────────────────────────────────────

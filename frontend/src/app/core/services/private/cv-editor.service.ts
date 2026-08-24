@@ -58,9 +58,36 @@ export interface PerfilDto {
   aspiracionSalarialPesos: number | null;
   aspiracionSalarialDolares: number | null;
   esActivo: boolean;
+  /** Mostrar la experiencia/aspiración salarial de ESTE perfil en el CV público --
+   * interruptor por perfil (antes era un único interruptor global en Configuración). */
+  mostrarExperienciaPerfil: boolean;
+  mostrarAspiracionSalarial: boolean;
 }
 
 export type UpsertPerfilRequest = Omit<PerfilDto, 'perfilId'>;
+
+/** Borrador generado con IA a partir de un enfoque corto -- no persiste nada. */
+export interface PerfilGeneradoIaDto {
+  nombrePerfil: string;
+  descripcionPerfil: string;
+  /** true si el CV todavía no tiene una versión activa propia de GENERADOR_PERFIL
+   * y se usó el prompt por defecto del sistema. */
+  promptPorDefecto: boolean;
+}
+
+/** Idea de enfoque sugerida por IA a partir de todo el currículum -- no crea ni genera
+ * nada por sí sola, solo precarga el campo "enfoque" del formulario de "Nuevo perfil". */
+export interface EnfoqueSugeridoDto {
+  nombre: string;
+  razon: string;
+}
+
+export interface SugerirEnfoquesPerfilResponse {
+  sugerencias: EnfoqueSugeridoDto[];
+  /** true si el CV todavía no tiene una versión activa propia de
+   * SUGERIDOR_ENFOQUE_PERFIL y se usó el prompt por defecto del sistema. */
+  promptPorDefecto: boolean;
+}
 
 // ── DTOs — Experiencias ────────────────────────────────────────────────────────
 
@@ -165,9 +192,13 @@ export interface ReferenciaDto {
   observaciones: string | null;
   adjuntoSoporte: string | null;
   fechaRegistro: string;
+  mostrarEnCv: boolean;
 }
 
 export type UpsertReferenciaRequest = Omit<ReferenciaDto, 'referenciaId' | 'fechaRegistro'>;
+export interface UpdateReferenciaVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Redes Sociales ──────────────────────────────────────────────────────
 
@@ -276,6 +307,12 @@ export class CvEditorService {
   }
   updatePerfil(id: number, data: UpsertPerfilRequest): Observable<PerfilDto> {
     return this.http.put<PerfilDto>(`${this.BASE}/perfiles/${id}`, data);
+  }
+  generarPerfilConIa(enfoque: string): Observable<PerfilGeneradoIaDto> {
+    return this.http.post<PerfilGeneradoIaDto>(`${this.BASE}/perfiles/generar-ia`, { enfoque });
+  }
+  sugerirEnfoquesPerfil(): Observable<SugerirEnfoquesPerfilResponse> {
+    return this.http.post<SugerirEnfoquesPerfilResponse>(`${this.BASE}/perfiles/sugerir-enfoques`, null);
   }
   deletePerfil(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/perfiles/${id}`);
@@ -394,6 +431,9 @@ export class CvEditorService {
   }
   updateReferencia(id: number, data: UpsertReferenciaRequest): Observable<ReferenciaDto> {
     return this.http.put<ReferenciaDto>(`${this.BASE}/referencias/${id}`, data);
+  }
+  updateReferenciaVisibilidad(id: number, data: UpdateReferenciaVisibilidadRequest): Observable<ReferenciaDto> {
+    return this.http.put<ReferenciaDto>(`${this.BASE}/referencias/${id}/visibilidad`, data);
   }
   deleteReferencia(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/referencias/${id}`);

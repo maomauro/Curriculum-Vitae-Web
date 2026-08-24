@@ -286,7 +286,7 @@ Variables sensibles que debes configurar localmente:
 
 - `ConnectionStrings:DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
 - `Jwt:Key` (mínimo 32 caracteres)
-- `Encryption:Key` (clave AES-256 de 32 bytes en base64 — cifra la clave de API de cada conexión en `ProveedorIaConfig`, ver `AesGcmApiKeyCipher`). Sin ella, cualquier endpoint de `api/cv/proveedor-ia` responde 500 al construir el servicio.
+- `Encryption:Key` (clave AES-256 de 32 bytes en base64 — cifra la clave de API de cada conexión en `ProveedorIa`, ver `AesGcmApiKeyCipher`). Sin ella, cualquier endpoint de `api/cv/proveedor-ia` responde 500 al construir el servicio.
 
 Para el flujo nativo, inicializa `user-secrets` una sola vez. **Importante:** `dotnet user-secrets set` guarda en un JSON plano, así que la jerarquía va con **dos puntos** (`Seccion:Clave`) — la sintaxis con doble guion bajo (`Seccion__Clave`) es solo para variables de entorno (Docker, `launchSettings.json`, Azure) y `dotnet user-secrets` la guarda tal cual, literal, sin traducirla, así que no la reconoce como configuración:
 

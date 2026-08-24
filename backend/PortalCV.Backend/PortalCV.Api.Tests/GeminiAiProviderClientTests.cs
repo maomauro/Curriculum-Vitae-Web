@@ -16,6 +16,7 @@ public class GeminiAiProviderClientTests
         private readonly string _body;
 
         public HttpRequestMessage? UltimaSolicitud { get; private set; }
+        public string? UltimaSolicitudCuerpo { get; private set; }
 
         public FakeHandler(HttpStatusCode status, string body = "{}")
         {
@@ -23,11 +24,11 @@ public class GeminiAiProviderClientTests
             _body = body;
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             UltimaSolicitud = request;
-            var response = new HttpResponseMessage(_status) { Content = new StringContent(_body) };
-            return Task.FromResult(response);
+            UltimaSolicitudCuerpo = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(_status) { Content = new StringContent(_body) };
         }
     }
 
@@ -121,5 +122,60 @@ public class GeminiAiProviderClientTests
     {
         var (cliente, _) = ClienteConRespuesta(HttpStatusCode.OK);
         Assert.Equal("gemini", cliente.Proveedor);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_SinApiKey_DevuelveOkFalseSinLlamarARed()
+    {
+        var (cliente, handler) = ClienteConRespuesta(HttpStatusCode.OK);
+
+        var (ok, texto, error) = await cliente.GenerarTextoAsync(null, null, null, "prompt", null, null);
+
+        Assert.False(ok);
+        Assert.Null(texto);
+        Assert.False(string.IsNullOrWhiteSpace(error));
+        Assert.Null(handler.UltimaSolicitud);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_ConRespuesta200_DevuelveElTextoDeLaPrimeraParte()
+    {
+        var (cliente, _) = ClienteConRespuesta(
+            HttpStatusCode.OK,
+            "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"{\\\"cargo\\\":\\\"Dev\\\"}\"}]}}]}");
+
+        var (ok, texto, error) = await cliente.GenerarTextoAsync(null, null, "clave", "prompt", null, null);
+
+        Assert.True(ok);
+        Assert.Equal("{\"cargo\":\"Dev\"}", texto);
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_ConImagenAdjunta_ArmaUnaParteInlineDataYUnaDeTexto()
+    {
+        var (cliente, handler) = ClienteConRespuesta(
+            HttpStatusCode.OK, "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"ok\"}]}}]}");
+        var imagen = new byte[] { 1, 2, 3, 4 };
+
+        await cliente.GenerarTextoAsync(null, null, "clave", "prompt", imagen, "image/jpeg");
+
+        var cuerpo = handler.UltimaSolicitudCuerpo;
+        Assert.NotNull(cuerpo);
+        Assert.Contains("inlineData", cuerpo);
+        Assert.Contains("image/jpeg", cuerpo);
+        Assert.Contains(Convert.ToBase64String(imagen), cuerpo);
+    }
+
+    [Fact]
+    public async Task GenerarTextoAsync_ConRespuestaSinCandidates_DevuelveOkFalseConFormatoInesperado()
+    {
+        var (cliente, _) = ClienteConRespuesta(HttpStatusCode.OK, "{\"otraCosa\":true}");
+
+        var (ok, texto, error) = await cliente.GenerarTextoAsync(null, null, "clave", "prompt", null, null);
+
+        Assert.False(ok);
+        Assert.Null(texto);
+        Assert.False(string.IsNullOrWhiteSpace(error));
     }
 }

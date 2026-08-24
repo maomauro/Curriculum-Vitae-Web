@@ -8,11 +8,12 @@ import {
   OfertaOrigenEntrada,
   UpsertOfertaRequest,
 } from '../../../core/services/private/oferta.service';
+import { CvEditorService, PerfilDto, PersonalesDto } from '../../../core/services/private/cv-editor.service';
+import { CvGeneradoService, CvGeneradoDto } from '../../../core/services/private/cv-generado.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
-type ModoEntrada = 'texto' | 'imagen';
-type Paso = 'historial' | 'entrada' | 'resultado' | 'generado' | 'yaAplicado';
+type Paso = 'historial' | 'entrada' | 'resultado' | 'sinCv' | 'correo' | 'enviado' | 'yaAplicado';
 
 interface OfertaAnalizadaForm {
   cargo: string;
@@ -20,6 +21,14 @@ interface OfertaAnalizadaForm {
   descripcion: string;
   correoReclutador: string;
   nombreReclutador: string;
+  modalidad: string;
+  tipoContrato: string;
+  moneda: string;
+  duracion: string;
+  horario: string;
+  experienciaRequerida: string;
+  stackTecnologico: string;
+  nivelIdioma: string;
 }
 
 interface FuenteOferta {
@@ -27,61 +36,19 @@ interface FuenteOferta {
   textoOriginal: string;
 }
 
-interface PerfilEjemplo {
-  id: number;
-  nombre: string;
-  palabrasClave: string[];
+interface CorreoForm {
+  destinatario: string;
+  asunto: string;
+  cuerpo: string;
 }
 
-interface ContenidoCvEjemplo {
-  resumen: string;
-  experiencia: string[];
-  educacion: string[];
-  habilidades: string[];
+function ofertaFormVacia(): OfertaAnalizadaForm {
+  return {
+    cargo: '', empresa: '', descripcion: '', correoReclutador: '', nombreReclutador: '',
+    modalidad: '', tipoContrato: '', moneda: '', duracion: '', horario: '',
+    experienciaRequerida: '', stackTecnologico: '', nivelIdioma: '',
+  };
 }
-
-const PERFILES_EJEMPLO: PerfilEjemplo[] = [
-  { id: 1, nombre: 'Desarrollador Backend .NET', palabrasClave: ['backend', '.net', 'c#', 'api'] },
-  { id: 2, nombre: 'Desarrollador Frontend Angular', palabrasClave: ['frontend', 'angular', 'typescript'] },
-  { id: 3, nombre: 'Líder Técnico / Full Stack', palabrasClave: ['líder', 'lider', 'full stack', 'tech lead'] },
-];
-
-const CONTENIDO_POR_PERFIL: Record<number, ContenidoCvEjemplo> = {
-  1: {
-    resumen: 'Desarrollador Backend con experiencia en .NET, arquitectura de APIs REST y bases de datos relacionales.',
-    experiencia: [
-      'Desarrollador Backend .NET — Empresa Ejemplo S.A. (2022 - actualidad)',
-      'Diseño y mantenimiento de microservicios, integración con Azure y control de calidad de código.',
-    ],
-    educacion: ['Ingeniería de Sistemas — Universidad Ejemplo (2018 - 2022)'],
-    habilidades: ['C#', '.NET', 'SQL Server', 'Azure', 'Clean Architecture'],
-  },
-  2: {
-    resumen: 'Desarrollador Frontend con experiencia en Angular, TypeScript y consumo de APIs REST.',
-    experiencia: [
-      'Desarrollador Frontend Angular — Empresa Ejemplo S.A. (2021 - actualidad)',
-      'Construcción de interfaces responsivas y mantenimiento de componentes reutilizables.',
-    ],
-    educacion: ['Ingeniería de Sistemas — Universidad Ejemplo (2017 - 2021)'],
-    habilidades: ['Angular', 'TypeScript', 'RxJS', 'Bootstrap', 'HTML/CSS'],
-  },
-  3: {
-    resumen: 'Líder Técnico Full Stack con experiencia liderando equipos y definiendo arquitectura de soluciones.',
-    experiencia: [
-      'Líder Técnico — Empresa Ejemplo S.A. (2020 - actualidad)',
-      'Definición de arquitectura, mentoría técnica y coordinación con equipos de producto.',
-    ],
-    educacion: ['Ingeniería de Sistemas — Universidad Ejemplo (2015 - 2020)'],
-    habilidades: ['Angular', '.NET', 'Liderazgo técnico', 'Arquitectura de software'],
-  },
-};
-
-const CONTENIDO_PERFIL_NUEVO: ContenidoCvEjemplo = {
-  resumen: 'Perfil nuevo: se creará a partir de la información de esta oferta.',
-  experiencia: ['Sin experiencia registrada aún — complétala en la sección Experiencia.'],
-  educacion: ['Sin educación registrada aún — complétala en la sección Educación.'],
-  habilidades: ['Por definir'],
-};
 
 @Component({
   selector: 'app-analizar-oferta',
@@ -89,37 +56,77 @@ const CONTENIDO_PERFIL_NUEVO: ContenidoCvEjemplo = {
   templateUrl: './analizar-oferta.component.html',
 })
 export class AnalizarOfertaComponent implements OnInit {
-  modoEntrada: ModoEntrada = 'texto';
   textoOferta = '';
   archivoOferta: File | null = null;
   arrastrando = false;
+  private static readonly IMAGEN_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+  private static readonly IMAGEN_MAX_BYTES = 5 * 1024 * 1024;
 
-  simularYaAplicado = false;
   paso: Paso = 'historial';
   analizando = false;
   guardando = false;
 
-  oferta: OfertaAnalizadaForm = {
-    cargo: '', empresa: '', descripcion: '', correoReclutador: '', nombreReclutador: '',
-  };
+  oferta: OfertaAnalizadaForm = ofertaFormVacia();
 
-  perfilesEjemplo = PERFILES_EJEMPLO;
-  perfilSugeridoId: number | 'nuevo' = 'nuevo';
+  perfiles: PerfilDto[] = [];
+  /** null: todavía sin sugerencia (o sin perfiles guardados) -- este flujo ya no
+   * ofrece "crear perfil nuevo", solo elegir entre perfiles existentes. */
+  perfilSugeridoId: number | null = null;
+  perfilSeleccionRazon: string | null = null;
+  seleccionandoPerfil = false;
 
-  fechaAplicacionSimulada = '';
+  /** CVs ya construidos en Mi CV (uno por Perfil, como máximo) -- se usan tal cual,
+   * este flujo ya no genera un CV nuevo con IA. */
+  private cvsGenerados: CvGeneradoDto[] = [];
+  /** Nombre del perfil elegido cuando todavía no tiene un CV generado (paso 'sinCv'). */
+  perfilSinCvNombre: string | null = null;
+
+  private personales: PersonalesDto | null = null;
+  private ofertaEnProgresoId: number | null = null;
+  redactandoCorreo = false;
+  enviandoCorreo = false;
+  promptRedactorPorDefecto = false;
+  correoForm: CorreoForm = { destinatario: '', asunto: '', cuerpo: '' };
+
+  /** Fecha mostrada en el paso 'yaAplicado' -- se llena con la FechaEnvioCorreo real de
+   * la oferta al reabrirla desde el historial (ver editarOferta). */
+  fechaEnvioMostrada = '';
 
   loading = true;
   ofertasGuardadas: OfertaDto[] = [];
   editandoOfertaId: number | null = null;
+
+  /** Cada paso del flujo (extraer / seleccionar perfil / redactar correo) llama a la IA
+   * por separado y puede usar el prompt por defecto del sistema de forma independiente
+   * -- ver docs/arquitectura/Roadmap-Ofertas-IA.md. Se desconocen (false) al editar una
+   * oferta ya guardada: ese dato no viaja con ella. */
+  promptExtractorPorDefecto = false;
+  promptSelectorPorDefecto = false;
+
   private fuenteOferta: FuenteOferta | null = null;
+
+  get remitenteEmail(): string | null {
+    return this.personales?.email?.trim() || null;
+  }
 
   constructor(
     private notificationService: NotificationService,
-    private ofertaService: OfertaService
+    private ofertaService: OfertaService,
+    private cvEditorService: CvEditorService,
+    private cvGeneradoService: CvGeneradoService
   ) {}
 
   ngOnInit(): void {
     this.cargarHistorial();
+    this.cvEditorService.getPerfiles().subscribe({
+      next: data => (this.perfiles = data),
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
+    });
+    this.cvEditorService.getPersonales().subscribe({
+      next: data => (this.personales = data),
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
+    });
+    this.cargarCvsGenerados();
   }
 
   private cargarHistorial(): void {
@@ -136,47 +143,33 @@ export class AnalizarOfertaComponent implements OnInit {
     });
   }
 
+  private cargarCvsGenerados(): void {
+    this.cvGeneradoService.listar().subscribe({
+      next: data => (this.cvsGenerados = data),
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
+    });
+  }
+
   trackByOferta(_index: number, o: OfertaDto): number {
     return o.ofertaId;
   }
 
   get puedeAnalizar(): boolean {
-    return this.modoEntrada === 'texto'
-      ? this.textoOferta.trim().length > 0
-      : this.archivoOferta !== null;
+    return this.textoOferta.trim().length > 0 || this.archivoOferta !== null;
+  }
+
+  /** Texto e imagen son complementarios, no excluyentes: registra con cual(es) se
+   * analizó esta oferta (se manda todo lo presente en una sola solicitud a la IA). */
+  get origenEntradaActual(): OfertaOrigenEntrada {
+    const hayTexto = this.textoOferta.trim().length > 0;
+    const hayImagen = this.archivoOferta !== null;
+    if (hayTexto && hayImagen) return 'ambos';
+    return hayImagen ? 'imagen' : 'texto';
   }
 
   get perfilSugeridoNombre(): string | null {
-    if (this.perfilSugeridoId === 'nuevo') return null;
-    return this.perfilesEjemplo.find(p => p.id === this.perfilSugeridoId)?.nombre ?? null;
-  }
-
-  get cvAtsTexto(): string {
-    const contenido = this.perfilSugeridoId === 'nuevo'
-      ? CONTENIDO_PERFIL_NUEVO
-      : CONTENIDO_POR_PERFIL[this.perfilSugeridoId];
-    const perfil = this.perfilSugeridoNombre ?? 'Perfil nuevo';
-
-    return [
-      'DATOS DE CONTACTO',
-      '[Nombre del candidato] — [correo@ejemplo.com] — [Ciudad, País]',
-      '',
-      'OFERTA APLICADA',
-      `${this.oferta.cargo || '—'} · ${this.oferta.empresa || '—'}`,
-      `Perfil utilizado: ${perfil}`,
-      '',
-      'RESUMEN PROFESIONAL',
-      contenido.resumen,
-      '',
-      'EXPERIENCIA LABORAL',
-      ...contenido.experiencia,
-      '',
-      'EDUCACIÓN',
-      ...contenido.educacion,
-      '',
-      'HABILIDADES',
-      contenido.habilidades.join(', '),
-    ].join('\n');
+    if (this.perfilSugeridoId === null) return null;
+    return this.perfiles.find(p => p.perfilId === this.perfilSugeridoId)?.nombrePerfil ?? null;
   }
 
   esCampoFaltante(valor: string | null | undefined): boolean {
@@ -187,23 +180,25 @@ export class AnalizarOfertaComponent implements OnInit {
    * Pegar con Ctrl+V una captura copiada de otro lado (p. ej. un grupo de WhatsApp) es
    * el flujo real de entrada por imagen, más común que subir un archivo. Escucha a
    * nivel de documento (no hace falta hacer foco en la zona de arrastre primero) y solo
-   * actúa mientras se está en el paso de entrada, en modo imagen.
+   * actúa mientras se está en el paso de entrada.
    */
   @HostListener('document:paste', ['$event'])
   onPaste(event: ClipboardEvent): void {
-    if (this.paso !== 'entrada' || this.modoEntrada !== 'imagen') return;
+    if (this.paso !== 'entrada') return;
 
     const item = Array.from(event.clipboardData?.items ?? []).find(i => i.type.startsWith('image/'));
     const archivo = item?.getAsFile();
     if (!archivo) return;
 
     event.preventDefault();
-    this.archivoOferta = archivo;
+    this.asignarArchivoSiValido(archivo);
   }
 
   onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.archivoOferta = input.files?.[0] ?? null;
+    const archivo = input.files?.[0] ?? null;
+    input.value = ''; // permite volver a elegir el mismo archivo despues (ej. tras un error)
+    if (archivo) this.asignarArchivoSiValido(archivo);
   }
 
   onDragOver(event: DragEvent): void {
@@ -219,7 +214,19 @@ export class AnalizarOfertaComponent implements OnInit {
     event.preventDefault();
     this.arrastrando = false;
     const archivo = event.dataTransfer?.files?.[0];
-    if (archivo) this.archivoOferta = archivo;
+    if (archivo) this.asignarArchivoSiValido(archivo);
+  }
+
+  private asignarArchivoSiValido(archivo: File): void {
+    if (!AnalizarOfertaComponent.IMAGEN_TIPOS_PERMITIDOS.includes(archivo.type)) {
+      this.notificationService.warning('Formato no soportado. Usa JPG, PNG o WEBP.');
+      return;
+    }
+    if (archivo.size > AnalizarOfertaComponent.IMAGEN_MAX_BYTES) {
+      this.notificationService.warning('La imagen no puede superar 5 MB.');
+      return;
+    }
+    this.archivoOferta = archivo;
   }
 
   quitarArchivo(): void {
@@ -232,18 +239,65 @@ export class AnalizarOfertaComponent implements OnInit {
   }
 
   editarOferta(item: OfertaDto): void {
+    if (item.estado === 'EnviadaPorCorreo') {
+      this.oferta = {
+        cargo: item.cargo,
+        empresa: item.empresa,
+        descripcion: item.descripcion ?? '',
+        correoReclutador: item.correoReclutador ?? '',
+        nombreReclutador: item.nombreReclutador ?? '',
+        modalidad: item.modalidad ?? '',
+        tipoContrato: item.tipoContrato ?? '',
+        moneda: item.moneda ?? '',
+        duracion: item.duracion ?? '',
+        horario: item.horario ?? '',
+        experienciaRequerida: item.experienciaRequerida ?? '',
+        stackTecnologico: item.stackTecnologico ?? '',
+        nivelIdioma: item.nivelIdioma ?? '',
+      };
+      this.fechaEnvioMostrada = item.fechaEnvioCorreo
+        ? this.formatearFecha(new Date(item.fechaEnvioCorreo))
+        : '';
+      this.paso = 'yaAplicado';
+      return;
+    }
+
     this.editandoOfertaId = item.ofertaId;
-    this.modoEntrada = item.origenEntrada;
+    this.ofertaEnProgresoId = item.ofertaId;
     this.oferta = {
       cargo: item.cargo,
       empresa: item.empresa,
       descripcion: item.descripcion ?? '',
       correoReclutador: item.correoReclutador ?? '',
       nombreReclutador: item.nombreReclutador ?? '',
+      modalidad: item.modalidad ?? '',
+      tipoContrato: item.tipoContrato ?? '',
+      moneda: item.moneda ?? '',
+      duracion: item.duracion ?? '',
+      horario: item.horario ?? '',
+      experienciaRequerida: item.experienciaRequerida ?? '',
+      stackTecnologico: item.stackTecnologico ?? '',
+      nivelIdioma: item.nivelIdioma ?? '',
     };
-    this.perfilSugeridoId = item.perfilId ?? 'nuevo';
+    this.perfilSeleccionRazon = null;
     this.fuenteOferta = { origenEntrada: item.origenEntrada, textoOriginal: item.textoOriginal };
-    this.paso = 'resultado';
+    // Ninguno de los dos viaja con la oferta guardada; se desconocen al editar.
+    this.promptExtractorPorDefecto = false;
+    this.promptSelectorPorDefecto = false;
+
+    if (item.perfilId !== null) {
+      // El perfil ya estaba asignado (el flujo quedó interrumpido antes de enviar) --
+      // retoma directo en el borrador de correo en vez de hacer pasar de nuevo por la
+      // confirmación de perfil.
+      this.perfilSugeridoId = item.perfilId;
+      this.paso = 'resultado';
+      this.continuarSegunCvDelPerfil(item.perfilId);
+    } else {
+      this.paso = 'resultado';
+      // La oferta se guardó antes de elegir perfil (estado 'Analizada'): pide una
+      // sugerencia fresca, igual que tras analizar una oferta nueva.
+      this.sugerirPerfilConIa();
+    }
   }
 
   eliminarOferta(item: OfertaDto): void {
@@ -267,43 +321,96 @@ export class AnalizarOfertaComponent implements OnInit {
     switch (estado) {
       case 'Analizada': return 'Analizada';
       case 'PerfilAsignado': return 'Perfil asignado';
-      case 'CvGenerado': return 'CV generado';
+      case 'EnviadaPorCorreo': return 'Enviada por correo';
     }
   }
 
   perfilNombreDe(item: OfertaDto): string {
     if (item.perfilId !== null) {
-      return this.perfilesEjemplo.find(p => p.id === item.perfilId)?.nombre ?? '—';
+      return this.perfiles.find(p => p.perfilId === item.perfilId)?.nombrePerfil ?? '—';
     }
-    return item.estado === 'Analizada' ? '—' : 'Perfil nuevo';
+    return item.estado === 'Analizada' ? '—' : 'Sin perfil asignado';
   }
 
-  // TODO: reemplazar por llamada real a /ofertas/analizar (extracción con IA, Fase 2)
+  tieneAtributosDetallados(item: OfertaDto): boolean {
+    return !!(item.modalidad || item.tipoContrato || item.duracion || item.horario
+      || item.experienciaRequerida || item.nivelIdioma || item.stackTecnologico);
+  }
+
   analizarOferta(): void {
     if (!this.puedeAnalizar || this.analizando) return;
     this.analizando = true;
 
-    setTimeout(() => {
-      this.analizando = false;
-
-      if (this.simularYaAplicado) {
-        this.fechaAplicacionSimulada = this.formatearFechaHoy();
-        this.paso = 'yaAplicado';
-        return;
-      }
-
-      this.oferta = this.construirOfertaMock();
-      this.perfilSugeridoId = this.sugerirPerfil(this.oferta.cargo);
-      this.fuenteOferta = { origenEntrada: this.modoEntrada, textoOriginal: this.construirTextoOriginal() };
-      this.paso = 'resultado';
-    }, 1200);
+    this.ofertaService.analizarOferta(this.textoOferta.trim() || null, this.archivoOferta).subscribe({
+      next: resultado => {
+        this.analizando = false;
+        this.oferta = {
+          cargo: resultado.cargo,
+          empresa: resultado.empresa,
+          descripcion: resultado.descripcion ?? '',
+          correoReclutador: resultado.correoReclutador ?? '',
+          nombreReclutador: resultado.nombreReclutador ?? '',
+          modalidad: resultado.modalidad ?? '',
+          tipoContrato: resultado.tipoContrato ?? '',
+          moneda: resultado.moneda ?? '',
+          duracion: resultado.duracion ?? '',
+          horario: resultado.horario ?? '',
+          experienciaRequerida: resultado.experienciaRequerida ?? '',
+          stackTecnologico: resultado.stackTecnologico ?? '',
+          nivelIdioma: resultado.nivelIdioma ?? '',
+        };
+        this.fuenteOferta = { origenEntrada: resultado.origenEntrada, textoOriginal: resultado.textoOriginal };
+        this.promptExtractorPorDefecto = resultado.promptPorDefecto;
+        this.paso = 'resultado';
+        this.sugerirPerfilConIa();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.analizando = false;
+        this.notificationService.error(extractApiErrorMessage(error) || 'No se pudo analizar la oferta.');
+      },
+    });
   }
 
+  /** Fase 3: sugiere con IA cuál de los perfiles existentes del candidato se ajusta
+   * mejor a la oferta. El usuario puede cambiar la sugerencia en el <select> antes de
+   * continuar. Si no tiene ningún perfil guardado, la API devuelve 400 y el flujo se
+   * detiene: hay que crear uno en Perfil Profesional primero. */
+  private sugerirPerfilConIa(): void {
+    this.seleccionandoPerfil = true;
+    this.ofertaService
+      .seleccionarPerfil({
+        cargo: this.oferta.cargo,
+        empresa: this.oferta.empresa,
+        descripcion: this.oferta.descripcion || null,
+      })
+      .subscribe({
+        next: sugerido => {
+          this.seleccionandoPerfil = false;
+          this.perfilSugeridoId = sugerido.perfilId;
+          this.perfilSeleccionRazon = sugerido.razon;
+          this.promptSelectorPorDefecto = sugerido.promptPorDefecto;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.seleccionandoPerfil = false;
+          this.perfilSugeridoId = null;
+          this.perfilSeleccionRazon = null;
+          const mensaje = this.perfiles.length === 0
+            ? 'Todavía no tienes perfiles guardados. Crea uno en Perfil Profesional antes de continuar.'
+            : extractApiErrorMessage(error) || 'No se pudo sugerir un perfil. Elige uno manualmente para continuar.';
+          this.notificationService.warning(mensaje);
+        },
+      });
+  }
+
+  /** Guarda la oferta con el perfil elegido y, según si ese perfil ya tiene un CV
+   * construido en Mi CV, sigue directo a redactar el correo o muestra el aviso de que
+   * falta generarlo primero -- este flujo ya no genera un CV nuevo con IA. */
   continuarConPerfil(): void {
-    if (this.guardando) return;
+    if (this.guardando || this.perfilSugeridoId === null) return;
+    const perfilElegidoId = this.perfilSugeridoId;
 
     const fuente = this.fuenteOferta ?? {
-      origenEntrada: this.modoEntrada,
+      origenEntrada: this.origenEntradaActual,
       textoOriginal: this.construirTextoOriginal(),
     };
     const request: UpsertOfertaRequest = {
@@ -312,10 +419,18 @@ export class AnalizarOfertaComponent implements OnInit {
       descripcion: this.oferta.descripcion.trim() || null,
       correoReclutador: this.oferta.correoReclutador.trim() || null,
       nombreReclutador: this.oferta.nombreReclutador.trim() || null,
+      modalidad: this.oferta.modalidad.trim() || null,
+      tipoContrato: this.oferta.tipoContrato.trim() || null,
+      moneda: this.oferta.moneda.trim() || null,
+      duracion: this.oferta.duracion.trim() || null,
+      horario: this.oferta.horario.trim() || null,
+      experienciaRequerida: this.oferta.experienciaRequerida.trim() || null,
+      stackTecnologico: this.oferta.stackTecnologico.trim() || null,
+      nivelIdioma: this.oferta.nivelIdioma.trim() || null,
       textoOriginal: fuente.textoOriginal,
       origenEntrada: fuente.origenEntrada,
-      estado: 'CvGenerado',
-      perfilId: this.perfilSugeridoId === 'nuevo' ? null : this.perfilSugeridoId,
+      estado: 'PerfilAsignado',
+      perfilId: perfilElegidoId,
     };
 
     this.guardando = true;
@@ -326,14 +441,76 @@ export class AnalizarOfertaComponent implements OnInit {
     guardado$.subscribe({
       next: ofertaGuardada => {
         this.guardando = false;
-        this.upsertEnHistorial(ofertaGuardada);
-        this.paso = 'generado';
+        this.ofertaEnProgresoId = ofertaGuardada.ofertaId;
+        this.cargarHistorial();
+        this.continuarSegunCvDelPerfil(perfilElegidoId);
       },
       error: (error: HttpErrorResponse) => {
         this.guardando = false;
         this.notificationService.warning(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
       },
     });
+  }
+
+  private continuarSegunCvDelPerfil(perfilElegidoId: number): void {
+    const cvDelPerfil = this.cvsGenerados.find(c => c.perfilId === perfilElegidoId);
+    if (!cvDelPerfil) {
+      this.perfilSinCvNombre = this.perfilSugeridoNombre;
+      this.paso = 'sinCv';
+      return;
+    }
+    this.redactarCorreo();
+  }
+
+  /** Pide a la IA un borrador de asunto/cuerpo para el correo al reclutador -- no
+   * persiste ni envía nada, el usuario lo revisa/edita antes de "Enviar correo". */
+  redactarCorreo(): void {
+    if (this.ofertaEnProgresoId === null || this.redactandoCorreo) return;
+
+    this.redactandoCorreo = true;
+    this.ofertaService.redactarCorreo(this.ofertaEnProgresoId).subscribe({
+      next: borrador => {
+        this.redactandoCorreo = false;
+        this.promptRedactorPorDefecto = borrador.promptPorDefecto;
+        this.correoForm = {
+          destinatario: this.oferta.correoReclutador.trim(),
+          asunto: borrador.asunto,
+          cuerpo: borrador.cuerpo,
+        };
+        this.paso = 'correo';
+      },
+      error: (error: HttpErrorResponse) => {
+        this.redactandoCorreo = false;
+        this.notificationService.error(extractApiErrorMessage(error) || 'No se pudo redactar el correo.');
+      },
+    });
+  }
+
+  enviarCorreo(): void {
+    if (this.ofertaEnProgresoId === null || this.enviandoCorreo) return;
+    if (this.esCampoFaltante(this.correoForm.destinatario)) {
+      this.notificationService.warning('El correo del destinatario es requerido.');
+      return;
+    }
+
+    this.enviandoCorreo = true;
+    this.ofertaService
+      .enviarCorreo(this.ofertaEnProgresoId, {
+        destinatario: this.correoForm.destinatario.trim(),
+        asunto: this.correoForm.asunto.trim(),
+        cuerpo: this.correoForm.cuerpo.trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.enviandoCorreo = false;
+          this.cargarHistorial();
+          this.paso = 'enviado';
+        },
+        error: (error: HttpErrorResponse) => {
+          this.enviandoCorreo = false;
+          this.notificationService.error(extractApiErrorMessage(error) || 'No se pudo enviar el correo.');
+        },
+      });
   }
 
   volverAEditar(): void {
@@ -345,68 +522,38 @@ export class AnalizarOfertaComponent implements OnInit {
     this.paso = 'historial';
   }
 
-  // TODO: reemplazar por llamada real a /ofertas/analizar cuando el backend esté listo
-  descargarPdf(): void {
-    this.notificationService.info('Función simulada: la descarga del PDF estará disponible cuando se integre con el backend.');
-  }
-
-  // TODO: reemplazar por llamada real a /ofertas/analizar cuando el backend esté listo
-  enviarPorCorreo(): void {
-    this.notificationService.info('Función simulada: el envío por correo estará disponible cuando se integre con el backend.');
-  }
-
-  private upsertEnHistorial(item: OfertaDto): void {
-    const idx = this.ofertasGuardadas.findIndex(o => o.ofertaId === item.ofertaId);
-    this.ofertasGuardadas = idx >= 0
-      ? [...this.ofertasGuardadas.slice(0, idx), item, ...this.ofertasGuardadas.slice(idx + 1)]
-      : [item, ...this.ofertasGuardadas];
-  }
-
-  private construirOfertaMock(): OfertaAnalizadaForm {
-    if (this.modoEntrada === 'imagen') {
-      return {
-        cargo: 'Desarrollador Backend .NET',
-        empresa: 'Grupo Bancario Andino',
-        descripcion: 'Desarrollo y mantenimiento de microservicios en .NET 10, integración con Azure y participación en ceremonias ágiles.',
-        correoReclutador: 'seleccion@grupobancarioandino.com',
-        nombreReclutador: '',
-      };
-    }
-    return {
-      cargo: 'Desarrollador Frontend Angular Senior',
-      empresa: 'Tecnalia Software',
-      descripcion: 'Buscamos un desarrollador Frontend con experiencia en Angular, TypeScript y consumo de APIs REST para fortalecer nuestro equipo de producto.',
-      correoReclutador: '',
-      nombreReclutador: 'Marcela Duarte',
-    };
-  }
-
-  /** Sin OCR/IA real todavía (Fase 2): en modo imagen, se guarda una referencia al
-   * archivo en vez del texto extraído. */
+  /** Fallback defensivo si por algún motivo se llega a continuarConPerfil() sin
+   * fuenteOferta ya establecido (no debería ocurrir en el flujo normal, ver
+   * analizarOferta/editarOferta). Refleja el mismo criterio que aplica el backend. */
   private construirTextoOriginal(): string {
-    if (this.modoEntrada === 'texto') return this.textoOferta.trim();
-    return this.archivoOferta ? `(analizado desde imagen: ${this.archivoOferta.name})` : '(analizado desde imagen)';
+    const texto = this.textoOferta.trim();
+    const archivo = this.archivoOferta ? `(+ imagen adjunta: ${this.archivoOferta.name})` : '';
+    if (texto && archivo) return `${texto}\n\n${archivo}`;
+    if (archivo) return `(analizado desde imagen: ${this.archivoOferta!.name})`;
+    return texto;
   }
 
-  private sugerirPerfil(cargo: string): number | 'nuevo' {
-    const texto = cargo.toLowerCase();
-    const coincidencia = this.perfilesEjemplo.find(p => p.palabrasClave.some(k => texto.includes(k)));
-    return coincidencia ? coincidencia.id : 'nuevo';
-  }
-
-  private formatearFechaHoy(): string {
-    return new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+  private formatearFecha(fecha: Date): string {
+    return fecha.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
   }
 
   private resetFormularioEntrada(): void {
-    this.modoEntrada = 'texto';
     this.textoOferta = '';
     this.archivoOferta = null;
-    this.simularYaAplicado = false;
-    this.perfilSugeridoId = 'nuevo';
+    this.perfilSugeridoId = null;
+    this.perfilSeleccionRazon = null;
+    this.seleccionandoPerfil = false;
     this.editandoOfertaId = null;
     this.fuenteOferta = null;
     this.guardando = false;
-    this.oferta = { cargo: '', empresa: '', descripcion: '', correoReclutador: '', nombreReclutador: '' };
+    this.perfilSinCvNombre = null;
+    this.ofertaEnProgresoId = null;
+    this.redactandoCorreo = false;
+    this.enviandoCorreo = false;
+    this.promptRedactorPorDefecto = false;
+    this.correoForm = { destinatario: '', asunto: '', cuerpo: '' };
+    this.promptExtractorPorDefecto = false;
+    this.promptSelectorPorDefecto = false;
+    this.oferta = ofertaFormVacia();
   }
 }

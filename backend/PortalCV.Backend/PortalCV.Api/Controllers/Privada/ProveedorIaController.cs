@@ -19,14 +19,14 @@ public class ProveedorIaController : CvControllerBase
         => Ok(await _service.ListarAsync(GetCurriculumId(), ct));
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CrearProveedorIaConfigRequest request, CancellationToken ct = default)
+    public async Task<IActionResult> Create([FromBody] CrearProveedorIaRequest request, CancellationToken ct = default)
     {
         var result = await _service.CrearAsync(GetCurriculumId(), request, ct);
         return CreatedAtAction(nameof(GetAll), new { }, result);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] ActualizarProveedorIaConfigRequest request, CancellationToken ct = default)
+    public async Task<IActionResult> Update(int id, [FromBody] ActualizarProveedorIaRequest request, CancellationToken ct = default)
         => Ok(await _service.ActualizarAsync(GetCurriculumId(), id, request, ct));
 
     [HttpDelete("{id:int}")]

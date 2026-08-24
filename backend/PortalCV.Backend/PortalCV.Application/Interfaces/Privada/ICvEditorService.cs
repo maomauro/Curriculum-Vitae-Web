@@ -71,6 +71,11 @@ public interface ICvEditorService
     Task<IReadOnlyList<ReferenciaDto>> GetReferenciasAsync(int curriculumId, CancellationToken ct = default);
     Task<ReferenciaDto> CreateReferenciaAsync(int curriculumId, UpsertReferenciaRequest request, CancellationToken ct = default);
     Task<ReferenciaDto> UpdateReferenciaAsync(int curriculumId, int referenciaId, UpsertReferenciaRequest request, CancellationToken ct = default);
+    Task<ReferenciaDto> UpdateReferenciaVisibilidadAsync(
+        int curriculumId,
+        int referenciaId,
+        UpdateReferenciaVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteReferenciaAsync(int curriculumId, int referenciaId, CancellationToken ct = default);
 
     // Redes sociales

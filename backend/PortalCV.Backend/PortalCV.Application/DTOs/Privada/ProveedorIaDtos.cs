@@ -1,8 +1,8 @@
 namespace PortalCV.Application.DTOs.Privada;
 
 /// <summary>Nunca incluye la clave de API — ni cifrada ni en texto plano.</summary>
-public record ProveedorIaConfigDto(
-    int ProveedorIaConfigId,
+public record ProveedorIaDto(
+    int ProveedorIaId,
     string Proveedor,
     string? Nombre,
     string? Modelo,
@@ -10,7 +10,7 @@ public record ProveedorIaConfigDto(
     bool EsActivo,
     DateTime FechaActualizacion);
 
-public record CrearProveedorIaConfigRequest(
+public record CrearProveedorIaRequest(
     string Proveedor,
     string? Nombre,
     string? Modelo,
@@ -20,7 +20,7 @@ public record CrearProveedorIaConfigRequest(
 /// <summary>ApiKey null/vacío en una actualización significa "no cambiar la clave
 /// guardada" (la clave nunca se devuelve al front-end, así que no hay forma de que el
 /// usuario la reenvíe sin escribirla de nuevo salvo que decida cambiarla).</summary>
-public record ActualizarProveedorIaConfigRequest(
+public record ActualizarProveedorIaRequest(
     string Proveedor,
     string? Nombre,
     string? Modelo,

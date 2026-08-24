@@ -48,4 +48,7 @@ public static class CvAuditoriaAcciones
     public const string OfertaCreate = "cv.oferta_create";
     public const string OfertaUpdate = "cv.oferta_update";
     public const string OfertaDelete = "cv.oferta_delete";
+    public const string OfertaCorreoEnviar = "cv.oferta_correo_enviar";
+
+    public const string CvGeneradoGenerar = "cv.cv_generado_generar";
 }

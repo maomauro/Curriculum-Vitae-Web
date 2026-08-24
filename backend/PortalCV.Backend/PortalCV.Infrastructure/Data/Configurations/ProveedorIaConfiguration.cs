@@ -4,14 +4,14 @@ using PortalCV.Domain.Entities;
 
 namespace PortalCV.Infrastructure.Data.Configurations;
 
-public class ProveedorIaConfigConfiguration : IEntityTypeConfiguration<ProveedorIaConfig>
+public class ProveedorIaConfiguration : IEntityTypeConfiguration<ProveedorIa>
 {
-    public void Configure(EntityTypeBuilder<ProveedorIaConfig> builder)
+    public void Configure(EntityTypeBuilder<ProveedorIa> builder)
     {
-        builder.ToTable("ProveedorIaConfig", t =>
-            t.HasCheckConstraint("CK_ProveedorIaConfig_Proveedor", "Proveedor IN ('claude', 'openai', 'gemini', 'ollama', 'otro')"));
+        builder.ToTable("ProveedorIa", t =>
+            t.HasCheckConstraint("CK_ProveedorIa_Proveedor", "Proveedor IN ('claude', 'openai', 'gemini', 'groq', 'ollama', 'otro')"));
 
-        builder.HasKey(p => p.ProveedorIaConfigId);
+        builder.HasKey(p => p.ProveedorIaId);
 
         builder.Property(p => p.Proveedor).IsRequired().HasMaxLength(20);
         builder.Property(p => p.Nombre).HasMaxLength(100);
@@ -29,10 +29,10 @@ public class ProveedorIaConfigConfiguration : IEntityTypeConfiguration<Proveedor
         builder.HasIndex(p => p.CurriculumId)
             .IsUnique()
             .HasFilter("[EsActivo] = 1")
-            .HasDatabaseName("UQ_ProveedorIaConfig_Curriculum_Activo");
+            .HasDatabaseName("UQ_ProveedorIa_Curriculum_Activo");
 
         builder.HasOne(p => p.Curriculum)
-            .WithMany(c => c.ProveedoresIaConfig)
+            .WithMany(c => c.ProveedoresIa)
             .HasForeignKey(p => p.CurriculumId)
             .OnDelete(DeleteBehavior.Cascade);
     }

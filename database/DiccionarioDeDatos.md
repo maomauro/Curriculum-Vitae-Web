@@ -113,6 +113,7 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | Relacion        | varchar(100)   | Relación                                    |                               |
 | Observaciones   | varchar(500)   | Observaciones                               |                               |
 | AdjuntoSoporte  | varchar(500)   | Soporte adjunto                             |                               |
+| MostrarEnCv     | boolean        | Incluir en Mi CV y en el detalle público    | not null, default: true       |
 | FechaRegistro   | datetime       | Fecha de registro                           | not null, default: now()      |
 
 ---
@@ -154,11 +155,13 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | AspiracionSalarialPesos| decimal(18,2)    | Aspiración salarial en pesos                 |                               |
 | AspiracionSalarialDolares| decimal(18,2)  | Aspiración salarial en dólares               |                               |
 | EsActivo               | boolean        | Indica si el perfil está activo/habilitado   | not null, default: 1          |
+| MostrarExperienciaPerfil | boolean      | Mostrar la experiencia de este perfil en el CV público | not null, default: true |
+| MostrarAspiracionSalarial | boolean     | Mostrar la aspiración salarial de este perfil en el CV público | not null, default: true |
 
 ---
 
 ## Tabla: Oferta
-Historial de ofertas laborales analizadas por el postulante (flujo Oferta → Perfil → CV generado, ver `docs/arquitectura/Roadmap-Ofertas-IA.md`).
+Historial de ofertas laborales analizadas por el postulante (flujo Oferta → Perfil → CV ya construido → correo con PDF adjunto, ver `docs/arquitectura/Roadmap-Ofertas-IA.md`).
 
 | Columna          | Tipo           | Descripción                                        | Reglas                                        |
 |------------------|----------------|------------------------------------------------------|------------------------------------------------|
@@ -169,11 +172,22 @@ Historial de ofertas laborales analizadas por el postulante (flujo Oferta → Pe
 | Descripcion      | text           | Descripción de la oferta                               |                                                 |
 | CorreoReclutador | varchar(150)   | Correo del reclutador                                   |                                                 |
 | NombreReclutador | varchar(150)   | Nombre del reclutador                                   |                                                 |
+| Modalidad            | varchar(150)   | Modalidad de trabajo (texto libre, ej. "100% remoto")   |                                                 |
+| TipoContrato         | varchar(100)   | Tipo de contrato (texto libre, ej. "Contractor")        |                                                 |
+| Moneda               | varchar(20)    | Moneda de la remuneración (texto libre, ej. "USD")      |                                                 |
+| Duracion             | varchar(150)   | Duración del contrato (texto libre)                     |                                                 |
+| Horario              | varchar(100)   | Horario o huso horario (texto libre, ej. "CST")         |                                                 |
+| ExperienciaRequerida | varchar(100)   | Años de experiencia pedidos (texto libre, ej. "3 a 5 años") |                                             |
+| StackTecnologico     | text           | Stack/tecnologías pedidas (texto libre)                 |                                                 |
+| NivelIdioma          | varchar(100)   | Nivel de idioma requerido (texto libre, ej. "Inglés B2+/C1") |                                            |
 | TextoOriginal    | text           | Texto pegado por el usuario, o texto detectado si vino de imagen | not null                             |
-| OrigenEntrada    | varchar(20)    | Cómo se entregó la oferta                               | not null, CHECK IN ('texto', 'imagen')         |
-| Estado           | varchar(20)    | Etapa del flujo Oferta → Perfil → CV                    | not null, CHECK IN ('Analizada', 'PerfilAsignado', 'CvGenerado') |
-| PerfilId         | int            | Perfil asignado a esta oferta (se llena en el paso 6 del flujo) | FK Perfil.PerfilId, NULL, ON DELETE NO ACTION |
+| OrigenEntrada    | varchar(20)    | Cómo se entregó la oferta                               | not null, CHECK IN ('texto', 'imagen', 'ambos') |
+| Estado           | varchar(20)    | Etapa del flujo Oferta → Perfil → correo enviado        | not null, CHECK IN ('Analizada', 'PerfilAsignado', 'EnviadaPorCorreo') |
+| PerfilId         | int            | Perfil asignado a esta oferta                           | FK Perfil.PerfilId, NULL, ON DELETE NO ACTION |
 | FechaAnalisis    | datetime       | Fecha en que se analizó la oferta                       | not null, default: now()                       |
+| FechaEnvioCorreo | datetime       | Cuándo se envió el correo con el CV adjunto              | NULL hasta que se envía                        |
+
+Los 8 atributos adicionales (Modalidad, TipoContrato, Moneda, Duracion, Horario, ExperienciaRequerida, StackTecnologico, NivelIdioma) son texto libre a propósito: `EXTRACTOR_OFERTA` los transcribe tal cual los redactó el reclutador, sin forzarlos a categorías fijas, porque cada oferta los expresa de forma distinta.
 
 Duplicados: el back-end valida a nivel de aplicación que no exista otra oferta con el mismo `(CurriculumId, Cargo, Empresa)` normalizado (trim + mayúsculas) antes de crear/actualizar — no es un índice único en la base de datos.
 
@@ -380,12 +394,12 @@ Prompts del asistente de IA, propios de cada CV y editables desde su área priva
 
 ---
 
-## Tabla: ProveedorIaConfig
+## Tabla: ProveedorIa
 Conexiones con proveedores de IA propias de cada CV (self-service, `/configuracion`) — la(s) clave(s) que usan "Analizar Oferta" y los prompts de `PromptIa` para invocar al modelo. Un CV puede guardar **varias** conexiones (Claude, OpenAI, Gemini, Ollama/self-hosted, otro) y siempre tiene como máximo una marcada `EsActivo=1` — esa es la que usa el flujo de Ofertas. No versionado: editar una conexión sobrescribe sus columnas.
 
 | Columna             | Tipo           | Descripción                                 | Reglas                        |
 |----------------------|----------------|-----------------------------------------------|-------------------------------|
-| ProveedorIaConfigId  | int            | Identificador único                          | PK, autoincrement, not null   |
+| ProveedorIaId  | int            | Identificador único                          | PK, autoincrement, not null   |
 | CurriculumId         | int            | CV dueño de la conexión                       | FK Curriculum.CurriculumId, not null, ON DELETE CASCADE |
 | Proveedor            | varchar(20)    | Proveedor de IA elegido                       | not null, CHECK IN ('claude', 'openai', 'gemini', 'ollama', 'otro') |
 | Nombre               | varchar(100)   | Alias opcional para distinguir varias conexiones del mismo proveedor (p. ej. "Cuenta trabajo" vs "Cuenta personal") | opcional |

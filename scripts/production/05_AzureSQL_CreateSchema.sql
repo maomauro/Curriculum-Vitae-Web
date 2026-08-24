@@ -39,7 +39,7 @@ IF OBJECT_ID(N'dbo.Perfil', N'U') IS NOT NULL                 DROP TABLE dbo.Per
 IF OBJECT_ID(N'dbo.Personales', N'U') IS NOT NULL             DROP TABLE dbo.Personales;
 IF OBJECT_ID(N'dbo.AuditoriaCv', N'U') IS NOT NULL            DROP TABLE dbo.AuditoriaCv;
 IF OBJECT_ID(N'dbo.PromptIa', N'U') IS NOT NULL               DROP TABLE dbo.PromptIa;
-IF OBJECT_ID(N'dbo.ProveedorIaConfig', N'U') IS NOT NULL      DROP TABLE dbo.ProveedorIaConfig;
+IF OBJECT_ID(N'dbo.ProveedorIa', N'U') IS NOT NULL      DROP TABLE dbo.ProveedorIa;
 IF OBJECT_ID(N'dbo.Curriculum', N'U') IS NOT NULL             DROP TABLE dbo.Curriculum;
 IF OBJECT_ID(N'dbo.AuditoriaAdmin', N'U') IS NOT NULL       DROP TABLE dbo.AuditoriaAdmin;
 IF OBJECT_ID(N'dbo.AuditoriaAuth', N'U') IS NOT NULL        DROP TABLE dbo.AuditoriaAuth;
@@ -184,6 +184,7 @@ CREATE TABLE dbo.Referencia (
     Relacion         NVARCHAR(100) NULL,
     Observaciones    NVARCHAR(500) NULL,
     AdjuntoSoporte   NVARCHAR(500) NULL,
+    MostrarEnCv      BIT           NOT NULL DEFAULT 1,
     FechaRegistro    DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Referencia PRIMARY KEY CLUSTERED (ReferenciaId),
     CONSTRAINT FK_Referencia_Curriculum  FOREIGN KEY (CurriculumId)  REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
@@ -230,6 +231,8 @@ CREATE TABLE dbo.Perfil (
     AspiracionSalarialPesos DECIMAL(18,2) NULL,
     AspiracionSalarialDolares DECIMAL(18,2) NULL,
     EsActivo                  BIT           NOT NULL DEFAULT 1,
+    MostrarExperienciaPerfil  BIT           NOT NULL DEFAULT 1,
+    MostrarAspiracionSalarial BIT           NOT NULL DEFAULT 1,
     CONSTRAINT PK_Perfil PRIMARY KEY CLUSTERED (PerfilId),
     CONSTRAINT FK_Perfil_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE
 );
@@ -246,16 +249,25 @@ CREATE TABLE dbo.Oferta (
     Descripcion      NVARCHAR(MAX) NULL,
     CorreoReclutador NVARCHAR(150) NULL,
     NombreReclutador NVARCHAR(150) NULL,
+    Modalidad             NVARCHAR(150) NULL,
+    TipoContrato          NVARCHAR(100) NULL,
+    Moneda                NVARCHAR(20)  NULL,
+    Duracion              NVARCHAR(150) NULL,
+    Horario               NVARCHAR(100) NULL,
+    ExperienciaRequerida  NVARCHAR(100) NULL,
+    StackTecnologico      NVARCHAR(MAX) NULL,
+    NivelIdioma           NVARCHAR(100) NULL,
     TextoOriginal    NVARCHAR(MAX) NOT NULL,
     OrigenEntrada    NVARCHAR(20)  NOT NULL,
     Estado           NVARCHAR(20)  NOT NULL,
     PerfilId         INT NULL,
     FechaAnalisis    DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaEnvioCorreo DATETIME2(0)  NULL,
     CONSTRAINT PK_Oferta PRIMARY KEY CLUSTERED (OfertaId),
     CONSTRAINT FK_Oferta_Curriculum FOREIGN KEY (CurriculumId) REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
     CONSTRAINT FK_Oferta_Perfil FOREIGN KEY (PerfilId) REFERENCES dbo.Perfil (PerfilId) ON DELETE NO ACTION,
-    CONSTRAINT CK_Oferta_OrigenEntrada CHECK (OrigenEntrada IN (N'texto', N'imagen')),
-    CONSTRAINT CK_Oferta_Estado CHECK (Estado IN (N'Analizada', N'PerfilAsignado', N'CvGenerado'))
+    CONSTRAINT CK_Oferta_OrigenEntrada CHECK (OrigenEntrada IN (N'texto', N'imagen', N'ambos')),
+    CONSTRAINT CK_Oferta_Estado CHECK (Estado IN (N'Analizada', N'PerfilAsignado', N'EnviadaPorCorreo'))
 );
 
 CREATE NONCLUSTERED INDEX IX_Oferta_CurriculumId ON dbo.Oferta (CurriculumId);
@@ -559,8 +571,8 @@ GO
 -- UQ_PromptIa_Curriculum_Codigo_Activo). La clave se guarda cifrada (AES-256-GCM, ver
 -- AesGcmApiKeyCipher) y nunca se devuelve al front-end; es opcional porque Ollama local
 -- normalmente no la requiere. Endpoint es obligatorio solo para proveedores self-hosted.
-CREATE TABLE dbo.ProveedorIaConfig (
-    ProveedorIaConfigId INT NOT NULL IDENTITY(1,1),
+CREATE TABLE dbo.ProveedorIa (
+    ProveedorIaId INT NOT NULL IDENTITY(1,1),
     CurriculumId         INT NOT NULL,
     Proveedor            NVARCHAR(20)  NOT NULL,
     Nombre               NVARCHAR(100) NULL,
@@ -570,17 +582,17 @@ CREATE TABLE dbo.ProveedorIaConfig (
     EsActivo             BIT           NOT NULL DEFAULT 0,
     FechaCreacion        DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
     FechaActualizacion   DATETIME2(0)  NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT PK_ProveedorIaConfig PRIMARY KEY CLUSTERED (ProveedorIaConfigId),
-    CONSTRAINT FK_ProveedorIaConfig_Curriculum FOREIGN KEY (CurriculumId)
+    CONSTRAINT PK_ProveedorIa PRIMARY KEY CLUSTERED (ProveedorIaId),
+    CONSTRAINT FK_ProveedorIa_Curriculum FOREIGN KEY (CurriculumId)
         REFERENCES dbo.Curriculum (CurriculumId) ON DELETE CASCADE,
-    CONSTRAINT CK_ProveedorIaConfig_Proveedor CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'ollama', N'otro'))
+    CONSTRAINT CK_ProveedorIa_Proveedor CHECK (Proveedor IN (N'claude', N'openai', N'gemini', N'ollama', N'otro'))
 );
 
-CREATE NONCLUSTERED INDEX IX_ProveedorIaConfig_CurriculumId ON dbo.ProveedorIaConfig (CurriculumId);
+CREATE NONCLUSTERED INDEX IX_ProveedorIa_CurriculumId ON dbo.ProveedorIa (CurriculumId);
 
 -- Solo una conexion activa por CV a la vez
-CREATE UNIQUE NONCLUSTERED INDEX UQ_ProveedorIaConfig_Curriculum_Activo
-    ON dbo.ProveedorIaConfig (CurriculumId)
+CREATE UNIQUE NONCLUSTERED INDEX UQ_ProveedorIa_Curriculum_Activo
+    ON dbo.ProveedorIa (CurriculumId)
     WHERE EsActivo = 1;
 GO
 

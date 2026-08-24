@@ -59,17 +59,6 @@ export class CvPlantillaPreviewComponent {
     return this.vis?.visibleAtributoSafe(s, a) ?? true;
   }
 
-  bloqueForm(b: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos'): boolean {
-    return this.vis?.visibleBloqueFormacion(b) ?? true;
-  }
-
-  descarga(
-    b: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos',
-    a: string
-  ): boolean {
-    return this.vis?.visibleDescargarSoporte(b, a) ?? false;
-  }
-
   get plantillaCodigo(): CvPlantillaCodigo {
     return this.vm.plantillaCodigo;
   }

@@ -17,4 +17,13 @@ public interface IAiProviderClient
     /// opcional porque no todos los proveedores lo requieren.</summary>
     Task<(bool Ok, string Mensaje)> ProbarConexionAsync(
         string? modelo, string? endpoint, string? apiKey, CancellationToken ct = default);
+
+    /// <summary>Genera texto real a partir de un prompt ya ensamblado y, opcionalmente,
+    /// una imagen adjunta -- ambos viajan en una sola solicitud multimodal cuando el
+    /// proveedor lo soporta, sin un paso previo de OCR. Nunca debe lanzar por errores
+    /// del proveedor (401, 400, timeout, red, formato inesperado) -- esos casos se
+    /// traducen a Ok=false con un mensaje claro en Error.</summary>
+    Task<(bool Ok, string? Texto, string? Error)> GenerarTextoAsync(
+        string? modelo, string? endpoint, string? apiKey, string prompt,
+        byte[]? imagenBytes, string? imagenContentType, CancellationToken ct = default);
 }

@@ -3,11 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../constants/api-base-url';
 
-export type ProveedorIaCodigo = 'claude' | 'openai' | 'gemini' | 'ollama' | 'otro';
+export type ProveedorIaCodigo = 'claude' | 'openai' | 'gemini' | 'groq' | 'ollama' | 'otro';
 
 /** Nunca incluye la clave de API — ni cifrada ni en texto plano. */
-export interface ProveedorIaConfigDto {
-  proveedorIaConfigId: number;
+export interface ProveedorIaDto {
+  proveedorIaId: number;
   proveedor: ProveedorIaCodigo;
   nombre: string | null;
   modelo: string | null;
@@ -16,7 +16,7 @@ export interface ProveedorIaConfigDto {
   fechaActualizacion: string;
 }
 
-export interface CrearProveedorIaConfigRequest {
+export interface CrearProveedorIaRequest {
   proveedor: ProveedorIaCodigo;
   nombre?: string | null;
   modelo?: string | null;
@@ -25,7 +25,7 @@ export interface CrearProveedorIaConfigRequest {
 }
 
 /** apiKey null/vacío en una actualización = no cambiar la clave guardada. */
-export interface ActualizarProveedorIaConfigRequest {
+export interface ActualizarProveedorIaRequest {
   proveedor: ProveedorIaCodigo;
   nombre?: string | null;
   modelo?: string | null;
@@ -51,24 +51,24 @@ export class ProveedorIaService {
 
   constructor(private http: HttpClient) {}
 
-  getConfigs(): Observable<ProveedorIaConfigDto[]> {
-    return this.http.get<ProveedorIaConfigDto[]>(this.BASE);
+  getConfigs(): Observable<ProveedorIaDto[]> {
+    return this.http.get<ProveedorIaDto[]>(this.BASE);
   }
 
-  crearConfig(request: CrearProveedorIaConfigRequest): Observable<ProveedorIaConfigDto> {
-    return this.http.post<ProveedorIaConfigDto>(this.BASE, request);
+  crearConfig(request: CrearProveedorIaRequest): Observable<ProveedorIaDto> {
+    return this.http.post<ProveedorIaDto>(this.BASE, request);
   }
 
-  actualizarConfig(id: number, request: ActualizarProveedorIaConfigRequest): Observable<ProveedorIaConfigDto> {
-    return this.http.put<ProveedorIaConfigDto>(`${this.BASE}/${id}`, request);
+  actualizarConfig(id: number, request: ActualizarProveedorIaRequest): Observable<ProveedorIaDto> {
+    return this.http.put<ProveedorIaDto>(`${this.BASE}/${id}`, request);
   }
 
   eliminarConfig(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/${id}`);
   }
 
-  activarConfig(id: number): Observable<ProveedorIaConfigDto> {
-    return this.http.put<ProveedorIaConfigDto>(`${this.BASE}/${id}/activar`, null);
+  activarConfig(id: number): Observable<ProveedorIaDto> {
+    return this.http.put<ProveedorIaDto>(`${this.BASE}/${id}/activar`, null);
   }
 
   probarConexion(request: ProbarConexionIaRequest): Observable<ProbarConexionIaResponse> {

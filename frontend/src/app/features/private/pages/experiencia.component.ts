@@ -49,6 +49,8 @@ export class ExperienciaComponent implements OnInit {
   /** PUT de visibilidad desde el switch de cabecera. */
   guardandoVisibilidadExpId: number | null = null;
   guardandoVisibilidadBloque = false;
+  /** PUT de visibilidad desde el switch de cabecera de una referencia laboral. */
+  guardandoVisibilidadRefId: number | null = null;
   guardandoRef = false;
   todayDate = getTodayDateString();
   /** PUT/DELETE de soporte (PDF) desde el input "Certificación laboral" de cada empleo. */
@@ -118,7 +120,37 @@ export class ExperienciaComponent implements OnInit {
       relacion: r.relacion,
       observaciones: r.observaciones,
       adjuntoSoporte: r.adjuntoSoporte,
+      mostrarEnCv: r.mostrarEnCv,
     };
+  }
+
+  /** PUT de visibilidad desde el switch de cabecera de cada referencia laboral (reemplaza
+   * el interruptor global "Referencia laboral" que antes vivía en Configuración -- ahora es
+   * un control por registro, igual que el de cada empleo). */
+  onMostrarEnCvChangeRef(ref: ReferenciaDto, nuevo: boolean): void {
+    const prev = !nuevo;
+    if (this.guardandoVisibilidadRefId === ref.referenciaId) {
+      return;
+    }
+    this.guardandoVisibilidadRefId = ref.referenciaId;
+    this.cvEditorService
+      .updateReferenciaVisibilidad(ref.referenciaId, { mostrarEnCv: nuevo })
+      .subscribe({
+        next: actualizada => {
+          this.referencias = this.referencias.map(r => (r.referenciaId === actualizada.referenciaId ? actualizada : r));
+          const ui = this.laborRefUi[actualizada.referenciaId];
+          if (ui) {
+            ui.form = this.referenciaToForm(actualizada);
+          }
+          this.guardandoVisibilidadRefId = null;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        },
+        error: (error: HttpErrorResponse) => {
+          ref.mostrarEnCv = prev;
+          this.guardandoVisibilidadRefId = null;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+        },
+      });
   }
 
   toggleLaborRefHeader(ref: ReferenciaDto, ev: Event): void {
@@ -176,6 +208,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: null,
       observaciones: null,
       adjuntoSoporte: null,
+      mostrarEnCv: true,
     };
   }
 
@@ -225,6 +258,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: form.relacion?.trim() || null,
       observaciones: form.observaciones?.trim() || null,
       adjuntoSoporte: form.adjuntoSoporte ?? null,
+      mostrarEnCv: form.mostrarEnCv ?? true,
     };
   }
 
@@ -248,6 +282,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: form.relacion?.trim() || null,
       observaciones: form.observaciones?.trim() || null,
       adjuntoSoporte: form.adjuntoSoporte ?? null,
+      mostrarEnCv: form.mostrarEnCv ?? true,
     };
   }
 
@@ -632,6 +667,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: ref.relacion?.trim() || null,
       observaciones: ref.observaciones?.trim() || null,
       adjuntoSoporte: ref.adjuntoSoporte ?? null,
+      mostrarEnCv: ref.mostrarEnCv ?? true,
     };
   }
 

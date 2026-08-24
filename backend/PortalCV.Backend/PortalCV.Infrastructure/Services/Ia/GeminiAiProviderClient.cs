@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using PortalCV.Application.Interfaces;
 
 namespace PortalCV.Infrastructure.Services;
@@ -72,6 +73,73 @@ public class GeminiAiProviderClient : IAiProviderClient
         catch (HttpRequestException)
         {
             return (false, "No se pudo conectar con el proveedor.");
+        }
+    }
+
+    public async Task<(bool Ok, string? Texto, string? Error)> GenerarTextoAsync(
+        string? modelo, string? endpoint, string? apiKey, string prompt,
+        byte[]? imagenBytes, string? imagenContentType, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return (false, null, "La clave de API es requerida.");
+
+        var modeloFinal = string.IsNullOrWhiteSpace(modelo) ? ModeloPorDefecto : modelo.Trim();
+
+        var partes = new List<object>();
+        if (imagenBytes is { Length: > 0 } && !string.IsNullOrWhiteSpace(imagenContentType))
+        {
+            partes.Add(new { inlineData = new { mimeType = imagenContentType, data = Convert.ToBase64String(imagenBytes) } });
+        }
+        partes.Add(new { text = prompt });
+
+        try
+        {
+            var claveEscapada = Uri.EscapeDataString(apiKey);
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post, $"v1beta/models/{modeloFinal}:generateContent?key={claveEscapada}");
+            request.Content = JsonContent.Create(new
+            {
+                contents = new[] { new { parts = partes } },
+                // 4096 (no 2048): un CV completo en JSON (resumen + experiencia +
+                // formación + proyectos + habilidades) puede superar 2048 tokens y
+                // cortarse a mitad de camino, dejando un JSON inválido.
+                generationConfig = new { maxOutputTokens = 4096 },
+            });
+
+            using var response = await _http.SendAsync(request, ct);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+                return (false, null, "La clave de API no es válida.");
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return (false, null, "El modelo indicado no existe. Verifica el nombre del modelo.");
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var cuerpoError = await response.Content.ReadAsStringAsync(ct);
+                if (cuerpoError.Contains("API_KEY_INVALID", StringComparison.OrdinalIgnoreCase))
+                    return (false, null, "La clave de API no es válida.");
+                return (false, null, "El modelo indicado no existe o la solicitud no es válida. Verifica el nombre del modelo.");
+            }
+            if (!response.IsSuccessStatusCode)
+                return (false, null, $"El proveedor respondió con un error ({(int)response.StatusCode}).");
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+            var texto = doc.RootElement.GetProperty("candidates")[0]
+                .GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
+            return string.IsNullOrWhiteSpace(texto)
+                ? (false, null, "El proveedor respondió sin contenido de texto.")
+                : (true, texto, null);
+        }
+        catch (TaskCanceledException)
+        {
+            return (false, null, "Tiempo de espera agotado al conectar con el proveedor.");
+        }
+        catch (HttpRequestException)
+        {
+            return (false, null, "No se pudo conectar con el proveedor.");
+        }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or IndexOutOfRangeException)
+        {
+            return (false, null, "El proveedor respondió, pero no con el formato esperado.");
         }
     }
 }

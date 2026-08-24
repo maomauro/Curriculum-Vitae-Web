@@ -466,11 +466,33 @@
 
 // Panel de vista previa en vivo (Configuración -> Visibilidad del CV). Fijo al hacer
 // scroll en pantallas grandes; en angostas se apila debajo de los controles (columna
-// Bootstrap col-lg-* ya se encarga de eso).
+// Bootstrap col-lg-* ya se encarga de eso). La tarjeta se estira en flex-column para
+// que el panel ocupe todo el alto disponible (igualando la columna de la izquierda,
+// que suele ser más alta) en vez de quedar con una franja vacía debajo de un cuerpo
+// con max-height fijo.
 .cv-preview-panel-card {
   @media (min-width: 992px) {
     position: sticky;
     top: 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 24px);
+  }
+}
+app-preview-publico-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+  }
+}
+.cv-preview-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
   }
 }
 .cv-preview-panel-tabs .nav-link {
@@ -479,8 +501,24 @@
   cursor: pointer;
 }
 .cv-preview-panel-body {
-  max-height: 70vh;
   overflow-y: auto;
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  @media (max-width: 991.98px) {
+    max-height: 70vh;
+  }
+
+  // La plantilla de CV (app-cv-plantilla-preview) trae su propia ventana con scroll
+  // (.cv-mi-letter-zoom-root, pensada para Mi CV con controles de zoom). Acá esa misma
+  // ventana queda anidada dentro de este panel, que ya tiene su propio scroll -- sin
+  // esto se ven dos barras de scroll una al lado de la otra. Se anula solo en este
+  // contexto; Mi CV sigue usando su scroll propio normalmente.
+  .cv-mi-letter-zoom-root {
+    max-height: none;
+    overflow: visible;
+  }
 }
 .cv-actions-row-soft {
   border-top: 1px solid #f0f0f0;

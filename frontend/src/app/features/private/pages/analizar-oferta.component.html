@@ -2,7 +2,7 @@
 <div class="page-header">
   <div>
     <h4><i class="bi bi-magic me-2 text-primary"></i>Analizar Oferta</h4>
-    <span class="text-muted small">Pega una oferta laboral o sube una imagen para generar un CV adaptado</span>
+    <span class="text-muted small">Pega una oferta laboral o sube una imagen para elegir el perfil más afín y enviar tu CV por correo al reclutador</span>
   </div>
 </div>
 
@@ -37,15 +37,27 @@
               [class.bg-secondary]="o.estado === 'Analizada'"
               [class.bg-info]="o.estado === 'PerfilAsignado'"
               [class.text-dark]="o.estado === 'PerfilAsignado'"
-              [class.bg-success]="o.estado === 'CvGenerado'">
+              [class.bg-success]="o.estado === 'EnviadaPorCorreo'">
           {{ estadoLabel(o.estado) }}
         </span>
       </div>
       <div class="text-muted small">{{ o.empresa }} · {{ o.fechaAnalisis | date: 'dd/MM/yyyy' }} · {{ perfilNombreDe(o) }}</div>
     </div>
+    <div class="row row-cols-2 row-cols-md-3 g-2 mb-2 small" *ngIf="tieneAtributosDetallados(o)">
+      <div class="col text-muted" *ngIf="o.modalidad"><i class="bi bi-geo-alt me-1"></i>{{ o.modalidad }}</div>
+      <div class="col text-muted" *ngIf="o.tipoContrato"><i class="bi bi-briefcase me-1"></i>{{ o.tipoContrato }}<span *ngIf="o.moneda"> · {{ o.moneda }}</span></div>
+      <div class="col text-muted" *ngIf="o.duracion"><i class="bi bi-calendar-range me-1"></i>{{ o.duracion }}</div>
+      <div class="col text-muted" *ngIf="o.horario"><i class="bi bi-clock me-1"></i>{{ o.horario }}</div>
+      <div class="col text-muted" *ngIf="o.experienciaRequerida"><i class="bi bi-bar-chart-steps me-1"></i>{{ o.experienciaRequerida }}</div>
+      <div class="col text-muted" *ngIf="o.nivelIdioma"><i class="bi bi-translate me-1"></i>{{ o.nivelIdioma }}</div>
+    </div>
+    <div class="text-muted small mb-2 text-truncate" *ngIf="o.stackTecnologico" [title]="o.stackTecnologico">
+      <i class="bi bi-code-slash me-1"></i>{{ o.stackTecnologico }}
+    </div>
     <div class="perfil-action-row">
       <button type="button" class="btn btn-outline-secondary btn-sm" (click)="editarOferta(o)">
-        <i class="bi bi-pencil me-1"></i>Editar
+        <i class="bi" [class.bi-pencil]="o.estado !== 'EnviadaPorCorreo'" [class.bi-eye]="o.estado === 'EnviadaPorCorreo'"></i>
+        <span class="ms-1">{{ o.estado === 'EnviadaPorCorreo' ? 'Ver' : 'Editar' }}</span>
       </button>
       <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminarOferta(o)">
         <i class="bi bi-trash3 me-1"></i>Eliminar
@@ -59,40 +71,35 @@
   <div class="d-flex justify-content-between align-items-start gap-2">
     <div>
       <div class="seccion-titulo"><i class="bi bi-clipboard-data"></i>Datos de la oferta</div>
-      <div class="seccion-subtitulo">Elige cómo quieres entregar la oferta laboral.</div>
+      <div class="seccion-subtitulo">Pega el texto, adjunta una imagen, o ambos — se analizan juntos.</div>
     </div>
     <button type="button" class="btn btn-outline-secondary btn-sm" (click)="volverAlHistorial()">
       <i class="bi bi-arrow-left me-1"></i>Historial
     </button>
   </div>
 
-  <ul class="nav gap-1 mb-3 cv-tabs-nav">
-    <li class="nav-item">
-      <a class="nav-link fw-semibold text-muted" role="button"
-         [class.cv-nav-link-active]="modoEntrada === 'texto'"
-         [class.cv-nav-link-passive]="modoEntrada !== 'texto'"
-         (click)="modoEntrada = 'texto'">
-        <i class="bi bi-fonts me-1"></i>Pegar texto
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link fw-semibold text-muted" role="button"
-         [class.cv-nav-link-active]="modoEntrada === 'imagen'"
-         [class.cv-nav-link-passive]="modoEntrada !== 'imagen'"
-         (click)="modoEntrada = 'imagen'">
-        <i class="bi bi-image me-1"></i>Subir imagen
-      </a>
-    </li>
-  </ul>
-
-  <div *ngIf="modoEntrada === 'texto'">
-    <label class="form-label" for="oferta-texto">Texto de la oferta laboral</label>
-    <textarea id="oferta-texto" class="form-control" rows="8" [(ngModel)]="textoOferta"
-              placeholder="Pega aquí el contenido de la oferta laboral..."></textarea>
+  <div class="mb-1">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <i class="bi bi-fonts text-primary"></i>
+      <label class="form-label mb-0 fw-semibold" for="oferta-texto">Texto de la oferta</label>
+      <span class="badge bg-light text-muted border fw-normal">Opcional si adjuntas una imagen</span>
+    </div>
+    <textarea id="oferta-texto" class="form-control" rows="6" [(ngModel)]="textoOferta"
+              placeholder="Pega aquí el contenido de la oferta laboral, o complementa la imagen con una nota (p. ej. el correo del reclutador si no se lee bien en la captura)..."></textarea>
   </div>
 
-  <div *ngIf="modoEntrada === 'imagen'">
-    <label class="form-label">Imagen de la oferta laboral</label>
+  <div class="d-flex align-items-center gap-2 my-3">
+    <hr class="flex-grow-1 my-0">
+    <span class="text-muted small fw-semibold">Y / O</span>
+    <hr class="flex-grow-1 my-0">
+  </div>
+
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <i class="bi bi-image text-primary"></i>
+      <span class="form-label mb-0 fw-semibold">Imagen de la oferta</span>
+      <span class="badge bg-light text-muted border fw-normal">Opcional si pegaste el texto</span>
+    </div>
     <div class="border border-2 rounded-3 p-4 text-center"
          [class.border-primary]="arrastrando"
          [class.bg-light]="arrastrando"
@@ -121,15 +128,13 @@
         </button>
       </div>
     </div>
+    <p class="text-muted small mt-2 mb-0" *ngIf="origenEntradaActual === 'ambos'">
+      <i class="bi bi-stars me-1"></i>Se analizarán el texto y la imagen juntos: la imagen aporta el diseño y el
+      contexto visual, y el texto completa o corrige datos puntuales.
+    </p>
   </div>
 
-  <div class="cv-border-t-soft pt-3 mt-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" id="simular-ya-aplicado" [(ngModel)]="simularYaAplicado">
-      <label class="form-check-label text-muted small" for="simular-ya-aplicado">
-        Simular caso: ya se aplicó a esta oferta (solo desarrollo)
-      </label>
-    </div>
+  <div class="cv-border-t-soft pt-3 mt-4 d-flex align-items-center justify-content-end flex-wrap gap-2">
     <button type="button" class="btn btn-primary" [disabled]="!puedeAnalizar || analizando" (click)="analizarOferta()">
       <span *ngIf="analizando" class="spinner-border spinner-border-sm me-2"></span>
       <i *ngIf="!analizando" class="bi bi-stars me-2"></i>{{ analizando ? 'Analizando oferta...' : 'Analizar oferta' }}
@@ -138,13 +143,44 @@
 </div>
 
 <!-- Paso: ya aplicado -->
-<div class="seccion-card text-center py-5" *ngIf="paso === 'yaAplicado'">
-  <i class="bi bi-check-circle-fill display-5 text-success"></i>
-  <h5 class="mt-3">Ya aplicaste a esta oferta</h5>
-  <p class="text-muted">Según nuestros registros, ya enviaste tu CV para esta oferta el {{ fechaAplicacionSimulada }}.</p>
-  <button type="button" class="btn btn-outline-secondary" (click)="reiniciar()">
-    <i class="bi bi-clock-history me-1"></i>Volver al historial
-  </button>
+<div class="seccion-card" *ngIf="paso === 'yaAplicado'">
+  <div class="text-center py-4">
+    <i class="bi bi-check-circle-fill display-5 text-success"></i>
+    <h5 class="mt-3">Ya aplicaste a esta oferta</h5>
+    <p class="text-muted mb-0">
+      Ya enviaste tu CV para esta oferta{{ fechaEnvioMostrada ? ' el ' + fechaEnvioMostrada : '' }}. No se puede volver a enviar.
+    </p>
+  </div>
+
+  <div class="cv-border-t-soft pt-3">
+    <div class="fw-semibold mb-1">{{ oferta.cargo }}</div>
+    <div class="text-muted small mb-3">{{ oferta.empresa }}</div>
+
+    <p class="mb-3" *ngIf="oferta.descripcion">{{ oferta.descripcion }}</p>
+
+    <div class="row row-cols-2 row-cols-md-3 g-2 mb-2 small"
+         *ngIf="oferta.modalidad || oferta.tipoContrato || oferta.duracion || oferta.horario || oferta.experienciaRequerida || oferta.nivelIdioma">
+      <div class="col text-muted" *ngIf="oferta.modalidad"><i class="bi bi-geo-alt me-1"></i>{{ oferta.modalidad }}</div>
+      <div class="col text-muted" *ngIf="oferta.tipoContrato"><i class="bi bi-briefcase me-1"></i>{{ oferta.tipoContrato }}<span *ngIf="oferta.moneda"> · {{ oferta.moneda }}</span></div>
+      <div class="col text-muted" *ngIf="oferta.duracion"><i class="bi bi-calendar-range me-1"></i>{{ oferta.duracion }}</div>
+      <div class="col text-muted" *ngIf="oferta.horario"><i class="bi bi-clock me-1"></i>{{ oferta.horario }}</div>
+      <div class="col text-muted" *ngIf="oferta.experienciaRequerida"><i class="bi bi-bar-chart-steps me-1"></i>{{ oferta.experienciaRequerida }}</div>
+      <div class="col text-muted" *ngIf="oferta.nivelIdioma"><i class="bi bi-translate me-1"></i>{{ oferta.nivelIdioma }}</div>
+    </div>
+    <div class="text-muted small mb-3" *ngIf="oferta.stackTecnologico">
+      <i class="bi bi-code-slash me-1"></i>{{ oferta.stackTecnologico }}
+    </div>
+
+    <div class="text-muted small mb-3" *ngIf="oferta.correoReclutador || oferta.nombreReclutador">
+      <i class="bi bi-person-rolodex me-1"></i>{{ oferta.nombreReclutador || 'Reclutador' }}<span *ngIf="oferta.correoReclutador"> · {{ oferta.correoReclutador }}</span>
+    </div>
+  </div>
+
+  <div class="text-center pt-2">
+    <button type="button" class="btn btn-outline-secondary" (click)="reiniciar()">
+      <i class="bi bi-clock-history me-1"></i>Volver al historial
+    </button>
+  </div>
 </div>
 
 <!-- Paso: resultado (formulario editable + perfil sugerido) -->
@@ -158,6 +194,15 @@
       <button type="button" class="btn btn-outline-secondary btn-sm" (click)="volverAlHistorial()">
         <i class="bi bi-arrow-left me-1"></i>Historial
       </button>
+    </div>
+
+    <div class="alert alert-secondary d-flex align-items-start gap-2 py-2 px-3 small mb-3" *ngIf="promptExtractorPorDefecto" role="note">
+      <i class="bi bi-info-circle mt-1"></i>
+      <div>
+        Este análisis usó el prompt de extracción <strong>por defecto</strong> — tu CV todavía no
+        tiene un prompt propio con código <code>EXTRACTOR_OFERTA</code>.
+        <a routerLink="/prompts-ia" class="alert-link">Crear el mío en Prompts de IA</a>
+      </div>
     </div>
 
     <div class="row g-3">
@@ -191,59 +236,183 @@
                [class.border-warning]="esCampoFaltante(oferta.nombreReclutador)">
         <span class="badge bg-warning text-dark mt-1" *ngIf="esCampoFaltante(oferta.nombreReclutador)">Dato faltante</span>
       </div>
+
+      <div class="col-12">
+        <hr class="cv-sidebar-hr my-1">
+        <div class="fw-semibold small text-muted mb-2">Condiciones de la oferta <small class="fw-normal">(opcional)</small></div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-modalidad">Modalidad</label>
+        <input id="of-modalidad" type="text" class="form-control" placeholder="Ej: 100% remoto desde México o Colombia"
+               [(ngModel)]="oferta.modalidad">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-tipo-contrato">Tipo de contrato</label>
+        <input id="of-tipo-contrato" type="text" class="form-control" placeholder="Ej: Contractor"
+               [(ngModel)]="oferta.tipoContrato">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-moneda">Moneda</label>
+        <input id="of-moneda" type="text" class="form-control" placeholder="Ej: USD"
+               [(ngModel)]="oferta.moneda">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-duracion">Duración</label>
+        <input id="of-duracion" type="text" class="form-control" placeholder="Ej: 6 meses + posibilidad de extensión"
+               [(ngModel)]="oferta.duracion">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-horario">Horario</label>
+        <input id="of-horario" type="text" class="form-control" placeholder="Ej: CST"
+               [(ngModel)]="oferta.horario">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-experiencia">Experiencia requerida</label>
+        <input id="of-experiencia" type="text" class="form-control" placeholder="Ej: 3 a 5 años"
+               [(ngModel)]="oferta.experienciaRequerida">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label" for="of-stack">Stack tecnológico</label>
+        <textarea id="of-stack" class="form-control" rows="2" placeholder="Ej: C#, .NET Core/6+, ASP.NET Core, React, SQL, AWS/Azure, CI/CD, Git"
+                  [(ngModel)]="oferta.stackTecnologico"></textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="of-idioma">Idioma requerido</label>
+        <input id="of-idioma" type="text" class="form-control" placeholder="Ej: Inglés B2+/C1"
+               [(ngModel)]="oferta.nivelIdioma">
+      </div>
     </div>
   </div>
 
   <div class="seccion-card">
     <div class="seccion-titulo"><i class="bi bi-person-check"></i>Perfil sugerido</div>
 
-    <p class="mb-3" *ngIf="perfilSugeridoNombre as nombre; else perfilNuevo">
-      Se reutilizará tu perfil: <strong>{{ nombre }}</strong>
-    </p>
-    <ng-template #perfilNuevo>
-      <p class="mb-3">No encontramos un perfil que coincida: <strong>se creará un perfil nuevo</strong>.</p>
-    </ng-template>
+    <div *ngIf="seleccionandoPerfil" class="d-flex align-items-center gap-2 text-muted mb-3">
+      <span class="spinner-border spinner-border-sm"></span>Analizando qué perfil se ajusta mejor…
+    </div>
 
-    <div class="col-md-6 mb-3">
-      <label class="form-label" for="perfil-sugerido">Cambiar por otro perfil de ejemplo</label>
+    <ng-container *ngIf="!seleccionandoPerfil">
+      <div class="alert alert-warning d-flex align-items-start gap-2 py-2 px-3 small mb-3" *ngIf="perfiles.length === 0" role="alert">
+        <i class="bi bi-exclamation-triangle mt-1"></i>
+        <div>
+          Todavía no tienes perfiles guardados. <a routerLink="/perfil" class="alert-link">Crea uno en Perfil Profesional</a> antes de continuar.
+        </div>
+      </div>
+
+      <p class="mb-1" *ngIf="perfilSugeridoNombre as nombre">
+        Se usará tu perfil: <strong>{{ nombre }}</strong>
+      </p>
+      <p class="text-muted small mb-3" *ngIf="perfilSeleccionRazon">{{ perfilSeleccionRazon }}</p>
+
+      <div class="alert alert-secondary d-flex align-items-start gap-2 py-2 px-3 small mb-3" *ngIf="promptSelectorPorDefecto" role="note">
+        <i class="bi bi-info-circle mt-1"></i>
+        <div>
+          Esta sugerencia usó el prompt de selección <strong>por defecto</strong> — tu CV todavía no
+          tiene un prompt propio con código <code>SELECTOR_PERFIL</code>.
+          <a routerLink="/prompts-ia" class="alert-link">Crear el mío en Prompts de IA</a>
+        </div>
+      </div>
+    </ng-container>
+
+    <div class="col-md-6 mb-3" *ngIf="perfiles.length > 0">
+      <label class="form-label" for="perfil-sugerido">Cambiar por otro perfil</label>
       <select id="perfil-sugerido" class="form-select" [(ngModel)]="perfilSugeridoId">
-        <option [ngValue]="'nuevo'">Crear perfil nuevo</option>
-        <option *ngFor="let p of perfilesEjemplo" [ngValue]="p.id">{{ p.nombre }}</option>
+        <option *ngFor="let p of perfiles" [ngValue]="p.perfilId">{{ p.nombrePerfil }}</option>
       </select>
     </div>
 
     <div class="d-flex justify-content-end">
-      <button type="button" class="btn btn-primary" [disabled]="guardando" (click)="continuarConPerfil()">
+      <button type="button" class="btn btn-primary" [disabled]="guardando || perfilSugeridoId === null" (click)="continuarConPerfil()">
         <span *ngIf="guardando" class="spinner-border spinner-border-sm me-2"></span>
-        {{ guardando ? 'Guardando...' : 'Continuar' }}<i *ngIf="!guardando" class="bi bi-arrow-right ms-1"></i>
+        {{ guardando ? 'Continuando...' : 'Continuar' }}<i *ngIf="!guardando" class="bi bi-arrow-right ms-1"></i>
       </button>
     </div>
   </div>
 </ng-container>
 
-<!-- Paso: generado (CV en formato ATS) -->
-<div class="seccion-card" *ngIf="paso === 'generado'">
-  <div class="seccion-titulo"><i class="bi bi-file-earmark-text"></i>CV generado (formato ATS)</div>
-  <div class="seccion-subtitulo">Texto plano estructurado, sin tablas ni columnas — optimizado para sistemas de selección automatizados.</div>
-
-  <pre class="border rounded-3 p-4 bg-light mb-0 small">{{ cvAtsTexto }}</pre>
-
-  <div class="cv-border-t-soft pt-3 mt-4 d-flex justify-content-between flex-wrap gap-2">
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-outline-secondary" (click)="volverAEditar()">
-        <i class="bi bi-arrow-left me-1"></i>Volver a editar
-      </button>
-      <button type="button" class="btn btn-outline-secondary" (click)="volverAlHistorial()">
-        <i class="bi bi-clock-history me-1"></i>Historial
-      </button>
-    </div>
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-outline-primary" (click)="descargarPdf()">
-        <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
-      </button>
-      <button type="button" class="btn btn-primary" (click)="enviarPorCorreo()">
-        <i class="bi bi-envelope me-1"></i>Enviar por correo
-      </button>
-    </div>
+<!-- Paso: sinCv (el perfil elegido todavía no tiene un CV construido en Mi CV) -->
+<div class="seccion-card text-center py-5" *ngIf="paso === 'sinCv'">
+  <i class="bi bi-file-earmark-excel display-5 text-warning"></i>
+  <h5 class="mt-3">El perfil «{{ perfilSinCvNombre }}» todavía no tiene un CV generado</h5>
+  <p class="text-muted">
+    Este flujo usa el CV que ya construiste en <strong>Mi CV</strong> para ese perfil -- generalo ahí primero y
+    volvé a intentarlo.
+  </p>
+  <div class="d-flex justify-content-center gap-2">
+    <a routerLink="/mi-cv" class="btn btn-primary">
+      <i class="bi bi-file-earmark-person-fill me-1"></i>Ir a Mi CV
+    </a>
+    <button type="button" class="btn btn-outline-secondary" (click)="volverAEditar()">
+      <i class="bi bi-arrow-left me-1"></i>Volver a editar
+    </button>
   </div>
+</div>
+
+<!-- Paso: correo (borrador redactado por IA, editable, con el CV ya construido como adjunto) -->
+<div class="seccion-card" *ngIf="paso === 'correo'">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <div>
+      <div class="seccion-titulo"><i class="bi bi-envelope-paper-fill"></i>Enviar correo al reclutador</div>
+      <div class="seccion-subtitulo">Revisa y edita el borrador -- se envía con tu CV ya construido adjunto en PDF.</div>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="volverAEditar()">
+      <i class="bi bi-arrow-left me-1"></i>Volver a editar
+    </button>
+  </div>
+
+  <div *ngIf="redactandoCorreo" class="d-flex align-items-center gap-2 text-muted my-3">
+    <span class="spinner-border spinner-border-sm"></span>Redactando el correo con IA…
+  </div>
+
+  <ng-container *ngIf="!redactandoCorreo">
+    <div class="alert alert-secondary d-flex align-items-start gap-2 py-2 px-3 small mb-3" *ngIf="promptRedactorPorDefecto" role="note">
+      <i class="bi bi-info-circle mt-1"></i>
+      <div>
+        Este borrador usó el prompt <strong>por defecto</strong> — tu CV todavía no tiene un
+        prompt propio con código <code>REDACTOR_CORREO_OFERTA</code>.
+        <a routerLink="/prompts-ia" class="alert-link">Crear el mío en Prompts de IA</a>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="correo-destinatario">Para</label>
+        <input id="correo-destinatario" type="email" class="form-control" [(ngModel)]="correoForm.destinatario"
+               [class.border-warning]="esCampoFaltante(correoForm.destinatario)">
+        <span class="badge bg-warning text-dark mt-1" *ngIf="esCampoFaltante(correoForm.destinatario)">Dato faltante</span>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">De</label>
+        <input type="text" class="form-control" [value]="remitenteEmail || 'Falta el correo en Información Personal'" disabled>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="correo-asunto">Asunto</label>
+        <input id="correo-asunto" type="text" class="form-control" [(ngModel)]="correoForm.asunto">
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="correo-cuerpo">Cuerpo</label>
+        <textarea id="correo-cuerpo" class="form-control" rows="8" [(ngModel)]="correoForm.cuerpo"></textarea>
+      </div>
+      <div class="col-12 text-muted small">
+        <i class="bi bi-paperclip me-1"></i>Se adjunta tu CV ya construido para este perfil, en PDF.
+      </div>
+    </div>
+
+    <div class="cv-border-t-soft pt-3 mt-4 d-flex justify-content-end">
+      <button type="button" class="btn btn-primary" [disabled]="enviandoCorreo" (click)="enviarCorreo()">
+        <span *ngIf="enviandoCorreo" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!enviandoCorreo" class="bi bi-send me-1"></i>{{ enviandoCorreo ? 'Enviando…' : 'Enviar correo' }}
+      </button>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Paso: enviado -->
+<div class="seccion-card text-center py-5" *ngIf="paso === 'enviado'">
+  <i class="bi bi-check-circle-fill display-5 text-success"></i>
+  <h5 class="mt-3">Correo enviado</h5>
+  <p class="text-muted">Le enviamos tu CV en PDF a {{ correoForm.destinatario }}.</p>
+  <button type="button" class="btn btn-outline-secondary" (click)="reiniciar()">
+    <i class="bi bi-clock-history me-1"></i>Volver al historial
+  </button>
 </div>
