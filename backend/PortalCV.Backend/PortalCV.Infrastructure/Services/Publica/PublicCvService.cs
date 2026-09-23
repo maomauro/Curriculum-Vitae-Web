@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Mail;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,9 @@ public class PublicCvService : IPublicCvService
             c.UrlPublica,
             c.Personales is null ? null
                 : $"{c.Personales.PrimerNombre} {c.Personales.PrimerApellido}".Trim(),
-            ResolverFotoUrlPublica(c.Personales, c.UrlPublica),
+            VisibilidadAtributoVisible(c.VisibilidadesSeccion, VisPersonalesFoto)
+                ? ResolverFotoUrlPublica(c.Personales, c.UrlPublica)
+                : null,
             c.Personales?.Ciudad,
             c.Personales?.Pais,
             c.Perfiles.FirstOrDefault()?.NombrePerfil,
@@ -330,6 +333,8 @@ public class PublicCvService : IPublicCvService
         return string.Equals(t, "Basico", StringComparison.Ordinal) ? "Básico" : t;
     }
 
+    private static readonly JsonSerializerOptions JsonOpcionesWeb = new(JsonSerializerDefaults.Web);
+
     private const string VisDashboardPublico = "dashboard.publico";
     private const string VisDashboardMetricas = "dashboard.metricas";
     private const string VisDashboardGraficas = "dashboard.graficas";
@@ -440,6 +445,18 @@ public class PublicCvService : IPublicCvService
         return vis.FirstOrDefault(v => v.NombreSeccion == VisHojaDeVidaPublico)?.EsVisible ?? true;
     }
 
+    /// <summary>Contenido de la Hoja de Vida pública: el CvGenerado del Perfil que el
+    /// candidato marcó como activo (Perfil.EsActivo) -- null si no hay Perfil activo o el
+    /// activo todavía no tiene un CV generado.</summary>
+    private static ContenidoCvGeneradoDto? ResolverHojaDeVidaContenido(Curriculum c)
+    {
+        var perfilActivo = c.Perfiles?.FirstOrDefault(p => p.EsActivo);
+        var contenidoJson = perfilActivo?.CvGenerado?.ContenidoJson;
+        if (string.IsNullOrWhiteSpace(contenidoJson)) return null;
+
+        return JsonSerializer.Deserialize<ContenidoCvGeneradoDto>(contenidoJson, JsonOpcionesWeb);
+    }
+
     private static CvDetalleDto MapToDetalle(
         Curriculum c,
         int experienciaLaboralMesesAcumulados,
@@ -449,6 +466,7 @@ public class PublicCvService : IPublicCvService
         var dash = ResolverFlagsDashboardPublico(c);
         var profesionalPublico = ResolverFlagProfesionalPublico(c);
         var hojaDeVidaPublico = ResolverFlagHojaDeVidaPublico(c);
+        var hojaDeVidaContenido = ResolverHojaDeVidaContenido(c);
         var vis = c.VisibilidadesSeccion;
         var mostrarEmail = VisibilidadAtributoVisible(vis, VisPersonalesEmail);
         var mostrarTelefono = VisibilidadAtributoVisible(vis, VisPersonalesTelefono);
@@ -495,6 +513,7 @@ public class PublicCvService : IPublicCvService
         dash.Graficas,
         profesionalPublico,
         hojaDeVidaPublico,
+        hojaDeVidaContenido,
         (vis ?? Array.Empty<VisibilidadSeccion>())
             .Select(v => new VisibilidadSeccionPublicaDto(v.NombreSeccion, v.EsVisible))
     );

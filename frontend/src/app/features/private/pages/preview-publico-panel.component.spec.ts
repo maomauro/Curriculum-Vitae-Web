@@ -87,4 +87,54 @@ describe('PreviewPublicoPanelComponent', () => {
     setup();
     expect(component.vistaPlantilla).toBeNull();
   });
+
+  it('seleccionarPestana permite cambiar a "hoja-de-vida"', () => {
+    setup();
+    component.seleccionarPestana('hoja-de-vida');
+    expect(component.pestanaActiva).toBe('hoja-de-vida');
+  });
+
+  it('hayContenidoHojaDeVida es false sin CV cargado', () => {
+    setup();
+    expect(component.hojaDeVidaContenido).toBeNull();
+    expect(component.hayContenidoHojaDeVida).toBeFalse();
+  });
+
+  it('hayContenidoHojaDeVida es true cuando el CV trae contenido del Perfil activo', () => {
+    setup(
+      of({
+        ...cvDetalle,
+        hojaDeVidaContenido: {
+          experiencia: [{ cabecera: 'Backend en Acme', funciones: ['Diseño de APIs'] }],
+          educacion: [],
+          proyectos: [],
+          habilidades: [],
+        },
+      })
+    );
+    component.ngOnInit();
+
+    expect(component.hayContenidoHojaDeVida).toBeTrue();
+  });
+
+  it('expone personales, redesSociales, plantillaCodigo y el Perfil activo para la pestaña Hoja de vida', () => {
+    setup(
+      of({
+        ...cvDetalle,
+        plantillaCodigo: 'corporativo',
+        personales: { nombreCompleto: 'Edgar Cifuentes', fotoUrl: null, ciudad: null, pais: null, celular: null, email: null },
+        redesSociales: [{ redSocialId: 1, nombreRed: 'GitHub', linkPublico: 'https://github.com/edgar', usuarioContacto: null }],
+        perfiles: [
+          { perfilId: 1, nombrePerfil: 'Backend', descripcionPerfil: null, experienciaPerfilAnios: null, aspiracionSalarialPesos: null, aspiracionSalarialDolares: null, esActivo: false },
+          { perfilId: 2, nombrePerfil: 'Scrum Master', descripcionPerfil: null, experienciaPerfilAnios: null, aspiracionSalarialPesos: null, aspiracionSalarialDolares: null, esActivo: true },
+        ],
+      })
+    );
+    component.ngOnInit();
+
+    expect(component.personales?.nombreCompleto).toBe('Edgar Cifuentes');
+    expect(component.redesSociales.length).toBe(1);
+    expect(component.perfilActivoHojaDeVida?.nombrePerfil).toBe('Scrum Master');
+    expect(component.plantillaCodigo).toBe('corporativo');
+  });
 });

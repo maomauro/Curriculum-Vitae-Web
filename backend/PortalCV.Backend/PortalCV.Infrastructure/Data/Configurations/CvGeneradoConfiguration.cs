@@ -12,9 +12,9 @@ public class CvGeneradoConfiguration : IEntityTypeConfiguration<CvGenerado>
 
         builder.HasKey(c => c.CvGeneradoId);
 
-        builder.Property(c => c.ContenidoJson).IsRequired().HasColumnType("nvarchar(max)");
+        builder.Property(c => c.ContenidoJson).IsRequired().HasColumnType("longtext");
         builder.Property(c => c.PromptPorDefecto).IsRequired().HasDefaultValue(false);
-        builder.Property(c => c.FechaGeneracion).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(c => c.FechaGeneracion).HasDefaultValueSql("UTC_TIMESTAMP()");
 
         builder.HasIndex(c => c.CurriculumId);
         // Uno por Perfil -- regenerar reemplaza el contenido en vez de crear una fila nueva.

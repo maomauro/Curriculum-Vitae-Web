@@ -10,11 +10,6 @@ import {
 } from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import {
-  ProveedorIaService,
-  ProveedorIaCodigo,
-  ProveedorIaDto,
-} from '../../../core/services/private/proveedor-ia.service';
-import {
   ConfiguracionCorreoService,
   ConfiguracionCorreoDto,
 } from '../../../core/services/private/configuracion-correo.service';
@@ -51,18 +46,6 @@ interface ConfigVisGroup {
   accordionOpen: boolean;
 }
 
-interface ProveedorIaForm {
-  proveedor: ProveedorIaCodigo;
-  nombre: string;
-  modelo: string;
-  endpoint: string;
-  apiKey: string;
-}
-
-function proveedorIaFormVacio(): ProveedorIaForm {
-  return { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
-}
-
 interface ConfiguracionCorreoForm {
   host: string;
   puerto: number;
@@ -73,9 +56,6 @@ interface ConfiguracionCorreoForm {
 function configuracionCorreoFormVacio(): ConfiguracionCorreoForm {
   return { host: 'smtp.gmail.com', puerto: 587, usarTls: true, password: '' };
 }
-
-const PROVEEDORES_SIN_API_KEY_OBLIGATORIA: readonly ProveedorIaCodigo[] = ['ollama', 'otro'];
-const PROVEEDORES_QUE_REQUIEREN_ENDPOINT: readonly ProveedorIaCodigo[] = ['ollama'];
 
 @Component({
   selector: 'app-configuracion',
@@ -103,22 +83,6 @@ export class ConfiguracionComponent implements OnInit {
   passwordNueva = '';
   passwordNueva2 = '';
   guardandoContrasena = false;
-
-  /** Conexiones con proveedores de IA que usan "Analizar Oferta" y "Prompts de IA" al
-   * invocar al modelo. Puede haber varias guardadas (Claude, OpenAI, Gemini, Ollama/
-   * self-hosted, otro); exactamente una queda marcada como activa a la vez. */
-  loadingProveedoresIa = true;
-  proveedoresIa: ProveedorIaDto[] = [];
-  mostrarFormProveedorIa = false;
-  editandoProveedorIaId: number | null = null;
-  proveedorIaForm: ProveedorIaForm = proveedorIaFormVacio();
-  guardandoProveedorIa = false;
-  probandoConexionIa = false;
-  resultadoPruebaIa: 'ok' | 'error' | null = null;
-  mensajePruebaIa: string | null = null;
-  activandoProveedorIaId: number | null = null;
-  eliminandoProveedorIaId: number | null = null;
-  probandoGuardadaProveedorIaId: number | null = null;
 
   /** Configuración SMTP para enviar correos a reclutadores desde Analizar Oferta ->
    * Enviar correo. Una sola por CV -- el remitente/login SMTP siempre es el correo de
@@ -164,24 +128,6 @@ export class ConfiguracionComponent implements OnInit {
   get hayHabilidadesVisibles(): boolean {
     return this.habilidades.some(h => h.mostrarEnCv);
   }
-
-  readonly modelosSugeridosPorProveedor: Record<ProveedorIaCodigo, string> = {
-    claude: 'claude-opus-4-20250514',
-    openai: 'gpt-4.1',
-    gemini: 'gemini-flash-latest',
-    groq: 'openai/gpt-oss-120b',
-    ollama: 'llama3.1',
-    otro: '',
-  };
-
-  readonly nombresProveedor: Record<ProveedorIaCodigo, string> = {
-    claude: 'Claude (Anthropic)',
-    openai: 'OpenAI',
-    gemini: 'Gemini (Google)',
-    groq: 'Groq',
-    ollama: 'Ollama (local / self-hosted)',
-    otro: 'Otro (compatible con API REST)',
-  };
 
   /** Hay texto en “repetir” y no coincide con “nueva” (validación mientras escribe). */
   get repetirContrasenaMismatchEnVivo(): boolean {
@@ -309,7 +255,6 @@ export class ConfiguracionComponent implements OnInit {
   constructor(
     private cvEditorService: CvEditorService,
     private authService: AuthService,
-    private proveedorIaService: ProveedorIaService,
     private configuracionCorreoService: ConfiguracionCorreoService,
     private notificationService: NotificationService
   ) {}
@@ -364,7 +309,6 @@ export class ConfiguracionComponent implements OnInit {
       error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
 
-    this.cargarProveedoresIa();
     this.cargarConfiguracionCorreo();
     this.cargarListasProfesional();
   }
@@ -562,20 +506,6 @@ export class ConfiguracionComponent implements OnInit {
       });
   }
 
-  private cargarProveedoresIa(): void {
-    this.loadingProveedoresIa = true;
-    this.proveedorIaService.getConfigs().subscribe({
-      next: data => {
-        this.proveedoresIa = data;
-        this.loadingProveedoresIa = false;
-      },
-      error: () => {
-        this.loadingProveedoresIa = false;
-        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
-      },
-    });
-  }
-
   private allVisItems(): ConfigVisItem[] {
     return [...this.pestanasPublicasCv, ...this.visibilidadGrupos.flatMap(g => g.items)];
   }
@@ -734,182 +664,4 @@ export class ConfiguracionComponent implements OnInit {
     return `${origin}/cv/${encodeURIComponent(slug)}`;
   }
 
-  trackByProveedorIa(_index: number, p: ProveedorIaDto): number {
-    return p.proveedorIaId;
-  }
-
-  nombreProveedor(codigo: ProveedorIaCodigo): string {
-    return this.nombresProveedor[codigo];
-  }
-
-  etiquetaConexionIa(p: ProveedorIaDto): string {
-    return p.nombre?.trim() || this.nombresProveedor[p.proveedor];
-  }
-
-  get requiereEndpointIa(): boolean {
-    return PROVEEDORES_QUE_REQUIEREN_ENDPOINT.includes(this.proveedorIaForm.proveedor);
-  }
-
-  get requiereApiKeyIa(): boolean {
-    return !PROVEEDORES_SIN_API_KEY_OBLIGATORIA.includes(this.proveedorIaForm.proveedor);
-  }
-
-  onProveedorIaChange(): void {
-    this.resultadoPruebaIa = null;
-    this.mensajePruebaIa = null;
-    if (!this.proveedorIaForm.modelo.trim()) {
-      this.proveedorIaForm.modelo = this.modelosSugeridosPorProveedor[this.proveedorIaForm.proveedor];
-    }
-  }
-
-  abrirNuevaConexionIa(): void {
-    this.editandoProveedorIaId = null;
-    this.proveedorIaForm = proveedorIaFormVacio();
-    this.resultadoPruebaIa = null;
-    this.mensajePruebaIa = null;
-    this.mostrarFormProveedorIa = true;
-  }
-
-  editarConexionIa(p: ProveedorIaDto): void {
-    this.editandoProveedorIaId = p.proveedorIaId;
-    this.proveedorIaForm = {
-      proveedor: p.proveedor,
-      nombre: p.nombre ?? '',
-      modelo: p.modelo ?? '',
-      endpoint: p.endpoint ?? '',
-      apiKey: '',
-    };
-    this.resultadoPruebaIa = null;
-    this.mensajePruebaIa = null;
-    this.mostrarFormProveedorIa = true;
-  }
-
-  cancelarFormProveedorIa(): void {
-    this.mostrarFormProveedorIa = false;
-  }
-
-  probarConexionIa(): void {
-    if (this.probandoConexionIa) return;
-    if (this.requiereEndpointIa && !this.proveedorIaForm.endpoint.trim()) {
-      this.notificationService.warning('La URL del servidor es requerida para este proveedor.');
-      return;
-    }
-
-    this.probandoConexionIa = true;
-    this.resultadoPruebaIa = null;
-    this.mensajePruebaIa = null;
-    this.proveedorIaService
-      .probarConexion({
-        proveedor: this.proveedorIaForm.proveedor,
-        modelo: this.proveedorIaForm.modelo.trim() || null,
-        endpoint: this.proveedorIaForm.endpoint.trim() || null,
-        apiKey: this.proveedorIaForm.apiKey.trim() || null,
-      })
-      .subscribe({
-        next: res => {
-          this.probandoConexionIa = false;
-          this.resultadoPruebaIa = res.ok ? 'ok' : 'error';
-          this.mensajePruebaIa = res.mensaje;
-        },
-        error: (error: HttpErrorResponse) => {
-          this.probandoConexionIa = false;
-          this.resultadoPruebaIa = 'error';
-          this.mensajePruebaIa = extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError;
-        },
-      });
-  }
-
-  guardarConexionIa(): void {
-    if (this.guardandoProveedorIa) return;
-    if (this.requiereEndpointIa && !this.proveedorIaForm.endpoint.trim()) {
-      this.notificationService.warning('La URL del servidor es requerida para este proveedor.');
-      return;
-    }
-    if (this.editandoProveedorIaId === null && this.requiereApiKeyIa && !this.proveedorIaForm.apiKey.trim()) {
-      this.notificationService.warning('La clave de API es requerida para este proveedor.');
-      return;
-    }
-
-    const payload = {
-      proveedor: this.proveedorIaForm.proveedor,
-      nombre: this.proveedorIaForm.nombre.trim() || null,
-      modelo: this.proveedorIaForm.modelo.trim() || null,
-      endpoint: this.proveedorIaForm.endpoint.trim() || null,
-      apiKey: this.proveedorIaForm.apiKey.trim() || null,
-    };
-
-    this.guardandoProveedorIa = true;
-    const guardado$ = this.editandoProveedorIaId !== null
-      ? this.proveedorIaService.actualizarConfig(this.editandoProveedorIaId, payload)
-      : this.proveedorIaService.crearConfig(payload);
-
-    guardado$.subscribe({
-      next: () => {
-        this.guardandoProveedorIa = false;
-        this.mostrarFormProveedorIa = false;
-        this.notificationService.success(
-          this.editandoProveedorIaId !== null ? NOTIFICATION_MESSAGES.updateSuccess : NOTIFICATION_MESSAGES.createSuccess
-        );
-        this.cargarProveedoresIa();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.guardandoProveedorIa = false;
-        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
-      },
-    });
-  }
-
-  activarConexionIa(p: ProveedorIaDto): void {
-    if (p.esActivo || this.activandoProveedorIaId) return;
-
-    this.activandoProveedorIaId = p.proveedorIaId;
-    this.proveedorIaService.activarConfig(p.proveedorIaId).subscribe({
-      next: () => {
-        this.activandoProveedorIaId = null;
-        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
-        this.cargarProveedoresIa();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.activandoProveedorIaId = null;
-        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
-      },
-    });
-  }
-
-  probarConexionGuardada(p: ProveedorIaDto): void {
-    if (this.probandoGuardadaProveedorIaId) return;
-
-    this.probandoGuardadaProveedorIaId = p.proveedorIaId;
-    this.proveedorIaService.probarConexionGuardada(p.proveedorIaId).subscribe({
-      next: res => {
-        this.probandoGuardadaProveedorIaId = null;
-        if (res.ok) {
-          this.notificationService.success(res.mensaje);
-        } else {
-          this.notificationService.warning(res.mensaje);
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.probandoGuardadaProveedorIaId = null;
-        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.loadError);
-      },
-    });
-  }
-
-  eliminarConexionIa(p: ProveedorIaDto): void {
-    if (!confirm(`¿Eliminar la conexión "${this.etiquetaConexionIa(p)}"?`)) return;
-
-    this.eliminandoProveedorIaId = p.proveedorIaId;
-    this.proveedorIaService.eliminarConfig(p.proveedorIaId).subscribe({
-      next: () => {
-        this.eliminandoProveedorIaId = null;
-        this.notificationService.success(NOTIFICATION_MESSAGES.deleteSuccess);
-        this.cargarProveedoresIa();
-      },
-      error: (error: HttpErrorResponse) => {
-        this.eliminandoProveedorIaId = null;
-        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.deleteError);
-      },
-    });
-  }
 }

@@ -2205,7 +2205,7 @@ app-preview-publico-panel {
   display: block;
   max-width: 100%;
 }
-// Dona “participación por tiempo” (proyectos): un poco más ancho por la leyenda inferior
+// Dona "tecnologías más usadas en proyectos".
 .public-cv-ficha .cv-chart-canvas-dona,
 .cv-dash-analytics-host .cv-chart-canvas-dona {
   position: relative;
@@ -2218,11 +2218,12 @@ app-preview-publico-panel {
   display: block;
   max-width: 100%;
 }
+// Mapa de cuadrantes "capacidades": ancho completo de la columna (necesita espacio
+// para los rótulos de cuadrante y los nombres de grupo junto a cada punto).
 .public-cv-ficha .cv-chart-canvas-radar,
 .cv-dash-analytics-host .cv-chart-canvas-radar {
   position: relative;
-  max-width: min(100%, 420px);
-  height: 320px;
+  width: 100%;
   margin: 0 auto;
 }
 .public-cv-ficha .cv-chart-canvas-radar canvas,

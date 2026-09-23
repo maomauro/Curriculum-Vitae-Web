@@ -17,23 +17,16 @@ public class ProveedorIaConfiguration : IEntityTypeConfiguration<ProveedorIa>
         builder.Property(p => p.Nombre).HasMaxLength(100);
         builder.Property(p => p.Modelo).HasMaxLength(100);
         builder.Property(p => p.Endpoint).HasMaxLength(500);
-        builder.Property(p => p.ApiKeyCifrada).HasColumnType("nvarchar(max)");
+        builder.Property(p => p.ApiKeyCifrada).HasColumnType("longtext");
         builder.Property(p => p.EsActivo).HasDefaultValue(false);
-        builder.Property(p => p.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(p => p.FechaActualizacion).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(p => p.FechaCreacion).HasDefaultValueSql("UTC_TIMESTAMP()");
+        builder.Property(p => p.FechaActualizacion).HasDefaultValueSql("UTC_TIMESTAMP()");
 
-        builder.HasIndex(p => p.CurriculumId);
-
-        // Solo una conexión activa por CV a la vez — mismo patrón que
-        // UQ_PromptIa_Curriculum_Codigo_Activo (índice único filtrado).
-        builder.HasIndex(p => p.CurriculumId)
+        // Solo una conexión activa a la vez en TODA la plataforma (configuración
+        // global administrada por Admin, ya no por CV) — índice único filtrado.
+        builder.HasIndex(p => p.EsActivo)
             .IsUnique()
             .HasFilter("[EsActivo] = 1")
-            .HasDatabaseName("UQ_ProveedorIa_Curriculum_Activo");
-
-        builder.HasOne(p => p.Curriculum)
-            .WithMany(c => c.ProveedoresIa)
-            .HasForeignKey(p => p.CurriculumId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasDatabaseName("UQ_ProveedorIa_Activo");
     }
 }

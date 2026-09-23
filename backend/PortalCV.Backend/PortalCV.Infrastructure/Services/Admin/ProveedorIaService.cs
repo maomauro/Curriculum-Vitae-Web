@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using PortalCV.Application.DTOs.Privada;
+using PortalCV.Application.DTOs.Admin;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
-using PortalCV.Domain.Exceptions;
 using PortalCV.Infrastructure.Data;
 
 namespace PortalCV.Infrastructure.Services;
@@ -24,26 +23,23 @@ public class ProveedorIaService : IProveedorIaService
         _aiClients = aiClients;
     }
 
-    public async Task<IReadOnlyList<ProveedorIaDto>> ListarAsync(int curriculumId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ProveedorIaDto>> ListarAsync(CancellationToken ct = default)
         => await _context.ProveedoresIa.AsNoTracking()
-            .Where(p => p.CurriculumId == curriculumId)
             .OrderByDescending(p => p.EsActivo)
             .ThenByDescending(p => p.FechaActualizacion)
             .Select(p => Map(p))
             .ToListAsync(ct);
 
-    public async Task<ProveedorIaDto> CrearAsync(
-        int curriculumId, CrearProveedorIaRequest r, CancellationToken ct = default)
+    public async Task<ProveedorIaDto> CrearAsync(CrearProveedorIaRequest r, CancellationToken ct = default)
     {
         ValidarProveedor(r.Proveedor);
         ValidarApiKeyRequerida(r.Proveedor, r.ApiKey);
         ValidarEndpointRequerido(r.Proveedor, r.Endpoint);
 
-        var esPrimera = !await _context.ProveedoresIa.AnyAsync(p => p.CurriculumId == curriculumId, ct);
+        var esPrimera = !await _context.ProveedoresIa.AnyAsync(ct);
 
         var e = new ProveedorIa
         {
-            CurriculumId = curriculumId,
             Proveedor = r.Proveedor,
             Nombre = string.IsNullOrWhiteSpace(r.Nombre) ? null : r.Nombre.Trim(),
             Modelo = string.IsNullOrWhiteSpace(r.Modelo) ? null : r.Modelo.Trim(),
@@ -59,9 +55,9 @@ public class ProveedorIaService : IProveedorIaService
     }
 
     public async Task<ProveedorIaDto> ActualizarAsync(
-        int curriculumId, int id, ActualizarProveedorIaRequest r, CancellationToken ct = default)
+        int id, ActualizarProveedorIaRequest r, CancellationToken ct = default)
     {
-        var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
+        var e = await GetOrThrowAsync(id, ct);
         ValidarProveedor(r.Proveedor);
         ValidarEndpointRequerido(r.Proveedor, r.Endpoint);
 
@@ -77,9 +73,9 @@ public class ProveedorIaService : IProveedorIaService
         return Map(e);
     }
 
-    public async Task EliminarAsync(int curriculumId, int id, CancellationToken ct = default)
+    public async Task EliminarAsync(int id, CancellationToken ct = default)
     {
-        var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
+        var e = await GetOrThrowAsync(id, ct);
         var eraActiva = e.EsActivo;
         _context.ProveedoresIa.Remove(e);
         await _context.SaveChangesAsync(ct);
@@ -87,7 +83,6 @@ public class ProveedorIaService : IProveedorIaService
         if (!eraActiva) return;
 
         var siguiente = await _context.ProveedoresIa
-            .Where(p => p.CurriculumId == curriculumId)
             .OrderByDescending(p => p.FechaActualizacion)
             .FirstOrDefaultAsync(ct);
         if (siguiente is null) return;
@@ -96,19 +91,19 @@ public class ProveedorIaService : IProveedorIaService
         await _context.SaveChangesAsync(ct);
     }
 
-    public async Task<ProveedorIaDto> ActivarAsync(int curriculumId, int id, CancellationToken ct = default)
+    public async Task<ProveedorIaDto> ActivarAsync(int id, CancellationToken ct = default)
     {
-        var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
+        var e = await GetOrThrowAsync(id, ct);
         if (!e.EsActivo)
         {
             // Dos SaveChanges separados a propósito: el índice único filtrado
-            // (EsActivo=1 por CurriculumId) se valida por sentencia, no al final de la
+            // (EsActivo=1, global) se valida por sentencia, no al final de la
             // transacción -- si se desactiva la vieja y se activa la nueva en un mismo
             // SaveChangesAsync, EF Core no garantiza el orden de los UPDATE dentro del
             // lote y puede mandar primero el "activar", chocando con la fila que aún
             // sigue activa.
             var activasActuales = await _context.ProveedoresIa
-                .Where(p => p.CurriculumId == curriculumId && p.EsActivo)
+                .Where(p => p.EsActivo)
                 .ToListAsync(ct);
             foreach (var activa in activasActuales) activa.EsActivo = false;
             await _context.SaveChangesAsync(ct);
@@ -122,9 +117,9 @@ public class ProveedorIaService : IProveedorIaService
     public Task<ProbarConexionIaResponse> ProbarConexionAsync(ProbarConexionIaRequest r, CancellationToken ct = default)
         => EjecutarPruebaAsync(r.Proveedor, r.Modelo, r.Endpoint, r.ApiKey, ct);
 
-    public async Task<ProbarConexionIaResponse> ProbarConexionGuardadaAsync(int curriculumId, int id, CancellationToken ct = default)
+    public async Task<ProbarConexionIaResponse> ProbarConexionGuardadaAsync(int id, CancellationToken ct = default)
     {
-        var e = await GetOwnedOrThrowAsync(curriculumId, id, ct);
+        var e = await GetOrThrowAsync(id, ct);
         var apiKey = string.IsNullOrEmpty(e.ApiKeyCifrada) ? null : _cipher.Decrypt(e.ApiKeyCifrada);
         return await EjecutarPruebaAsync(e.Proveedor, e.Modelo, e.Endpoint, apiKey, ct);
     }
@@ -143,16 +138,9 @@ public class ProveedorIaService : IProveedorIaService
         return new ProbarConexionIaResponse(ok, mensaje);
     }
 
-    private async Task<ProveedorIa> GetOwnedOrThrowAsync(int curriculumId, int id, CancellationToken ct)
-    {
-        var entity = await _context.ProveedoresIa.FirstOrDefaultAsync(p => p.ProveedorIaId == id, ct)
+    private async Task<ProveedorIa> GetOrThrowAsync(int id, CancellationToken ct)
+        => await _context.ProveedoresIa.FirstOrDefaultAsync(p => p.ProveedorIaId == id, ct)
             ?? throw new KeyNotFoundException($"ProveedorIa {id} no encontrado.");
-
-        if (entity.CurriculumId != curriculumId)
-            throw new ForbiddenOperationException($"ProveedorIa {id} no pertenece al curriculum {curriculumId}.");
-
-        return entity;
-    }
 
     private static void ValidarProveedor(string proveedor)
     {

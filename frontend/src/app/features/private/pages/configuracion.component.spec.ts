@@ -12,7 +12,6 @@ import {
   VisibilidadSeccionDto,
 } from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
-import { ProveedorIaService, ProveedorIaDto } from '../../../core/services/private/proveedor-ia.service';
 import { ConfiguracionCorreoService, ConfiguracionCorreoDto } from '../../../core/services/private/configuracion-correo.service';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
@@ -20,26 +19,12 @@ describe('ConfiguracionComponent', () => {
   let component: ConfiguracionComponent;
   let cvEditorService: jasmine.SpyObj<CvEditorService>;
   let authService: jasmine.SpyObj<AuthService>;
-  let proveedorIaService: jasmine.SpyObj<ProveedorIaService>;
   let configuracionCorreoService: jasmine.SpyObj<ConfiguracionCorreoService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const presentacion: PresentacionCvDto = {
     plantillaCodigo: 'clasico', experienciaLaboralMesesAcumulados: 0, urlPublica: 'ana-cv', publicado: true,
   };
-
-  function proveedorIaItem(over: Partial<ProveedorIaDto> = {}): ProveedorIaDto {
-    return {
-      proveedorIaId: 1,
-      proveedor: 'claude',
-      nombre: null,
-      modelo: 'claude-opus-4-20250514',
-      endpoint: null,
-      esActivo: true,
-      fechaActualizacion: '2026-08-19T00:00:00Z',
-      ...over,
-    };
-  }
 
   function configuracionCorreoDto(over: Partial<ConfiguracionCorreoDto> = {}): ConfiguracionCorreoDto {
     return {
@@ -56,7 +41,6 @@ describe('ConfiguracionComponent', () => {
   function setup(
     presentacionResult = of(presentacion),
     visibilidadResult = of<VisibilidadSeccionDto[]>([]),
-    proveedorIaResult = of<ProveedorIaDto[]>([]),
     configuracionCorreoResult = of(configuracionCorreoDto()),
   ): void {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
@@ -72,11 +56,6 @@ describe('ConfiguracionComponent', () => {
     cvEditorService.getProyectos.and.returnValue(of([]));
     cvEditorService.getHabilidades.and.returnValue(of([]));
     authService = jasmine.createSpyObj('AuthService', ['changePassword']);
-    proveedorIaService = jasmine.createSpyObj('ProveedorIaService', [
-      'getConfigs', 'crearConfig', 'actualizarConfig', 'eliminarConfig', 'activarConfig', 'probarConexion',
-      'probarConexionGuardada',
-    ]);
-    proveedorIaService.getConfigs.and.returnValue(proveedorIaResult);
     configuracionCorreoService = jasmine.createSpyObj('ConfiguracionCorreoService', ['getConfig', 'guardarConfig']);
     configuracionCorreoService.getConfig.and.returnValue(configuracionCorreoResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
@@ -86,7 +65,6 @@ describe('ConfiguracionComponent', () => {
         ConfiguracionComponent,
         { provide: CvEditorService, useValue: cvEditorService },
         { provide: AuthService, useValue: authService },
-        { provide: ProveedorIaService, useValue: proveedorIaService },
         { provide: ConfiguracionCorreoService, useValue: configuracionCorreoService },
         { provide: NotificationService, useValue: notificationService },
       ],
@@ -439,307 +417,9 @@ describe('ConfiguracionComponent', () => {
     });
   });
 
-  describe('proveedor de IA', () => {
-    it('onProveedorIaChange sugiere el modelo por defecto si el campo esta vacio', () => {
-      setup();
-      component.proveedorIaForm.proveedor = 'openai';
-      component.proveedorIaForm.modelo = '';
-
-      component.onProveedorIaChange();
-
-      expect(component.proveedorIaForm.modelo).toBe('gpt-4.1');
-    });
-
-    it('onProveedorIaChange no pisa un modelo ya escrito por el usuario', () => {
-      setup();
-      component.proveedorIaForm.proveedor = 'claude';
-      component.proveedorIaForm.modelo = 'modelo-custom';
-
-      component.onProveedorIaChange();
-
-      expect(component.proveedorIaForm.modelo).toBe('modelo-custom');
-    });
-
-    it('requiereEndpointIa es true solo para ollama', () => {
-      setup();
-      component.proveedorIaForm.proveedor = 'ollama';
-      expect(component.requiereEndpointIa).toBeTrue();
-      component.proveedorIaForm.proveedor = 'claude';
-      expect(component.requiereEndpointIa).toBeFalse();
-    });
-
-    it('requiereApiKeyIa es false para ollama y otro, true para el resto', () => {
-      setup();
-      component.proveedorIaForm.proveedor = 'ollama';
-      expect(component.requiereApiKeyIa).toBeFalse();
-      component.proveedorIaForm.proveedor = 'otro';
-      expect(component.requiereApiKeyIa).toBeFalse();
-      component.proveedorIaForm.proveedor = 'gemini';
-      expect(component.requiereApiKeyIa).toBeTrue();
-    });
-
-    describe('cargarProveedoresIa (via ngOnInit)', () => {
-      it('sin conexiones guardadas, deja la lista vacia', () => {
-        setup(of(presentacion), of([]), of([]));
-        component.ngOnInit();
-
-        expect(component.loadingProveedoresIa).toBeFalse();
-        expect(component.proveedoresIa).toEqual([]);
-      });
-
-      it('con conexiones guardadas, las carga', () => {
-        setup(of(presentacion), of([]), of([proveedorIaItem(), proveedorIaItem({ proveedorIaId: 2, proveedor: 'openai', esActivo: false })]));
-        component.ngOnInit();
-
-        expect(component.proveedoresIa.length).toBe(2);
-      });
-
-      it('notifica error si falla la carga', () => {
-        setup(of(presentacion), of([]), throwError(() => new Error('boom')));
-        component.ngOnInit();
-
-        expect(component.loadingProveedoresIa).toBeFalse();
-        expect(notificationService.error).toHaveBeenCalled();
-      });
-    });
-
-    it('abrirNuevaConexionIa limpia el formulario y lo muestra', () => {
-      setup();
-      component.editandoProveedorIaId = 5;
-      component.proveedorIaForm.nombre = 'algo viejo';
-
-      component.abrirNuevaConexionIa();
-
-      expect(component.editandoProveedorIaId).toBeNull();
-      expect(component.proveedorIaForm.nombre).toBe('');
-      expect(component.mostrarFormProveedorIa).toBeTrue();
-    });
-
-    it('editarConexionIa precarga el formulario sin la clave', () => {
-      setup();
-      const item = proveedorIaItem({ nombre: 'Cuenta trabajo', endpoint: null });
-
-      component.editarConexionIa(item);
-
-      expect(component.editandoProveedorIaId).toBe(item.proveedorIaId);
-      expect(component.proveedorIaForm).toEqual({
-        proveedor: 'claude', nombre: 'Cuenta trabajo', modelo: 'claude-opus-4-20250514', endpoint: '', apiKey: '',
-      });
-      expect(component.mostrarFormProveedorIa).toBeTrue();
-    });
-
-    it('cancelarFormProveedorIa oculta el formulario', () => {
-      setup();
-      component.mostrarFormProveedorIa = true;
-
-      component.cancelarFormProveedorIa();
-
-      expect(component.mostrarFormProveedorIa).toBeFalse();
-    });
-
-    describe('probarConexionIa', () => {
-      it('avisa si el proveedor requiere endpoint y falta', () => {
-        setup();
-        component.proveedorIaForm.proveedor = 'ollama';
-        component.proveedorIaForm.endpoint = '';
-
-        component.probarConexionIa();
-
-        expect(notificationService.warning).toHaveBeenCalled();
-        expect(proveedorIaService.probarConexion).not.toHaveBeenCalled();
-      });
-
-      it('exitosa muestra el mensaje del backend', () => {
-        setup();
-        component.proveedorIaForm.apiKey = 'sk-ant-test';
-        proveedorIaService.probarConexion.and.returnValue(of({ ok: true, mensaje: 'Conexión exitosa.' }));
-
-        component.probarConexionIa();
-
-        expect(component.probandoConexionIa).toBeFalse();
-        expect(component.resultadoPruebaIa).toBe('ok');
-        expect(component.mensajePruebaIa).toBe('Conexión exitosa.');
-      });
-
-      it('con Ok=false muestra el error del backend', () => {
-        setup();
-        component.proveedorIaForm.apiKey = 'sk-ant-test';
-        proveedorIaService.probarConexion.and.returnValue(of({ ok: false, mensaje: 'La clave de API no es válida.' }));
-
-        component.probarConexionIa();
-
-        expect(component.resultadoPruebaIa).toBe('error');
-        expect(component.mensajePruebaIa).toBe('La clave de API no es válida.');
-      });
-
-      it('notifica error si la peticion falla', () => {
-        setup();
-        component.proveedorIaForm.apiKey = 'sk-ant-test';
-        proveedorIaService.probarConexion.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-
-        component.probarConexionIa();
-
-        expect(component.probandoConexionIa).toBeFalse();
-        expect(component.resultadoPruebaIa).toBe('error');
-        expect(component.mensajePruebaIa).toBeTruthy();
-      });
-    });
-
-    describe('guardarConexionIa', () => {
-      it('avisa si el proveedor requiere endpoint y falta', () => {
-        setup();
-        component.proveedorIaForm.proveedor = 'ollama';
-        component.proveedorIaForm.endpoint = '';
-
-        component.guardarConexionIa();
-
-        expect(notificationService.warning).toHaveBeenCalled();
-        expect(proveedorIaService.crearConfig).not.toHaveBeenCalled();
-      });
-
-      it('al crear, avisa si falta la clave de API para un proveedor que la requiere', () => {
-        setup();
-        component.proveedorIaForm = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
-
-        component.guardarConexionIa();
-
-        expect(notificationService.warning).toHaveBeenCalled();
-        expect(proveedorIaService.crearConfig).not.toHaveBeenCalled();
-      });
-
-      it('crea una conexion nueva y recarga la lista', () => {
-        setup();
-        component.proveedorIaForm = { proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: '', apiKey: 'sk-ant-test' };
-        proveedorIaService.crearConfig.and.returnValue(of(proveedorIaItem()));
-        proveedorIaService.getConfigs.and.returnValue(of([proveedorIaItem()]));
-
-        component.guardarConexionIa();
-
-        expect(proveedorIaService.crearConfig).toHaveBeenCalledWith({
-          proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: null, apiKey: 'sk-ant-test',
-        });
-        expect(component.guardandoProveedorIa).toBeFalse();
-        expect(component.mostrarFormProveedorIa).toBeFalse();
-        expect(notificationService.success).toHaveBeenCalled();
-      });
-
-      it('al editar, no exige la clave de API (se mantiene la anterior si se deja en blanco)', () => {
-        setup();
-        component.editandoProveedorIaId = 7;
-        component.proveedorIaForm = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
-        proveedorIaService.actualizarConfig.and.returnValue(of(proveedorIaItem()));
-
-        component.guardarConexionIa();
-
-        expect(proveedorIaService.actualizarConfig).toHaveBeenCalledWith(7, jasmine.objectContaining({ apiKey: null }));
-        expect(notificationService.warning).not.toHaveBeenCalled();
-      });
-
-      it('notifica error si el backend rechaza la solicitud', () => {
-        setup();
-        component.proveedorIaForm = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: 'sk-ant-test' };
-        proveedorIaService.crearConfig.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-
-        component.guardarConexionIa();
-
-        expect(component.guardandoProveedorIa).toBeFalse();
-        expect(notificationService.error).toHaveBeenCalled();
-      });
-    });
-
-    describe('activarConexionIa', () => {
-      it('no hace nada si ya esta activa', () => {
-        setup();
-        component.activarConexionIa(proveedorIaItem({ esActivo: true }));
-        expect(proveedorIaService.activarConfig).not.toHaveBeenCalled();
-      });
-
-      it('activa y recarga la lista', () => {
-        setup();
-        proveedorIaService.activarConfig.and.returnValue(of(proveedorIaItem({ esActivo: true })));
-
-        component.activarConexionIa(proveedorIaItem({ proveedorIaId: 2, esActivo: false }));
-
-        expect(proveedorIaService.activarConfig).toHaveBeenCalledWith(2);
-        expect(notificationService.success).toHaveBeenCalled();
-      });
-
-      it('notifica error si falla', () => {
-        setup();
-        proveedorIaService.activarConfig.and.returnValue(throwError(() => new Error('boom')));
-
-        component.activarConexionIa(proveedorIaItem({ esActivo: false }));
-
-        expect(notificationService.error).toHaveBeenCalled();
-      });
-    });
-
-    describe('probarConexionGuardada', () => {
-      it('prueba una conexion guardada y notifica exito si responde ok', () => {
-        setup();
-        proveedorIaService.probarConexionGuardada.and.returnValue(of({ ok: true, mensaje: 'Conexión exitosa.' }));
-
-        component.probarConexionGuardada(proveedorIaItem({ proveedorIaId: 2 }));
-
-        expect(proveedorIaService.probarConexionGuardada).toHaveBeenCalledWith(2);
-        expect(notificationService.success).toHaveBeenCalledWith('Conexión exitosa.');
-        expect(component.probandoGuardadaProveedorIaId).toBeNull();
-      });
-
-      it('notifica warning si el backend responde ok:false', () => {
-        setup();
-        proveedorIaService.probarConexionGuardada.and.returnValue(of({ ok: false, mensaje: 'La clave de API no es válida.' }));
-
-        component.probarConexionGuardada(proveedorIaItem());
-
-        expect(notificationService.warning).toHaveBeenCalledWith('La clave de API no es válida.');
-      });
-
-      it('notifica error si la solicitud falla', () => {
-        setup();
-        proveedorIaService.probarConexionGuardada.and.returnValue(throwError(() => new Error('boom')));
-
-        component.probarConexionGuardada(proveedorIaItem());
-
-        expect(notificationService.error).toHaveBeenCalled();
-      });
-    });
-
-    describe('eliminarConexionIa', () => {
-      it('no hace nada si se cancela la confirmacion', () => {
-        setup();
-        spyOn(window, 'confirm').and.returnValue(false);
-
-        component.eliminarConexionIa(proveedorIaItem());
-
-        expect(proveedorIaService.eliminarConfig).not.toHaveBeenCalled();
-      });
-
-      it('elimina y recarga la lista si se confirma y el backend responde bien', () => {
-        setup();
-        spyOn(window, 'confirm').and.returnValue(true);
-        proveedorIaService.eliminarConfig.and.returnValue(of(undefined));
-
-        component.eliminarConexionIa(proveedorIaItem());
-
-        expect(notificationService.success).toHaveBeenCalled();
-      });
-
-      it('notifica error si el backend falla', () => {
-        setup();
-        spyOn(window, 'confirm').and.returnValue(true);
-        proveedorIaService.eliminarConfig.and.returnValue(throwError(() => new Error('boom')));
-
-        component.eliminarConexionIa(proveedorIaItem());
-
-        expect(notificationService.error).toHaveBeenCalled();
-      });
-    });
-  });
-
   describe('configuración de correo (SMTP para Analizar Oferta -> Enviar correo)', () => {
     it('ngOnInit carga la configuración y precarga el formulario sin la contraseña', () => {
-      setup(undefined, undefined, undefined, of(configuracionCorreoDto({
+      setup(undefined, undefined, of(configuracionCorreoDto({
         configuracionCorreoId: 3, host: 'smtp.gmail.com', puerto: 587, usarTls: true, tieneConfiguracion: true,
       })));
 
@@ -791,7 +471,7 @@ describe('ConfiguracionComponent', () => {
       });
 
       it('al editar una ya configurada, no exige contraseña (se mantiene la anterior si se deja en blanco)', () => {
-        setup(undefined, undefined, undefined, of(configuracionCorreoDto({ tieneConfiguracion: true })));
+        setup(undefined, undefined, of(configuracionCorreoDto({ tieneConfiguracion: true })));
         component.ngOnInit();
         configuracionCorreoService.guardarConfig.and.returnValue(of(configuracionCorreoDto({ tieneConfiguracion: true })));
 

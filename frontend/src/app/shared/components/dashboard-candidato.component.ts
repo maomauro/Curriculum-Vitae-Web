@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
+import type { Plugin } from 'chart.js';
 import {
   CvDetalleDto,
   ExperienciaPublicoDto,
@@ -63,40 +64,32 @@ interface HabilidadStrategicPoint {
   experto: number;
 }
 
-interface ProyectoChartRow {
+interface TecnologiaProyectoRow {
   etiqueta: string;
-  nombreLargo: string;
-  meses: number;
-  /** % del total de meses entre proyectos con duración (dona). */
-  porcentajeTiempo: number;
-  rol: string | null;
-  equipoTamano: number | null;
+  cantidadProyectos: number;
+  proyectos: string[];
+  /** true solo en el pedazo sintético "Otras" que agrega el resto (ver buildTecnologiasProyectosDona). */
+  esOtras?: boolean;
 }
 
 /** Paleta prototipo dashboard-candidato.html */
 const CHART_COLOR_VERDE = '#6EE7B7';
 const CHART_COLOR_BARRAS = '#7C6FCD';
-/** Dona participación proyectos: colores alternados (naranja portal + paleta suave) */
-const CHART_PROYECTOS_DONA_COLORS = [
-  'rgba(253, 126, 20, 0.88)',
-  '#7C6FCD',
-  '#6EE7B7',
-  '#818CF8',
-  '#f472b6',
-  '#22c55e',
-  '#0ea5e9',
-  '#eab308',
+/** Un color por grupo/tecnología (mapa de cuadrantes y dona de tecnologías) -- ayuda a
+ * distinguir puntos/pedazos cercanos además de la etiqueta de texto. */
+const CHART_HABILIDADES_COLORS = [
+  'rgba(37, 99, 235, 0.9)',
+  'rgba(14, 165, 233, 0.9)',
+  'rgba(34, 197, 94, 0.9)',
+  'rgba(124, 111, 205, 0.9)',
+  'rgba(253, 126, 20, 0.9)',
+  'rgba(236, 72, 153, 0.9)',
+  'rgba(234, 179, 8, 0.9)',
+  'rgba(99, 102, 241, 0.9)',
 ];
-const CHART_HABILIDADES_BUBBLE_COLORS = [
-  'rgba(37, 99, 235, 0.78)',
-  'rgba(14, 165, 233, 0.78)',
-  'rgba(34, 197, 94, 0.78)',
-  'rgba(124, 111, 205, 0.78)',
-  'rgba(253, 126, 20, 0.82)',
-  'rgba(236, 72, 153, 0.78)',
-  'rgba(234, 179, 8, 0.82)',
-  'rgba(99, 102, 241, 0.78)',
-];
+/** Gris neutro para el pedazo "Otras" de la dona -- lo distingue de las tecnologías
+ * puntuales (que usan la paleta de colores de arriba). */
+const CHART_OTRAS_COLOR = 'rgba(156, 163, 175, 0.85)';
 const TIPOS_FORMACION_ACADEMICA = new Set([
   'Posgrado',
   'Pregrado',
@@ -299,29 +292,66 @@ function truncarEtiquetaGrafico(s: string, max = 44): string {
   return `${t.slice(0, max - 1)}…`;
 }
 
-/** Proyectos con meses > 0, ordenados; % respecto al total de meses-proyecto (dona participación). */
-function buildProyectosParticipacionPorTiempo(proyectos: ProyectoPublicoDto[]): ProyectoChartRow[] {
-  const base = (proyectos ?? []).map(p => {
-    const nombreLargo = (p.nombreProyecto ?? '').trim() || `Proyecto ${p.proyectoId}`;
-    const meses = p.duracionMeses != null && p.duracionMeses >= 0 ? p.duracionMeses : 0;
-    return {
-      etiqueta: truncarEtiquetaGrafico(nombreLargo, 36),
-      nombreLargo,
-      meses,
-      porcentajeTiempo: 0,
-      rol: (p.rol ?? '').trim() || null,
-      equipoTamano: p.equipoTamano,
-    };
-  });
-  const conMeses = base.filter(r => r.meses > 0);
-  const total = conMeses.reduce((s, r) => s + r.meses, 0);
-  if (total <= 0) return [];
-  return conMeses
-    .sort((a, b) => b.meses - a.meses)
-    .map(r => ({
-      ...r,
-      porcentajeTiempo: Math.round((1000 * r.meses) / total) / 10,
-    }));
+/** Mediana usada para dividir el mapa de cuadrantes por cobertura/madurez -- relativa al
+ * propio perfil del candidato, no un umbral fijo. */
+function mediana(valores: number[]): number {
+  if (!valores.length) return 0;
+  const s = [...valores].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 !== 0 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/** Tags de tecnología de un proyecto (mismo separador que cv-plantilla-preview.stackTags). */
+function parseStackTagsProyecto(stack: string | null | undefined): string[] {
+  return (stack ?? '')
+    .split(/[,;]/)
+    .map(t => t.trim())
+    .filter(Boolean);
+}
+
+/** Ranking de tecnologías por cantidad de proyectos donde aparecen -- no depende de
+ * fechas/duración, así que incluye TODOS los proyectos con stack declarado (a diferencia
+ * de un cruce por tiempo, que descartaría los que no tienen duración en meses). */
+export function buildTecnologiasProyectos(proyectos: ProyectoPublicoDto[]): TecnologiaProyectoRow[] {
+  const map = new Map<string, { etiqueta: string; proyectos: Set<string> }>();
+  for (const p of proyectos ?? []) {
+    const tags = parseStackTagsProyecto(p.stackTecnologico);
+    if (!tags.length) continue;
+    const nombreProyecto = (p.nombreProyecto ?? '').trim() || `Proyecto ${p.proyectoId}`;
+    for (const tag of tags) {
+      const key = tag.toLowerCase();
+      const current = map.get(key) ?? { etiqueta: tag, proyectos: new Set<string>() };
+      current.proyectos.add(nombreProyecto);
+      map.set(key, current);
+    }
+  }
+  return [...map.values()]
+    .map(v => ({
+      etiqueta: v.etiqueta,
+      cantidadProyectos: v.proyectos.size,
+      proyectos: [...v.proyectos],
+    }))
+    .sort((a, b) => b.cantidadProyectos - a.cantidadProyectos || a.etiqueta.localeCompare(b.etiqueta, 'es'));
+}
+
+/** Para la dona: top N tecnologías + un pedazo "Otras" agregando el resto -- evita una
+ * dona con demasiados pedazos finos. `rows` ya viene ordenado desc por cantidadProyectos
+ * (ver buildTecnologiasProyectos). */
+export function buildTecnologiasProyectosDona(rows: TecnologiaProyectoRow[], maxRows: number): TecnologiaProyectoRow[] {
+  const top = rows.slice(0, maxRows);
+  const resto = rows.slice(maxRows);
+  if (!resto.length) return top;
+  const proyectosOtras = new Set<string>();
+  resto.forEach(r => r.proyectos.forEach(p => proyectosOtras.add(p)));
+  return [
+    ...top,
+    {
+      etiqueta: `Otras (${resto.length})`,
+      cantidadProyectos: resto.reduce((s, r) => s + r.cantidadProyectos, 0),
+      proyectos: [...proyectosOtras],
+      esOtras: true,
+    },
+  ];
 }
 
 function buildNivelPromedioPorTipo(habs: HabilidadPublicoDto[]): { tipo: string; promedio: number }[] {
@@ -539,8 +569,8 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   expEmpresas: ExpEmpresa[] = [];
   timelineYearSeries: TimelineYearSeries = { labels: [], edu: [], exp: [] };
   educacionTipoSeries: EducacionTipoSeries = { labels: [], values: [] };
-  proyectosChart: ProyectoChartRow[] = [];
-  /** Total de registros de proyecto en el CV (aunque no tengan meses). */
+  tecnologiasProyectos: TecnologiaProyectoRow[] = [];
+  /** Total de registros de proyecto en el CV (aunque no tengan stack declarado). */
   proyectosRawCount = 0;
   nivelPromedio: { tipo: string; promedio: number }[] = [];
   habilidadNivelSerie: HabilidadNivelSerie = { labels: [], basico: [], intermedio: [], avanzado: [], experto: [] };
@@ -550,10 +580,15 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   chartProyectosHeightPx = 320;
   chartHabilidadesHeightPx = 300;
   readonly habilidadStrategicMaxRows = 8;
+  readonly tecnologiasProyectosMaxRows = 8;
 
-  get habilidadStrategicPointsVisible(): HabilidadStrategicPoint[] {
-    return this.habilidadStrategicPoints.slice(0, this.habilidadStrategicMaxRows);
-  }
+  /** Calculados UNA vez en rellenarDesdeCv() (no getters): un getter que arma un array
+   * nuevo en cada acceso, ligado directo a un *ngFor, hace que Angular vea un valor
+   * distinto entre sus dos pasadas de verificación en modo desarrollo y lance
+   * ExpressionChangedAfterItHasBeenCheckedError -- eso corta el change detection antes
+   * de llegar a scheduleRenderCharts() y ninguna gráfica se dibuja. */
+  habilidadStrategicPointsVisible: HabilidadStrategicPoint[] = [];
+  tecnologiasProyectosVisible: TecnologiaProyectoRow[] = [];
 
   /** En CV público: según visibilidad; en área privada siempre true. */
   mostrarMetricas = true;
@@ -621,22 +656,26 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
       this.timelineYearSeries = buildTimelineYearSeries(cv);
       this.educacionTipoSeries = buildEducacionTipoSeries(cv.formaciones ?? []);
       this.proyectosRawCount = cv.proyectos?.length ?? 0;
-      this.proyectosChart = buildProyectosParticipacionPorTiempo(cv.proyectos ?? []);
+      this.tecnologiasProyectos = buildTecnologiasProyectos(cv.proyectos ?? []);
+      this.tecnologiasProyectosVisible = buildTecnologiasProyectosDona(this.tecnologiasProyectos, this.tecnologiasProyectosMaxRows);
       this.nivelPromedio = buildNivelPromedioPorTipo(cv.habilidades ?? []);
       this.habilidadNivelSerie = buildHabilidadNivelSerie(cv.habilidades ?? []);
       this.habilidadStrategicPoints = buildHabilidadStrategicPoints(cv.habilidades ?? []);
+      this.habilidadStrategicPointsVisible = this.habilidadStrategicPoints.slice(0, this.habilidadStrategicMaxRows);
       this.chartExpHeightPx = Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80));
-      this.chartProyectosHeightPx = Math.min(380, Math.max(260, this.proyectosChart.length > 4 ? 300 : 260));
-      this.chartHabilidadesHeightPx = Math.min(440, Math.max(280, this.habilidadStrategicPoints.length * 28 + 120));
+      this.chartProyectosHeightPx = 320;
+      this.chartHabilidadesHeightPx = 360;
     } else {
       this.expEmpresas = [];
       this.timelineYearSeries = { labels: [], edu: [], exp: [] };
       this.educacionTipoSeries = { labels: [], values: [] };
       this.proyectosRawCount = cv.proyectos?.length ?? 0;
-      this.proyectosChart = [];
+      this.tecnologiasProyectos = [];
+      this.tecnologiasProyectosVisible = [];
       this.nivelPromedio = [];
       this.habilidadNivelSerie = { labels: [], basico: [], intermedio: [], avanzado: [], experto: [] };
       this.habilidadStrategicPoints = [];
+      this.habilidadStrategicPointsVisible = [];
       this.chartExpHeightPx = 260;
       this.chartProyectosHeightPx = 320;
       this.chartHabilidadesHeightPx = 300;
@@ -668,36 +707,40 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     if (this.expEmpresas.length && exp) {
       const ctx = exp.getContext('2d');
       if (ctx) {
-        this.chartInstances.push(
-          new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: this.expEmpresas.map(e => e.empresa),
-              datasets: [
-                {
-                  label: 'Meses',
-                  data: this.expEmpresas.map(e => e.meses),
-                  backgroundColor: CHART_COLOR_BARRAS,
-                  borderRadius: 4,
-                  borderSkipped: false,
-                },
-              ],
-            },
-            options: {
-              indexAxis: 'y',
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: {
-                x: {
-                  grid: { color: '#f0f0f0' },
-                  ticks: { callback: v => `${v}m` },
-                },
-                y: { grid: { display: false } },
+        try {
+          this.chartInstances.push(
+            new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: this.expEmpresas.map(e => e.empresa),
+                datasets: [
+                  {
+                    label: 'Meses',
+                    data: this.expEmpresas.map(e => e.meses),
+                    backgroundColor: CHART_COLOR_BARRAS,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                  },
+                ],
               },
-            },
-          })
-        );
+              options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    grid: { color: '#f0f0f0' },
+                    ticks: { callback: v => `${v}m` },
+                  },
+                  y: { grid: { display: false } },
+                },
+              },
+            })
+          );
+        } catch (err) {
+          console.error('[dashboard-candidato] Error renderizando "Experiencia laboral por empresa":', err);
+        }
       }
     }
 
@@ -705,151 +748,233 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     if (this.educacionTipoSeries.labels.length && tl) {
       const ctx = tl.getContext('2d');
       if (ctx) {
-        this.chartInstances.push(
-          new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: this.educacionTipoSeries.labels,
-              datasets: [
-                {
-                  label: 'Formaciones',
-                  data: this.educacionTipoSeries.values,
-                  backgroundColor: CHART_COLOR_VERDE,
-                  borderRadius: 2,
+        try {
+          this.chartInstances.push(
+            new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: this.educacionTipoSeries.labels,
+                datasets: [
+                  {
+                    label: 'Formaciones',
+                    data: this.educacionTipoSeries.values,
+                    backgroundColor: CHART_COLOR_VERDE,
+                    borderRadius: 2,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false,
+                  },
                 },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: false,
+                scales: {
+                  x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 }, maxRotation: 35, minRotation: 0 },
+                  },
+                  y: {
+                    grid: { color: '#f0f0f0' },
+                    beginAtZero: true,
+                    ticks: { precision: 0 },
+                  },
                 },
               },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { font: { size: 10 }, maxRotation: 35, minRotation: 0 },
-                },
-                y: {
-                  grid: { color: '#f0f0f0' },
-                  beginAtZero: true,
-                  ticks: { precision: 0 },
-                },
-              },
-            },
-          })
-        );
+            })
+          );
+        } catch (err) {
+          console.error('[dashboard-candidato] Error renderizando "Educación por tipo de formación":', err);
+        }
       }
     }
 
     const pr = this.chartProyectosEl?.nativeElement;
-    if (this.proyectosChart.length && pr) {
+    const tecnologias = this.tecnologiasProyectosVisible;
+    if (tecnologias.length && pr) {
       const ctx = pr.getContext('2d');
       if (ctx) {
-        const rows = this.proyectosChart;
+       try {
+        const centerTextPlugin: Plugin<'doughnut'> = {
+          id: 'cvTecnologiasCenterText',
+          afterDraw: chart => {
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return;
+            const cx = (chartArea.left + chartArea.right) / 2;
+            const cy = (chartArea.top + chartArea.bottom) / 2;
+            c.save();
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.fillStyle = '#212529';
+            c.font = "700 22px system-ui, -apple-system, 'Segoe UI', sans-serif";
+            c.fillText(String(this.proyectosRawCount), cx, cy - 9);
+            c.fillStyle = '#6c757d';
+            c.font = "600 11px system-ui, -apple-system, 'Segoe UI', sans-serif";
+            c.fillText(this.proyectosRawCount === 1 ? 'proyecto' : 'proyectos', cx, cy + 13);
+            c.restore();
+          },
+        };
         this.chartInstances.push(
           new Chart(ctx, {
             type: 'doughnut',
             data: {
-              labels: rows.map(r => r.etiqueta),
+              labels: tecnologias.map(t => t.etiqueta),
               datasets: [
                 {
-                  data: rows.map(r => r.meses),
-                  backgroundColor: rows.map(
-                    (_, i) => CHART_PROYECTOS_DONA_COLORS[i % CHART_PROYECTOS_DONA_COLORS.length]
-                  ),
+                  data: tecnologias.map(t => t.cantidadProyectos),
+                  backgroundColor: tecnologias.map((t, i) => this.getTecnologiaColor(t, i)),
                   borderColor: '#fff',
-                  borderWidth: 2,
-                  hoverOffset: 6,
+                  borderWidth: 3,
+                  borderRadius: 6,
+                  spacing: 2,
+                  hoverOffset: 8,
                 },
               ],
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              cutout: '56%',
+              cutout: '68%',
               plugins: {
-                legend: {
-                  display: false,
-                },
+                legend: { display: false },
                 tooltip: {
+                  backgroundColor: 'rgba(17, 24, 39, 0.92)',
+                  padding: 10,
+                  cornerRadius: 8,
+                  boxPadding: 4,
+                  titleFont: { weight: 600 },
                   callbacks: {
                     title: items => {
                       const i = items[0]?.dataIndex ?? 0;
-                      return rows[i]?.nombreLargo ?? '';
-                    },
-                    afterTitle: items => {
-                      const i = items[0]?.dataIndex ?? 0;
-                      const r = rows[i];
-                      if (!r) return '';
-                      const partes: string[] = [];
-                      if (r.rol) partes.push(`Rol: ${r.rol}`);
-                      if (r.equipoTamano != null) partes.push(`Equipo: ${r.equipoTamano} pers.`);
-                      return partes.length ? partes.join('\n') : '';
+                      return tecnologias[i]?.etiqueta ?? '';
                     },
                     label: item => {
-                      const i = item.dataIndex;
-                      const r = rows[i];
-                      if (!r) return '';
-                      return `${r.meses} meses · ${r.porcentajeTiempo}% del tiempo en proyectos`;
+                      const t = tecnologias[item.dataIndex];
+                      if (!t) return '';
+                      return `${t.cantidadProyectos} proyecto${t.cantidadProyectos === 1 ? '' : 's'}`;
+                    },
+                    afterLabel: item => {
+                      const t = tecnologias[item.dataIndex];
+                      if (!t) return '';
+                      return truncarEtiquetaGrafico(t.proyectos.join(', '), 90);
                     },
                   },
                 },
               },
             },
+            plugins: [centerTextPlugin],
           })
         );
+       } catch (err) {
+         console.error('[dashboard-candidato] Error renderizando "Tecnologías más usadas en proyectos":', err);
+       }
       }
     }
 
     const radar = this.chartRadarEl?.nativeElement;
-    if (this.habilidadStrategicPoints.length && radar) {
+    const puntos = this.habilidadStrategicPointsVisible;
+    if (puntos.length && radar) {
       const ctx = radar.getContext('2d');
       if (ctx) {
-        const puntos = this.habilidadStrategicPoints;
+       try {
+        const xs = puntos.map(p => p.total);
+        const ys = puntos.map(p => p.madurezPromedio);
+        const medianaX = mediana(xs);
+        const medianaY = mediana(ys);
+        const maxX = Math.max(...xs);
+
+        const quadrantPlugin: Plugin<'scatter'> = {
+          id: 'cvCapacidadesCuadrantes',
+          beforeDatasetsDraw: chart => {
+            const { ctx: c, chartArea, scales } = chart;
+            if (!chartArea) return;
+            const xPix = scales['x'].getPixelForValue(medianaX);
+            const yPix = scales['y'].getPixelForValue(medianaY);
+            c.save();
+            c.fillStyle = 'rgba(37, 99, 235, 0.07)';
+            c.fillRect(xPix, chartArea.top, chartArea.right - xPix, yPix - chartArea.top);
+            c.fillStyle = 'rgba(107, 114, 128, 0.05)';
+            c.fillRect(chartArea.left, chartArea.top, xPix - chartArea.left, yPix - chartArea.top);
+            c.fillRect(xPix, yPix, chartArea.right - xPix, chartArea.bottom - yPix);
+            c.fillStyle = 'rgba(239, 68, 68, 0.06)';
+            c.fillRect(chartArea.left, yPix, xPix - chartArea.left, chartArea.bottom - yPix);
+
+            c.strokeStyle = '#d1d5db';
+            c.setLineDash([4, 4]);
+            c.lineWidth = 1;
+            c.beginPath();
+            c.moveTo(xPix, chartArea.top);
+            c.lineTo(xPix, chartArea.bottom);
+            c.moveTo(chartArea.left, yPix);
+            c.lineTo(chartArea.right, yPix);
+            c.stroke();
+            c.setLineDash([]);
+
+            c.font = "700 9px system-ui, -apple-system, 'Segoe UI', sans-serif";
+            c.fillStyle = '#9ca3af';
+            c.textBaseline = 'top';
+            c.textAlign = 'right';
+            c.fillText('FORTALEZAS NÚCLEO', chartArea.right - 6, chartArea.top + 6);
+            c.textAlign = 'left';
+            c.fillText('NICHO PROFUNDO', chartArea.left + 6, chartArea.top + 6);
+            c.textBaseline = 'bottom';
+            c.textAlign = 'right';
+            c.fillText('AMPLIO, POR PROFUNDIZAR', chartArea.right - 6, chartArea.bottom - 6);
+            c.textAlign = 'left';
+            c.fillText('POR DESARROLLAR', chartArea.left + 6, chartArea.bottom - 6);
+            c.restore();
+          },
+          afterDatasetsDraw: chart => {
+            const { ctx: c } = chart;
+            const meta = chart.getDatasetMeta(0);
+            c.save();
+            c.font = "600 11px system-ui, -apple-system, 'Segoe UI', sans-serif";
+            c.fillStyle = '#374151';
+            c.textBaseline = 'middle';
+            c.textAlign = 'left';
+            meta.data.forEach((el, i) => {
+              const p = puntos[i];
+              if (!p) return;
+              const pos = el as unknown as { x: number; y: number };
+              c.fillText(truncarEtiquetaGrafico(p.grupo, 20), pos.x + 9, pos.y);
+            });
+            c.restore();
+          },
+        };
+
         this.chartInstances.push(
           new Chart(ctx, {
-            type: 'bubble',
+            type: 'scatter',
             data: {
-              datasets: puntos.map((punto, index) => ({
-                label: punto.grupo,
-                data: [
-                  {
-                    x: punto.total,
-                    y: punto.madurezPromedio,
-                    r: Math.max(8, Math.min(22, 6 + punto.total * 1.4)),
-                  },
-                ],
-                backgroundColor: CHART_HABILIDADES_BUBBLE_COLORS[index % CHART_HABILIDADES_BUBBLE_COLORS.length],
-                borderColor: '#ffffff',
-                borderWidth: 2,
-              })),
+              datasets: [
+                {
+                  data: puntos.map(p => ({ x: p.total, y: p.madurezPromedio })),
+                  backgroundColor: puntos.map((_, i) => CHART_HABILIDADES_COLORS[i % CHART_HABILIDADES_COLORS.length]),
+                  borderColor: '#ffffff',
+                  borderWidth: 2,
+                  pointRadius: 7,
+                  pointHoverRadius: 9,
+                },
+              ],
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              layout: { padding: { right: 90, top: 18, bottom: 6 } },
               scales: {
                 x: {
                   beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Cobertura (cantidad de habilidades)',
-                  },
-                  ticks: {
-                    stepSize: 1,
-                    font: { size: 10 },
-                  },
-                  grid: { color: '#e5e7eb' },
+                  suggestedMax: maxX + 1,
+                  title: { display: true, text: 'Cobertura (cantidad de habilidades)' },
+                  ticks: { stepSize: 1, font: { size: 10 } },
+                  grid: { color: '#eef0f4' },
                 },
                 y: {
-                  min: 1,
-                  max: 4,
-                  title: {
-                    display: true,
-                    text: 'Madurez promedio',
-                  },
+                  min: 0.5,
+                  max: 4.5,
+                  title: { display: true, text: 'Madurez promedio' },
                   ticks: {
                     stepSize: 1,
                     callback: value => {
@@ -857,10 +982,10 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
                       if (value === 2) return 'Intermedio';
                       if (value === 3) return 'Avanzado';
                       if (value === 4) return 'Experto';
-                      return value;
+                      return '';
                     },
                   },
-                  grid: { color: '#e5e7eb' },
+                  grid: { color: '#eef0f4' },
                 },
               },
               plugins: {
@@ -868,14 +993,22 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
                   display: false,
                 },
                 tooltip: {
+                  backgroundColor: 'rgba(17, 24, 39, 0.92)',
+                  padding: 10,
+                  cornerRadius: 8,
+                  boxPadding: 4,
+                  titleFont: { weight: 600 },
                   callbacks: {
-                    title: items => items[0]?.dataset?.label ?? '',
+                    title: items => {
+                      const i = items[0]?.dataIndex ?? 0;
+                      return puntos[i]?.grupo ?? '';
+                    },
                     label: item => {
-                      const punto = puntos[item.datasetIndex];
+                      const punto = puntos[item.dataIndex];
                       if (!punto) return '';
                       return [
+                        `Madurez promedio: ${punto.madurezPromedio}/4`,
                         `Cobertura: ${punto.total} habilidades`,
-                        `Madurez: ${punto.madurezPromedio}/4`,
                         `Básico: ${punto.basico} · Intermedio: ${punto.intermedio}`,
                         `Avanzado: ${punto.avanzado} · Experto: ${punto.experto}`,
                       ];
@@ -884,13 +1017,21 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
                 },
               },
             },
+            plugins: [quadrantPlugin],
           })
         );
+       } catch (err) {
+         console.error('[dashboard-candidato] Error renderizando "Mapa estratégico de capacidades":', err);
+       }
       }
     }
   }
 
-  getProyectoColor(index: number): string {
-    return CHART_PROYECTOS_DONA_COLORS[index % CHART_PROYECTOS_DONA_COLORS.length];
+  getHabilidadColor(index: number): string {
+    return CHART_HABILIDADES_COLORS[index % CHART_HABILIDADES_COLORS.length];
+  }
+
+  getTecnologiaColor(t: TecnologiaProyectoRow, index: number): string {
+    return t.esOtras ? CHART_OTRAS_COLOR : CHART_HABILIDADES_COLORS[index % CHART_HABILIDADES_COLORS.length];
   }
 }

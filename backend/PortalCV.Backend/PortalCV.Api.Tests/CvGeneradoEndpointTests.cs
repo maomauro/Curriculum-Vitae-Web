@@ -127,11 +127,44 @@ public class CvGeneradoEndpointTests : IClassFixture<TestWebApplicationFactory>
 
     private static async Task AgregarProveedorActivoAsync(HttpClient client, string proveedor = "claude")
     {
-        var response = await client.PostAsJsonAsync(
-            "/api/cv/proveedor-ia",
-            new { proveedor, nombre = (string?)null, modelo = (string?)null, endpoint = (string?)null, apiKey = "clave-de-prueba" },
-            CamelCase);
-        response.EnsureSuccessStatusCode();
+        // El endpoint ahora es admin-only (config global de IA) -- se cambia
+        // momentaneamente la cookie de auth del cliente Publicador por una de Admin
+        // solo para esta llamada, y se restaura despues.
+        var cookieOriginal = client.DefaultRequestHeaders.GetValues("Cookie").First();
+        client.DefaultRequestHeaders.Remove("Cookie");
+        client.DefaultRequestHeaders.Add("Cookie", $"portalcv_auth={CrearTokenAdmin()}");
+        try
+        {
+            var response = await client.PostAsJsonAsync(
+                "/api/admin/proveedor-ia",
+                new { proveedor, nombre = (string?)null, modelo = (string?)null, endpoint = (string?)null, apiKey = "clave-de-prueba" },
+                CamelCase);
+            response.EnsureSuccessStatusCode();
+        }
+        finally
+        {
+            client.DefaultRequestHeaders.Remove("Cookie");
+            client.DefaultRequestHeaders.Add("Cookie", cookieOriginal);
+        }
+    }
+
+    private static string CrearTokenAdmin()
+    {
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, "0"),
+            new Claim(JwtRegisteredClaimNames.Email, "admin-seed@example.com"),
+            new Claim(ClaimTypes.Role, "Admin"),
+        };
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestWebApplicationFactory.TestJwtKey));
+        var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+        var jwt = new JwtSecurityToken(
+            issuer: TestWebApplicationFactory.TestJwtIssuer,
+            audience: TestWebApplicationFactory.TestJwtAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(5),
+            signingCredentials: credentials);
+        return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
 
     private static async Task<int> CrearPerfilAsync(HttpClient client, string nombre)

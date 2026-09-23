@@ -37,7 +37,7 @@ public class IaPromptInvoker : IIaPromptInvoker
         CancellationToken ct = default)
     {
         var proveedorConfig = await _context.ProveedoresIa.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.CurriculumId == curriculumId && p.EsActivo, ct)
+            .FirstOrDefaultAsync(p => p.EsActivo, ct)
             ?? throw new ArgumentException(ApiMessages.Ia.SinProveedorActivo);
 
         var cliente = _aiClients.FirstOrDefault(c =>

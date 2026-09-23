@@ -4,8 +4,16 @@ import { CvDetalleVistaContext } from '../../../shared/contexts/cv-detalle-vista
 import { VisibilidadSeccionResolver } from '../../../core/utils/visibilidad-seccion-resolver';
 import { cvDetalleDtoToPreviewVm } from '../../../shared/mappers/cv-detalle-to-preview-vm';
 import type { CvPreviewVisibilidad, CvPreviewVm } from '../../../shared/models/cv-preview-vm';
+import {
+  hayContenidoHojaDeVida,
+  type HojaDeVidaContenidoDto,
+  type PerfilPublicoDto,
+  type PersonalesPublicoDto,
+  type RedSocialPublicoDto,
+} from '../../../core/services/public/public.service';
+import type { CvPlantillaCodigo } from '../../../core/constants/cv-plantillas';
 
-type PestanaPreview = 'profesional' | 'dashboard';
+type PestanaPreview = 'profesional' | 'dashboard' | 'hoja-de-vida';
 
 /** Panel de vista previa en vivo de Configuración: exactamente lo que vería un
  * visitante en las pestañas "Información profesional" y "Dashboard analítico" del CV
@@ -31,6 +39,30 @@ export class PreviewPublicoPanelComponent implements OnInit {
 
   get visibilidad(): CvPreviewVisibilidad {
     return new VisibilidadSeccionResolver(this.ctx.cv?.visibilidadSeccion);
+  }
+
+  get hojaDeVidaContenido(): HojaDeVidaContenidoDto | null {
+    return this.ctx.cv?.hojaDeVidaContenido ?? null;
+  }
+
+  get hayContenidoHojaDeVida(): boolean {
+    return hayContenidoHojaDeVida(this.hojaDeVidaContenido);
+  }
+
+  get personales(): PersonalesPublicoDto | null {
+    return this.ctx.cv?.personales ?? null;
+  }
+
+  get redesSociales(): RedSocialPublicoDto[] {
+    return this.ctx.cv?.redesSociales ?? [];
+  }
+
+  get perfilActivoHojaDeVida(): PerfilPublicoDto | null {
+    return this.ctx.cv?.perfiles?.find(p => p.esActivo) ?? null;
+  }
+
+  get plantillaCodigo(): CvPlantillaCodigo | undefined {
+    return this.ctx.cv?.plantillaCodigo as CvPlantillaCodigo | undefined;
   }
 
   ngOnInit(): void {

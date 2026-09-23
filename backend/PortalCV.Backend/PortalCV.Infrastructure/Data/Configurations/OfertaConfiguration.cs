@@ -18,7 +18,7 @@ public class OfertaConfiguration : IEntityTypeConfiguration<Oferta>
 
         builder.Property(o => o.Cargo).IsRequired().HasMaxLength(150);
         builder.Property(o => o.Empresa).IsRequired().HasMaxLength(150);
-        builder.Property(o => o.Descripcion).HasColumnType("nvarchar(max)");
+        builder.Property(o => o.Descripcion).HasColumnType("longtext");
         builder.Property(o => o.CorreoReclutador).HasMaxLength(150);
         builder.Property(o => o.NombreReclutador).HasMaxLength(150);
         builder.Property(o => o.Modalidad).HasMaxLength(150);
@@ -27,12 +27,12 @@ public class OfertaConfiguration : IEntityTypeConfiguration<Oferta>
         builder.Property(o => o.Duracion).HasMaxLength(150);
         builder.Property(o => o.Horario).HasMaxLength(100);
         builder.Property(o => o.ExperienciaRequerida).HasMaxLength(100);
-        builder.Property(o => o.StackTecnologico).HasColumnType("nvarchar(max)");
+        builder.Property(o => o.StackTecnologico).HasColumnType("longtext");
         builder.Property(o => o.NivelIdioma).HasMaxLength(100);
-        builder.Property(o => o.TextoOriginal).IsRequired().HasColumnType("nvarchar(max)");
+        builder.Property(o => o.TextoOriginal).IsRequired().HasColumnType("longtext");
         builder.Property(o => o.OrigenEntrada).IsRequired().HasMaxLength(20);
         builder.Property(o => o.Estado).IsRequired().HasMaxLength(20);
-        builder.Property(o => o.FechaAnalisis).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(o => o.FechaAnalisis).HasDefaultValueSql("UTC_TIMESTAMP()");
 
         builder.HasIndex(o => o.CurriculumId);
 

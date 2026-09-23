@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using PortalCV.Application.DTOs.Privada;
 
 namespace PortalCV.Application.DTOs.Publica;
 
@@ -45,6 +46,10 @@ public record CvDetalleDto(
     bool InformacionProfesionalPublicaActiva,
     /// <summary>Pestaña "Hoja de vida" del CV público (VisibilidadSeccion <c>hoja-de-vida.publico</c>).</summary>
     bool HojaDeVidaPublicaActiva,
+    /// <summary>Contenido del CV generado por IA del Perfil marcado como activo
+    /// (<c>Perfil.EsActivo</c>) -- null si no hay Perfil activo o el activo todavía no
+    /// tiene un CvGenerado. Mismo shape que consume "Mi CV" en la zona privada.</summary>
+    ContenidoCvGeneradoDto? HojaDeVidaContenido,
     /// <summary>Filas crudas de VisibilidadSeccion (secciones/atributos de "Información Personal" y
     /// "Información Profesional") para que el frontend filtre el consolidado -- mismo criterio que
     /// usaba antes la vista privada. Nota: las colecciones (Proyectos, Habilidades, Formaciones, etc.)

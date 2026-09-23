@@ -79,7 +79,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .AsNoTracking()
             .AsSplitQuery()
             .Include(c => c.Personales)
-            .Include(c => c.Perfiles)
+            .Include(c => c.Perfiles).ThenInclude(p => p.CvGenerado)
             .Include(c => c.Habilidades)
             .Include(c => c.Proyectos)
             .Include(c => c.Referencias)
@@ -101,7 +101,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .AsNoTracking()
             .AsSplitQuery()
             .Include(c => c.Personales)
-            .Include(c => c.Perfiles)
+            .Include(c => c.Perfiles).ThenInclude(p => p.CvGenerado)
             .Include(c => c.Habilidades)
             .Include(c => c.Proyectos)
             .Include(c => c.Referencias)
@@ -176,6 +176,7 @@ public class CurriculumRepository : GenericRepository<Curriculum>, ICurriculumRe
             .Include(c => c.Personales)
             .Include(c => c.Perfiles.Where(p => p.EsActivo))
             .Include(c => c.Habilidades)
+            .Include(c => c.VisibilidadesSeccion)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(ciudad))

@@ -45,9 +45,11 @@ export interface ProbarConexionIaResponse {
   mensaje: string;
 }
 
+/** Conexión de IA GLOBAL para toda la plataforma (una activa a la vez), administrada
+ * exclusivamente desde el panel de Admin -- ver docs/CLAUDE.md. */
 @Injectable({ providedIn: 'root' })
 export class ProveedorIaService {
-  private readonly BASE = `${API_BASE_URL}/api/cv/proveedor-ia`;
+  private readonly BASE = `${API_BASE_URL}/api/admin/proveedor-ia`;
 
   constructor(private http: HttpClient) {}
 

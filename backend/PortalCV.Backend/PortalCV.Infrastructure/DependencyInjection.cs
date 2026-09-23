@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MySql.EntityFrameworkCore.Extensions;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data;
@@ -23,9 +24,9 @@ public static class DependencyInjection
 
         services.AddDbContext<PortalCvDbContext>(options =>
             options
-                .UseSqlServer(
+                .UseMySQL(
                     connectionString,
-                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+                    mySqlOptions => mySqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
         services.AddHttpContextAccessor();
         services.AddMemoryCache();

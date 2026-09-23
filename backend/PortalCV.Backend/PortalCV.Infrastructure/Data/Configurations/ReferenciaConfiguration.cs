@@ -22,10 +22,10 @@ public class ReferenciaConfiguration : IEntityTypeConfiguration<Referencia>
         builder.Property(r => r.Cargo).HasMaxLength(100);
         builder.Property(r => r.Empresa).HasMaxLength(150);
         builder.Property(r => r.Relacion).HasMaxLength(80);
-        builder.Property(r => r.Observaciones).HasColumnType("nvarchar(max)");
+        builder.Property(r => r.Observaciones).HasColumnType("longtext");
         builder.Property(r => r.AdjuntoSoporte).HasMaxLength(500);
         builder.Property(r => r.MostrarEnCv).HasDefaultValue(true);
-        builder.Property(r => r.FechaRegistro).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(r => r.FechaRegistro).HasDefaultValueSql("UTC_TIMESTAMP()");
 
         builder.HasOne(r => r.Curriculum)
             .WithMany(c => c.Referencias)

@@ -15,9 +15,9 @@ public class ConfiguracionCorreoConfiguration : IEntityTypeConfiguration<Configu
         builder.Property(c => c.Host).IsRequired().HasMaxLength(200);
         builder.Property(c => c.Puerto).IsRequired();
         builder.Property(c => c.UsarTls).HasDefaultValue(true);
-        builder.Property(c => c.PasswordCifrada).HasColumnType("nvarchar(max)");
-        builder.Property(c => c.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(c => c.FechaActualizacion).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(c => c.PasswordCifrada).HasColumnType("longtext");
+        builder.Property(c => c.FechaCreacion).HasDefaultValueSql("UTC_TIMESTAMP()");
+        builder.Property(c => c.FechaActualizacion).HasDefaultValueSql("UTC_TIMESTAMP()");
 
         // Una configuración de correo por CV -- a diferencia de ProveedorIa (varias
         // conexiones posibles), acá no hay concepto de "activo/inactivo".

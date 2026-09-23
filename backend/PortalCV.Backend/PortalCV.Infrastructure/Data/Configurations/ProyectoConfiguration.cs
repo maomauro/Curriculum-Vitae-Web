@@ -15,9 +15,9 @@ public class ProyectoConfiguration : IEntityTypeConfiguration<Proyecto>
         builder.Property(p => p.NombreProyecto).HasMaxLength(150);
         builder.Property(p => p.Rol).HasMaxLength(80);
         builder.Property(p => p.StackTecnologico).HasMaxLength(500);
-        builder.Property(p => p.Aporte).HasColumnType("nvarchar(max)");
-        builder.Property(p => p.Logro).HasColumnType("nvarchar(max)");
-        builder.Property(p => p.Desafio).HasColumnType("nvarchar(max)");
+        builder.Property(p => p.Aporte).HasColumnType("longtext");
+        builder.Property(p => p.Logro).HasColumnType("longtext");
+        builder.Property(p => p.Desafio).HasColumnType("longtext");
         builder.Property(p => p.MostrarEnCv).HasDefaultValue(true);
 
         builder.HasOne(p => p.Curriculum)

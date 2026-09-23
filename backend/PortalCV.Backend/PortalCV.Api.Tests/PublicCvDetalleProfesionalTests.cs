@@ -283,4 +283,92 @@ public class PublicCvDetalleProfesionalTests : IClassFixture<TestWebApplicationF
         Assert.Equal("Bogotá", personales.GetProperty("ciudad").GetString());
         Assert.Equal("https://example.com/foto.jpg", personales.GetProperty("fotoUrl").GetString());
     }
+
+    // ── Hoja de vida pública: contenido del CV del Perfil activo ────────────────
+    // El candidato puede tener varios Perfiles, cada uno con su propio CvGenerado;
+    // la pestaña pública "Hoja de vida" muestra el del Perfil marcado EsActivo=true,
+    // no una mezcla de todos. Ver PublicCvService.ResolverHojaDeVidaContenido.
+
+    [Fact]
+    public async Task GetDetalle_ConPerfilActivoYCvGenerado_HojaDeVidaContenidoTraeElDelActivo()
+    {
+        var slug = await CrearCurriculumPublicadoAsync("public-hoja-contenido");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+            var curriculum = await db.Curriculums.FirstAsync(c => c.UrlPublica == slug);
+
+            var perfilInactivo = new Perfil { CurriculumId = curriculum.CurriculumId, NombrePerfil = "Inactivo", EsActivo = false };
+            var perfilActivo = new Perfil { CurriculumId = curriculum.CurriculumId, NombrePerfil = "Activo", EsActivo = true };
+            db.Perfiles.AddRange(perfilInactivo, perfilActivo);
+            await db.SaveChangesAsync();
+
+            db.CvsGenerados.Add(new CvGenerado
+            {
+                CurriculumId = curriculum.CurriculumId,
+                PerfilId = perfilActivo.PerfilId,
+                ContenidoJson = """{"experiencia":[{"cabecera":"Backend en Acme","funciones":["Diseño de APIs"]}],"educacion":["Ingeniería de Sistemas"],"proyectos":["Portal de CV"],"habilidades":[{"nombre":"C#","tipo":"Tecnica"}]}""",
+                FechaGeneracion = DateTime.UtcNow,
+            });
+            db.CvsGenerados.Add(new CvGenerado
+            {
+                CurriculumId = curriculum.CurriculumId,
+                PerfilId = perfilInactivo.PerfilId,
+                ContenidoJson = """{"experiencia":[],"educacion":[],"proyectos":[],"habilidades":[]}""",
+                FechaGeneracion = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var contenido = dto.GetProperty("hojaDeVidaContenido");
+        Assert.Equal(JsonValueKind.Object, contenido.ValueKind);
+        Assert.Equal("Backend en Acme", contenido.GetProperty("experiencia")[0].GetProperty("cabecera").GetString());
+        Assert.Equal("Ingeniería de Sistemas", contenido.GetProperty("educacion")[0].GetString());
+    }
+
+    [Fact]
+    public async Task GetDetalle_SinNingunPerfilActivo_HojaDeVidaContenidoEsNull()
+    {
+        var slug = await CrearCurriculumPublicadoAsync("public-hoja-sin-activo");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+            var curriculum = await db.Curriculums.FirstAsync(c => c.UrlPublica == slug);
+            db.Perfiles.Add(new Perfil { CurriculumId = curriculum.CurriculumId, NombrePerfil = "Inactivo", EsActivo = false });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Null, dto.GetProperty("hojaDeVidaContenido").ValueKind);
+    }
+
+    [Fact]
+    public async Task GetDetalle_PerfilActivoSinCvGenerado_HojaDeVidaContenidoEsNull()
+    {
+        var slug = await CrearCurriculumPublicadoAsync("public-hoja-sin-generar");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+            var curriculum = await db.Curriculums.FirstAsync(c => c.UrlPublica == slug);
+            db.Perfiles.Add(new Perfil { CurriculumId = curriculum.CurriculumId, NombrePerfil = "Activo", EsActivo = true });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Null, dto.GetProperty("hojaDeVidaContenido").ValueKind);
+    }
 }

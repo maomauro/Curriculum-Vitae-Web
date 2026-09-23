@@ -71,7 +71,7 @@ public static class ApiMessages
     /// </summary>
     public static class Ia
     {
-        public const string SinProveedorActivo = "Configura un proveedor de IA activo en Configuración antes de continuar.";
+        public const string SinProveedorActivo = "No hay un proveedor de IA activo configurado. Contactá al administrador del portal.";
         public const string RespuestaNoEsJsonValido = "La IA no devolvió un formato válido. Intenta de nuevo.";
 
         public static string ProveedorSinClienteReal(string proveedor) =>

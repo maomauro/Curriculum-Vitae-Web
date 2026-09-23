@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PortalCV.Application.DTOs.Privada;
+using PortalCV.Application.DTOs.Admin;
 using PortalCV.Application.Interfaces;
 
 namespace PortalCV.Api.Controllers;
 
-[Route("api/cv/proveedor-ia")]
-public class ProveedorIaController : CvControllerBase
+[ApiController]
+[Authorize(Roles = "Admin")]
+[Route("api/admin/proveedor-ia")]
+public class ProveedorIaController : ControllerBase
 {
     private readonly IProveedorIaService _service;
 
@@ -16,29 +19,29 @@ public class ProveedorIaController : CvControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct = default)
-        => Ok(await _service.ListarAsync(GetCurriculumId(), ct));
+        => Ok(await _service.ListarAsync(ct));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CrearProveedorIaRequest request, CancellationToken ct = default)
     {
-        var result = await _service.CrearAsync(GetCurriculumId(), request, ct);
+        var result = await _service.CrearAsync(request, ct);
         return CreatedAtAction(nameof(GetAll), new { }, result);
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] ActualizarProveedorIaRequest request, CancellationToken ct = default)
-        => Ok(await _service.ActualizarAsync(GetCurriculumId(), id, request, ct));
+        => Ok(await _service.ActualizarAsync(id, request, ct));
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {
-        await _service.EliminarAsync(GetCurriculumId(), id, ct);
+        await _service.EliminarAsync(id, ct);
         return NoContent();
     }
 
     [HttpPut("{id:int}/activar")]
     public async Task<IActionResult> Activar(int id, CancellationToken ct = default)
-        => Ok(await _service.ActivarAsync(GetCurriculumId(), id, ct));
+        => Ok(await _service.ActivarAsync(id, ct));
 
     [HttpPost("probar")]
     public async Task<IActionResult> Probar([FromBody] ProbarConexionIaRequest request, CancellationToken ct = default)
@@ -46,5 +49,5 @@ public class ProveedorIaController : CvControllerBase
 
     [HttpPost("{id:int}/probar")]
     public async Task<IActionResult> ProbarGuardada(int id, CancellationToken ct = default)
-        => Ok(await _service.ProbarConexionGuardadaAsync(GetCurriculumId(), id, ct));
+        => Ok(await _service.ProbarConexionGuardadaAsync(id, ct));
 }

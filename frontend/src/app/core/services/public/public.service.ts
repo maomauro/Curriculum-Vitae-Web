@@ -124,6 +124,37 @@ export interface ReferenciaPublicoDto {
   empresa: string | null;
 }
 
+export interface ExperienciaCondensadaPublicaDto {
+  cabecera: string;
+  funciones: string[];
+}
+
+export interface HabilidadCondensadaPublicaDto {
+  nombre: string;
+  tipo: string | null;
+}
+
+/** Contenido del CV generado por IA del Perfil que el candidato marcó como activo --
+ * mismo shape que consume "Mi CV" en la zona privada (cv-generado.service.ts). */
+export interface HojaDeVidaContenidoDto {
+  experiencia: ExperienciaCondensadaPublicaDto[];
+  educacion: string[];
+  proyectos: string[];
+  habilidades: HabilidadCondensadaPublicaDto[];
+}
+
+/** true si el contenido tiene al menos una sección con datos -- compartido entre la
+ * pestaña pública "Hoja de vida" y el panel de vista previa de Configuración. */
+export function hayContenidoHojaDeVida(contenido: HojaDeVidaContenidoDto | null | undefined): boolean {
+  if (!contenido) return false;
+  return (
+    contenido.experiencia.length > 0 ||
+    contenido.educacion.length > 0 ||
+    contenido.proyectos.length > 0 ||
+    contenido.habilidades.length > 0
+  );
+}
+
 export interface CvDetalleDto {
   curriculumId: number;
   urlPublica: string;
@@ -147,6 +178,9 @@ export interface CvDetalleDto {
   informacionProfesionalPublicaActiva?: boolean;
   /** Pestaña "Hoja de vida" del CV público (default true si la API no envía el campo). */
   hojaDeVidaPublicaActiva?: boolean;
+  /** Contenido a mostrar en "Hoja de vida" -- el CV generado del Perfil activo. Null si
+   * no hay Perfil activo o el activo todavía no tiene un CV generado. */
+  hojaDeVidaContenido?: HojaDeVidaContenidoDto | null;
   /** Filas crudas de VisibilidadSeccion -- para filtrar el consolidado (Información
    * Personal/Profesional) igual que hacía antes la vista privada. */
   visibilidadSeccion?: VisibilidadSeccionPublicaDto[];

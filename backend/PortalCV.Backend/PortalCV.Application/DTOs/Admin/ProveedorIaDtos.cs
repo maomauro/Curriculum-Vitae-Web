@@ -1,4 +1,4 @@
-namespace PortalCV.Application.DTOs.Privada;
+namespace PortalCV.Application.DTOs.Admin;
 
 /// <summary>Nunca incluye la clave de API — ni cifrada ni en texto plano.</summary>
 public record ProveedorIaDto(
