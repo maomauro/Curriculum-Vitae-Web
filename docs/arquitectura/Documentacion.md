@@ -4,7 +4,7 @@
 
 ## Versión 1.0 - Fundamentos del Sistema
 
-**Referencias:** [Backlog](Backlog.md) · [modelo de datos](Modelo.md) · [Despliegue / CI-CD](../devops/Despliegue.md) · [Guía Git](../guias/Guia-git.md) · [database/README](../../database/README.md)
+**Referencias:** [Backlog](Backlog.md) · [modelo de datos](../../database/README.md) · [Despliegue / CI-CD](../devops/Despliegue.md) · [Guía Git](../guias/Guia-git.md)
 
 ---
 
@@ -445,13 +445,13 @@ Se usa una sola tabla **Referencia** vinculada a **Curriculum**, que agrupa tant
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │  │
 │  │  ┌─────────────┐  ┌──────────────────────────────────┐  │  │
-│  │  │   SQL DB    │  │  IMemoryCache (.NET in-process)  │  │  │
+│  │  │  MariaDB    │  │  IMemoryCache (.NET in-process)  │  │  │
 │  │  │  (Principal)│  │  TTL: roles 15min, CV 5min       │  │  │
 │  │  └─────────────┘  └──────────────────────────────────┘  │  │
 │  │                                                      │  │
-│  │  • Entity Framework (ORM)                            │  │
-│  │  • Scripts DDL versionados (no migraciones EF)       │  │
-│  │    → scripts/manual/ (local) · scripts/production/   │  │
+│  │  • Entity Framework (ORM, MySql.EntityFrameworkCore) │  │
+│  │  • Script DDL versionado (no migraciones EF)         │  │
+│  │    → database/01_CreateSchema.sql                    │  │
 │  │  • Vistas materializadas para estadísticas           │  │
 │  │  • Índices optimizados para búsqueda                 │  │
 │  └──────────────────────────────────────────────────────┘  │

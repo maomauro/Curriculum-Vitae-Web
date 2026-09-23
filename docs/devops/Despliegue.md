@@ -1,13 +1,25 @@
 # Guia de CI/CD y Despliegue -- Portal CV Web
 
+> ⚠️ **Documento desactualizado.** Describe el plan de despliegue evaluado sobre
+> **Azure Container Apps + Azure Static Web Apps + Azure SQL Database**, con
+> recursos que en algún momento llegaron a estar operativos. Ese corte ya no
+> refleja el estado real del proyecto: el motor de base de datos pasó a
+> **MariaDB** (ver `database/README.md`) y la decisión de dónde se aloja
+> producción está **pendiente de definir** (dejó de ser Azure; ver
+> `CLAUDE.md`). Todas las referencias a `SQL Server` / `Azure SQL Database`
+> como motor de base de datos de este documento **ya no aplican** — se
+> conserva como referencia histórica de la arquitectura Azure evaluada, no
+> como guía vigente. `scripts/manual/` y `scripts/production/` mencionados
+> abajo tampoco existen ya en el repositorio (ver `database/README.md`).
+
 ---
 
 ## Referencias
 
 - [Documentacion.md](../arquitectura/Documentacion.md) -- Vision del producto y arquitectura
 - [Backlog.md](../arquitectura/Backlog.md) -- Epicas, historias y plan de sprints
-- [Runbook-Azure.md](./Runbook-Azure.md) -- Runbook ejecutable con comandos `az` para provisionar Azure
-- [database/README.md](../../database/README.md) -- Scripts SQL Server
+- [Runbook-Azure.md](./Runbook-Azure.md) -- Runbook ejecutable con comandos `az` para provisionar Azure (mismo aviso de desactualizacion)
+- [database/README.md](../../database/README.md) -- Script y modelo de base de datos (MariaDB, fuente de verdad actual)
 
 ---
 

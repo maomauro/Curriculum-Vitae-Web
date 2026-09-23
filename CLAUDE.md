@@ -4,7 +4,7 @@ Este archivo brinda contexto a Claude Code (claude.ai/code) al trabajar con cód
 
 ## Descripción general del proyecto
 
-PortalCV: un portal que conecta a profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda/detalle público) o en **borrador** (edición privada únicamente). Solo los publicadores y administradores necesitan registrarse/autenticarse. Monorepo: backend en **.NET 10** (Clean Architecture) + frontend en **Angular 20**, base de datos **SQL Server**, todo desplegado en **Azure** (Container Apps + Static Web Apps + Azure SQL) mediante una imagen Docker publicada en GHCR.
+PortalCV: un portal que conecta a profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda/detalle público) o en **borrador** (edición privada únicamente). Solo los publicadores y administradores necesitan registrarse/autenticarse. Monorepo: backend en **.NET 10** (Clean Architecture) + frontend en **Angular 20**, base de datos **MariaDB**. El despliegue a producción está pendiente de definir (dejó de ser Azure).
 
 Todo el código, comentarios, mensajes de commit y documentación de este repositorio están escritos en **español**. Mantené esa convención al editar.
 
@@ -39,20 +39,17 @@ Si la API no está en el puerto 5005, configurá `PORTALCV_API_PROXY_TARGET` ant
 
 ### Base de datos
 
-No se usan migraciones de EF Core. El SQL está escrito a mano y vive en `scripts/`:
+Motor: **MariaDB** (`MySql.EntityFrameworkCore`, el conector oficial de Oracle — no Pomelo, ver `backend/README.md` para por qué). No se usan migraciones de EF Core: el SQL está escrito a mano en `database/01_CreateSchema.sql` (esquema completo — DDL de todas las tablas, índices y triggers), y es la única fuente de verdad del esquema.
 
-- `scripts/manual/01_CreateSchema.sql` — esquema completo de arranque local (drop+create).
-- `scripts/production/05_AzureSQL_CreateSchema.sql` — esquema completo de arranque para Azure (drop+create). **Nunca volver a ejecutar contra una base de datos con datos reales.**
-- `scripts/production/NN_*.sql` — migraciones incrementales numeradas para una base de datos Azure existente (estilo `IF OBJECT_ID(...) IS NULL CREATE TABLE...`, seguro de re-ejecutar). Al agregar una tabla/columna, agregá el siguiente script incremental numerado acá *y* reflejá el mismo cambio tanto en `01_CreateSchema.sql` (manual) como en `05_AzureSQL_CreateSchema.sql` (producción) para que sigan siendo la referencia completa. Renombrar una tabla/columna existente que pueda tener datos reales → usar `sp_rename` en el script incremental, no drop+recreate.
-- Aplicar localmente en SQL Server con `sqlcmd` — este proyecto ha tenido problemas de UTF-8/texto acentuado antes, así que siempre ejecutá `chcp.com 65001` primero y pasá `-f 65001 -C` a `sqlcmd`.
+`docker-compose.yml` monta ese mismo archivo como script de inicialización del contenedor `db` (`mariadb:11`) — corre solo la primera vez, con el volumen `portalcv_db_data` vacío. Para aplicarlo a mano contra un contenedor ya existente: `docker exec -i <contenedor_mariadb> mariadb -uroot -p"$PASSWORD" < database/01_CreateSchema.sql`.
 
-`database/01_CreateSchema.dbml` (visualizar en dbdiagram.io) y `database/DiccionarioDeDatos.md` están pensados para reflejar el esquema, pero **históricamente han quedado desactualizados** respecto a `scripts/` — tratá los scripts SQL como la fuente de verdad, no estos documentos, y verificá antes de confiar en cualquiera de los dos.
+`database/01_CreateSchema.dbml` (visualizar en dbdiagram.io) y `database/DiccionarioDeDatos.md` están pensados para reflejar el esquema, pero **históricamente han quedado desactualizados** respecto a `database/01_CreateSchema.sql` — tratá ese script como la fuente de verdad, no estos documentos, y verificá antes de confiar en cualquiera de los dos.
 
 ### Docker (solo backend — así se despliega a Azure Container Apps)
 
 ```bash
 cd backend && docker build -f Dockerfile -t portalcv-backend:local .
-# copiar docker/backend.local.env.example -> docker/backend.local.env (ignorado por git) y completar valores reales primero
+# copiar docker/backend.local.env.mariadb.example -> docker/backend.local.env (ignorado por git) y completar valores reales primero
 docker run --rm -p 5005:8080 --add-host=host.docker.internal:host-gateway --env-file docker/backend.local.env --name portalcv-api-local portalcv-backend:local
 curl http://localhost:5005/health
 ```
@@ -76,7 +73,7 @@ Tres jobs: `backend` (`dotnet build` + `dotnet test` con cobertura), `frontend` 
 
 Las subcarpetas físicas en las cuatro capas siguen las mismas tres zonas funcionales (reflejan `docs/diseño/prototipos/`): `Auth/` (identidad, roles, auditoría de auth), `Privada/` (el área del editor de CV — todo lo que el publicador edita/gestiona), `Publica/` (búsqueda/detalle/contacto público sin autenticación). Un puñado de servicios transversales (auditoría, auditoría de admin) viven en la raíz de su capa en lugar de en una carpeta de zona.
 
-Flujo de una petición: `Middleware → Controller (lee claims del JWT) → I{Service/Repository} (Application) → {Service/Repository} (Infrastructure) → PortalCvDbContext → SQL Server`.
+Flujo de una petición: `Middleware → Controller (lee claims del JWT) → I{Service/Repository} (Application) → {Service/Repository} (Infrastructure) → PortalCvDbContext → MariaDB`.
 
 `DependencyInjection.cs` (`AddInfrastructure`) es el único punto de registro para cada servicio/repositorio; `Program.cs` solo lo invoca.
 
@@ -119,8 +116,8 @@ Si se le pide a un usuario que provea un secreto (contraseña SMTP, una clave de
 
 ### Estructura del frontend
 
-Angular 20, ruteo standalone-módulo-por-zona (chunks lazy `private-module`, `public-module`, `auth-module`). `src/app/core/services/{admin,auth,cv,private,public,shared}` refleja la misma división de zonas Auth/Privada/Publica que el backend. `src/app/features/{admin,auth,private,public}/pages` contiene los componentes de página ruteados; `frontend/src/app/features/private/pages` es por lejos el más grande (el editor de CV + Mi CV + Analizar Oferta + Configuración, etc.).
+Angular 20, ruteo standalone-módulo-por-zona (chunks lazy `private-module`, `public-module`, `auth-module`, `admin-module`). `src/app/core/services/{admin,auth,cv,private,public,shared}` refleja la misma división de zonas Auth/Privada/Publica que el backend. `src/app/features/{admin,auth,private,public}/pages` contiene los componentes de página ruteados; `frontend/src/app/features/private/pages` es por lejos el más grande (el editor de CV + Mi CV + Analizar Oferta + Configuración, etc.).
 
 ### Tests del backend
 
-`PortalCV.Api.Tests` son tests de integración con xUnit que levantan el host real de la API vía `WebApplicationFactory<Program>` con EF Core **InMemory** en lugar de SQL Server (`TestWebApplicationFactory` aísla el proveedor para que InMemory/SqlServer no colisionen) — no se necesita una base de datos real para correr los tests.
+`PortalCV.Api.Tests` son tests de integración con xUnit que levantan el host real de la API vía `WebApplicationFactory<Program>` con EF Core **InMemory** en lugar de MariaDB (`TestWebApplicationFactory` aísla el proveedor para que InMemory/MySQL no colisionen) — no se necesita una base de datos real para correr los tests.

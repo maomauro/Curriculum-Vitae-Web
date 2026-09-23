@@ -2,9 +2,13 @@
 
 > Nota de vigencia: este plan conserva el contexto historico del corte 23-04-2026.
 > Para retomar trabajo con estado consolidado, usar primero:
-> - `docs/archivo/Estado-Actual-2026-08-07.md`
 > - `docs/devops/Smoke-Test-Produccion.md`
-> - `docs/archivo/Sprint-Cierre-GoLive-2026-08.md`
+>
+> Ademas, con posterioridad a este corte, el motor de base de datos paso de
+> **Azure SQL Database a MariaDB** (ver `database/README.md`) y el hosting de
+> produccion en Azure quedo pendiente de redefinir (ver `CLAUDE.md`). Toda
+> referencia a Azure SQL / SQL Server en este documento corresponde al corte
+> historico, no al estado actual.
 
 Estado del plan: En ejecucion
 Fecha de corte: 23-04-2026

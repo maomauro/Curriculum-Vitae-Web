@@ -1,5 +1,12 @@
 # Runbook de Despliegue en Azure — PortalCV
 
+> ⚠️ **Documento desactualizado.** Igual que [Despliegue.md](./Despliegue.md):
+> el motor de base de datos ya no es SQL Server/Azure SQL sino **MariaDB**
+> (ver `database/README.md`), y la decisión de dónde se aloja producción está
+> pendiente de definir (dejó de ser Azure; ver `CLAUDE.md`). Los comandos
+> `az sql ...` de este runbook ya no aplican. Se conserva como referencia
+> histórica, no como guía ejecutable vigente.
+
 Runbook operativo con los comandos `az` en orden, para provisionar desde cero la infraestructura descrita en [Despliegue.md](./Despliegue.md).
 
 > Este documento es **ejecutable**: cada bloque se puede copiar tal cual en PowerShell (o bash) una vez autenticado en Azure. Los valores entre `{}` son placeholders que debes reemplazar.
@@ -315,7 +322,7 @@ az containerapp logs show --name $ACA_APP --resource-group $RG --follow
 
 ## 7.1 Snapshot público (retirado 2026-08-18)
 
-⚠️ **Funcionalidad retirada.** El mecanismo de resiliencia ante cold-start (snapshot en memoria + export estático `frontend/public/snapshots/public-cvs-snapshot.json` + endpoints `GET/POST /api/admin/public-cv-snapshot/*` + `GET /api/public/snapshot`) fue eliminado del código. Se mantiene la estrategia de mantener la base de producción activa (evitando el cold-start en origen) en vez de un fallback client-side; ver `docs/archivo/Snapshot-JSON-ColdStart.md` para el diseño histórico.
+⚠️ **Funcionalidad retirada.** El mecanismo de resiliencia ante cold-start (snapshot en memoria + export estático `frontend/public/snapshots/public-cvs-snapshot.json` + endpoints `GET/POST /api/admin/public-cv-snapshot/*` + `GET /api/public/snapshot`) fue eliminado del código. Se mantiene la estrategia de mantener la base de producción activa (evitando el cold-start en origen) en vez de un fallback client-side.
 
 Las tablas `PublicCvSnapshotExport` y `PublicStaticSnapshotState` fueron eliminadas de la base (2026-08-20, `scripts/production/13_DropSnapshotTables.sql`). Para una base Azure existente que aún las tenga, ejecutar ese script.
 

@@ -4,6 +4,8 @@
 
 **Stack confirmado**: .NET 10 (Clean Architecture: Domain/Application/Infrastructure/Api + Api.Tests) · Angular 20 (NgModules) · SQL Server/Azure SQL vía DDL manual (sin migraciones EF) · Docker → GHCR → Azure Container Apps (backend) · Azure Static Web Apps (frontend) · GitHub Actions + SonarCloud.
 
+> ⚠️ **Actualización posterior (no retroactiva a esta auditoría):** el motor de base de datos pasó de SQL Server/Azure SQL a **MariaDB** (ver `database/README.md`), y el hosting de producción en Azure quedó pendiente de redefinir (ver `CLAUDE.md`). El resto del stack listado arriba sigue vigente.
+
 ---
 
 ## 1. Limpieza
@@ -35,6 +37,7 @@
   - `docs/produccion/Estado-Actual-2026-08-07.md` → `docs/archivo/Estado-Actual-2026-08-07.md`
   - `docs/produccion/Sprint-Cierre-GoLive-2026-08.md` → `docs/archivo/Sprint-Cierre-GoLive-2026-08.md`
   - Referencias cruzadas actualizadas en `Checklist-Produccion.md`, `Runbook-Azure.md`, `Plan-Trabajo-Produccion.md` y `docs/README.md`.
+  - ⚠️ **Actualización posterior:** `docs/archivo/` (los 5 archivos de arriba) se eliminó por completo del repositorio; ya no aportaban nada de cara al futuro y las referencias cruzadas se quitaron de los documentos que las tenían.
 
 - [x] **2.2** — Ver **1.5** (también era hallazgo estructural, no solo de limpieza).
 

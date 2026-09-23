@@ -1,9 +1,16 @@
 ## 📋 Referencias
 
+> ⚠️ Este backlog documenta la épica 0 (fundación técnica) tal como se planificó
+> originalmente, cuando el motor de base de datos era SQL Server/Azure SQL. El
+> motor ya se migró a **MariaDB** (ver `database/README.md`) y los scripts
+> `scripts/manual/`/`scripts/production/` mencionados abajo ya no existen en
+> el repositorio — la fuente de verdad actual es `database/01_CreateSchema.sql`.
+> Se conserva el resto del contenido como referencia histórica de planificación.
+
 - **Documentación del producto:** [Documentacion.md](Documentacion.md)  
-- **Modelo de datos:** [Modelo.md](Modelo.md)  
+- **Modelo de datos:** [database/README.md](../../database/README.md)  
 - **Roadmap del flujo Ofertas + IA:** [Roadmap-Ofertas-IA.md](Roadmap-Ofertas-IA.md)  
-- **Script BD SQL Server (local):** [../../scripts/manual/01_CreateSchema.sql](../../scripts/manual/01_CreateSchema.sql) · **Azure:** [../../scripts/production/05_AzureSQL_CreateSchema.sql](../../scripts/production/05_AzureSQL_CreateSchema.sql)  
+- **Script BD (MariaDB, fuente de verdad actual):** [../../database/01_CreateSchema.sql](../../database/01_CreateSchema.sql)  
 - **Despliegue / CI-CD:** [../devops/Despliegue.md](../devops/Despliegue.md)  
 - **Git (ramas, commits, flujo):** [../guias/Guia-git.md](../guias/Guia-git.md)
 

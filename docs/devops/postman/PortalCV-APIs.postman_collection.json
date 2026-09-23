@@ -1112,7 +1112,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, Azure SQL\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start en capa gratuita de Azure\",\n  \"mostrarEnCv\": true\n}"
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, MariaDB\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start en capa gratuita de Azure\",\n  \"mostrarEnCv\": true\n}"
                 }
               },
               "response": []
@@ -1141,7 +1141,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, Azure SQL\",\n  \"aporte\": \"Actualizado\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start\",\n  \"mostrarEnCv\": true\n}"
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, MariaDB\",\n  \"aporte\": \"Actualizado\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start\",\n  \"mostrarEnCv\": true\n}"
                 },
                 "description": "Reemplazar el 1 del path por un ProyectoId real."
               },

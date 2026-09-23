@@ -1,0 +1,73 @@
+# Entorno local completo para desarrollo: MariaDB + backend (.NET, hot-reload) + frontend (Angular, hot-reload).
+#
+# El Dockerfile de produccion del backend (backend/Dockerfile) NO se toca: sigue siendo
+# el que se usa para replicar/desplegar a Azure Container Apps (build multi-stage sin
+# hot-reload). Este compose usa Dockerfile.dev en backend y frontend, pensados
+# unicamente para desarrollo local.
+#
+# Uso:
+#   1. Copiar docker/mariadb.local.env.example -> docker/mariadb.local.env y completar credenciales.
+#   2. Copiar docker/backend.local.env.mariadb.example -> docker/backend.local.env (Jwt/Encryption keys).
+#   3. docker compose up --build
+
+services:
+
+  db:
+    image: mariadb:11
+    container_name: portalcv-mariadb
+    restart: unless-stopped
+    env_file:
+      - ./docker/mariadb.local.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - portalcv_db_data:/var/lib/mysql
+      # Solo corre la primera vez, con el volumen vacio (creacion inicial del esquema).
+      - ./database/01_CreateSchema.sql:/docker-entrypoint-initdb.d/01_CreateSchema.sql:ro
+    networks:
+      - portalcv-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: portalcv-backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./docker/backend.local.env
+      - ./docker/mariadb.local.env
+    volumes:
+      - ./backend/PortalCV.Backend:/src/PortalCV.Backend
+    ports:
+      - "5005:8080"
+    networks:
+      - portalcv-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: portalcv-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORTALCV_API_PROXY_TARGET: http://backend:8080
+      # ng serve no siempre detecta cambios en bind mounts sobre Docker Desktop sin esto.
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    networks:
+      - portalcv-net
+
+networks:
+  portalcv-net:
+    driver: bridge
+
+volumes:
+  portalcv_db_data:

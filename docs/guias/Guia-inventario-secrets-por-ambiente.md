@@ -7,8 +7,8 @@ Mantener un inventario unico de credenciales y secretos requeridos por el proyec
 Esta guia cubre:
 - Desarrollo local (maquina del dev: `dotnet user-secrets` o `docker/backend.local.env`).
 - CI (GitHub Actions a nivel de repositorio; no hay GitHub Environment separado hoy).
-- Produccion (`main` / release en Azure Container Apps + Azure Static Web Apps + Azure SQL).
-- Herramientas: GitHub, SonarCloud, Azure, base de datos, servicios externos.
+- Produccion (`main` / release; hosting de backend/frontend pendiente de definir — ver `CLAUDE.md` — base de datos MariaDB).
+- Herramientas: GitHub, SonarCloud, hosting de produccion, base de datos, servicios externos.
 
 ## Reglas obligatorias
 - No guardar secretos reales en archivos `.md`, `appsettings*.json`, `launchSettings.json`, `.env` versionado o issues.
@@ -48,7 +48,7 @@ Usar esta plantilla por cada secreto:
 - [ ] `Auth__DemoUser__Email` (si se usa usuario demo)
 - [ ] `Auth__DemoUser__Password` (si se usa usuario demo)
 
-### 2.2 Base de datos (SQL Server / Azure SQL)
+### 2.2 Base de datos (MariaDB)
 - [ ] Credencial admin de base de datos (uso restringido)
 - [ ] Credencial de aplicacion (runtime) con minimo privilegio
 - [ ] Credencial de migraciones (si aplica, separada de runtime)
@@ -86,7 +86,7 @@ Usar esta plantilla por cada secreto:
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si | maomauro | Activo — nativo via `Trusted_Connection=true` (ver `launchSettings.json`); Docker via `docker/backend.local.env` con `portalcv_app` |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Activo — MariaDB via `dotnet user-secrets` (flujo `dotnet run`) o `docker/backend.local.env` (flujo Docker), ambos contra el contenedor `db` de `docker-compose.yml` |
 | `Jwt__Key` | Si | maomauro | Activo en `docker/backend.local.env`; Pendiente en `dotnet user-secrets` |
 | `Jwt__Issuer` | Si (no sensible) | maomauro | Activo (`PortalCV.Api`) |
 | `Jwt__Audience` | Si (no sensible) | maomauro | Activo (`PortalCV.Client`) |
@@ -94,7 +94,7 @@ Usar esta plantilla por cada secreto:
 | `Auth__DemoUser__Password` | Opcional | maomauro | No configurado |
 
 Checklist:
-- [x] `launchSettings.json` sin secretos reales (solo cadena a `SQLEXPRESS` con `Trusted_Connection`).
+- [x] `launchSettings.json` sin secretos reales (cadena a MariaDB via `dotnet user-secrets`/`docker/backend.local.env`, no hardcodeada).
 - [x] `docker/backend.local.env` excluido de git (`.gitignore`).
 - [x] Plantilla `docker/backend.local.env.example` versionada con placeholders.
 - [ ] User-secrets configurados para el flujo nativo `dotnet run`.
@@ -112,7 +112,7 @@ Checklist:
 | `AZURE_CREDENTIALS` | Secret | Para deploy | maomauro | Pendiente (workflow de deploy aun no existe) |
 | `AZURE_STATIC_WEB_APPS_TOKEN` | Secret | Para deploy SWA | maomauro | Pendiente |
 | `JWT_KEY_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
-| `AZURE_SQL_CONN_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
+| `DB_CONNECTION_PROD` | Secret | Para deploy | maomauro | Pendiente — hosting de produccion aun sin definir |
 
 Checklist:
 - [x] Secret `SONAR_TOKEN` y variables `SONAR_*` cargados.
@@ -125,7 +125,7 @@ Checklist:
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a `sql-portalcv-mao.database.windows.net` con `portalcv_app_prod` |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a la instancia MariaDB de produccion (hosting aun sin definir) |
 | `Jwt__Key` | Si | maomauro | Pendiente — clave distinta a la de local/develop (≥ 32 chars) |
 | `Jwt__Issuer` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Api` |
 | `Jwt__Audience` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Client` |
@@ -137,8 +137,7 @@ Checklist:
 - [ ] Aprobacion para despliegues a `production` (GitHub Environment con reviewers).
 - [ ] Politica de rotacion activa (90 dias para criticos).
 - [ ] Plan de respuesta ante exposicion validado.
-- [ ] Firewall Azure SQL: `Allow Azure services ON`.
-- [ ] `portalcv_app_prod` con permisos minimos (SELECT/INSERT/UPDATE/DELETE/EXECUTE sobre `dbo`).
+- [ ] Usuario de aplicacion en MariaDB con permisos minimos (SELECT/INSERT/UPDATE/DELETE, sin privilegios de administracion).
 
 ---
 

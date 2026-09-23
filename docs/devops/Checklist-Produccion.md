@@ -2,15 +2,20 @@
 
 Lista orientativa antes de exponer el portal a usuarios reales. Complementa [Integracion-SonarCloud.md](../produccion/Integracion-SonarCloud.md), [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md) y [Guia-git.md](../guias/Guia-git.md).
 
+> ⚠️ Los ítems marcados `[x]` reflejan el corte previo (base de datos Azure SQL,
+> hosting en Azure Container Apps / Static Web Apps). Ese corte ya no está
+> vigente: la base de datos es **MariaDB** (ver `database/README.md`) y el
+> hosting de producción está pendiente de definir (ver `CLAUDE.md`). Revisar
+> y re-verificar cada ítem contra el destino real antes del próximo despliegue.
+
 Referencia de corte vigente para retomar trabajo:
-- [Estado-Actual-2026-08-07.md](../archivo/Estado-Actual-2026-08-07.md)
 - [Smoke-Test-Produccion.md](./Smoke-Test-Produccion.md)
 
 ---
 
 ## Configuración y secretos
 
-- [x] **Cadena SQL**: `ConnectionStrings__DefaultConnection` con `Encrypt=True` y certificados correctos en Azure SQL (no usar `TrustServerCertificate=True` en prod salvo criterio explícito).
+- [ ] **Cadena de conexión**: `ConnectionStrings__DefaultConnection` apuntando a la instancia MariaDB de producción, con usuario/permisos dedicados (no `root`).
 - [ ] **JWT**: `Jwt__Key` larga y aleatoria (≥ 32 caracteres); `Jwt__Issuer` y `Jwt__Audience` alineados con el despliegue. Rotación documentada.
 - [x] **CORS**: `Cors__AllowedOrigins__0` (y más índices si aplica) con la **URL exacta** del SPA (incluye `https://`, sin barra final salvo que el navegador la envíe así). En producción la API **falla al arrancar** si no hay orígenes configurados y `AllowedOrigins` está vacío en appsettings.
 - [ ] **Usuario demo** (`Auth__DemoUser`): deshabilitar o eliminar en producción si el endpoint no debe existir.
@@ -20,7 +25,7 @@ Referencia de corte vigente para retomar trabajo:
 
 ## Base de datos
 
-- [x] **Base nueva (recomendado):** ejecutar `scripts/production/05_AzureSQL_CreateSchema.sql` una vez en Azure SQL (incluye esquema completo y roles base). **Local (SQL Server instalado):** ejecutar `scripts/manual/01_CreateSchema.sql` (y opcionalmente `02_InsertTestData.sql`) según `database/README.md`.
+- [ ] **Base nueva:** ejecutar `database/01_CreateSchema.sql` una vez contra la instancia MariaDB de producción (incluye esquema completo, índices, triggers y roles base) — ver `database/README.md`.
 - [ ] Revisar política de backups y retención definida por el equipo (documentar responsable, periodicidad y restauración).
 
 ---

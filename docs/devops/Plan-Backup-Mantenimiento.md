@@ -1,55 +1,57 @@
 # Plan Basico de Backup y Mantenimiento
 
+> ⚠️ Reescrito para **MariaDB** (el motor anterior, SQL Server/Azure SQL, ya
+> no se usa — ver `database/README.md`). El hosting de produccion todavia
+> esta pendiente de definir (ver `CLAUDE.md`), asi que las
+> tareas de "Produccion" de abajo asumen una instancia MariaDB propia
+> (self-managed); si en el futuro se usa un servicio administrado (ej. un
+> MariaDB gestionado en algun proveedor cloud), revisar que backups/PITR ya
+> vengan incluidos por el proveedor y ajustar esta seccion.
+
 ## Objetivo
 
-Definir una politica minima para proteger la base de datos `PortalCV` y mantener un rendimiento estable, diferenciando claramente produccion (servicio administrado en Azure) de desarrollo local (instancia propia).
+Definir una politica minima para proteger la base de datos `portalcv` (MariaDB) y mantener un rendimiento estable, diferenciando produccion de desarrollo local (contenedor `db` de `docker-compose.yml`).
 
 ## Alcance
 
 | Aspecto | Produccion | Desarrollo local |
 |---------|------------|------------------|
-| **Motor** | Azure SQL Database Free Tier (`sql-portalcv-mao.database.windows.net`) | SQL Server instalado nativo (instancia `SQLEXPRESS`) |
-| **Backups** | Automaticos (PITR administrado por Azure) | Manual u opcional |
-| **Mantenimiento** | Aplicado por el equipo via T-SQL | Aplicado por el equipo via T-SQL |
-
-> Produccion es un servicio administrado: Azure gestiona los backups automaticamente y permite restaurar a un punto en el tiempo (PITR). En local el respaldo es responsabilidad del desarrollador y solo es critico si existe informacion que no se pueda regenerar.
+| **Motor** | MariaDB (hosting pendiente de definir) | MariaDB (`mariadb:11` via `docker-compose.yml`) |
+| **Backups** | Manual/programado (`mariadb-dump` o `mariabackup`), salvo que el hosting elegido lo automatice | Manual u opcional |
+| **Mantenimiento** | `OPTIMIZE TABLE` / `ANALYZE TABLE` | `OPTIMIZE TABLE` / `ANALYZE TABLE` |
 
 ---
 
 ## 1. Backups
 
-### Produccion (Azure SQL)
+### Produccion
 
-- **Backups automaticos:** Azure SQL realiza backups completos, diferenciales y de log de forma continua.
-- **Point-in-Time Restore (PITR):** retencion minima de 7 dias en el tier Free.
-- **Restore geografico:** depende del tier; verificar en portal Azure antes de asumirlo.
+- **Backup logico:** `mariadb-dump -u<usuario> -p portalcv > backup_$(date +%F).sql` (o `mariabackup` para un backup fisico/incremental en instancias mas grandes).
+- **Point-in-time recovery:** requiere binary logging (`log_bin`) habilitado en el servidor; sin eso, solo se puede restaurar al ultimo backup completo.
 - **Responsable de restauracion:** el lider tecnico es quien autoriza una restauracion.
-- **No se requiere ejecutar jobs manuales de backup.**
+- **Frecuencia sugerida:** diaria, retencion minima de 7 dias.
 
-### Desarrollo local (SQL Server instalado)
+### Desarrollo local
 
-- Backups solo son necesarios si se almacenan datos valiosos que no se regeneren con `scripts/manual/02_InsertTestData.sql`.
-- Si se requieren, ejecutar manualmente con SSMS o `BACKUP DATABASE PortalCV TO DISK = '...'`.
+- Backups solo son necesarios si se almacenan datos valiosos que no se regeneren con `database/01_CreateSchema.sql`.
+- Si se requieren: `docker exec <contenedor_mariadb> mariadb-dump -uroot -p"$PASSWORD" portalcv > backup_local.sql`.
 - **Retencion sugerida:** los ultimos 3 backups manuales, si es que se crean.
 
 ---
 
-## 2. Mantenimiento de indices
+## 2. Mantenimiento de indices y tablas
 
 Aplica tanto a produccion como a local.
 
-- **Frecuencia:** semanal (domingo 03:00 AM en produccion; en local, cuando se observe degradacion).
-- **Regla simple:**
-  - Fragmentacion entre 5% y 30%: `ALTER INDEX ... REORGANIZE`.
-  - Fragmentacion mayor a 30%: `ALTER INDEX ... REBUILD`.
-- **Como ejecutar en Azure SQL:** script T-SQL planificado con Elastic Jobs o una ejecucion manual desde Azure Data Studio/Portal.
-- **Como ejecutar en local:** ejecutar el mismo script en SSMS.
+- **Frecuencia:** mensual, o cuando se observe degradacion de consultas.
+- **Comando:** `OPTIMIZE TABLE <tabla>;` (reconstruye la tabla InnoDB y sus indices, recupera espacio fragmentado).
+- MariaDB/InnoDB no expone un porcentaje de fragmentacion como SQL Server; `OPTIMIZE TABLE` es seguro de correr periodicamente sobre las tablas con mas escritura/borrado (`AlertaVisita`, `AuditoriaCv`, `AuditoriaAuth`, `AuditoriaAdmin`).
 
 ---
 
 ## 3. Mantenimiento de estadisticas
 
-- **Frecuencia:** semanal (domingo 04:00 AM en produccion).
+- **Frecuencia:** mensual, junto con el mantenimiento de indices.
 - **Alcance:** actualizar estadisticas de las tablas con mayor rotacion:
   - `Curriculum`
   - `Personales`
@@ -60,7 +62,7 @@ Aplica tanto a produccion como a local.
   - `Proyecto`
   - `AlertaVisita`
   - `EstadisticasPublicas`
-- **Comando:** `UPDATE STATISTICS <tabla>` o `EXEC sp_updatestats`.
+- **Comando:** `ANALYZE TABLE <tabla>;`
 
 ---
 
@@ -68,12 +70,12 @@ Aplica tanto a produccion como a local.
 
 ### Produccion
 
-- **Una vez al mes** realizar una prueba de PITR a una base temporal (`PortalCV-restore-test`) y verificar que las consultas principales respondan.
+- **Una vez al mes** restaurar el ultimo backup en una base temporal (`portalcv_restore_test`) y verificar que las consultas principales respondan.
 - **Eliminar** la base de prueba despues de validar.
 
 ### Local
 
-- Opcional. Si se mantienen backups manuales, restaurar al menos 1 vez al trimestre para verificar integridad del archivo `.bak`.
+- Opcional. Si se mantienen backups manuales, restaurar al menos 1 vez al trimestre para verificar integridad del archivo `.sql`.
 
 ---
 
@@ -81,9 +83,9 @@ Aplica tanto a produccion como a local.
 
 | Tarea | Frecuencia | Ventana |
 |-------|------------|---------|
-| PITR automatico | Continuo | Administrado por Azure |
-| Mantenimiento de indices | Semanal | Domingo 03:00 AM |
-| Actualizacion de estadisticas | Semanal | Domingo 04:00 AM |
+| Backup logico/fisico | Diario | Fuera de horario pico |
+| Mantenimiento de indices y tablas | Mensual | Fin de semana |
+| Actualizacion de estadisticas | Mensual | Junto al mantenimiento de indices |
 | Prueba de restauracion | Mensual | Primer lunes del mes |
 
 ---
@@ -100,13 +102,13 @@ Aplica tanto a produccion como a local.
 
 ### Produccion
 
-- [ ] PITR activo en Azure SQL (por defecto lo esta; verificar en el portal).
-- [ ] Retencion de PITR configurada segun el tier.
-- [ ] Script de mantenimiento de indices documentado.
-- [ ] Script de actualizacion de estadisticas documentado.
+- [ ] Backup automatizado (cron / job del hosting elegido) configurado y probado.
+- [ ] Retencion de backups definida y documentada.
+- [ ] Comando de mantenimiento de indices/tablas documentado.
+- [ ] Comando de actualizacion de estadisticas documentado.
 - [ ] Evidencia de prueba de restauracion mensual registrada.
 
 ### Local
 
 - [ ] Script de backup manual conocido por el desarrollador (si aplica).
-- [ ] Repoblacion desde `scripts/manual/` validada como alternativa rapida a restaurar.
+- [ ] Repoblacion desde `database/01_CreateSchema.sql` validada como alternativa rapida a restaurar.

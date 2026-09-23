@@ -14,8 +14,7 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 | Backend | .NET 10 | LTS | API REST (Clean Architecture) |
 | Frontend | Angular | 20.1.1 | SPA servida como estatico |
 | ORM | Entity Framework Core | 10 | Acceso a datos |
-| Base de datos (local) | SQL Server (instalación local) | según entorno | Desarrollo |
-| Base de datos (prod) | Azure SQL Database Free Tier | -- | Produccion |
+| Base de datos | MariaDB (`mariadb:11`) | -- | Local vía `docker-compose.yml`; hosting de producción pendiente de definir |
 | Contenedores (build) | Docker (opcional) | -- | Solo para construir/pushear imagen backend hacia GHCR |
 | Hosting backend | Azure Container Apps | Free tier | scale-to-zero, imagen GHCR |
 | Hosting frontend | Azure Static Web Apps | Free | CDN global, Angular SPA |
@@ -134,7 +133,7 @@ package-and-deploy:
 
 ### Flujo recomendado
 
-1. **Base de datos**: SQL Server local + scripts en `scripts/manual/` (ver `database/README.md`).
+1. **Base de datos**: MariaDB local (`docker compose up --build` o instancia propia) + `database/01_CreateSchema.sql` (ver `database/README.md`).
 2. **Backend**: `dotnet run` desde `backend/PortalCV.Backend/PortalCV.Api` con secretos locales (`dotnet user-secrets`).
 3. **Frontend**: `npm ci` + `ng serve` desde `frontend/` (proxy `/api` y `/health` hacia el backend local).
 
@@ -147,6 +146,16 @@ Para validar localmente la imagen (opcional):
 docker build -f backend/Dockerfile -t portalcv-backend:local ./backend
 ```
 
+### Docker Compose (entorno local completo, MariaDB)
+
+Para desarrollo con MariaDB (ver `database/README.md`), `docker-compose.yml`
+en la raíz levanta MariaDB + backend + frontend juntos con hot-reload (`dotnet watch` /
+`ng serve`). Mapa completo de qué archivo Docker vive dónde y por qué: `docker/README.md`.
+
+```bash
+docker compose up --build
+```
+
 ---
 
 ## 5. Recursos Azure (produccion)
@@ -154,7 +163,6 @@ docker build -f backend/Dockerfile -t portalcv-backend:local ./backend
 | Recurso | Nombre | Tipo | Estado |
 |---------|--------|------|--------|
 | Resource Group | `rg-portalcv` | Contenedor de recursos | Pendiente crear |
-| Azure SQL Database | `sql-portalcv-mao.database.windows.net / PortalCV` | Free Tier | OPERATIVA |
 | Container Apps Environment | `env-portalcv` | Entorno ACA | Pendiente crear |
 | Container App | `portalcv-api` | Backend .NET 10 | Pendiente crear |
 | Static Web App | `portalcv-web` | Frontend Angular | Pendiente crear |
@@ -170,7 +178,7 @@ docker build -f backend/Dockerfile -t portalcv-backend:local ./backend
 | `AZURE_CREDENTIALS` | JSON del Service Principal (rol Contributor en rg-portalcv) |
 | `AZURE_STATIC_WEB_APPS_TOKEN` | Token de deploy del Static Web App |
 | `JWT_KEY_PROD` | Clave de firma JWT (>= 32 caracteres) |
-| `AZURE_SQL_CONN_PROD` | Cadena de conexion a Azure SQL con portalcv_app_prod |
+| `DB_CONNECTION_PROD` | Cadena de conexion a MariaDB en produccion |
 
 > `GITHUB_TOKEN` es automatico -- no requiere configuracion.
 
@@ -242,8 +250,6 @@ Seguir Conventional Commits (ver [Guia-git.md](../guias/Guia-git.md)):
 
 | Script | Entorno | Descripcion |
 |--------|---------|-------------|
-| `scripts/manual/01_CreateSchema.sql` | Local | Esquema completo SQL Server |
-| `scripts/manual/02_InsertTestData.sql` | Local | Datos de prueba |
-| `scripts/production/05_AzureSQL_CreateSchema.sql` | Azure SQL | DDL sin USE [DB] + roles base al final -- ejecutar 1 vez |
+| `database/01_CreateSchema.sql` | Local / cualquier entorno | Esquema completo MariaDB (tablas, indices, triggers y roles base). Fuente de verdad -- ver `database/README.md`. |
 
-> Los scripts de Azure SQL ya fueron ejecutados en el servidor de produccion.
+> Lo monta `docker-compose.yml` (servicio `db`) como script de inicializacion de MariaDB; corre solo la primera vez, con el volumen de datos vacio.

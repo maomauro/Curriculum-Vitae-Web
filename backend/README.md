@@ -149,9 +149,18 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 | Archivo | Función |
 |---------|---------|
 | `PortalCvDbContext.cs` | DbContext principal de EF Core. Registra todos los `DbSet<T>` y aplica las configuraciones |
-| `Configurations/*.cs` | Una clase por entidad. Define mapeo a SQL Server: tabla, columnas, PK, FK, índices y constraints |
+| `Configurations/*.cs` | Una clase por entidad. Define mapeo a MariaDB: tabla, columnas, PK, FK, índices y constraints |
 
-> El proyecto **no usa migraciones** de EF Core. El DDL ejecutable está en **`scripts/manual/`** (local) y **`scripts/production/`** (Azure); ver `scripts/README_ProductionScripts.md` y `database/README.md`.
+> El proyecto **no usa migraciones** de EF Core. El DDL ejecutable está en **`database/01_CreateSchema.sql`**; ver `database/README.md`.
+
+> **Conector EF Core usado: `MySql.EntityFrameworkCore` (Oracle), no Pomelo.EntityFrameworkCore.MySql.**
+> Pomelo es el más recomendado específicamente para MariaDB, pero al momento de escribir esto no
+> tiene ninguna versión compatible con EF Core 10 (la última, 9.0.0, falla en runtime con
+> `MissingMethodException` al resolver el primer `DbContext` — incompatibilidad binaria real con
+> `Microsoft.EntityFrameworkCore.Abstractions` 10.x). El conector de Oracle sí publica versión
+> `10.0.x` en paralelo a cada versión de EF Core y fue probado contra MariaDB real (no solo MySQL).
+> Si Pomelo publica soporte para EF Core 10 más adelante, migrar es un cambio chico (mismo
+> `DbContext`, mismo esquema) — vale la pena revisar entonces.
 
 ### Repositorios (`Repositories/`)
 
@@ -306,7 +315,7 @@ $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create
 Para el flujo Docker, copia la plantilla y completa valores reales:
 
 ```bash
-Copy-Item docker/backend.local.env.example docker/backend.local.env
+Copy-Item docker/backend.local.env.mariadb.example docker/backend.local.env
 ```
 
 > Los valores sensibles **nunca** deben commitearse en `launchSettings.json`, `appsettings.*.json` ni en código fuente.
@@ -331,7 +340,7 @@ HTTP Request
 [Servicio / Repositorio]      ← Implementación en Infrastructure
     │
     ▼
-[PortalCvDbContext]            ← EF Core → SQL Server
+[PortalCvDbContext]            ← EF Core → MariaDB
     │
     ▼
 HTTP Response (DTO serializado como JSON)
@@ -355,7 +364,7 @@ HTTP Response (DTO serializado como JSON)
 
 ## Tests (`PortalCV.Api.Tests`)
 
-Proyecto **xUnit** con tests de integración que arrancan el host de la API en memoria usando `WebApplicationFactory<Program>` y sustituyen SQL Server por **EF Core InMemory** (sin dependencia de base de datos real).
+Proyecto **xUnit** con tests de integración que arrancan el host de la API en memoria usando `WebApplicationFactory<Program>` y sustituyen MariaDB por **EF Core InMemory** (sin dependencia de base de datos real).
 
 Cobertura actual:
 
@@ -365,7 +374,7 @@ Cobertura actual:
 | `AuthEndpointsTests.cs` | Login/logout, registro de auditoría de autenticación (incluye IP de origen), endpoints protegidos devuelven 401 sin token; forgot-password responde genérico |
 | `CvEditorEndpointsTests.cs` | Edición del CV por el publicador y registro de auditoría de cambios |
 | `AdminAuditoriaAuthEndpointsTests.cs` | Endpoints admin de auditoría de autenticación: listado, control de acceso por rol, validaciones de purga |
-| `TestWebApplicationFactory.cs` | Fixture compartida: aísla el provider interno de EF para evitar choque SqlServer/InMemory |
+| `TestWebApplicationFactory.cs` | Fixture compartida: aísla el provider interno de EF para evitar choque MySQL/InMemory |
 
 Ejecutar en local:
 
