@@ -116,7 +116,7 @@ Si se le pide a un usuario que provea un secreto (contraseña SMTP, una clave de
 
 ### Estructura del frontend
 
-Angular 20, ruteo standalone-módulo-por-zona (chunks lazy `private-module`, `public-module`, `auth-module`, `admin-module`). `src/app/core/services/{admin,auth,cv,private,public,shared}` refleja la misma división de zonas Auth/Privada/Publica que el backend. `src/app/features/{admin,auth,private,public}/pages` contiene los componentes de página ruteados; `frontend/src/app/features/private/pages` es por lejos el más grande (el editor de CV + Mi CV + Analizar Oferta + Configuración, etc.).
+Angular 20, ruteo standalone-módulo-por-zona (chunks lazy `private-module`, `public-module`, `auth-module`; `admin` va **eager** en el bundle principal a propósito, para evitar un problema de chunk lazy cacheado en dev — ver comentario en `app-routing-module.ts`). `src/app/core/services/{admin,auth,cv,private,public,shared}` refleja la misma división de zonas Auth/Privada/Publica que el backend. `src/app/features/{admin,auth,private,public}/pages` contiene los componentes de página ruteados; `frontend/src/app/features/private/pages` es por lejos el más grande (el editor de CV + Mi CV + Analizar Oferta + Configuración, etc.).
 
 ### Tests del backend
 
