@@ -23,9 +23,9 @@ Portal web para conectar profesionales (publicadores de CV) con reclutadores. Ca
 
 Antes de **producción**, revisar [docs/devops/Checklist-Produccion.md](docs/devops/Checklist-Produccion.md) (CORS, JWT, base de datos, build del SPA).
 
-### Docker (solo lo necesario para Azure Container Apps)
+### Docker (imagen de producción del backend)
 
-El despliegue de backend en **Azure Container Apps** usa una **imagen Docker** construida desde `backend/Dockerfile` y publicada en **GHCR**.
+El despliegue de producción (VPS de Contabo, ver [docs/produccion/Plan-Trabajo-Produccion.md](docs/produccion/Plan-Trabajo-Produccion.md)) usa una **imagen Docker** construida desde `backend/Dockerfile` y publicada en **GHCR**.
 Para validar localmente la imagen (opcional):
 
 ```bash

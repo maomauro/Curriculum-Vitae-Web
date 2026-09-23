@@ -2,10 +2,11 @@
 
 > ⚠️ **Documento desactualizado.** Igual que [Despliegue.md](./Despliegue.md):
 > el motor de base de datos ya no es SQL Server/Azure SQL sino **MariaDB**
-> (ver `database/README.md`), y la decisión de dónde se aloja producción está
-> pendiente de definir (dejó de ser Azure; ver `CLAUDE.md`). Los comandos
-> `az sql ...` de este runbook ya no aplican. Se conserva como referencia
-> histórica, no como guía ejecutable vigente.
+> (ver `database/README.md`), y la producción se despliega en un **VPS de
+> Contabo + Cloudflare**, no en Azure — ver el plan vigente en
+> [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md). Los
+> comandos `az ...` de este runbook ya no aplican. Se conserva como
+> referencia histórica, no como guía ejecutable vigente.
 
 Runbook operativo con los comandos `az` en orden, para provisionar desde cero la infraestructura descrita en [Despliegue.md](./Despliegue.md).
 

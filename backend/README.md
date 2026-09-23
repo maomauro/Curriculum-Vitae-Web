@@ -278,8 +278,8 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 
 > `Serilog`/`Logging`/`AllowedHosts` también están en `appsettings.json` con la configuración estándar de logging; se omiten aquí por brevedad.
 
-- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
-- **JWT / SQL**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
+- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-subdominio.tu-dominio.com`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
+- **JWT / MariaDB**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
 
 ### Secretos locales
 
@@ -289,19 +289,20 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 |---|---|---|
 | **Docker local** (`docker run --env-file`) | `docker/backend.local.env` | Sí |
 | **Nativo** (`dotnet run` / F5 en Visual Studio o Rider) | `dotnet user-secrets` (perfil del usuario del SO) | Sí (no está en el repo) |
-| **CI / Azure Container Apps** | Variables de entorno del runtime / Key Vault | N/A |
+| **CI / VPS de producción (Contabo)** | Variables de entorno del runtime | N/A |
 
 Variables sensibles que debes configurar localmente:
 
-- `ConnectionStrings:DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
+- `ConnectionStrings:DefaultConnection` (cadena a MariaDB — `launchSettings.json` ya **no** trae un valor por defecto, así que sin esto el flujo nativo no puede conectar a la base)
 - `Jwt:Key` (mínimo 32 caracteres)
 - `Encryption:Key` (clave AES-256 de 32 bytes en base64 — cifra la clave de API de cada conexión en `ProveedorIa`, ver `AesGcmApiKeyCipher`). Sin ella, cualquier endpoint de `api/cv/proveedor-ia` responde 500 al construir el servicio.
 
-Para el flujo nativo, inicializa `user-secrets` una sola vez. **Importante:** `dotnet user-secrets set` guarda en un JSON plano, así que la jerarquía va con **dos puntos** (`Seccion:Clave`) — la sintaxis con doble guion bajo (`Seccion__Clave`) es solo para variables de entorno (Docker, `launchSettings.json`, Azure) y `dotnet user-secrets` la guarda tal cual, literal, sin traducirla, así que no la reconoce como configuración:
+Para el flujo nativo, inicializa `user-secrets` una sola vez. **Importante:** `dotnet user-secrets set` guarda en un JSON plano, así que la jerarquía va con **dos puntos** (`Seccion:Clave`) — la sintaxis con doble guion bajo (`Seccion__Clave`) es solo para variables de entorno (Docker, `launchSettings.json`, CI/VPS) y `dotnet user-secrets` la guarda tal cual, literal, sin traducirla, así que no la reconoce como configuración:
 
 ```bash
 cd backend/PortalCV.Backend/PortalCV.Api
 dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "server=localhost;port=3306;database=portalcv;user=portalcv_app;password=TU_PASSWORD;"
 dotnet user-secrets set "Jwt:Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
 dotnet user-secrets set "Encryption:Key" "TU_CLAVE_AES256_DE_32_BYTES_EN_BASE64"
 ```

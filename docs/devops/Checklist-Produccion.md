@@ -2,11 +2,12 @@
 
 Lista orientativa antes de exponer el portal a usuarios reales. Complementa [Integracion-SonarCloud.md](../produccion/Integracion-SonarCloud.md), [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md) y [Guia-git.md](../guias/Guia-git.md).
 
-> ⚠️ Los ítems marcados `[x]` reflejan el corte previo (base de datos Azure SQL,
-> hosting en Azure Container Apps / Static Web Apps). Ese corte ya no está
-> vigente: la base de datos es **MariaDB** (ver `database/README.md`) y el
-> hosting de producción está pendiente de definir (ver `CLAUDE.md`). Revisar
-> y re-verificar cada ítem contra el destino real antes del próximo despliegue.
+> Infraestructura vigente: base de datos **MariaDB** (ver `database/README.md`),
+> hosting en **Contabo (VPS) + Cloudflare (DNS/proxy)** con frontend y backend
+> detrás del mismo subdominio — ver el detalle completo y las fases de
+> despliegue en [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md).
+> Este checklist es el repaso final antes de exponer el portal, no reemplaza
+> ese plan.
 
 Referencia de corte vigente para retomar trabajo:
 - [Smoke-Test-Produccion.md](./Smoke-Test-Produccion.md)
@@ -19,7 +20,7 @@ Referencia de corte vigente para retomar trabajo:
 - [ ] **JWT**: `Jwt__Key` larga y aleatoria (≥ 32 caracteres); `Jwt__Issuer` y `Jwt__Audience` alineados con el despliegue. Rotación documentada.
 - [x] **CORS**: `Cors__AllowedOrigins__0` (y más índices si aplica) con la **URL exacta** del SPA (incluye `https://`, sin barra final salvo que el navegador la envíe así). En producción la API **falla al arrancar** si no hay orígenes configurados y `AllowedOrigins` está vacío en appsettings.
 - [ ] **Usuario demo** (`Auth__DemoUser`): deshabilitar o eliminar en producción si el endpoint no debe existir.
-- [x] **Variables**: ningún secreto en el repositorio; usar secretos del proveedor (Azure Key Vault, GitHub Secrets, variables de entorno de Azure Container Apps).
+- [x] **Variables**: ningún secreto en el repositorio; usar GitHub Secrets (para CI/CD) y un archivo de entorno en el VPS (`env_file` del compose de producción, no versionado).
 
 ---
 
@@ -34,7 +35,7 @@ Referencia de corte vigente para retomar trabajo:
 
 - [x] `ASPNETCORE_ENVIRONMENT=Production`.
 - [x] Swagger desactivado fuera de Development (comportamiento actual en `Program.cs`).
-- [x] HTTPS terminado correctamente (proxy / Container Apps); `UseHttpsRedirection` activo fuera de Development.
+- [x] HTTPS terminado correctamente (Nginx en el VPS + Cloudflare); `UseHttpsRedirection` activo fuera de Development.
 - [ ] Revisar `AllowedHosts` en `appsettings` si se desea restringir host headers.
 
 ---
@@ -42,7 +43,7 @@ Referencia de corte vigente para retomar trabajo:
 ## Frontend (Angular)
 
 - [x] Build de producción: `npm run build -- --configuration production`.
-- [x] El frontend publicado en SWA consume API productiva en ACA (configuración de runtime para host `*.azurestaticapps.net`).
+- [ ] El frontend y el backend quedan detrás del mismo subdominio (Nginx en el VPS enruta `/api/*` al backend, el resto sirve el build de Angular) — sin esto no hace falta CORS cross-origin ni `environment.prod.ts`.
 - [ ] Probar login, CV público, contacto, alertas y panel privado contra el entorno real.
 
 ---
@@ -50,7 +51,7 @@ Referencia de corte vigente para retomar trabajo:
 ## Observabilidad y seguridad
 
 - [ ] Logs (Serilog) hacia consola/sink adecuado en el entorno cloud.
-- [ ] Revisar CORS y cabeceras de seguridad en el frontal (CDN / Static Web Apps).
+- [ ] Revisar CORS y cabeceras de seguridad en el frontal (Cloudflare / Nginx).
 - [ ] Rate limiting / WAF según política de la organización (opcional en fase inicial).
 
 ---

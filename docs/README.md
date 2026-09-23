@@ -76,7 +76,7 @@ Plan de salida a producción y configuración de calidad continua.
 
 | Archivo | Contenido |
 |---|---|
-| [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live — corte histórico en Azure (ACA + SWA + Azure SQL), ver nota de vigencia en el propio archivo |
+| [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live en Contabo (VPS) + Cloudflare, con MariaDB |
 | [Integracion-SonarCloud.md](./produccion/Integracion-SonarCloud.md) | Configuración de SonarCloud en CI, cobertura LCOV y variables requeridas |
 
 ---

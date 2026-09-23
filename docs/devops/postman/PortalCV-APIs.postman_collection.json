@@ -2239,7 +2239,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "https://portalcv-api.wittyriver-e6fd0cd4.brazilsouth.azurecontainerapps.io"
+      "value": "http://localhost:5005"
     }
   ]
 }

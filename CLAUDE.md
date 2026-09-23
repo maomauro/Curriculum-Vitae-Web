@@ -4,7 +4,7 @@ Este archivo brinda contexto a Claude Code (claude.ai/code) al trabajar con cód
 
 ## Descripción general del proyecto
 
-PortalCV: un portal que conecta a profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda/detalle público) o en **borrador** (edición privada únicamente). Solo los publicadores y administradores necesitan registrarse/autenticarse. Monorepo: backend en **.NET 10** (Clean Architecture) + frontend en **Angular 20**, base de datos **MariaDB**. El despliegue a producción está pendiente de definir (dejó de ser Azure).
+PortalCV: un portal que conecta a profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda/detalle público) o en **borrador** (edición privada únicamente). Solo los publicadores y administradores necesitan registrarse/autenticarse. Monorepo: backend en **.NET 10** (Clean Architecture) + frontend en **Angular 20**, base de datos **MariaDB**. Producción se despliega en un VPS de Contabo con Cloudflare como DNS/proxy del dominio (dejó de ser Azure; ver `docs/produccion/Plan-Trabajo-Produccion.md`).
 
 Todo el código, comentarios, mensajes de commit y documentación de este repositorio están escritos en **español**. Mantené esa convención al editar.
 

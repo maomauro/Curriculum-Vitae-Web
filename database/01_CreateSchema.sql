@@ -1,9 +1,9 @@
 -- =============================================================================
 -- Portal de Curriculum Vitae - Script de creacion de base de datos
 -- MariaDB (10.6+ recomendado; requiere >= 10.2 por columnas generadas y CHECK)
--- Traducido desde scripts/manual/01_CreateSchema.sql (SQL Server), que sigue
--- siendo la fuente de verdad para Azure SQL. Ver MIGRACION_MARIADB.md para el
--- detalle de cada diferencia de dialecto resuelta en este archivo.
+-- Este archivo es la unica fuente de verdad del esquema (MariaDB, sin
+-- excepciones) -- ver database/README.md. El script original de SQL Server
+-- del que se tradujo ya no existe en el repositorio.
 -- =============================================================================
 
 -- Base de datos en minusculas a proposito: en Linux los nombres de base de

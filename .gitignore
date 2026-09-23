@@ -3,7 +3,7 @@
 .env.local
 .env.*.local
 
-# Variables reales para docker run (ver docker/backend.local.env.example)
+# Variables reales para docker run (ver docker/backend.local.env.mariadb.example)
 docker/backend.local.env
 # Variables reales para el contenedor MariaDB del docker-compose.yml local
 docker/mariadb.local.env

@@ -162,8 +162,8 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// IP real del cliente. Requiere ForwardedHeadersMiddleware (Program.cs) para leer
-    /// X-Forwarded-For detrás del ingress de Azure Container Apps; sin eso, HttpContext
-    /// solo vería la IP interna del proxy de la plataforma.
+    /// X-Forwarded-For detrás del reverse proxy (Nginx en produccion); sin eso, HttpContext
+    /// solo vería la IP interna del proxy.
     /// </summary>
     private string? ObtenerIpCliente() => HttpContext.Connection.RemoteIpAddress?.ToString();
 

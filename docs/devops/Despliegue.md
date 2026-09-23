@@ -3,14 +3,15 @@
 > ⚠️ **Documento desactualizado.** Describe el plan de despliegue evaluado sobre
 > **Azure Container Apps + Azure Static Web Apps + Azure SQL Database**, con
 > recursos que en algún momento llegaron a estar operativos. Ese corte ya no
-> refleja el estado real del proyecto: el motor de base de datos pasó a
-> **MariaDB** (ver `database/README.md`) y la decisión de dónde se aloja
-> producción está **pendiente de definir** (dejó de ser Azure; ver
-> `CLAUDE.md`). Todas las referencias a `SQL Server` / `Azure SQL Database`
-> como motor de base de datos de este documento **ya no aplican** — se
-> conserva como referencia histórica de la arquitectura Azure evaluada, no
-> como guía vigente. `scripts/manual/` y `scripts/production/` mencionados
-> abajo tampoco existen ya en el repositorio (ver `database/README.md`).
+> refleja el estado real del proyecto: el motor de base de datos es
+> **MariaDB** (ver `database/README.md`) y la producción se despliega en un
+> **VPS de Contabo + Cloudflare** — ver el plan vigente en
+> [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md).
+> Todas las referencias a `SQL Server` / `Azure SQL Database` /
+> `Azure Container Apps` / `Azure Static Web Apps` de este documento **ya no
+> aplican** — se conserva como referencia histórica de la arquitectura Azure
+> evaluada, no como guía vigente. `scripts/manual/` y `scripts/production/`
+> mencionados abajo tampoco existen ya en el repositorio (ver `database/README.md`).
 
 ---
 

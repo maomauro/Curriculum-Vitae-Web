@@ -15,9 +15,9 @@ Registrar, de forma ordenada, las herramientas que usa el proyecto por ambiente 
 | TOOL-001 | GitHub | Repositorio/CI | Global | Codigo fuente, PR, Actions | maomauro | Activo | https://github.com/maomauro/Curriculum-Vitae-Web | Workflow: `.github/workflows/ci.yml` |
 | TOOL-002 | SonarCloud | Calidad | CI (main + ramas) | Analisis de codigo y quality gate | maomauro | Activo | https://sonarcloud.io/ | QG "Passed" en `main`; requiere `SONAR_TOKEN`, `SONAR_ORGANIZATION`, `SONAR_PROJECT_KEY` |
 | TOOL-003 | MariaDB (Docker) | Base de datos | Local | Desarrollo y pruebas locales | maomauro | Activo | Contenedor `db` (`mariadb:11`) vía `docker-compose.yml`, puerto 3306 | Esquema inicial `database/01_CreateSchema.sql` montado en `/docker-entrypoint-initdb.d/` |
-| TOOL-004 | Base de datos en producción | Base de datos | Produccion | — | maomauro | Pendiente definir | — | Motor ya definido (MariaDB); hosting/instancia de producción pendiente de decidir (ver `CLAUDE.md`) |
-| TOOL-005 | Azure Container Apps | Runtime backend | Produccion | Hosting de API .NET 10 desde imagen GHCR | maomauro | Pendiente crear | Azure Portal (recurso futuro `portalcv-api` en `rg-portalcv`) | Scale-to-zero, puerto 8080, ingress externo HTTPS |
-| TOOL-006 | Azure Static Web Apps | Runtime frontend | Produccion | Hosting de SPA Angular con CDN | maomauro | Pendiente crear | Azure Portal (recurso futuro `portalcv-web`) | Conectar al repo en `main`; `output_location: dist/portalcv-web/browser` |
+| TOOL-004 | MariaDB (Docker, produccion) | Base de datos | Produccion | Contenedor en el VPS de Contabo, volumen persistente | maomauro | Pendiente crear | VPS Contabo `13.140.188.159` | Ver `docs/produccion/Plan-Trabajo-Produccion.md` Fase 4 |
+| TOOL-005 | VPS Contabo (Cloud VPS 6) | Runtime backend + frontend | Produccion | Hosting de API .NET 10 (imagen GHCR) + build de Angular, ambos detras del mismo Nginx | maomauro | Contratado, sin configurar | IP `13.140.188.159`, Hub Europe | Ver `docs/produccion/Plan-Trabajo-Produccion.md` Fases 1 y 3 |
+| TOOL-006 | Cloudflare | DNS / proxy / TLS | Produccion | Subdominio publico sobre `sitiosapps.com`, proxy y terminacion TLS de borde | maomauro | Pendiente crear registro | https://dash.cloudflare.com | Ver `docs/produccion/Plan-Trabajo-Produccion.md` Fase 2 |
 | TOOL-007 | GitHub Container Registry (GHCR) | Registro de imagenes | CI/Produccion | Almacenar imagen Docker del backend | maomauro | Pendiente | https://github.com/maomauro?tab=packages | El workflow de publicacion (`docker build + push`) aun no existe en `ci.yml` |
 | TOOL-008 | Docker Desktop | Contenedores | Local | Opcional: construir/validar imagen backend (`backend/Dockerfile`) | maomauro | Activo | Docker Desktop (Windows) | No requerido para `dotnet run` + `ng serve`; usar `--add-host=host.docker.internal:host-gateway` |
 | TOOL-009 | Swagger UI | API testing | Local/Produccion | Probar endpoints REST desde el navegador | maomauro | Activo | http://localhost:5005/swagger (local) | Expuesto solo en `ASPNETCORE_ENVIRONMENT=Development` (ver `Program.cs`) |
@@ -45,14 +45,12 @@ Registrar, de forma ordenada, las herramientas que usa el proyecto por ambiente 
 - [x] Workflow de build + push de imagen backend a GHCR (`.github/workflows/publish-backend-image.yml`).
 - [x] Proyecto de tests backend (`PortalCV.Api.Tests` con xUnit) y su paso en CI (job `backend`).
 
-### Produccion (hosting pendiente de definir — ver `CLAUDE.md`)
-- [ ] Instancia MariaDB de producción provisionada.
-- [ ] Hosting de backend/frontend decidido y provisionado.
+### Produccion (Contabo + Cloudflare — ver `docs/produccion/Plan-Trabajo-Produccion.md`)
+- [ ] VPS Contabo endurecido (SSH, firewall, Docker instalado).
+- [ ] Subdominio creado y proxied en Cloudflare, con TLS configurado.
+- [ ] Instancia MariaDB de produccion provisionada (contenedor con volumen persistente).
 - [ ] Secretos de produccion configurados (connection string a MariaDB, `Jwt__Key`, etc.).
 - [ ] Monitoreo y alertas activos.
-
-> Las filas de Azure (Resource Group, Container Apps, Static Web Apps, firewall)
-> correspondían al plan anterior — ver nota de vigencia en `docs/devops/Despliegue.md`.
 
 ## Estados sugeridos
 - `Pendiente`: no configurado.

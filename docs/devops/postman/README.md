@@ -3,7 +3,7 @@
 ## Archivos
 
 - `PortalCV-APIs.postman_collection.json` — coleccion unica, sirve para local y produccion (solo cambia el environment activo).
-- `PortalCV-Produccion.postman_environment.json` — apunta al backend real en Azure Container Apps.
+- `PortalCV-Produccion.postman_environment.json` — apunta al backend real en el VPS de Contabo (mismo subdominio que el frontend, ver `docs/produccion/Plan-Trabajo-Produccion.md`). Completar `baseUrl` una vez elegido el subdominio en Cloudflare.
 - `PortalCV-Local.postman_environment.json` — apunta al backend corriendo en Docker local (`localhost:5005`, ver `backend/README.md` / raiz `README.md` para levantarlo). Trae `authEmail`/`authPassword` precargados con un usuario de prueba ya registrado en la base local durante el desarrollo; si tu base local no lo tiene, registralo primero con `POST /api/auth/register` o cambia esas variables por un usuario propio.
 
 ## Autenticacion (cookie HttpOnly, no bearer manual)
@@ -24,7 +24,7 @@ login siga disponible en las siguientes llamadas.
 1. Importar la coleccion y **ambos** environments en Postman.
 2. Seleccionar el environment segun donde quieras probar:
    - `PortalCV Local` — backend Docker en `localhost:5005` (recomendado para probar cambios antes de desplegar).
-   - `PortalCV Produccion` — backend real en Azure.
+   - `PortalCV Produccion` — backend real en el VPS de Contabo.
 3. Completar/revisar variables:
    - `authEmail`, `authPassword` (ya vienen cargados en `PortalCV Local` con un usuario de prueba)
    - `publicSlug` (slug de un CV publicado, por ejemplo `mao-cv`)
@@ -36,14 +36,11 @@ login siga disponible en las siguientes llamadas.
 
 - **Local**: el backend debe estar corriendo (`docker run ...` segun `README.md` de la raiz, o
   `dotnet run` desde `PortalCV.Api`). Si no responde, revisar `docker ps` / logs del contenedor.
-- **Produccion**: la URL base apunta **directo al backend en Azure Container Apps** (no al
-  frontend de SWA): la SPA en `*.azurestaticapps.net` no tiene un backend enlazado que reenvie
-  `/api/*` — llamar a esas rutas contra el dominio de SWA devuelve el `index.html` de Angular,
-  no la API.
-  - `https://portalcv-api.wittyriver-e6fd0cd4.brazilsouth.azurecontainerapps.io`
-  - Si cambia el hostname del Container App, actualizar `baseUrl` en el environment de
-    Produccion (mismo valor que la variable de repo `API_BASE_URL`, inyectada en el frontend
-    durante el build por `.github/workflows/deploy-frontend-swa.yml`).
+- **Produccion**: la URL base es el **mismo subdominio** que sirve el frontend (Nginx en el
+  VPS de Contabo enruta `/api/*` al backend) — no hace falta un dominio separado para la API,
+  a diferencia del esquema anterior con Azure Static Web Apps + Container Apps en dominios
+  distintos.
+  - Actualizar `baseUrl` en el environment de Produccion una vez elegido el subdominio final en Cloudflare.
 - Si algun request devuelve 401:
   - revisar en la pestaña Cookies de Postman si `portalcv_auth` sigue presente para el dominio
     de `baseUrl`; si no esta o vencio, volver a ejecutar login.

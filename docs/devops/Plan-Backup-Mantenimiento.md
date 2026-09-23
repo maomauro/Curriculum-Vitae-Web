@@ -1,12 +1,11 @@
 # Plan Basico de Backup y Mantenimiento
 
 > ⚠️ Reescrito para **MariaDB** (el motor anterior, SQL Server/Azure SQL, ya
-> no se usa — ver `database/README.md`). El hosting de produccion todavia
-> esta pendiente de definir (ver `CLAUDE.md`), asi que las
+> no se usa — ver `database/README.md`). El hosting de produccion es un VPS
+> de Contabo (ver `docs/produccion/Plan-Trabajo-Produccion.md`), asi que las
 > tareas de "Produccion" de abajo asumen una instancia MariaDB propia
-> (self-managed); si en el futuro se usa un servicio administrado (ej. un
-> MariaDB gestionado en algun proveedor cloud), revisar que backups/PITR ya
-> vengan incluidos por el proveedor y ajustar esta seccion.
+> (self-managed, contenedor Docker en el mismo VPS) — no hay backups/PITR
+> automaticos de un proveedor administrado.
 
 ## Objetivo
 
@@ -16,8 +15,8 @@ Definir una politica minima para proteger la base de datos `portalcv` (MariaDB) 
 
 | Aspecto | Produccion | Desarrollo local |
 |---------|------------|------------------|
-| **Motor** | MariaDB (hosting pendiente de definir) | MariaDB (`mariadb:11` via `docker-compose.yml`) |
-| **Backups** | Manual/programado (`mariadb-dump` o `mariabackup`), salvo que el hosting elegido lo automatice | Manual u opcional |
+| **Motor** | MariaDB (contenedor propio en el VPS de Contabo) | MariaDB (`mariadb:11` via `docker-compose.yml`) |
+| **Backups** | Programado por cron (`mariadb-dump` o `mariabackup`) — no hay backup automatico de proveedor | Manual u opcional |
 | **Mantenimiento** | `OPTIMIZE TABLE` / `ANALYZE TABLE` | `OPTIMIZE TABLE` / `ANALYZE TABLE` |
 
 ---

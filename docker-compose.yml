@@ -1,7 +1,7 @@
 # Entorno local completo para desarrollo: MariaDB + backend (.NET, hot-reload) + frontend (Angular, hot-reload).
 #
 # El Dockerfile de produccion del backend (backend/Dockerfile) NO se toca: sigue siendo
-# el que se usa para replicar/desplegar a Azure Container Apps (build multi-stage sin
+# el que se usa para desplegar al VPS de Contabo (build multi-stage sin
 # hot-reload). Este compose usa Dockerfile.dev en backend y frontend, pensados
 # unicamente para desarrollo local.
 #

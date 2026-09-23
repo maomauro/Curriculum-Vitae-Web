@@ -8,7 +8,10 @@ export type DbReadinessState = 'checking' | 'ready' | 'degraded';
 
 /**
  * Comprueba periódicamente si la API y la base de datos están listas
- * (`GET /health/ready`). Pensado para cold start de Azure SQL en producción.
+ * (`GET /health/ready`). Origen: cold start de Azure SQL serverless (ya no
+ * aplica con MariaDB en el VPS de Contabo, que no tiene auto-pausa) — sigue
+ * siendo útil como espera genérica mientras el backend/DB arrancan (ej. al
+ * levantar `docker compose up`).
  */
 @Injectable({ providedIn: 'root' })
 export class StartupReadinessService {

@@ -7,8 +7,8 @@ Mantener un inventario unico de credenciales y secretos requeridos por el proyec
 Esta guia cubre:
 - Desarrollo local (maquina del dev: `dotnet user-secrets` o `docker/backend.local.env`).
 - CI (GitHub Actions a nivel de repositorio; no hay GitHub Environment separado hoy).
-- Produccion (`main` / release; hosting de backend/frontend pendiente de definir — ver `CLAUDE.md` — base de datos MariaDB).
-- Herramientas: GitHub, SonarCloud, hosting de produccion, base de datos, servicios externos.
+- Produccion (`main` / release; VPS de Contabo + Cloudflare, base de datos MariaDB — ver `docs/produccion/Plan-Trabajo-Produccion.md`).
+- Herramientas: GitHub, SonarCloud, Contabo, Cloudflare, base de datos, servicios externos.
 
 ## Reglas obligatorias
 - No guardar secretos reales en archivos `.md`, `appsettings*.json`, `launchSettings.json`, `.env` versionado o issues.
@@ -112,7 +112,7 @@ Checklist:
 | `AZURE_CREDENTIALS` | Secret | Para deploy | maomauro | Pendiente (workflow de deploy aun no existe) |
 | `AZURE_STATIC_WEB_APPS_TOKEN` | Secret | Para deploy SWA | maomauro | Pendiente |
 | `JWT_KEY_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
-| `DB_CONNECTION_PROD` | Secret | Para deploy | maomauro | Pendiente — hosting de produccion aun sin definir |
+| `DB_CONNECTION_PROD` | Secret | Para deploy | maomauro | Pendiente — cadena a MariaDB en el VPS de Contabo |
 
 Checklist:
 - [x] Secret `SONAR_TOKEN` y variables `SONAR_*` cargados.
@@ -120,17 +120,17 @@ Checklist:
 - [ ] Secrets de Azure creados cuando se implemente el job de deploy.
 - [ ] Evaluar migracion a OIDC (sin password estatico) para `AZURE_CREDENTIALS`.
 
-## Production (Azure)
-**Ubicacion recomendada:** variables de entorno de Azure Container Apps (y Azure Key Vault si se decide centralizar).
+## Production (Contabo + Cloudflare)
+**Ubicacion recomendada:** archivo de entorno (`env_file`) del compose de produccion en el VPS, no versionado.
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a la instancia MariaDB de produccion (hosting aun sin definir) |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a la instancia MariaDB en el VPS de Contabo |
 | `Jwt__Key` | Si | maomauro | Pendiente — clave distinta a la de local/develop (≥ 32 chars) |
 | `Jwt__Issuer` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Api` |
 | `Jwt__Audience` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Client` |
 | `ASPNETCORE_ENVIRONMENT` | Si (no sensible) | maomauro | Pendiente — valor: `Production` |
-| `Cors__AllowedOrigins__0` | Si (no sensible) | maomauro | Pendiente — URL final del Static Web App |
+| `Cors__AllowedOrigins__0` | Si (no sensible) | maomauro | Pendiente — subdominio final en Cloudflare |
 
 Checklist:
 - [ ] Secrets de produccion distintos a los de local y CI.

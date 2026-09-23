@@ -224,18 +224,20 @@ namespace PortalCV.Api
 
             // Health checks:
             // - /health: liveness basico (la API responde; sin dependencias externas).
-            // - /health/ready: readiness con conexion a SQL (Azure SQL puede tardar en despertar).
+            // - /health/ready: readiness con conexion a MariaDB.
             builder.Services
                 .AddHealthChecks()
                 .AddDbContextCheck<PortalCvDbContext>("database");
 
             var app = builder.Build();
 
-            // Detrás del ingress de Azure Container Apps la IP real del visitante viaja en
-            // X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress solo vería la
-            // IP interna del proxy de la plataforma. KnownNetworks/KnownProxies se limpian
-            // porque el proxy de Container Apps no tiene una IP fija conocida de antemano
-            // (mismo patrón recomendado por Microsoft para apps detrás de un PaaS gestionado).
+            // Detrás de un reverse proxy (hoy pensado para Nginx en el VPS de Contabo, delante
+            // de Cloudflare) la IP real del visitante viaja en X-Forwarded-For; sin esto,
+            // HttpContext.Connection.RemoteIpAddress solo vería la IP interna del proxy.
+            // KnownNetworks/KnownProxies quedan sin restringir por ahora (heredado de cuando el
+            // proxy era el ingress de Azure Container Apps, sin IP fija conocida) -- una vez que
+            // exista el Nginx de produccion (ver docs/produccion/Plan-Trabajo-Produccion.md Fase 3),
+            // conviene restringir esto a la IP/red real de ese Nginx en vez de confiar en cualquier origen.
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
@@ -280,7 +282,7 @@ namespace PortalCV.Api
                 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
             }
 
-            // Endpoint de health publico (no requiere JWT). Azure Container Apps lo
+            // Endpoint de health publico (no requiere JWT). El orquestador (Docker) lo
             // usa como liveness probe y curl lo usa como smoke test post-deploy.
             app.MapHealthChecks("/health").AllowAnonymous();
             app.MapHealthChecks("/health/ready", new HealthCheckOptions

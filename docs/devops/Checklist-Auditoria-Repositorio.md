@@ -4,7 +4,7 @@
 
 **Stack confirmado**: .NET 10 (Clean Architecture: Domain/Application/Infrastructure/Api + Api.Tests) · Angular 20 (NgModules) · SQL Server/Azure SQL vía DDL manual (sin migraciones EF) · Docker → GHCR → Azure Container Apps (backend) · Azure Static Web Apps (frontend) · GitHub Actions + SonarCloud.
 
-> ⚠️ **Actualización posterior (no retroactiva a esta auditoría):** el motor de base de datos pasó de SQL Server/Azure SQL a **MariaDB** (ver `database/README.md`), y el hosting de producción en Azure quedó pendiente de redefinir (ver `CLAUDE.md`). El resto del stack listado arriba sigue vigente.
+> ⚠️ **Actualización posterior (no retroactiva a esta auditoría):** el motor de base de datos pasó de SQL Server/Azure SQL a **MariaDB** (ver `database/README.md`), y el hosting de producción dejó de ser Azure — ahora es un VPS de Contabo + Cloudflare (ver `docs/produccion/Plan-Trabajo-Produccion.md`). El resto del stack listado arriba sigue vigente.
 
 ---
 

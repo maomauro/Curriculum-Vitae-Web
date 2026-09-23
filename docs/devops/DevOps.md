@@ -14,10 +14,10 @@ Practicas y lineamientos de operacion tecnica del proyecto. Complementa [Desplie
 | Backend | .NET 10 | LTS | API REST (Clean Architecture) |
 | Frontend | Angular | 20.1.1 | SPA servida como estatico |
 | ORM | Entity Framework Core | 10 | Acceso a datos |
-| Base de datos | MariaDB (`mariadb:11`) | -- | Local vía `docker-compose.yml`; hosting de producción pendiente de definir |
+| Base de datos | MariaDB (`mariadb:11`) | -- | Local vía `docker-compose.yml`; producción en VPS de Contabo (contenedor propio) |
 | Contenedores (build) | Docker (opcional) | -- | Solo para construir/pushear imagen backend hacia GHCR |
-| Hosting backend | Azure Container Apps | Free tier | scale-to-zero, imagen GHCR |
-| Hosting frontend | Azure Static Web Apps | Free | CDN global, Angular SPA |
+| Hosting (backend + frontend) | VPS Contabo (Cloud VPS 6) | -- | Nginx enruta `/api/*` al backend (imagen GHCR), resto sirve el build de Angular |
+| DNS / proxy / TLS | Cloudflare | Free | Subdominio sobre `sitiosapps.com` |
 | Cache | IMemoryCache (.NET in-process) | -- | Sin dependencia externa; $0 |
 | Logging | Serilog | -- | Structured logs en consola y archivo |
 | Auth | JWT Bearer | -- | Tokens de acceso (15 min) |
@@ -76,7 +76,7 @@ Existen dos workflows:
 |-----|---------|-------|
 | `publish` | `push` a `main` con cambios en `backend/**` o en el propio workflow, y `workflow_dispatch` | Login a GHCR con `GITHUB_TOKEN`, extrae tags con `docker/metadata-action` (`latest` solo en `main` + `sha-<short>`), `docker/build-push-action` con cache GHA, publica `ghcr.io/<owner>/portalcv-backend:<tags>` |
 
-Esta imagen es la que consume Azure Container Apps según [Runbook-Azure.md](./Runbook-Azure.md).
+Esta imagen es la que se despliega en el VPS de Contabo según [../produccion/Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md).
 
 ### Variables / secretos de CI requeridos
 
@@ -89,6 +89,10 @@ Esta imagen es la que consume Azure Container Apps según [Runbook-Azure.md](./R
 > Si alguno falta, el job `sonarcloud` emite un warning informativo pero **no rompe** el pipeline.
 
 ### Configuracion del job deploy (pendiente implementar)
+
+Publica la imagen a GHCR (ya activo) y luego conecta por SSH al VPS de
+Contabo para actualizar los contenedores en produccion — ver
+[../produccion/Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md) Fase 6:
 
 ```yaml
 package-and-deploy:
@@ -108,23 +112,15 @@ package-and-deploy:
         push: true
         tags: ghcr.io/maomauro/portalcv-backend:${{ github.sha }}
 
-    - uses: azure/login@v1
+    - uses: appleboy/ssh-action@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - run: |
-        az containerapp update \
-          --name portalcv-api \
-          --resource-group rg-portalcv \
-          --image ghcr.io/maomauro/portalcv-backend:${{ github.sha }}
-
-    - uses: Azure/static-web-apps-deploy@v1
-      with:
-        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN }}
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        action: upload
-        app_location: /frontend
-        output_location: dist/portalcv-web/browser
+        host: ${{ secrets.CONTABO_SSH_HOST }}
+        username: ${{ secrets.CONTABO_SSH_USER }}
+        key: ${{ secrets.CONTABO_SSH_KEY }}
+        script: |
+          cd /opt/portalcv
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d
 ```
 
 ---
@@ -137,9 +133,9 @@ package-and-deploy:
 2. **Backend**: `dotnet run` desde `backend/PortalCV.Backend/PortalCV.Api` con secretos locales (`dotnet user-secrets`).
 3. **Frontend**: `npm ci` + `ng serve` desde `frontend/` (proxy `/api` y `/health` hacia el backend local).
 
-### Docker (solo para imagen backend / paridad con ACA)
+### Docker (imagen de produccion del backend)
 
-El runtime productivo del backend en Azure Container Apps se basa en **imagen Docker** desde `backend/Dockerfile`.
+El runtime productivo del backend en el VPS de Contabo se basa en **imagen Docker** desde `backend/Dockerfile`.
 Para validar localmente la imagen (opcional):
 
 ```bash
@@ -158,16 +154,15 @@ docker compose up --build
 
 ---
 
-## 5. Recursos Azure (produccion)
+## 5. Recursos de produccion (Contabo + Cloudflare)
 
-| Recurso | Nombre | Tipo | Estado |
-|---------|--------|------|--------|
-| Resource Group | `rg-portalcv` | Contenedor de recursos | Pendiente crear |
-| Container Apps Environment | `env-portalcv` | Entorno ACA | Pendiente crear |
-| Container App | `portalcv-api` | Backend .NET 10 | Pendiente crear |
-| Static Web App | `portalcv-web` | Frontend Angular | Pendiente crear |
+| Recurso | Detalle | Estado |
+|---------|---------|--------|
+| VPS Contabo | Cloud VPS 6, IP `13.140.188.159`, Hub Europe | Contratado, sin configurar |
+| Subdominio Cloudflare | Sobre `sitiosapps.com`, a elegir | Pendiente crear |
+| `docker-compose.prod.yml` | MariaDB + backend (imagen GHCR) + Nginx | Pendiente crear |
 
-> Ver [Despliegue.md](Despliegue.md) para parametros de configuracion y comandos de creacion.
+> Ver [../produccion/Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md) para las fases y comandos de puesta en marcha.
 
 ---
 
@@ -175,8 +170,9 @@ docker compose up --build
 
 | Secret | Descripcion |
 |--------|-------------|
-| `AZURE_CREDENTIALS` | JSON del Service Principal (rol Contributor en rg-portalcv) |
-| `AZURE_STATIC_WEB_APPS_TOKEN` | Token de deploy del Static Web App |
+| `CONTABO_SSH_HOST` | IP o hostname del VPS de Contabo |
+| `CONTABO_SSH_USER` | Usuario no-root usado para el deploy |
+| `CONTABO_SSH_KEY` | Llave privada SSH para conectar al VPS |
 | `JWT_KEY_PROD` | Clave de firma JWT (>= 32 caracteres) |
 | `DB_CONNECTION_PROD` | Cadena de conexion a MariaDB en produccion |
 
@@ -191,15 +187,14 @@ docker compose up --build
 - Logs de Serilog en consola (salida del proceso `dotnet run`)
 - Swagger UI: revisar `backend/PortalCV.Backend/PortalCV.Api/Properties/launchSettings.json` (típico `http://localhost:5005/swagger`)
 
-### Produccion (Azure)
+### Produccion (VPS Contabo)
 
 | Herramienta | Tipo | Como acceder |
 |-------------|------|--------------|
-| Container Apps logs | Logs de aplicacion | Portal Azure -> Container App -> Log stream |
-| Azure Monitor | Metricas de recursos | Portal Azure -> Monitor |
-| Serilog stdout | Logs estructurados | Capturados automaticamente por Container Apps |
-
-> Application Insights puede agregarse como mejora futura sin coste en capa gratuita.
+| Logs de contenedores | Logs de aplicacion | `docker compose -f docker-compose.prod.yml logs -f` en el VPS |
+| Serilog stdout | Logs estructurados | Capturados por Docker (`docker logs`) |
+| Cloudflare Analytics | Trafico y errores de borde | Dashboard de Cloudflare del dominio |
+| Uptime | Disponibilidad externa | Cloudflare Health Checks o UptimeRobot (no hay un equivalente al "log stream" de un PaaS en un VPS propio) |
 
 ---
 
