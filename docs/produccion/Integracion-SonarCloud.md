@@ -10,19 +10,25 @@ Workflow actualizado: [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
 
 Incluye:
 
+- **Tests backend en CI con cobertura**:
+  - `dotnet test PortalCV.Api.Tests` (253 tests de integración, xUnit + WebApplicationFactory + EF InMemory) con `--collect:"XPlat Code Coverage"` en formato `opencover`.
+  - El job `backend` sube el reporte como artifact `backend-coverage` y el `.trx` como `backend-test-results`.
 - **Tests frontend en CI con cobertura**:
+  - `npm run lint` + `npm run lint:pilots` (lint estricto por zonas) antes del build.
   - `npm run test -- --configuration=ci` ejecuta Karma en modo headless con `codeCoverage: true`.
   - `frontend/karma.conf.js` genera el reporte `lcov.info` bajo `frontend/coverage/portalcv-web/`.
   - El job `frontend` sube ese archivo como artifact `frontend-coverage` via `actions/upload-artifact@v4`.
 - **Job `sonarcloud`**:
   - Corre despues de `backend` y `frontend` (`needs: [backend, frontend]`).
-  - **Descarga** el artifact `frontend-coverage` con `actions/download-artifact@v4`.
+  - **Descarga** los artifacts `frontend-coverage` y `backend-coverage` con `actions/download-artifact@v4`.
   - Ejecuta `SonarSource/sonarqube-scan-action@v6` pasando:
     - `sonar.javascript.lcov.reportPaths=frontend/coverage/portalcv-web/lcov.info`
+    - `sonar.cs.opencover.reportsPaths=backend/TestResults/**/coverage.opencover.xml`
+    - `sonar.sources=backend,frontend`
     - `sonar.tests=frontend/src`
     - `sonar.test.inclusions=**/*.spec.ts`
-    - `sonar.coverage.exclusions=**/*.spec.ts,**/main.ts,**/environments/**,**/*.module.ts,**/*.routes.ts,**/polyfills.ts`
-  - Si faltan variables/secrets, no rompe el pipeline y deja un warning informativo.
+    - `sonar.coverage.exclusions` excluye specs, `main.ts`, `environments/`, `*.module.ts`, `*.routes.ts`, `polyfills.ts`, `eslint.config.js`, `proxy.conf.js`, `styles/**`, y del lado backend `**/*.Tests/**` y `**/Program.cs`
+  - Si faltan variables/secrets (`SONAR_TOKEN`, `SONAR_ORGANIZATION`, `SONAR_PROJECT_KEY`), no rompe el pipeline y deja un warning informativo.
 
 ---
 
@@ -58,9 +64,9 @@ Settings -> Secrets and variables -> Actions
 
 El flujo CI queda:
 
-1. **Job `backend`**: build .NET Release (sin tests hasta que exista proyecto de tests backend).
-2. **Job `frontend`**: build Angular production + tests Karma en headless con cobertura → sube artifact `frontend-coverage`.
-3. **Job `sonarcloud`**: descarga `frontend-coverage` → Sonar scan (quality gate visible en dashboard).
+1. **Job `backend`**: build .NET Release + `dotnet test` sobre `PortalCV.Api.Tests` con cobertura → sube artifacts `backend-coverage` y `backend-test-results`.
+2. **Job `frontend`**: lint + build Angular production + tests Karma en headless con cobertura → sube artifact `frontend-coverage`.
+3. **Job `sonarcloud`**: descarga `frontend-coverage` y `backend-coverage` → Sonar scan (quality gate visible en dashboard).
 
 Nota: en la configuración actual no se usa un paso separado de `quality-gate-action`; el análisis se ejecuta en el paso de scan y el resultado se consulta en el dashboard de SonarCloud.
 
@@ -76,7 +82,7 @@ Configurar quality gate en SonarCloud para controlar la calidad técnica en la r
 - Nuevas vulnerabilidades altas
 - Duplicacion elevada en codigo nuevo
 
-Cobertura: iniciar con umbral moderado y subir gradualmente cuando exista suite de pruebas backend más amplia.
+Cobertura: iniciar con umbral moderado y subir gradualmente — ya existe suite de pruebas backend (`PortalCV.Api.Tests`, 253 tests de integración) y frontend con cobertura, ambas reportadas a Sonar.
 
 ## 6) Alcance del plan gratuito
 
