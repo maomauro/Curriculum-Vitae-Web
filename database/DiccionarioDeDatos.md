@@ -88,7 +88,7 @@ A continuación se documentan todas las tablas y columnas del modelo, con nombre
 | Direccion            | varchar(255)     | Dirección                                   |                               |
 | TipoResidencia       | varchar(50)      | Tipo de residencia                          |                               |
 | FotoUrl              | varchar(500)     | URL de foto pegada por el usuario (legacy). Se ignora si FotoBytes tiene valor |  |
-| FotoBytes            | varbinary(max)   | Foto de perfil subida como archivo (máx. 1 MB, validado en aplicación) |       |
+| FotoBytes            | longblob         | Foto de perfil subida como archivo (máx. 1 MB, validado en aplicación) |       |
 | FotoContentType      | varchar(100)     | Tipo MIME de FotoBytes (image/jpeg, image/png, image/webp) |               |
 
 > **Visibilidad de Email/Celular en el CV público:** no son columnas propias de `Personales` — se controlan con filas genéricas en `VisibilidadSeccion` (claves `datos-personales.email` / `datos-personales.telefono`, ver tabla más abajo). Sin fila guardada, el atributo se considera visible por defecto.
@@ -224,7 +224,7 @@ Duplicados: el back-end valida a nivel de aplicación que no exista otra oferta 
 | EsActual       | boolean        | Indica si es el trabajo actual (sin FechaFin)| not null, default: 0          |
 | MostrarEnCv    | boolean        | Incluir este registro en el CV (Mi CV / detalle público) | not null, default: 1 |
 | AdjuntoSoporte | varchar(500)   | URL de soporte pegada por el usuario (legacy). Se ignora si AdjuntoSoporteBytes tiene valor |  |
-| AdjuntoSoporteBytes | varbinary(max) | Soporte subido como archivo (carta laboral, contrato — solo PDF, máx. 3 MB) |          |
+| AdjuntoSoporteBytes | longblob | Soporte subido como archivo (carta laboral, contrato — solo PDF, máx. 3 MB) |          |
 | AdjuntoSoporteContentType | varchar(100) | Tipo MIME de AdjuntoSoporteBytes (siempre application/pdf) |                    |
 | FechaRegistro  | datetime       | Fecha de registro                            | not null, default: now()      |
 
@@ -243,7 +243,7 @@ Duplicados: el back-end valida a nivel de aplicación que no exista otra oferta 
 | TipoFormacion  | varchar(50)    | Tipo de formación                            |                               |
 | Descripcion    | text           | Descripción adicional                        |                               |
 | AdjuntoSoporte | varchar(500)   | URL de soporte pegada por el usuario (legacy). Se ignora si AdjuntoSoporteBytes tiene valor |  |
-| AdjuntoSoporteBytes | varbinary(max) | Soporte subido como archivo (diploma, certificado — solo PDF, máx. 3 MB) |         |
+| AdjuntoSoporteBytes | longblob | Soporte subido como archivo (diploma, certificado — solo PDF, máx. 3 MB) |         |
 | AdjuntoSoporteContentType | varchar(100) | Tipo MIME de AdjuntoSoporteBytes (siempre application/pdf) |                    |
 | FechaVigencia  | date           | Fecha de vigencia/expiración del certificado |                               |
 | DuracionHoras  | int            | Duración en horas (para cursos)              |                               |
