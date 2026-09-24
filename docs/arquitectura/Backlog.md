@@ -1,12 +1,5 @@
 ## 📋 Referencias
 
-> ⚠️ Este backlog documenta la épica 0 (fundación técnica) tal como se planificó
-> originalmente, cuando el motor de base de datos era SQL Server/Azure SQL. El
-> motor ya se migró a **MariaDB** (ver `database/README.md`) y los scripts
-> `scripts/manual/`/`scripts/production/` mencionados abajo ya no existen en
-> el repositorio — la fuente de verdad actual es `database/01_CreateSchema.sql`.
-> Se conserva el resto del contenido como referencia histórica de planificación.
-
 - **Documentación del producto:** [Documentacion.md](Documentacion.md)  
 - **Modelo de datos:** [database/README.md](../../database/README.md)  
 - **Roadmap del flujo Ofertas + IA:** [Roadmap-Ofertas-IA.md](Roadmap-Ofertas-IA.md)  
@@ -33,7 +26,7 @@ Además:
 
 ```
 📋 ÉPICA 0: FUNDACIÓN TÉCNICA (INFRAESTRUCTURA)
-├── 🔧 Feature 0.1: Base de Datos SQL Server
+├── 🔧 Feature 0.1: Base de Datos MariaDB
 │    ├── 📝 Historia Técnica: Modelado de base de datos
 │    │    ├── Tarea: Refinar modelo entidad-relación
 │    │    ├── Tarea: Definir tipos de datos
@@ -57,13 +50,13 @@ Además:
      │    └── Tarea: Configurar tablero ágil (boards, milestones)
      │
      ├── 📝 Historia Técnica: Entorno de desarrollo local
-     │    ├── Tarea: Configurar toolchain local (.NET SDK, Node.js, SQL Server local)
+     │    ├── Tarea: Configurar toolchain local (.NET SDK, Node.js, MariaDB local)
      │    ├── Tarea: Conectar proyectos a BD existente
      │    └── Tarea: Verificar datos de prueba
      │
      ├── 📝 Historia Técnica: Proyecto backend
      │    ├── Tarea: Crear solución .NET con arquitectura por capas
-     │    ├── Tarea: Configurar Entity Framework (mapeo a SQL Server)
+     │    ├── Tarea: Configurar Entity Framework (mapeo a MariaDB)
      │    ├── Tarea: Configurar autenticación JWT base
      │    └── Tarea: Configurar Swagger/OpenAPI
      │
@@ -86,7 +79,7 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Tarea | Descripción |
 |-------|-------------|
 | Refinar modelo entidad-relación | Ajustar entidades y relaciones según Documentacion.md y Modelo.md (Usuario, Curriculum, Referencia unificada, etc.). |
-| Definir tipos de datos SQL Server | Asignar tipos (int, nvarchar, datetime2, bit, etc.) y longitudes a cada campo. |
+| Definir tipos de datos MariaDB | Asignar tipos (int, varchar, datetime, boolean, etc.) y longitudes a cada campo. |
 | Diseñar índices estratégicos | Índices para UrlPublica, CurriculumId en tablas hijas, búsqueda por nombre/ciudad. |
 | Definir constraints y reglas | PK, FK, UNIQUE, CHECK (estados, tipos); reglas de negocio en BD. |
 | Diseñar estrategia de particionamiento | (Opcional) Si se prevé mucho volumen, definir particionamiento por fechas o rangos. |
@@ -108,8 +101,8 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 | Proteger ramas principales | Reglas: no push directo a main/develop; PR/MR obligatorio. |
 | Configurar templates para PR/MR | Plantillas de descripción, checklist (tests, documentación). |
 | Configurar tablero ágil | Boards, milestones, labels para épicas, features e historias. |
-| Configurar entorno local (sin Docker obligatorio) | Instalar .NET SDK + Node.js + SQL Server local; scripts SQL en `scripts/manual/`. |
-| Validar imagen Docker del backend (opcional) | `docker build -f backend/Dockerfile ...` para alinear con Azure Container Apps. |
+| Configurar entorno local (sin Docker obligatorio) | Instalar .NET SDK + Node.js + MariaDB local; script SQL en `database/01_CreateSchema.sql`. |
+| Validar imagen Docker del backend (opcional) | `docker build -f backend/Dockerfile ...` para alinear con el despliegue en el VPS de Contabo. |
 | Conectar proyectos a BD existente | Connection string en backend; verificar conectividad desde el host. |
 | Verificar datos de prueba funcionando | Ejecutar script de BD y comprobar que backend/frontend lean datos. |
 | Crear solución .NET con arquitectura por capas | Proyectos: API, dominio, aplicación, infraestructura (o similar). |
@@ -136,11 +129,11 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 **Prioridad:** MUST HAVE  
 **Dependencia:** Ninguna (es la base del proyecto).
 
-**Descripción:** Cubre el diseño e implementación de la base de datos SQL Server, el control de versiones, el entorno de desarrollo local (SQL Server nativo + .NET SDK + Node.js; Docker solo opcional para validar la imagen del backend) y el pipeline CI/CD inicial. Sin esta épica no puede arrancar el desarrollo funcional del portal.
+**Descripción:** Cubre el diseño e implementación de la base de datos MariaDB, el control de versiones, el entorno de desarrollo local (MariaDB + .NET SDK + Node.js; Docker solo opcional para validar la imagen del backend) y el pipeline CI/CD inicial. Sin esta épica no puede arrancar el desarrollo funcional del portal.
 
 ---
 
-#### FEATURE 0.1: BASE DE DATOS SQL SERVER
+#### FEATURE 0.1: BASE DE DATOS MARIADB
 
 **Descripción:** Diseño, implementación y documentación de la base de datos que soporta todo el portal: usuarios, roles, curriculum, personales, referencias, visitantes, alertas y estadísticas. Incluye script DDL, índices, datos de prueba y plan de mantenimiento.
 
@@ -148,20 +141,20 @@ Las tareas son el desglose técnico de cada historia; en sprint planning se asig
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
-| **HS-01** | Historia Técnica | Modelado de base de datos | [ ] Refinar modelo entidad-relación<br>[ ] Definir tipos de datos SQL Server<br>[ ] Diseñar índices estratégicos<br>[ ] Definir constraints y reglas<br>[ ] Diseñar estrategia de particionamiento<br>[ ] Crear diagrama físico | DBA | 8 |
-| **HS-02** | Historia Técnica | Implementación de base de datos | [ ] Crear script DDL completo (ver `scripts/manual/01_CreateSchema.sql` / `scripts/production/05_AzureSQL_CreateSchema.sql`)<br>[ ] Crear índices optimizados<br>[ ] (Opcional) Triggers para sincronizar estadísticas<br>[ ] (Opcional) Vistas para consultas frecuentes | Backend | 8 |
+| **HS-01** | Historia Técnica | Modelado de base de datos | [ ] Refinar modelo entidad-relación<br>[ ] Definir tipos de datos MariaDB<br>[ ] Diseñar índices estratégicos<br>[ ] Definir constraints y reglas<br>[ ] Diseñar estrategia de particionamiento<br>[ ] Crear diagrama físico | DBA | 8 |
+| **HS-02** | Historia Técnica | Implementación de base de datos | [ ] Crear script DDL completo (ver `database/01_CreateSchema.sql`)<br>[ ] Crear índices optimizados<br>[ ] (Opcional) Triggers para sincronizar estadísticas<br>[ ] (Opcional) Vistas para consultas frecuentes | Backend | 8 |
 | **HS-03** | Historia Técnica | Datos de prueba y documentación | [ ] Crear datos de prueba ofuscados (10+ CVs)<br>[ ] Pruebas de rendimiento<br>[ ] Crear diccionario de datos completo<br>[ ] Plan de backup y mantenimiento | DBA | 5 |
 
 ---
 
 #### FEATURE 0.2: CONFIGURACIÓN DE ENTORNOS
 
-**Descripción:** Configuración del repositorio (GitHub), ramas y tablero ágil; entorno local con SQL Server instalado (sin Docker obligatorio); solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
+**Descripción:** Configuración del repositorio (GitHub), ramas y tablero ágil; entorno local con MariaDB instalado (sin Docker obligatorio); solución backend .NET con Entity Framework y JWT; proyecto frontend Angular con servicios e interceptores; y pipeline CI/CD (build, test, opcional análisis de código).
 
 | ID | Tipo | Título | Tareas | Responsable | Story Points |
 |----|------|--------|--------|-------------|--------------|
 | **HS-04** | Historia Técnica | Repositorio y control de versiones | [ ] Configurar repositorio (GitHub)<br>[ ] Estructurar ramas (main, develop, feature)<br>[ ] Proteger ramas principales<br>[ ] Configurar templates para PR/MR<br>[ ] Configurar tablero ágil (boards, milestones, labels) | DevOps | 3 |
-| **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar toolchain local (.NET SDK, Node.js, SQL Server)<br>[ ] Ejecutar scripts SQL locales (`scripts/manual/`)<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
+| **HS-05** | Historia Técnica | Entorno de desarrollo local | [ ] Configurar toolchain local (.NET SDK, Node.js, MariaDB)<br>[ ] Ejecutar `database/01_CreateSchema.sql`<br>[ ] Conectar proyectos a BD existente<br>[ ] Verificar datos de prueba funcionando | DevOps | 5 |
 | **HS-06** | Historia Técnica | Configuración backend .NET | [ ] Crear solución con arquitectura por capas<br>[ ] Configurar Entity Framework (DbContext, mappings)<br>[ ] Configurar autenticación JWT base<br>[ ] Configurar Swagger/OpenAPI<br>[ ] Implementar middleware básico (logging, excepciones)<br>[ ] Eliminar scaffold WeatherForecast (WeatherForecast.cs + WeatherForecastController.cs) | Backend | 8 |
 | **HS-07** | Historia Técnica | Configuración frontend Angular | [ ] Crear proyecto con estructura de módulos<br>[ ] Configurar lazy loading<br>[ ] Implementar servicios base (HttpClient)<br>[ ] Configurar interceptores (auth, errores)<br>[ ] Crear componentes base (header, footer, layout) | Frontend | 5 |
 | **HS-08** | Historia Técnica | CI/CD y documentación | [ ] Configurar pipeline CI/CD (GitHub Actions: build, test)<br>[ ] Configurar análisis de código (SonarQube/SonarCloud opcional)<br>[ ] Documentar guía de inicio rápido<br>[ ] Crear README principal del proyecto | DevOps | 3 |

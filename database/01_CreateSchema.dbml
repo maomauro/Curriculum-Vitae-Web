@@ -275,7 +275,7 @@ Table AlertaVisita {
   VisitanteAnonimoId varchar(36) [note: 'Id anonimo de cookie/localStorage del visitante -- para deduplicar Vista/Descarga']
   VistasAcumuladas int [not null, default: 1]
   VisitanteContactoId int
-  VisitanteAnonimoIdSiVista varchar(36) [note: 'Generada: VisitanteAnonimoId si TipoVisita=Vista, si no NULL. Emula el indice unico filtrado de SQL Server']
+  VisitanteAnonimoIdSiVista varchar(36) [note: 'Generada: VisitanteAnonimoId si TipoVisita=Vista, si no NULL. Emula un indice unico filtrado']
   VisitanteAnonimoIdSiDescarga varchar(36) [note: 'Generada: VisitanteAnonimoId si TipoVisita=Descarga, si no NULL']
   VisitanteContactoIdSiContacto int [note: 'Generada: VisitanteContactoId si TipoVisita=Contacto, si no NULL']
   indexes {
@@ -356,7 +356,7 @@ Table PromptIa {
   EsActivo boolean [not null, default: true, note: 'Solo una fila activa por (CurriculumId, Codigo)']
   FechaCreacion datetime [not null, default: `now()`]
   ActualizadoPorUsuarioId int
-  CodigoSiActivo varchar(50) [note: 'Generada: Codigo si EsActivo=1, si no NULL. Emula el indice unico filtrado de SQL Server']
+  CodigoSiActivo varchar(50) [note: 'Generada: Codigo si EsActivo=1, si no NULL. Emula un indice unico filtrado']
   indexes {
     (CurriculumId, Codigo) [unique, name: "UQ_PromptIa_Curriculum_Codigo_Activo", note: 'Filtrado por EsActivo=1']
     (CurriculumId, Codigo, Version) [unique, name: "UQ_PromptIa_Curriculum_Codigo_Version"]
@@ -374,7 +374,7 @@ Table ProveedorIa {
   EsActivo boolean [not null, default: false, note: 'Solo una activa a la vez en TODA la plataforma -- conexion global, no por CV, administrada solo por Admin']
   FechaCreacion datetime [not null, default: `now()`]
   FechaActualizacion datetime [not null, default: `now()`]
-  EsActivoUnico tinyint [note: 'Generada: 1 si EsActivo=1, si no NULL. Emula el indice unico filtrado de SQL Server']
+  EsActivoUnico tinyint [note: 'Generada: 1 si EsActivo=1, si no NULL. Emula un indice unico filtrado']
   indexes {
     (EsActivoUnico) [unique, name: "UQ_ProveedorIa_Activo", note: 'Filtrado por EsActivo=1']
   }

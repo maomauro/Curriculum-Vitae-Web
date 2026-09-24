@@ -37,9 +37,7 @@ login siga disponible en las siguientes llamadas.
 - **Local**: el backend debe estar corriendo (`docker run ...` segun `README.md` de la raiz, o
   `dotnet run` desde `PortalCV.Api`). Si no responde, revisar `docker ps` / logs del contenedor.
 - **Produccion**: la URL base es el **mismo subdominio** que sirve el frontend (Nginx en el
-  VPS de Contabo enruta `/api/*` al backend) — no hace falta un dominio separado para la API,
-  a diferencia del esquema anterior con Azure Static Web Apps + Container Apps en dominios
-  distintos.
+  VPS de Contabo enruta `/api/*` al backend) — no hace falta un dominio separado para la API.
   - Actualizar `baseUrl` en el environment de Produccion una vez elegido el subdominio final en Cloudflare.
 - Si algun request devuelve 401:
   - revisar en la pestaña Cookies de Postman si `portalcv_auth` sigue presente para el dominio

@@ -1,11 +1,10 @@
 # Plan Basico de Backup y Mantenimiento
 
-> ⚠️ Reescrito para **MariaDB** (el motor anterior, SQL Server/Azure SQL, ya
-> no se usa — ver `database/README.md`). El hosting de produccion es un VPS
-> de Contabo (ver `docs/produccion/Plan-Trabajo-Produccion.md`), asi que las
-> tareas de "Produccion" de abajo asumen una instancia MariaDB propia
-> (self-managed, contenedor Docker en el mismo VPS) — no hay backups/PITR
-> automaticos de un proveedor administrado.
+> El hosting de produccion es un VPS de Contabo (ver
+> `docs/produccion/Plan-Trabajo-Produccion.md`), asi que las tareas de
+> "Produccion" de abajo asumen una instancia MariaDB propia (self-managed,
+> contenedor Docker en el mismo VPS) — no hay backups/PITR automaticos de
+> un proveedor administrado.
 
 ## Objetivo
 
@@ -44,7 +43,7 @@ Aplica tanto a produccion como a local.
 
 - **Frecuencia:** mensual, o cuando se observe degradacion de consultas.
 - **Comando:** `OPTIMIZE TABLE <tabla>;` (reconstruye la tabla InnoDB y sus indices, recupera espacio fragmentado).
-- MariaDB/InnoDB no expone un porcentaje de fragmentacion como SQL Server; `OPTIMIZE TABLE` es seguro de correr periodicamente sobre las tablas con mas escritura/borrado (`AlertaVisita`, `AuditoriaCv`, `AuditoriaAuth`, `AuditoriaAdmin`).
+- `OPTIMIZE TABLE` es seguro de correr periodicamente sobre las tablas con mas escritura/borrado (`AlertaVisita`, `AuditoriaCv`, `AuditoriaAuth`, `AuditoriaAdmin`).
 
 ---
 

@@ -4,15 +4,6 @@ Estado del plan: En definicion de infraestructura
 Fecha de este corte: 2026-09-23
 Rama de trabajo actual: `feature/portal-cv-mejoras-adjuntos-ia` (PR abierto hacia `main`)
 
-> Este documento reemplaza por completo el plan anterior, escrito para Azure
-> (Container Apps + Static Web Apps + Azure SQL Database). Esa infraestructura
-> nunca llego a usarse en el estado final del proyecto: el motor de base de
-> datos es **MariaDB** (ver `database/README.md`) y el hosting de produccion
-> ya esta decidido — **Contabo (VPS) + Cloudflare (DNS/proxy)** — segun lo
-> definido en esta sesion. El historial de la version anterior (corte
-> 23-04-2026, epoca Azure) queda disponible en `git log` de este archivo si
-> hace falta consultarlo.
-
 ---
 
 ## Objetivo
@@ -70,30 +61,6 @@ que ASP.NET Core lee automaticamente con `ASPNETCORE_ENVIRONMENT=Production`.
   certificado de origen que emite el propio Cloudflare)
 - [ ] Confirmar el sistema operativo del VPS entregado por Contabo (para
   saber el gestor de paquetes al instalar Docker)
-- [ ] **Urgente, antes del proximo merge a `main`:** deshabilitar o eliminar
-  `.github/workflows/deploy-frontend-swa.yml` — hoy corre automaticamente en
-  cada push a `main` que toque `frontend/**` e intenta desplegar a Azure
-  Static Web Apps con `secrets.AZURE_STATIC_WEB_APPS_TOKEN`. Va a fallar (o
-  apuntar a un recurso obsoleto) apenas se mergee cualquier cambio de
-  frontend, incluido el PR de esta sesion. El mecanismo de inyeccion de
-  `window.__PORTALCV_CONFIG__.apiBaseUrl` que usa (`frontend/src/index.html`,
-  `frontend/src/app/core/constants/api-base-url.ts`) no hace falta tocarlo:
-  con el esquema de un solo origen (Fase 3), `API_BASE_URL` cae a su
-  fallback relativo (`''`) y todo sigue funcionando sin ese workflow.
-- [ ] **Igual de urgente:** el job `deploy-aca` dentro de
-  `.github/workflows/publish-backend-image.yml` corre en cada push a `main`
-  que toque `backend/**` y hace `az containerapp update` contra el resource
-  group `CV-Mao` / app `portalcv-api` usando `secrets.AZURE_CREDENTIALS` —
-  va a fallar apenas se mergee cualquier cambio de backend, incluido el PR
-  de esta sesion. El job `publish` (build + push de la imagen a GHCR) de ese
-  mismo workflow **sí** sigue sirviendo tal cual para Contabo; solo hay que
-  quitar/deshabilitar el job `deploy-aca` y reemplazarlo mas adelante por el
-  job SSH de la Fase 6.
-- [ ] Revisar `frontend/public/staticwebapp.config.json` — es config
-  especifica de Azure Static Web Apps (fallback SPA, headers); con Nginx en
-  Contabo esa misma logica se replica en la config de Nginx (Fase 3), asi
-  que este archivo queda sin uso y se puede eliminar cuando se confirme que
-  Nginx ya cubre lo mismo.
 
 ### Fase 1 — Preparacion del servidor (Contabo VPS)
 
@@ -136,8 +103,7 @@ que ASP.NET Core lee automaticamente con `ASPNETCORE_ENVIRONMENT=Production`.
 - [ ] Una vez que el Nginx de produccion exista: restringir
   `KnownProxies`/`KnownIPNetworks` de `ForwardedHeadersOptions` en
   `Program.cs` a la IP/red real de ese Nginx, en vez de confiar en cualquier
-  origen (config heredada de cuando el proxy era Azure Container Apps, sin
-  IP fija conocida)
+  origen
   - Criterio de cierre: `docker compose -f docker-compose.prod.yml up -d`
     levanta los 3 servicios sanos en el VPS
 

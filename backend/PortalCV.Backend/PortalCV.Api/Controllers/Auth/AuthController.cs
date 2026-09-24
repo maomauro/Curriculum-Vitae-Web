@@ -175,10 +175,9 @@ public class AuthController : ControllerBase
         => Response.Cookies.Append(AuthCookieDefaults.Name, token, BuildCookieOptions(expiracion));
 
     /// <summary>
-    /// SameSite=None + Secure es obligatorio en producción porque el SPA (Static Web Apps)
-    /// y la API (Container Apps) viven en dominios distintos — es una cookie cross-site.
-    /// En Development se usa Lax/no-Secure porque ng serve la sirve por HTTP a través del
-    /// proxy (mismo origen aparente); un navegador descarta SameSite=None sin Secure.
+    /// Frontend y backend se sirven desde el mismo origen (mismo subdominio en producción,
+    /// proxy de `ng serve` en desarrollo), así que la cookie nunca es cross-site: `Lax` alcanza
+    /// en ambos casos. `Secure` solo aplica quitarlo en Development, ya que ahí se sirve por HTTP.
     /// </summary>
     private CookieOptions BuildCookieOptions(DateTime expiracion) => BuildCookieOptions(new DateTimeOffset(expiracion, TimeSpan.Zero));
 
@@ -186,7 +185,7 @@ public class AuthController : ControllerBase
     {
         HttpOnly = true,
         Secure = !_environment.IsDevelopment(),
-        SameSite = _environment.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+        SameSite = SameSiteMode.Lax,
         Expires = expiracion,
         Path = "/"
     };

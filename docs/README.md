@@ -47,13 +47,10 @@ Infraestructura, despliegue y políticas de mantenimiento.
 | Archivo | Contenido |
 |---|---|
 | [DevOps.md](./devops/DevOps.md) | Pipelines, CI/CD, configuración Docker |
-| [Despliegue.md](./devops/Despliegue.md) | Decisiones de infraestructura y arquitectura de despliegue |
-| [Runbook-Azure.md](./devops/Runbook-Azure.md) | Runbook ejecutable con comandos `az` para provisionar Azure desde cero |
 | [Smoke-Test-Produccion.md](./devops/Smoke-Test-Produccion.md) | Pasos de verificación manual post-despliegue en producción |
 | [Plan-Backup-Mantenimiento.md](./devops/Plan-Backup-Mantenimiento.md) | Plan de backup y mantenimiento |
 | [Politica-Proteccion-Ramas.md](./devops/Politica-Proteccion-Ramas.md) | Reglas de protección de ramas Git |
 | [Checklist-Produccion.md](./devops/Checklist-Produccion.md) | Verificación previa a publicar en producción |
-| [Checklist-Auditoria-Repositorio.md](./devops/Checklist-Auditoria-Repositorio.md) | Checklist de auditoría del repo (limpieza, estructura, docs vs. código) — 2026-08-18 |
 | [postman/](./devops/postman/) | Colección Postman de la API + entornos (local/producción) |
 
 ---
@@ -64,10 +61,10 @@ Guías de trabajo, convenciones del equipo y gestión de secretos.
 | Archivo | Contenido |
 |---|---|
 | [Guia-git.md](./guias/Guia-git.md) | Convenciones de ramas, commits y flujo de trabajo Git |
-| [Guia-secrets-y-credenciales.md](./guias/Guia-secrets-y-credenciales.md) | Política de secretos: dónde viven según entorno (local / CI / Azure) |
+| [Guia-secrets-y-credenciales.md](./guias/Guia-secrets-y-credenciales.md) | Política de secretos: dónde viven según entorno (local / CI / producción) |
 | [Guia-inventario-secrets-por-ambiente.md](./guias/Guia-inventario-secrets-por-ambiente.md) | Plantilla de inventario de secretos por entorno (sin valores reales) |
 | [Inventario-minimo-local.md](./guias/Inventario-minimo-local.md) | Identidades y secretos mínimos para arrancar el proyecto localmente |
-| [Plantilla-herramientas-por-ambiente.md](./guias/Plantilla-herramientas-por-ambiente.md) | Catálogo de herramientas por ambiente (SDK, Node, Docker, Azure) |
+| [Plantilla-herramientas-por-ambiente.md](./guias/Plantilla-herramientas-por-ambiente.md) | Catálogo de herramientas por ambiente (SDK, Node, Docker, Contabo, Cloudflare) |
 
 ---
 

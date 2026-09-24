@@ -26,9 +26,9 @@ public class CvGeneradoConfiguration : IEntityTypeConfiguration<CvGenerado>
             .OnDelete(DeleteBehavior.Cascade);
 
         // NoAction (no Cascade): Curriculum->Perfil ya cascadea; si Perfil también
-        // cascadeara hacia CvGenerado, SQL Server tendría dos rutas de cascada hacia
-        // la misma fila. La cascada real ocurre por CurriculumId; borrar un Perfil con
-        // CV asociado requiere borrar antes ese CvGenerado (ver CvEditorService.DeletePerfilAsync).
+        // cascadeara hacia CvGenerado, habría dos rutas de cascada hacia la misma fila.
+        // La cascada real ocurre por CurriculumId; borrar un Perfil con CV asociado
+        // requiere borrar antes ese CvGenerado (ver CvEditorService.DeletePerfilAsync).
         builder.HasOne(c => c.Perfil)
             .WithOne(p => p.CvGenerado)
             .HasForeignKey<CvGenerado>(c => c.PerfilId)

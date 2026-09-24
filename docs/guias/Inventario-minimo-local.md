@@ -20,7 +20,7 @@ Definir, de forma simple, que identidades y secretos minimos deben existir en am
 ## Aclaraciones clave
 - El backend usa solo `DB-APP-LOCAL` (`portalcv_app`) para operar, tanto en `dotnet run` como en Docker.
 - `DB-ADM-LOCAL` (`root` del contenedor MariaDB) no se usa desde la aplicacion; solo para tareas manuales de DBA (aplicar `database/01_CreateSchema.sql` a mano, crear usuarios).
-- No hay autenticacion integrada de Windows (SQL Server) en este flujo: MariaDB usa siempre usuario/password, configurados via `dotnet user-secrets` o `docker/backend.local.env`.
+- MariaDB usa siempre usuario/password (sin autenticacion integrada de SO), configurados via `dotnet user-secrets` o `docker/backend.local.env`.
 - `Jwt__Key` debe tener como minimo 32 caracteres. En PowerShell se puede generar con:
   `[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))`
 

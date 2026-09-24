@@ -1112,7 +1112,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, MariaDB\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start en capa gratuita de Azure\",\n  \"mostrarEnCv\": true\n}"
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, MariaDB\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Despliegue en VPS propio con Docker\",\n  \"mostrarEnCv\": true\n}"
                 }
               },
               "response": []

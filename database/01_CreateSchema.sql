@@ -1,15 +1,13 @@
 -- =============================================================================
 -- Portal de Curriculum Vitae - Script de creacion de base de datos
 -- MariaDB (10.6+ recomendado; requiere >= 10.2 por columnas generadas y CHECK)
--- Este archivo es la unica fuente de verdad del esquema (MariaDB, sin
--- excepciones) -- ver database/README.md. El script original de SQL Server
--- del que se tradujo ya no existe en el repositorio.
+-- Este archivo es la unica fuente de verdad del esquema -- ver database/README.md.
 -- =============================================================================
 
 -- Base de datos en minusculas a proposito: en Linux los nombres de base de
--- datos son sensibles a mayusculas/minusculas (a diferencia de SQL Server) --
--- usar minusculas evita el clasico problema de "Table 'PortalCV.usuario'
--- doesn't exist" cuando el contenedor corre sobre un filesystem case-sensitive.
+-- datos son sensibles a mayusculas/minusculas -- usar minusculas evita el
+-- clasico problema de "Table 'PortalCV.usuario' doesn't exist" cuando el
+-- contenedor corre sobre un filesystem case-sensitive.
 CREATE DATABASE IF NOT EXISTS portalcv
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE portalcv;
@@ -108,16 +106,14 @@ CREATE TABLE Curriculum (
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Nota: "ON UPDATE CURRENT_TIMESTAMP" en FechaActualizacion es una comodidad de
--- MariaDB sin equivalente exacto en el script SQL Server original (alli se
--- actualiza a mano en el service). Se deja para no romper nada si el backend
--- ya la actualiza explicitamente -- el ON UPDATE solo aplica si ninguna sentencia
--- toca esa columna; si el backend la fija, ese valor manda.
+-- MariaDB; el backend tambien la actualiza explicitamente en el service, y ese
+-- valor manda -- el ON UPDATE solo aplica si ninguna sentencia toca la columna.
 
 CREATE INDEX IX_Curriculum_UrlPublica ON Curriculum (UrlPublica);
 CREATE INDEX IX_Curriculum_Estado_Visitas ON Curriculum (Estado, ContadorVisitas DESC, CurriculumId, UrlPublica);
--- La clausula INCLUDE (UrlPublica) de SQL Server no existe en MariaDB; se
--- agrega UrlPublica como columna final del indice para conservar el mismo
--- indice de cobertura (covering index) en las consultas que la necesitan.
+-- UrlPublica se agrega como columna final del indice (no solo Estado/ContadorVisitas/
+-- CurriculumId) para conservar un indice de cobertura (covering index) en las
+-- consultas que tambien filtran/proyectan por UrlPublica.
 
 -- -----------------------------------------------------------------------------
 -- C. INFORMACION PERSONAL (Personales - 1 a 1 con Curriculum)
@@ -453,10 +449,10 @@ CREATE TABLE AlertaVisita (
     VisitanteAnonimoId  VARCHAR(36)  NULL,
     VistasAcumuladas    INT NOT NULL DEFAULT 1,
     VisitanteContactoId INT NULL,
-    -- Las 3 columnas GENERATED de aca abajo emulan los indices unicos
-    -- filtrados (WHERE ...) de SQL Server, que MariaDB no soporta: cada una
-    -- vale NULL salvo que se cumpla la condicion original, y como MariaDB
-    -- permite multiples NULL en un indice UNIQUE, el efecto es identico.
+    -- Las 3 columnas GENERATED de aca abajo emulan un indice unico filtrado
+    -- (WHERE ...), que MariaDB no soporta nativamente: cada una vale NULL
+    -- salvo que se cumpla la condicion original, y como MariaDB permite
+    -- multiples NULL en un indice UNIQUE, el efecto es identico.
     VisitanteAnonimoIdSiVista    VARCHAR(36) GENERATED ALWAYS AS (
         CASE WHEN TipoVisita = 'Vista' AND VisitanteAnonimoId IS NOT NULL THEN VisitanteAnonimoId ELSE NULL END
     ) VIRTUAL,
@@ -578,7 +574,7 @@ CREATE TABLE PromptIa (
     FechaCreacion           DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
     ActualizadoPorUsuarioId INT NULL,
 
-    -- Emula UQ_PromptIa_Curriculum_Codigo_Activo (WHERE EsActivo = 1) de SQL Server
+    -- Emula un indice unico filtrado (WHERE EsActivo = 1) sobre (CurriculumId, Codigo)
     CodigoSiActivo          VARCHAR(50) GENERATED ALWAYS AS (
         CASE WHEN EsActivo = 1 THEN Codigo ELSE NULL END
     ) VIRTUAL,
@@ -594,14 +590,13 @@ CREATE TABLE PromptIa (
 -- Historial completo de un (CurriculumId, Codigo)
 CREATE INDEX IX_PromptIa_Curriculum_Codigo ON PromptIa (CurriculumId, Codigo);
 
--- Conexiones con proveedores de IA propias de cada CV (self-service): un CV puede
--- guardar varias (Claude, OpenAI, Gemini, Ollama/self-hosted, otro), con exactamente
--- una activa a la vez (indice unico via columna generada, mismo patron que
+-- Conexion de IA GLOBAL para toda la plataforma (Claude, OpenAI, Gemini,
+-- Ollama/self-hosted, otro), administrada exclusivamente por el rol Admin --
+-- no pertenece a ningun CV. Puede haber varias guardadas, con exactamente una
+-- activa a la vez (indice unico via columna generada, mismo patron que
 -- UQ_PromptIa_Curriculum_Codigo_Activo). La clave se guarda cifrada (AES-256-GCM, ver
 -- AesGcmApiKeyCipher) y nunca se devuelve al front-end; es opcional porque Ollama local
 -- normalmente no la requiere. Endpoint es obligatorio solo para proveedores self-hosted.
--- Conexion de IA GLOBAL para toda la plataforma (una activa a la vez),
--- administrada exclusivamente por el rol Admin -- no pertenece a ningun CV.
 CREATE TABLE ProveedorIa (
     ProveedorIaId      INT NOT NULL AUTO_INCREMENT,
     Proveedor          VARCHAR(20)  NOT NULL,
@@ -612,9 +607,9 @@ CREATE TABLE ProveedorIa (
     EsActivo           TINYINT(1) NOT NULL DEFAULT 0,
     FechaCreacion      DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
     FechaActualizacion DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()) ON UPDATE CURRENT_TIMESTAMP,
-    -- Emula UQ_ProveedorIa_Activo (WHERE EsActivo = 1) de SQL Server: MariaDB no
-    -- soporta indices unicos filtrados nativos, pero si permite multiples NULL en
-    -- un indice unico, asi que solo una fila puede tener EsActivoUnico = 1.
+    -- Emula un indice unico filtrado (WHERE EsActivo = 1): MariaDB no soporta
+    -- indices unicos filtrados nativos, pero si permite multiples NULL en un
+    -- indice unico, asi que solo una fila puede tener EsActivoUnico = 1.
     EsActivoUnico TINYINT GENERATED ALWAYS AS (
         CASE WHEN EsActivo = 1 THEN 1 ELSE NULL END
     ) VIRTUAL,
@@ -643,13 +638,10 @@ CREATE TABLE ConfiguracionCorreo (
 -- =============================================================================
 -- TRIGGERS DE SINCRONIZACION DE CONTADORES (Curriculum y EstadisticasPublicas)
 -- =============================================================================
--- OJO -- diferencia real de comportamiento, no solo de sintaxis: los triggers
--- de SQL Server son "por sentencia" (leen las pseudo-tablas `inserted`/
--- `deleted`, que pueden traer muchas filas si el INSERT/UPDATE/DELETE afecto
--- varias a la vez). MariaDB solo soporta triggers "por fila" (una ejecucion
--- por cada fila afectada, con NEW/OLD apuntando a esa fila unicamente). Por
--- eso aca hay 3 triggers por tabla (INSERT/UPDATE/DELETE) en vez de 1, y cada
--- uno recalcula el agregado para el CurriculumId de ESA fila. El resultado
+-- OJO -- MariaDB solo soporta triggers "por fila" (una ejecucion por cada fila
+-- afectada, con NEW/OLD apuntando a esa fila unicamente), asi que aca hay 3
+-- triggers por tabla (INSERT/UPDATE/DELETE) en vez de 1, y cada uno recalcula
+-- el agregado para el CurriculumId de ESA fila. El resultado
 -- final es identico porque el codigo de la app siempre inserta/actualiza/
 -- borra de a una fila de VisitanteContacto o AlertaVisita por vez -- si en el
 -- futuro se agrega un borrado masivo (DELETE de muchas filas de un tiro),

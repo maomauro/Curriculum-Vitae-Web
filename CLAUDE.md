@@ -4,7 +4,7 @@ Este archivo brinda contexto a Claude Code (claude.ai/code) al trabajar con cód
 
 ## Descripción general del proyecto
 
-PortalCV: un portal que conecta a profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda/detalle público) o en **borrador** (edición privada únicamente). Solo los publicadores y administradores necesitan registrarse/autenticarse. Monorepo: backend en **.NET 10** (Clean Architecture) + frontend en **Angular 20**, base de datos **MariaDB**. Producción se despliega en un VPS de Contabo con Cloudflare como DNS/proxy del dominio (dejó de ser Azure; ver `docs/produccion/Plan-Trabajo-Produccion.md`).
+PortalCV: un portal que conecta a profesionales (publicadores de CV) con reclutadores. Cada usuario controla si su CV está **publicado** (visible en búsqueda/detalle público) o en **borrador** (edición privada únicamente). Solo los publicadores y administradores necesitan registrarse/autenticarse. Monorepo: backend en **.NET 10** (Clean Architecture) + frontend en **Angular 20**, base de datos **MariaDB**. Producción se despliega en un VPS de Contabo con Cloudflare como DNS/proxy del dominio (ver `docs/produccion/Plan-Trabajo-Produccion.md`).
 
 Todo el código, comentarios, mensajes de commit y documentación de este repositorio están escritos en **español**. Mantené esa convención al editar.
 
@@ -45,7 +45,7 @@ Motor: **MariaDB** (`MySql.EntityFrameworkCore`, el conector oficial de Oracle �
 
 `database/01_CreateSchema.dbml` (visualizar en dbdiagram.io) y `database/DiccionarioDeDatos.md` están pensados para reflejar el esquema, pero **históricamente han quedado desactualizados** respecto a `database/01_CreateSchema.sql` — tratá ese script como la fuente de verdad, no estos documentos, y verificá antes de confiar en cualquiera de los dos.
 
-### Docker (solo backend — así se despliega a Azure Container Apps)
+### Docker (solo backend — así se despliega al VPS de Contabo)
 
 ```bash
 cd backend && docker build -f Dockerfile -t portalcv-backend:local .
@@ -79,13 +79,13 @@ Flujo de una petición: `Middleware → Controller (lee claims del JWT) → I{Se
 
 ### Auth (JWT en una cookie HttpOnly, no en localStorage)
 
-`AuthController` coloca el JWT en una cookie `HttpOnly` (`portalcv_auth`), no en el cuerpo de la respuesta, para mantenerlo fuera del alcance de XSS. `Secure=true; SameSite=None` en Producción (el SPA y la API son dominios distintos), `Secure=false; SameSite=Lax` en Desarrollo (con proxy a través de `ng serve`, mismo origen aparente). El pipeline de `JwtBearer` acepta el token desde el header `Authorization: Bearer` **o** desde la cookie, así que los clientes que no son SPA (Postman, scripts) siguen funcionando con el header. `GET /api/auth/me` es cómo el frontend restaura el estado de sesión después de un reload, ya que no puede leer la cookie HttpOnly por sí mismo. Claims: `sub`, `email`, `nombre`, `role`, `curriculum_id` — `CvControllerBase` lee `curriculum_id` para que cada controlador privado sepa con qué CV operar sin que el frontend tenga que pasar un id nunca. Roles: `Visitante`, `Publicador`, `Admin`.
+`AuthController` coloca el JWT en una cookie `HttpOnly` (`portalcv_auth`), no en el cuerpo de la respuesta, para mantenerlo fuera del alcance de XSS. `SameSite=Lax` siempre (frontend y backend comparten origen, tanto en producción como en desarrollo vía el proxy de `ng serve`); `Secure=true` solo fuera de Development. El pipeline de `JwtBearer` acepta el token desde el header `Authorization: Bearer` **o** desde la cookie, así que los clientes que no son SPA (Postman, scripts) siguen funcionando con el header. `GET /api/auth/me` es cómo el frontend restaura el estado de sesión después de un reload, ya que no puede leer la cookie HttpOnly por sí mismo. Claims: `sub`, `email`, `nombre`, `role`, `curriculum_id` — `CvControllerBase` lee `curriculum_id` para que cada controlador privado sepa con qué CV operar sin que el frontend tenga que pasar un id nunca. Roles: `Visitante`, `Publicador`, `Admin`.
 
 ### Arquitectura de proveedores de IA / prompts
 
 Esta es la parte menos evidente del backend y abarca varios archivos:
 
-- Cada `Curriculum` puede tener varias filas `ProveedorIa` guardadas (Claude/Gemini/Groq/Ollama), una activa a la vez. La clave de API se cifra en reposo con `IApiKeyCipher`/`AesGcmApiKeyCipher` (AES-256-GCM, singleton, clave desde config `Encryption:Key`) y **nunca** vuelve a salir de ningún endpoint, ni cifrada ni en texto plano — los DTOs de respuesta simplemente la omiten. Una contraseña/clave en blanco en una solicitud de actualización significa "mantener la existente".
+- `ProveedorIa` es una conexión **global de toda la plataforma** (Claude/Gemini/Groq/Ollama), administrada solo por Admin — puede haber varias guardadas pero una sola activa a la vez, usada por el flujo de IA de cualquier usuario. La clave de API se cifra en reposo con `IApiKeyCipher`/`AesGcmApiKeyCipher` (AES-256-GCM, singleton, clave desde config `Encryption:Key`) y **nunca** vuelve a salir de ningún endpoint, ni cifrada ni en texto plano — los DTOs de respuesta simplemente la omiten. Una contraseña/clave en blanco en una solicitud de actualización significa "mantener la existente".
 - Los cuatro proveedores implementan `IAiProviderClient` y se registran vía `AddHttpClient<IAiProviderClient, TImpl>("ia-<name>", ...)` — cada uno **necesita un nombre explícito** en `DependencyInjection.cs` porque comparten el mismo `TClient`, o ASP.NET Core lanza una excepción cuando se resuelve la segunda implementación. Ollama tiene un timeout HTTP mucho más largo (300s vs 60s) ya que típicamente es un modelo local/auto-hospedado sobre CPU, a veces tunelizado (ngrok).
 - Cada flujo de "pedirle a la IA JSON estructurado" (extraer una oferta, seleccionar/hacer match de un Perfil, generar un CV condensado, redactar un correo para reclutador, etc.) pasa por el mismo `IIaPromptInvoker.InvocarAsync(curriculumId, codigoPrompt, contenidoPromptPorDefecto, valores, imagenBytes?, imagenContentType?, ct)`: resuelve el proveedor activo, descifra la clave, resuelve la versión activa del `PromptIa` propio del CV para `codigoPrompt` (o usa el texto por defecto codificado si no existe), sustituye los placeholders `{{MARCADOR}}` y llama al proveedor. Quien llama solo provee el código del prompt, sus marcadores, y cómo parsear la respuesta JSON (vía `RespuestaIaJsonParser.Parsear<T>`, que quita los fences ```json y deserializa sin distinguir mayúsculas/minúsculas).
 - Los textos de prompts por defecto viven como constantes en `PortalCV.Application.Constants.PromptsPorDefecto`. Un usuario solo ve un prompt en la UI "Prompts de IA" una vez que ha creado su propia fila `PromptIa` con ese código — no hay un registro que actualizar al agregar un nuevo prompt.
@@ -108,7 +108,7 @@ Nunca hardcodeados en `appsettings.json`/`launchSettings.json`. Tres lugares dis
 |---|---|
 | `dotnet run` / IDE | `dotnet user-secrets` (perfil por usuario del SO, no está en el repo) |
 | Docker local | `docker/backend.local.env` (ignorado por git; copiar desde `.example`) |
-| CI / Azure Container Apps | variables de entorno / Key Vault |
+| CI / VPS de producción | variables de entorno |
 
 Requeridos localmente: `ConnectionStrings:DefaultConnection`, `Jwt:Key` (≥32 caracteres), `Encryption:Key` (base64 AES-256, 32 bytes — sin esto, cada endpoint `api/cv/proveedor-ia` y `api/cv/configuracion-correo` devuelve 500). `dotnet user-secrets set` usa sintaxis de dos puntos (`Seccion:Clave`); el doble guion bajo (`Seccion__Clave`) es solo para variables de entorno y **no** es traducido por user-secrets.
 

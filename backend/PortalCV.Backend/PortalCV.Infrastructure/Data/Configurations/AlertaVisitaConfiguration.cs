@@ -47,7 +47,7 @@ public class AlertaVisitaConfiguration : IEntityTypeConfiguration<AlertaVisita>
             .HasForeignKey(a => a.CurriculumId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // NO ACTION en SQL Server: CASCADE aquí choca con CASCADE Curriculum→Alerta y Curriculum→Contacto (múltiples rutas).
+        // NO ACTION: CASCADE aquí choca con CASCADE Curriculum→Alerta y Curriculum→Contacto (múltiples rutas hacia la misma fila).
         builder.HasOne(a => a.VisitanteContacto)
             .WithMany()
             .HasForeignKey(a => a.VisitanteContactoId)

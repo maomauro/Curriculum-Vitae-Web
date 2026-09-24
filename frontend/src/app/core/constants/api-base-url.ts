@@ -1,24 +1,7 @@
-const SWA_HOST_SUFFIX = '.azurestaticapps.net';
-
-interface RuntimeConfig {
-  apiBaseUrl?: string;
-}
-
-declare global {
-  interface Window {
-    __PORTALCV_CONFIG__?: RuntimeConfig;
-  }
-}
-
-function isStaticWebAppsHost(hostname: string | undefined): boolean {
-  return typeof hostname === 'string' && hostname.endsWith(SWA_HOST_SUFFIX);
-}
-
-const hostname = globalThis.location?.hostname;
-const runtimeApiBaseUrl = globalThis.window?.__PORTALCV_CONFIG__?.apiBaseUrl?.trim();
-
 /**
- * En SWA usamos URL absoluta al backend (ACA) porque no hay backend enlazado
- * en Static Web Apps para resolver rutas relativas /api.
+ * Frontend y backend se sirven desde el mismo origen (el reverse proxy del
+ * VPS enruta /api hacia el backend), así que las rutas relativas alcanzan
+ * en todos los entornos: en local vía `proxy.conf.js`, en producción vía
+ * el proxy del VPS.
  */
-export const API_BASE_URL = runtimeApiBaseUrl || (isStaticWebAppsHost(hostname) ? '/api' : '');
+export const API_BASE_URL = '';

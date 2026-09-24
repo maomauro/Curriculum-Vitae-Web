@@ -231,13 +231,12 @@ namespace PortalCV.Api
 
             var app = builder.Build();
 
-            // Detrás de un reverse proxy (hoy pensado para Nginx en el VPS de Contabo, delante
-            // de Cloudflare) la IP real del visitante viaja en X-Forwarded-For; sin esto,
-            // HttpContext.Connection.RemoteIpAddress solo vería la IP interna del proxy.
-            // KnownNetworks/KnownProxies quedan sin restringir por ahora (heredado de cuando el
-            // proxy era el ingress de Azure Container Apps, sin IP fija conocida) -- una vez que
-            // exista el Nginx de produccion (ver docs/produccion/Plan-Trabajo-Produccion.md Fase 3),
-            // conviene restringir esto a la IP/red real de ese Nginx en vez de confiar en cualquier origen.
+            // Detrás del reverse proxy (Nginx en el VPS de Contabo, delante de Cloudflare) la IP
+            // real del visitante viaja en X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress
+            // solo vería la IP interna del proxy. KnownNetworks/KnownProxies quedan sin restringir
+            // por ahora -- una vez que exista el Nginx de produccion (ver
+            // docs/produccion/Plan-Trabajo-Produccion.md Fase 3), conviene restringir esto a la
+            // IP/red real de ese Nginx en vez de confiar en cualquier origen.
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
