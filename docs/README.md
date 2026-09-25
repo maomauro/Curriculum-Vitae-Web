@@ -11,6 +11,7 @@ Descripción general del sistema, modelo de datos y backlog.
 |---|---|
 | [Documentacion.md](./arquitectura/Documentacion.md) | Descripción general del proyecto, stack tecnológico |
 | [Backlog.md](./arquitectura/Backlog.md) | Historias de usuario, tareas pendientes |
+| [adr/](./arquitectura/adr/) | Decisiones de arquitectura registradas (ADRs): contexto, alternativas consideradas, consecuencias |
 
 ---
 

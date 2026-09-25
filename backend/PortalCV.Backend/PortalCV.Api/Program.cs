@@ -250,6 +250,22 @@ namespace PortalCV.Api
 
             app.UseCors("AllowFrontend");
 
+            // Headers de seguridad HTTP (OWASP). El CSP estricto solo aplica fuera de
+            // Development porque Swagger UI (solo habilitado en dev) necesita scripts/estilos
+            // inline que ese CSP bloquearía; en producción este backend solo devuelve JSON
+            // (el HTML del SPA lo sirve Nginx, no este proceso), así que "default-src 'none'" es seguro.
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+                context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+                context.Response.Headers.Append("X-Frame-Options", "DENY");
+                if (!app.Environment.IsDevelopment())
+                {
+                    context.Response.Headers.Append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+                }
+                await next();
+            });
+
             if (app.Environment.IsDevelopment())
             {
                 // Swagger 2.0: máxima compatibilidad con Swagger UI (evita "valid version field" por caché o parsers viejos).
@@ -269,6 +285,7 @@ namespace PortalCV.Api
             // usuario abre https:// en un puerto que solo sirve HTTP → "invalid response".
             if (!app.Environment.IsDevelopment())
             {
+                app.UseHsts();
                 app.UseHttpsRedirection();
             }
 

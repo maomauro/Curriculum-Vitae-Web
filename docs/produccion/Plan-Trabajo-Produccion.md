@@ -1,7 +1,7 @@
 # Plan de Trabajo para Salida a Produccion — PortalCV
 
 Estado del plan: En definicion de infraestructura
-Fecha de este corte: 2026-09-23
+Fecha de este corte: 2026-09-25
 Rama de trabajo actual: `feature/portal-cv-mejoras-adjuntos-ia` (PR abierto hacia `main`)
 
 ---
@@ -224,9 +224,39 @@ que ASP.NET Core lee automaticamente con `ASPNETCORE_ENVIRONMENT=Production`.
 
 ---
 
+## Deuda de gobierno relacionada (no bloquea el go-live, pero quedo pendiente)
+
+Detectada en un diagnostico tecnico externo (2026-09-24) y solo parcialmente resuelta hasta
+ahora. No son requisitos para publicar en el VPS, pero conviene no perderlos de vista:
+
+- [x] Headers de seguridad HTTP (HSTS, CSP, X-Content-Type-Options, Referrer-Policy,
+  X-Frame-Options) en el backend — aplicado en `Program.cs`
+- [x] Branch protection de GitHub alineada con `docs/devops/Politica-Proteccion-Ramas.md`
+  (exigia 0 aprobaciones en vez de 1 en `main`/`develop`) — corregido
+- [x] ADRs retroactivos de decisiones ya tomadas — ver `docs/arquitectura/adr/`
+  (conector MariaDB, QuestPDF, MailKit, VPS vs cloud gestionado)
+- [ ] **Infraestructura como codigo (IaC)** del VPS y Cloudflare (Terraform u equivalente) —
+  hoy la Fase 1-2 de este plan se ejecuta a mano; sin IaC, reproducir el entorno ante un
+  incidente depende de seguir este documento paso a paso. Ver ADR-0004 (consecuencias)
+- [ ] **Tags SemVer** en cada deploy a produccion — fortalece el rollback de Fase 7 (hoy
+  dice "mantener el tag de imagen anterior en GHCR", pero sin versionado formal no hay forma
+  de correlacionar un incidente con una version exacta del codigo)
+- [ ] **Smoke test / e2e automatizado** para los flujos criticos (login, publicar/despublicar
+  CV, busqueda publica) — hoy el smoke test de Fase 7 y
+  `docs/devops/Smoke-Test-Produccion.md` son manuales
+- [ ] **Metricas DORA basicas** (lead time, frecuencia de despliegue) — el pipeline de CI ya
+  genera los datos crudos (duracion de jobs, frecuencia de merges a `main`), falta instrumentar
+  algo que las calcule/reporte
+- [ ] **Documentacion arc42 / diagramas C4** — `docs/arquitectura/Documentacion.md` no sigue
+  las secciones estandar de arc42 y no hay diagrama de contexto/contenedores; util para
+  onboarding, no bloqueante para operar
+
+---
+
 ## Ver tambien
 
 - [docs/devops/Plan-Backup-Mantenimiento.md](../devops/Plan-Backup-Mantenimiento.md) — backups y mantenimiento de MariaDB
 - [docs/devops/Checklist-Produccion.md](../devops/Checklist-Produccion.md) — checklist previo a publicar
 - [database/README.md](../../database/README.md) — esquema y modelo de datos (MariaDB, fuente de verdad)
+- [docs/arquitectura/adr/](../arquitectura/adr/) — decisiones de arquitectura registradas (ADRs)
 - `CLAUDE.md` — estado general del stack y decisiones de arquitectura
