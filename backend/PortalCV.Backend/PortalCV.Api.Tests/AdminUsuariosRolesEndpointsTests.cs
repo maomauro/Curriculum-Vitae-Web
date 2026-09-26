@@ -115,6 +115,61 @@ public class AdminUsuariosRolesEndpointsTests : IClassFixture<TestWebApplication
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task SetEstado_DesactivarPropiaCuenta_Retorna400()
+    {
+        var id = await SembrarUsuarioAsync("Activo");
+        var client = CreateClientWithRole("Admin", usuarioId: id);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/usuarios/{id}/estado", new { activo = false });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SetEstado_ActivarPropiaCuenta_NoEstaBloqueado()
+    {
+        var id = await SembrarUsuarioAsync("Activo");
+        var client = CreateClientWithRole("Admin", usuarioId: id);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/usuarios/{id}/estado", new { activo = true });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SetEstado_DesactivarUltimoAdminActivo_Retorna400()
+    {
+        var id = await SembrarUsuarioAsync("Activo", rolAdmin: true);
+
+        var response = await CreateAdminClient().PutAsJsonAsync($"/api/admin/usuarios/{id}/estado", new { activo = false });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SetEstado_DesactivarAdmin_PermiteSiHayOtroAdminActivo()
+    {
+        var otroAdminId = await SembrarUsuarioAsync("Activo", rolAdmin: true);
+        var idADesactivar = await SembrarUsuarioAsync("Activo", rolAdmin: true);
+
+        var response = await CreateAdminClient().PutAsJsonAsync(
+            $"/api/admin/usuarios/{idADesactivar}/estado", new { activo = false });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        _ = otroAdminId;
+    }
+
+    [Fact]
+    public async Task SetEstado_DesactivarUsuarioSinRolAdmin_Permite()
+    {
+        var id = await SembrarUsuarioAsync("Activo");
+
+        var response = await CreateAdminClient().PutAsJsonAsync($"/api/admin/usuarios/{id}/estado", new { activo = false });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     // ── PUT /api/admin/usuarios/{id}/cv-publicacion ──────────────────────────
 
     [Fact]
