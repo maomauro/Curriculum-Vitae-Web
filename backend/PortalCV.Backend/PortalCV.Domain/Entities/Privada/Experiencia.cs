@@ -13,9 +13,13 @@ public class Experiencia
     public string? MotivoRetiro { get; set; }
     public string? Funciones { get; set; }
     public bool EsActual { get; set; } = false;
-    /** Incluir este empleo en Mi CV y en el detalle público (cuando la sección Experiencia esté visible). */
+    /// <summary>Incluir este empleo en Mi CV y en el detalle público (cuando la sección Experiencia esté visible).</summary>
     public bool MostrarEnCv { get; set; } = true;
+    /// <summary>URL pegada por el usuario (legacy). Si <see cref="AdjuntoSoporteBytes"/> tiene
+    /// valor, se ignora en favor del adjunto subido como binario.</summary>
     public string? AdjuntoSoporte { get; set; }
+    public byte[]? AdjuntoSoporteBytes { get; set; }
+    public string? AdjuntoSoporteContentType { get; set; }
     public DateTime FechaRegistro { get; set; }
 
     public Curriculum Curriculum { get; set; } = null!;

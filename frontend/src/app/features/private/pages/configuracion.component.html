@@ -6,14 +6,72 @@
   </div>
 </div>
 
-<!-- Visibilidad del CV -->
+<!-- Publicación en el portal (Estado Publicado / Borrador en curriculum) -->
 <div class="seccion-card">
+  <div class="seccion-titulo">
+    <i class="bi bi-megaphone me-2 text-primary"></i>Publicación del CV
+  </div>
+  <p class="text-muted small mb-3">
+    Con el interruptor activo tu CV queda <strong>publicado</strong>: aparece en la búsqueda pública y el enlace de
+    "URL pública del CV" (más abajo) funciona para quien lo visite. Si lo desactivas, pasa a <strong>borrador</strong>:
+    solo tú lo ves en el portal privado; el enlace público ya no mostrará tu CV.
+  </p>
+  <div class="vis-row align-items-center py-1">
+    <div class="vis-info flex-grow-1 min-w-0">
+      <label class="vis-name" for="cfg_cv_publicado">Publicar mi CV en el portal</label>
+      <div class="vis-desc small text-muted mb-0">
+        Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
+      </div>
+    </div>
+    <div class="form-check form-switch mb-0 flex-shrink-0">
+      <input
+        class="form-check-input cv-switch-cursor"
+        type="checkbox"
+        role="switch"
+        id="cfg_cv_publicado"
+        [checked]="cvPublicado"
+        [disabled]="!presentacionLista || guardandoPublicacion"
+        (click)="onCvPublicacionClick($event)"
+        (keydown)="$event.stopPropagation()">
+    </div>
+  </div>
+  <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
+    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    Actualizando publicación…
+  </p>
+</div>
+
+<!-- Visibilidad del CV + vista previa en vivo -->
+<div class="row g-3">
+<div class="col-lg-5">
+<div class="seccion-card h-100">
   <div class="seccion-titulo"><i class="bi bi-eye-fill"></i>Visibilidad del CV</div>
   <div class="seccion-subtitulo">
     Clasifica la visibilidad por páginas ya implementadas. En cada sección se listan los atributos que se mostrarán
     en tu CV público cuando el switch esté activo.
     <strong class="d-block mt-2">Los cambios se guardan automáticamente</strong> al activar o desactivar cada opción.
   </div>
+
+  <!-- Pestañas del CV público: interruptores maestros, uno por tab -->
+  <div class="fw-semibold small text-muted mt-3 mb-1">Pestañas del CV público</div>
+  <div class="vis-row" *ngFor="let pestana of pestanasPublicasCv">
+    <div class="vis-info">
+      <div class="vis-icon" [ngClass]="pestana.iconStyle">
+        <i class="bi" [ngClass]="pestana.icon"></i>
+      </div>
+      <div>
+        <div class="vis-name">{{ pestana.label }}</div>
+        <div class="vis-desc">Muestra u oculta esta pestaña en tu CV público.</div>
+      </div>
+    </div>
+    <div class="form-check form-switch mb-0">
+      <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
+             [(ngModel)]="pestana.visible" [id]="'vis_' + pestana.key"
+             (change)="onToggleSeccion(pestana)">
+    </div>
+  </div>
+
+  <div class="fw-semibold small text-muted mt-4 mb-1">Contenido de cada pestaña</div>
   <div class="vis-accordion">
     <div class="vis-accordion-item" *ngFor="let grupo of visibilidadGrupos">
       <button
@@ -38,8 +96,9 @@
         role="region"
         [attr.aria-labelledby]="'vis-acc-trigger-' + grupo.id">
         <p *ngIf="grupo.id === 'dashboard-publico'" class="text-muted small mb-3 px-1">
-          Controla la pestaña <strong>Dashboard analítico</strong> en tu CV público. Si el interruptor principal está
-          activo pero desactivas <strong>métricas</strong> y <strong>gráficas</strong>, esa pestaña no se mostrará.
+          Si desactivas <strong>métricas</strong> y <strong>gráficas</strong>, la pestaña
+          <strong>Dashboard analítico</strong> (interruptor arriba, en "Pestañas del CV público") deja de mostrarse
+          aunque esté activa.
         </p>
         <ng-container *ngFor="let campo of grupo.items">
           <div class="vis-row" [class.vis-row--sin-switch-seccion]="campo.sinSwitchSeccion">
@@ -78,9 +137,77 @@
             </div>
           </div>
         </ng-container>
+
+        <div *ngIf="grupo.id === 'profesional'" class="vis-attr-list mt-2">
+          <div class="fw-semibold small text-muted mb-1 px-1">Acciones en bloque</div>
+          <p class="text-muted small mb-2 px-1">
+            Activa u oculta de una sola vez todos los registros de una sección -- el mismo control que ya tenés
+            dentro de cada vista de edición, disponible también acá.
+          </p>
+
+          <div class="vis-row" *ngIf="experiencias.length > 0">
+            <div class="vis-info">
+              <div class="vis-name">Experiencia</div>
+              <div class="vis-desc">{{ hayExperienciasOcultas ? (hayExperienciasVisibles ? 'Algunas ocultas' : 'Todas ocultas') : 'Todas visibles' }}</div>
+            </div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch" id="bloque-experiencia"
+                     [checked]="!hayExperienciasOcultas"
+                     [disabled]="guardandoVisibilidadBloqueExperiencia"
+                     (change)="onToggleBloqueExperiencias($any($event.target).checked)">
+            </div>
+          </div>
+
+          <div class="vis-row" *ngIf="formaciones.length > 0">
+            <div class="vis-info">
+              <div class="vis-name">Educación</div>
+              <div class="vis-desc">{{ hayFormacionesOcultas ? (hayFormacionesVisibles ? 'Algunas ocultas' : 'Todas ocultas') : 'Todas visibles' }}</div>
+            </div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch" id="bloque-formacion"
+                     [checked]="!hayFormacionesOcultas"
+                     [disabled]="guardandoVisibilidadBloqueFormacion"
+                     (change)="onToggleBloqueFormaciones($any($event.target).checked)">
+            </div>
+          </div>
+
+          <div class="vis-row" *ngIf="proyectos.length > 0">
+            <div class="vis-info">
+              <div class="vis-name">Proyectos</div>
+              <div class="vis-desc">{{ hayProyectosOcultos ? (hayProyectosVisibles ? 'Algunos ocultos' : 'Todos ocultos') : 'Todos visibles' }}</div>
+            </div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch" id="bloque-proyecto"
+                     [checked]="!hayProyectosOcultos"
+                     [disabled]="guardandoVisibilidadBloqueProyecto"
+                     (change)="onToggleBloqueProyectos($any($event.target).checked)">
+            </div>
+          </div>
+
+          <div class="vis-row" *ngIf="habilidades.length > 0">
+            <div class="vis-info">
+              <div class="vis-name">Habilidades</div>
+              <div class="vis-desc">{{ hayHabilidadesOcultas ? (hayHabilidadesVisibles ? 'Algunas ocultas' : 'Todas ocultas') : 'Todas visibles' }}</div>
+            </div>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch" id="bloque-habilidad"
+                     [checked]="!hayHabilidadesOcultas"
+                     [disabled]="guardandoVisibilidadBloqueHabilidad"
+                     (change)="onToggleBloqueHabilidades($any($event.target).checked)">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+</div>
+</div>
+
+<div class="col-lg-7">
+<div class="seccion-card h-100 cv-preview-panel-card">
+  <app-preview-publico-panel></app-preview-publico-panel>
+</div>
+</div>
 </div>
 
 <!-- URL pública del CV -->
@@ -183,37 +310,62 @@
   </div>
 </div>
 
-<!-- Publicación en el portal (Estado Publicado / Borrador en curriculum) -->
+<!-- Correo saliente -->
 <div class="seccion-card">
-  <div class="seccion-titulo">
-    <i class="bi bi-megaphone me-2 text-primary"></i>Publicación del CV
+  <div class="seccion-titulo mb-2">
+    <i class="bi bi-envelope-paper-fill me-2 text-primary"></i>Correo saliente
   </div>
   <p class="text-muted small mb-3">
-    Con el interruptor activo tu CV queda <strong>publicado</strong>: aparece en la búsqueda pública y el enlace de arriba
-    funciona para quien lo visite. Si lo desactivas, pasa a <strong>borrador</strong>: solo tú lo ves en el portal privado;
-    el enlace público ya no mostrará tu CV.
+    Esta conexión SMTP es la que usa <strong>Analizar Oferta</strong> para enviarle el correo (con tu CV adjunto en
+    PDF) al reclutador. El remitente siempre es el correo que tienes en <strong>Información Personal</strong> — acá
+    solo guardas la contraseña de aplicación para poder enviar en su nombre. La contraseña se guarda de forma
+    segura en el servidor — nunca vuelve a mostrarse una vez guardada.
   </p>
-  <div class="vis-row align-items-center py-1">
-    <div class="vis-info flex-grow-1 min-w-0">
-      <label class="vis-name" for="cfg_cv_publicado">Publicar mi CV en el portal</label>
-      <div class="vis-desc small text-muted mb-0">
-        Estado actual: <strong>{{ cvPublicado ? 'Publicado' : 'Borrador' }}</strong>
-      </div>
-    </div>
-    <div class="form-check form-switch mb-0 flex-shrink-0">
-      <input
-        class="form-check-input cv-switch-cursor"
-        type="checkbox"
-        role="switch"
-        id="cfg_cv_publicado"
-        [checked]="cvPublicado"
-        [disabled]="!presentacionLista || guardandoPublicacion"
-        (click)="onCvPublicacionClick($event)"
-        (keydown)="$event.stopPropagation()">
+
+  <div *ngIf="loadingCorreo" class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="visually-hidden">Cargando configuración de correo…</span>
     </div>
   </div>
-  <p class="small text-muted mb-0 mt-2" *ngIf="guardandoPublicacion">
-    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-    Actualizando publicación…
-  </p>
+
+  <div class="row g-3" *ngIf="!loadingCorreo">
+    <div class="col-md-6">
+      <label class="form-label" for="cfg_correo_host">Host SMTP <span class="text-danger">*</span></label>
+      <input id="cfg_correo_host" type="text" class="form-control" [(ngModel)]="correoForm.host" placeholder="smtp.gmail.com">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="cfg_correo_puerto">Puerto <span class="text-danger">*</span></label>
+      <input id="cfg_correo_puerto" type="number" class="form-control" [(ngModel)]="correoForm.puerto">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <div class="form-check">
+        <input id="cfg_correo_tls" type="checkbox" class="form-check-input" [(ngModel)]="correoForm.usarTls">
+        <label class="form-check-label" for="cfg_correo_tls">Usar TLS</label>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" for="cfg_correo_password">
+        Contraseña de aplicación
+        <span class="text-danger" *ngIf="!correoConfig?.tieneConfiguracion">*</span>
+        <small class="text-muted fw-normal" *ngIf="correoConfig?.tieneConfiguracion">(opcional)</small>
+      </label>
+      <input
+        id="cfg_correo_password"
+        type="password"
+        class="form-control"
+        [(ngModel)]="correoForm.password"
+        autocomplete="off"
+        [placeholder]="correoConfig?.tieneConfiguracion ? 'Dejar en blanco para no cambiarla' : 'Contraseña de aplicación de Gmail'">
+    </div>
+
+    <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="guardandoCorreo" (click)="guardarConfiguracionCorreo()">
+        <span *ngIf="guardandoCorreo" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!guardandoCorreo" class="bi bi-check2-circle me-1"></i>Guardar
+      </button>
+      <span *ngIf="correoConfig?.tieneConfiguracion" class="small text-success">
+        <i class="bi bi-check-circle-fill me-1"></i>Correo configurado
+      </span>
+    </div>
+  </div>
 </div>

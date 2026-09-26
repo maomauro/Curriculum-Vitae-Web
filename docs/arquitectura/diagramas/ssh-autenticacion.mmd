@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant PC as PC del operador
+    participant Panel as Panel Contabo
+    participant VPS as VPS (servidor)
+
+    Note over PC: Genera el par de llaves<br/>id_ed25519 (privada)<br/>id_ed25519.pub (pública)
+    PC->>Panel: Pega la llave PÚBLICA
+    Panel->>VPS: Guarda la pública en<br/>~/.ssh/authorized_keys
+
+    Note over PC,VPS: --- Al conectarse por SSH ---
+    PC->>VPS: "Quiero conectarme, esta es mi llave pública"
+    VPS->>VPS: Genera un reto aleatorio
+    VPS->>PC: Envía el reto cifrado con la llave pública
+    PC->>PC: Firma el reto con la llave PRIVADA (nunca sale del PC)
+    PC->>VPS: Devuelve la respuesta firmada
+    VPS->>VPS: Verifica la firma con la llave pública guardada
+    VPS-->>PC: Acceso concedido (solo quien tiene la privada)

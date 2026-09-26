@@ -35,9 +35,17 @@
 
         <div class="input-group mb-4">
           <label class="visually-hidden" for="login-password">Contraseña</label>
-          <input id="login-password" type="password" class="form-control"
+          <input id="login-password" [type]="mostrarPassword ? 'text' : 'password'" class="form-control"
             placeholder="Contraseña"
             [(ngModel)]="password" name="password" required autocomplete="current-password">
+          <button
+            type="button"
+            class="btn btn-outline-secondary auth-input-clear"
+            (click)="toggleMostrarPassword()"
+            [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="mostrarPassword">
+            <i class="bi" [ngClass]="mostrarPassword ? 'bi-eye-slash' : 'bi-eye'" aria-hidden="true"></i>
+          </button>
           <button
             *ngIf="password.length > 0"
             type="button"

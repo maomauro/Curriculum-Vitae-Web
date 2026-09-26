@@ -17,7 +17,7 @@ ng serve
 
 Abre `http://localhost:4200/`. Los cambios recargan en caliente.
 
-**Producción:** `npm run build -- --configuration production` (salida en `dist/`). El hosting debe servir el SPA y resolver `/api` (y, si aplica readiness directo, `/health`) hacia la API (proxy inverso, Static Web Apps con API enlazada, etc.).
+**Producción:** `npm run build -- --configuration production` (salida en `dist/`). El VPS de Contabo sirve este build con Nginx, que además resuelve `/api` y `/health` hacia el contenedor del backend por el mismo subdominio (ver `docs/produccion/Plan-Trabajo-Produccion.md`).
 
 ## Calidad de código (ESLint)
 

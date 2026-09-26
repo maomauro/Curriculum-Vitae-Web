@@ -48,10 +48,15 @@ export class ExperienciaComponent implements OnInit {
   guardando = false;
   /** PUT de visibilidad desde el switch de cabecera. */
   guardandoVisibilidadExpId: number | null = null;
+  guardandoVisibilidadBloque = false;
+  /** PUT de visibilidad desde el switch de cabecera de una referencia laboral. */
+  guardandoVisibilidadRefId: number | null = null;
   guardandoRef = false;
   todayDate = getTodayDateString();
-  readonly hintAdjunto =
-    'Próximamente podrás adjuntar certificación; el campo está deshabilitado por ahora.';
+  /** PUT/DELETE de soporte (PDF) desde el input "Certificación laboral" de cada empleo. */
+  subiendoAdjuntoExpId: number | null = null;
+  private static readonly ADJUNTO_TIPOS_PERMITIDOS = ['application/pdf'];
+  private static readonly ADJUNTO_MAX_BYTES = 3 * 1024 * 1024;
   readonly formMessages = FORM_MESSAGES;
 
   constructor(
@@ -115,7 +120,37 @@ export class ExperienciaComponent implements OnInit {
       relacion: r.relacion,
       observaciones: r.observaciones,
       adjuntoSoporte: r.adjuntoSoporte,
+      mostrarEnCv: r.mostrarEnCv,
     };
+  }
+
+  /** PUT de visibilidad desde el switch de cabecera de cada referencia laboral (reemplaza
+   * el interruptor global "Referencia laboral" que antes vivía en Configuración -- ahora es
+   * un control por registro, igual que el de cada empleo). */
+  onMostrarEnCvChangeRef(ref: ReferenciaDto, nuevo: boolean): void {
+    const prev = !nuevo;
+    if (this.guardandoVisibilidadRefId === ref.referenciaId) {
+      return;
+    }
+    this.guardandoVisibilidadRefId = ref.referenciaId;
+    this.cvEditorService
+      .updateReferenciaVisibilidad(ref.referenciaId, { mostrarEnCv: nuevo })
+      .subscribe({
+        next: actualizada => {
+          this.referencias = this.referencias.map(r => (r.referenciaId === actualizada.referenciaId ? actualizada : r));
+          const ui = this.laborRefUi[actualizada.referenciaId];
+          if (ui) {
+            ui.form = this.referenciaToForm(actualizada);
+          }
+          this.guardandoVisibilidadRefId = null;
+          this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        },
+        error: (error: HttpErrorResponse) => {
+          ref.mostrarEnCv = prev;
+          this.guardandoVisibilidadRefId = null;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+        },
+      });
   }
 
   toggleLaborRefHeader(ref: ReferenciaDto, ev: Event): void {
@@ -173,6 +208,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: null,
       observaciones: null,
       adjuntoSoporte: null,
+      mostrarEnCv: true,
     };
   }
 
@@ -222,6 +258,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: form.relacion?.trim() || null,
       observaciones: form.observaciones?.trim() || null,
       adjuntoSoporte: form.adjuntoSoporte ?? null,
+      mostrarEnCv: form.mostrarEnCv ?? true,
     };
   }
 
@@ -245,6 +282,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: form.relacion?.trim() || null,
       observaciones: form.observaciones?.trim() || null,
       adjuntoSoporte: form.adjuntoSoporte ?? null,
+      mostrarEnCv: form.mostrarEnCv ?? true,
     };
   }
 
@@ -413,6 +451,59 @@ export class ExperienciaComponent implements OnInit {
     });
   }
 
+  get hayExperienciasGuardadas(): boolean {
+    return this.experiencias.some(e => e.experienciaId !== 0);
+  }
+
+  get hayExperienciasOcultas(): boolean {
+    return this.experiencias.some(e => e.experienciaId !== 0 && !e.form.mostrarEnCv);
+  }
+
+  get hayExperienciasVisibles(): boolean {
+    return this.experiencias.some(e => e.experienciaId !== 0 && e.form.mostrarEnCv);
+  }
+
+  activarTodos(): void {
+    this.actualizarVisibilidadEnBloque(true);
+  }
+
+  inactivarTodos(): void {
+    this.actualizarVisibilidadEnBloque(false);
+  }
+
+  private actualizarVisibilidadEnBloque(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloque) {
+      return;
+    }
+    const objetivo = this.experiencias.filter(
+      e => e.experienciaId !== 0 && e.form.mostrarEnCv !== mostrar
+    );
+    if (objetivo.length === 0) {
+      return;
+    }
+    this.guardandoVisibilidadBloque = true;
+    forkJoin(
+      objetivo.map(e =>
+        this.cvEditorService.updateExperienciaVisibilidad(e.experienciaId, { mostrarEnCv: mostrar })
+      )
+    ).subscribe({
+      next: actualizadas => {
+        actualizadas.forEach(actualizada => {
+          const exp = this.experiencias.find(e => e.experienciaId === actualizada.experienciaId);
+          if (exp) {
+            Object.assign(exp, actualizada, { expanded: exp.expanded, form: this.toForm(actualizada) });
+          }
+        });
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
   agregar(): void {
     if (this.experiencias.some(e => e.experienciaId === 0)) {
       this.notificationService.warning(FORM_MESSAGES.experiencia.completeNuevoAntesDeOtro);
@@ -444,7 +535,6 @@ export class ExperienciaComponent implements OnInit {
         funciones: null,
         esActual: true,
         mostrarEnCv: true,
-        adjuntoSoporte: null,
       },
     };
     this.experiencias.unshift(nueva);
@@ -577,6 +667,7 @@ export class ExperienciaComponent implements OnInit {
       relacion: ref.relacion?.trim() || null,
       observaciones: ref.observaciones?.trim() || null,
       adjuntoSoporte: ref.adjuntoSoporte ?? null,
+      mostrarEnCv: ref.mostrarEnCv ?? true,
     };
   }
 
@@ -623,6 +714,51 @@ export class ExperienciaComponent implements OnInit {
       error: () => {
         this.guardandoRef = false;
         this.notificationService.error(NOTIFICATION_MESSAGES.deleteError);
+      },
+    });
+  }
+
+  onAdjuntoSeleccionado(event: Event, exp: ExperienciaUI): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    input.value = ''; // permite volver a elegir el mismo archivo despues (ej. tras un error)
+    if (!archivo) return;
+
+    if (!ExperienciaComponent.ADJUNTO_TIPOS_PERMITIDOS.includes(archivo.type)) {
+      this.notificationService.warning('Formato no soportado. Solo se admiten archivos PDF.');
+      return;
+    }
+    if (archivo.size > ExperienciaComponent.ADJUNTO_MAX_BYTES) {
+      this.notificationService.warning('El archivo no puede superar 3 MB.');
+      return;
+    }
+
+    this.subiendoAdjuntoExpId = exp.experienciaId;
+    this.cvEditorService.uploadAdjuntoExperiencia(exp.experienciaId, archivo).subscribe({
+      next: actualizada => {
+        Object.assign(exp, actualizada, { expanded: exp.expanded, form: this.toForm(actualizada) });
+        this.subiendoAdjuntoExpId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoAdjuntoExpId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  eliminarAdjunto(exp: ExperienciaUI): void {
+    if (this.subiendoAdjuntoExpId === exp.experienciaId) return;
+    this.subiendoAdjuntoExpId = exp.experienciaId;
+    this.cvEditorService.eliminarAdjuntoExperiencia(exp.experienciaId).subscribe({
+      next: actualizada => {
+        Object.assign(exp, actualizada, { expanded: exp.expanded, form: this.toForm(actualizada) });
+        this.subiendoAdjuntoExpId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoAdjuntoExpId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
       },
     });
   }

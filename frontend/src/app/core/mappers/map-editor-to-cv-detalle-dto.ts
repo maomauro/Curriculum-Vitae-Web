@@ -25,7 +25,9 @@ export function mapEditorToCvDetalleDto(
 ): CvDetalleDto {
   const experienciasVisibles = experiencias.filter(e => e.mostrarEnCv !== false);
   const formacionesVisibles = formaciones.filter(f => f.mostrarEnCv !== false);
+  const habilidadesVisibles = habilidades.filter(h => h.mostrarEnCv !== false);
   const proyectosVisibles = proyectos.filter(pr => pr.mostrarEnCv !== false);
+  const redesVisibles = redes.filter(r => r.mostrarEnCv !== false);
   const idsExpCv = new Set(experienciasVisibles.map(e => e.experienciaId));
 
   const nombreCompleto = !personales
@@ -54,8 +56,9 @@ export function mapEditorToCvDetalleDto(
       perfilId: p.perfilId,
       nombrePerfil: p.nombrePerfil,
       descripcionPerfil: p.descripcionPerfil,
-      aspiracionSalarialPesos: p.aspiracionSalarialPesos,
-      aspiracionSalarialDolares: p.aspiracionSalarialDolares,
+      experienciaPerfilAnios: p.mostrarExperienciaPerfil ? p.experienciaPerfilAnios : null,
+      aspiracionSalarialPesos: p.mostrarAspiracionSalarial ? p.aspiracionSalarialPesos : null,
+      aspiracionSalarialDolares: p.mostrarAspiracionSalarial ? p.aspiracionSalarialDolares : null,
       esActivo: p.esActivo,
     })),
     experiencias: experienciasVisibles.map(e => ({
@@ -68,6 +71,7 @@ export function mapEditorToCvDetalleDto(
       esActual: e.esActual,
       funciones: e.funciones,
       tipoContrato: e.tipoContrato,
+      adjuntoSoporte: e.adjuntoSoporte,
     })),
     formaciones: formacionesVisibles.map(f => ({
       formacionId: f.formacionId,
@@ -77,8 +81,9 @@ export function mapEditorToCvDetalleDto(
       tipoFormacion: f.tipoFormacion,
       fechaInicio: f.fechaInicio,
       fechaFin: f.fechaFin,
+      adjuntoSoporte: f.adjuntoSoporte,
     })),
-    habilidades: habilidades.map(h => ({
+    habilidades: habilidadesVisibles.map(h => ({
       habilidadId: h.habilidadId,
       nombre: h.nombre,
       tipo: h.tipo,
@@ -102,9 +107,10 @@ export function mapEditorToCvDetalleDto(
     referencias: referencias
       .filter(
         r =>
-          r.tipoReferencia !== 'Laboral' ||
-          r.experienciaId == null ||
-          idsExpCv.has(r.experienciaId)
+          r.mostrarEnCv !== false &&
+          (r.tipoReferencia !== 'Laboral' ||
+            r.experienciaId == null ||
+            idsExpCv.has(r.experienciaId))
       )
       .map(r => ({
         referenciaId: r.referenciaId,
@@ -114,7 +120,7 @@ export function mapEditorToCvDetalleDto(
         cargo: r.cargo,
         empresa: r.empresa,
       })),
-    redesSociales: redes.map(r => ({
+    redesSociales: redesVisibles.map(r => ({
       redSocialId: r.redSocialId,
       nombreRed: r.nombreRed,
       linkPublico: r.linkPublico,

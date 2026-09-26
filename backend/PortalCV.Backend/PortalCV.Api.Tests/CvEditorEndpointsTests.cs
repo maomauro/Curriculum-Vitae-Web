@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -139,7 +140,7 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var createResponse = await client.PostAsync("/api/cv/formaciones", JsonPayload(new UpsertFormacionRequest(
             Titulo: "Ingeniería", Institucion: "Universidad X", Area: null,
             FechaInicio: new DateOnly(2015, 1, 1), FechaFin: new DateOnly(2019, 1, 1),
-            TipoFormacion: "Pregrado", Descripcion: null, AdjuntoSoporte: null,
+            TipoFormacion: "Pregrado", Descripcion: null,
             FechaVigencia: null, DuracionHoras: null, MostrarEnCv: true)));
         Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
         var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
@@ -148,7 +149,7 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var updateResponse = await client.PutAsync($"/api/cv/formaciones/{id}", JsonPayload(new UpsertFormacionRequest(
             Titulo: "Ingeniería de Sistemas", Institucion: "Universidad X", Area: null,
             FechaInicio: new DateOnly(2015, 1, 1), FechaFin: new DateOnly(2019, 1, 1),
-            TipoFormacion: "Pregrado", Descripcion: null, AdjuntoSoporte: null,
+            TipoFormacion: "Pregrado", Descripcion: null,
             FechaVigencia: null, DuracionHoras: null, MostrarEnCv: true)));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
 
@@ -161,21 +162,25 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Habilidad_CrudCompleto_FuncionaDePrincipioAFin()
+    public async Task Habilidad_CrudYVisibilidad_FuncionaDePrincipioAFin()
     {
         var client = await CreateAuthenticatedClientAsync("hab-crud");
 
         var createResponse = await client.PostAsync("/api/cv/habilidades", JsonPayload(new UpsertHabilidadRequest(
             Nombre: "Java", Tipo: "Tecnica", Nivel: "Avanzado", Descripcion: null,
-            NivelLectura: null, NivelEscritura: null, NivelEscucha: null, NivelHabla: null)));
+            NivelLectura: null, NivelEscritura: null, NivelEscucha: null, NivelHabla: null, MostrarEnCv: true)));
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
         var id = created.GetProperty("habilidadId").GetInt32();
 
         var updateResponse = await client.PutAsync($"/api/cv/habilidades/{id}", JsonPayload(new UpsertHabilidadRequest(
             Nombre: "Java", Tipo: "Tecnica", Nivel: "Experto", Descripcion: null,
-            NivelLectura: null, NivelEscritura: null, NivelEscucha: null, NivelHabla: null)));
+            NivelLectura: null, NivelEscritura: null, NivelEscucha: null, NivelHabla: null, MostrarEnCv: true)));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+
+        var visibilidadResponse = await client.PutAsync($"/api/cv/habilidades/{id}/visibilidad",
+            JsonPayload(new UpdateHabilidadVisibilidadRequest { MostrarEnCv = false }));
+        Assert.Equal(HttpStatusCode.OK, visibilidadResponse.StatusCode);
 
         var deleteResponse = await client.DeleteAsync($"/api/cv/habilidades/{id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
@@ -225,24 +230,34 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
             Relacion: null, Observaciones: null, AdjuntoSoporte: null)));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
 
+        var visibilidadResponse = await client.PutAsync($"/api/cv/referencias/{id}/visibilidad",
+            JsonPayload(new UpdateReferenciaVisibilidadRequest { MostrarEnCv = false }));
+        Assert.Equal(HttpStatusCode.OK, visibilidadResponse.StatusCode);
+        var visibilidadActualizada = JsonDocument.Parse(await visibilidadResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.False(visibilidadActualizada.GetProperty("mostrarEnCv").GetBoolean());
+
         var deleteResponse = await client.DeleteAsync($"/api/cv/referencias/{id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
     }
 
     [Fact]
-    public async Task RedSocial_CrudCompleto_FuncionaDePrincipioAFin()
+    public async Task RedSocial_CrudYVisibilidad_FuncionaDePrincipioAFin()
     {
         var client = await CreateAuthenticatedClientAsync("red-crud");
 
         var createResponse = await client.PostAsync("/api/cv/redes-sociales", JsonPayload(new UpsertRedSocialRequest(
-            NombreRed: "LinkedIn", LinkPublico: "https://linkedin.com/in/test", UsuarioContacto: null)));
+            NombreRed: "LinkedIn", LinkPublico: "https://linkedin.com/in/test", UsuarioContacto: null, MostrarEnCv: true)));
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
         var id = created.GetProperty("redSocialId").GetInt32();
 
         var updateResponse = await client.PutAsync($"/api/cv/redes-sociales/{id}", JsonPayload(new UpsertRedSocialRequest(
-            NombreRed: "LinkedIn", LinkPublico: "https://linkedin.com/in/test2", UsuarioContacto: null)));
+            NombreRed: "LinkedIn", LinkPublico: "https://linkedin.com/in/test2", UsuarioContacto: null, MostrarEnCv: true)));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+
+        var visibilidadResponse = await client.PutAsync($"/api/cv/redes-sociales/{id}/visibilidad",
+            JsonPayload(new UpdateRedSocialVisibilidadRequest { MostrarEnCv = false }));
+        Assert.Equal(HttpStatusCode.OK, visibilidadResponse.StatusCode);
 
         var deleteResponse = await client.DeleteAsync($"/api/cv/redes-sociales/{id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
@@ -282,13 +297,214 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
             FechaNacimiento: null, LugarNacimiento: null, Genero: null, Nacionalidad: null, TipoSangre: null,
             EPS: null, Pencion: null, Cesantias: null, Email: null, Celular: null, TelefonoFijo: null,
             Pais: null, Departamento: null, Ciudad: null, Barrio: null, CodigoPostal: null, Direccion: null,
-            TipoResidencia: null, FotoUrl: null)));
+            TipoResidencia: null)));
         Assert.Equal(HttpStatusCode.OK, upsertResponse.StatusCode);
 
         var getResponse = await client.GetAsync("/api/cv/personales");
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
         var dto = JsonDocument.Parse(await getResponse.Content.ReadAsStringAsync()).RootElement;
         Assert.Equal("Juan", dto.GetProperty("primerNombre").GetString());
+    }
+
+    private static MultipartFormDataContent FotoMultipart(byte[] bytes, string contentType, string nombreArchivo = "foto.jpg")
+    {
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(bytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        content.Add(fileContent, "archivo", nombreArchivo);
+        return content;
+    }
+
+    [Fact]
+    public async Task Personales_Foto_SubirObtenerYEliminar_FuncionaDePrincipioAFin()
+    {
+        var client = await CreateAuthenticatedClientAsync("pers-foto");
+        var bytesFoto = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 4 };
+
+        var subirResponse = await client.PutAsync("/api/cv/personales/foto", FotoMultipart(bytesFoto, "image/jpeg"));
+        Assert.Equal(HttpStatusCode.OK, subirResponse.StatusCode);
+        var dto = JsonDocument.Parse(await subirResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal("/api/cv/personales/foto", dto.GetProperty("fotoUrl").GetString());
+
+        var getFotoResponse = await client.GetAsync("/api/cv/personales/foto");
+        Assert.Equal(HttpStatusCode.OK, getFotoResponse.StatusCode);
+        Assert.Equal("image/jpeg", getFotoResponse.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(bytesFoto, await getFotoResponse.Content.ReadAsByteArrayAsync());
+
+        var eliminarResponse = await client.DeleteAsync("/api/cv/personales/foto");
+        Assert.Equal(HttpStatusCode.OK, eliminarResponse.StatusCode);
+        var dtoTrasEliminar = JsonDocument.Parse(await eliminarResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(JsonValueKind.Null, dtoTrasEliminar.GetProperty("fotoUrl").ValueKind);
+
+        var getFotoTrasEliminarResponse = await client.GetAsync("/api/cv/personales/foto");
+        Assert.Equal(HttpStatusCode.NotFound, getFotoTrasEliminarResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Personales_Foto_MasDeUnMegabyte_Retorna400()
+    {
+        var client = await CreateAuthenticatedClientAsync("pers-foto-grande");
+        var bytesFoto = new byte[1024 * 1024 + 1];
+
+        var response = await client.PutAsync("/api/cv/personales/foto", FotoMultipart(bytesFoto, "image/jpeg"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Personales_Foto_TipoNoSoportado_Retorna400()
+    {
+        var client = await CreateAuthenticatedClientAsync("pers-foto-tipo");
+
+        var response = await client.PutAsync(
+            "/api/cv/personales/foto", FotoMultipart(new byte[] { 1, 2, 3 }, "application/pdf", "archivo.pdf"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Personales_Foto_SinArchivoGuardado_Retorna404()
+    {
+        var client = await CreateAuthenticatedClientAsync("pers-foto-vacia");
+
+        var response = await client.GetAsync("/api/cv/personales/foto");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private static readonly byte[] PdfBytesDePrueba = { 0x25, 0x50, 0x44, 0x46, 1, 2, 3 }; // "%PDF" + relleno
+
+    private async Task<int> CrearExperienciaAsync(HttpClient client, string empresa = "Acme")
+    {
+        var response = await client.PostAsync("/api/cv/experiencias", JsonPayload(new UpsertExperienciaRequest
+        {
+            Empresa = empresa,
+            EsActual = true,
+        }));
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("experienciaId").GetInt32();
+    }
+
+    [Fact]
+    public async Task Experiencia_Adjunto_SubirObtenerYEliminar_FuncionaDePrincipioAFin()
+    {
+        var client = await CreateAuthenticatedClientAsync("exp-adjunto");
+        var id = await CrearExperienciaAsync(client);
+
+        var subirResponse = await client.PutAsync(
+            $"/api/cv/experiencias/{id}/adjunto", FotoMultipart(PdfBytesDePrueba, "application/pdf", "carta.pdf"));
+        Assert.Equal(HttpStatusCode.OK, subirResponse.StatusCode);
+        var dto = JsonDocument.Parse(await subirResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal($"/api/cv/experiencias/{id}/adjunto", dto.GetProperty("adjuntoSoporte").GetString());
+
+        var getResponse = await client.GetAsync($"/api/cv/experiencias/{id}/adjunto");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Equal("application/pdf", getResponse.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(PdfBytesDePrueba, await getResponse.Content.ReadAsByteArrayAsync());
+
+        var eliminarResponse = await client.DeleteAsync($"/api/cv/experiencias/{id}/adjunto");
+        Assert.Equal(HttpStatusCode.OK, eliminarResponse.StatusCode);
+        var dtoTrasEliminar = JsonDocument.Parse(await eliminarResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(JsonValueKind.Null, dtoTrasEliminar.GetProperty("adjuntoSoporte").ValueKind);
+
+        var getTrasEliminarResponse = await client.GetAsync($"/api/cv/experiencias/{id}/adjunto");
+        Assert.Equal(HttpStatusCode.NotFound, getTrasEliminarResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Experiencia_Adjunto_MasDeTresMegabytes_Retorna400()
+    {
+        var client = await CreateAuthenticatedClientAsync("exp-adjunto-grande");
+        var id = await CrearExperienciaAsync(client);
+
+        var response = await client.PutAsync(
+            $"/api/cv/experiencias/{id}/adjunto", FotoMultipart(new byte[3 * 1024 * 1024 + 1], "application/pdf"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Experiencia_Adjunto_TipoNoSoportado_Retorna400()
+    {
+        var client = await CreateAuthenticatedClientAsync("exp-adjunto-tipo");
+        var id = await CrearExperienciaAsync(client);
+
+        var response = await client.PutAsync(
+            $"/api/cv/experiencias/{id}/adjunto", FotoMultipart(new byte[] { 1, 2, 3 }, "image/jpeg", "foto.jpg"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Experiencia_Adjunto_DeOtroUsuario_Retorna403()
+    {
+        var clientA = await CreateAuthenticatedClientAsync("exp-adjunto-a");
+        var id = await CrearExperienciaAsync(clientA);
+        var clientB = await CreateAuthenticatedClientAsync("exp-adjunto-b");
+
+        var response = await clientB.PutAsync(
+            $"/api/cv/experiencias/{id}/adjunto", FotoMultipart(PdfBytesDePrueba, "application/pdf"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    private async Task<int> CrearFormacionAsync(HttpClient client, string tipoFormacion = "Curso")
+    {
+        var response = await client.PostAsync("/api/cv/formaciones", JsonPayload(new UpsertFormacionRequest(
+            Titulo: "Curso X", Institucion: null, Area: null, FechaInicio: null, FechaFin: null,
+            TipoFormacion: tipoFormacion, Descripcion: null,
+            FechaVigencia: null, DuracionHoras: null, MostrarEnCv: true)));
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("formacionId").GetInt32();
+    }
+
+    [Fact]
+    public async Task Formacion_Adjunto_SubirObtenerYEliminar_FuncionaDePrincipioAFin()
+    {
+        var client = await CreateAuthenticatedClientAsync("form-adjunto");
+        var id = await CrearFormacionAsync(client);
+
+        var subirResponse = await client.PutAsync(
+            $"/api/cv/formaciones/{id}/adjunto", FotoMultipart(PdfBytesDePrueba, "application/pdf", "diploma.pdf"));
+        Assert.Equal(HttpStatusCode.OK, subirResponse.StatusCode);
+        var dto = JsonDocument.Parse(await subirResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal($"/api/cv/formaciones/{id}/adjunto", dto.GetProperty("adjuntoSoporte").GetString());
+
+        var getResponse = await client.GetAsync($"/api/cv/formaciones/{id}/adjunto");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Equal("application/pdf", getResponse.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(PdfBytesDePrueba, await getResponse.Content.ReadAsByteArrayAsync());
+
+        var eliminarResponse = await client.DeleteAsync($"/api/cv/formaciones/{id}/adjunto");
+        Assert.Equal(HttpStatusCode.OK, eliminarResponse.StatusCode);
+        var dtoTrasEliminar = JsonDocument.Parse(await eliminarResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(JsonValueKind.Null, dtoTrasEliminar.GetProperty("adjuntoSoporte").ValueKind);
+
+        var getTrasEliminarResponse = await client.GetAsync($"/api/cv/formaciones/{id}/adjunto");
+        Assert.Equal(HttpStatusCode.NotFound, getTrasEliminarResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Formacion_Adjunto_TipoNoSoportado_Retorna400()
+    {
+        var client = await CreateAuthenticatedClientAsync("form-adjunto-tipo");
+        var id = await CrearFormacionAsync(client);
+
+        var response = await client.PutAsync(
+            $"/api/cv/formaciones/{id}/adjunto", FotoMultipart(new byte[] { 1, 2, 3 }, "image/png", "foto.png"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Formacion_Adjunto_DeOtroUsuario_Retorna403()
+    {
+        var clientA = await CreateAuthenticatedClientAsync("form-adjunto-a");
+        var id = await CrearFormacionAsync(clientA);
+        var clientB = await CreateAuthenticatedClientAsync("form-adjunto-b");
+
+        var response = await clientB.PutAsync(
+            $"/api/cv/formaciones/{id}/adjunto", FotoMultipart(PdfBytesDePrueba, "application/pdf"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
@@ -357,6 +573,28 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Perfil_MostrarExperienciaYAspiracionSalarial_PorDefectoTrueYPersisteCambio()
+    {
+        var client = await CreateAuthenticatedClientAsync("perfil-visibilidad");
+
+        var createResponse = await client.PostAsync("/api/cv/perfiles", PerfilPayload("Backend Developer", 5));
+        var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.True(created.GetProperty("mostrarExperienciaPerfil").GetBoolean());
+        Assert.True(created.GetProperty("mostrarAspiracionSalarial").GetBoolean());
+        var perfilId = created.GetProperty("perfilId").GetInt32();
+
+        var updateResponse = await client.PutAsync($"/api/cv/perfiles/{perfilId}", new StringContent(
+            "{\"nombrePerfil\":\"Backend Developer\",\"descripcionPerfil\":null,\"experienciaPerfilAnios\":5," +
+            "\"aspiracionSalarialPesos\":null,\"aspiracionSalarialDolares\":null,\"esActivo\":true," +
+            "\"mostrarExperienciaPerfil\":false,\"mostrarAspiracionSalarial\":false}",
+            Encoding.UTF8, "application/json"));
+        var updated = JsonDocument.Parse(await updateResponse.Content.ReadAsStringAsync()).RootElement;
+
+        Assert.False(updated.GetProperty("mostrarExperienciaPerfil").GetBoolean());
+        Assert.False(updated.GetProperty("mostrarAspiracionSalarial").GetBoolean());
+    }
+
+    [Fact]
     public async Task Perfil_Update_DeOtroUsuario_Retorna403()
     {
         var clientA = await CreateAuthenticatedClientAsync("perfil-owner");
@@ -397,5 +635,98 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var response = await client.PutAsync("/api/cv/perfiles/999999", PerfilPayload("No existe"));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private static StringContent OfertaPayload(string cargo, string empresa, string estado = "Analizada", int? perfilId = null) =>
+        JsonPayload(new UpsertOfertaRequest(
+            Cargo: cargo, Empresa: empresa, Descripcion: null, CorreoReclutador: null, NombreReclutador: null,
+            TextoOriginal: "Texto de la oferta de prueba.", OrigenEntrada: "texto", Estado: estado, PerfilId: perfilId));
+
+    [Fact]
+    public async Task Oferta_CrudCompleto_FuncionaDePrincipioAFin()
+    {
+        var client = await CreateAuthenticatedClientAsync("oferta-crud");
+
+        var getInicial = await client.GetAsync("/api/cv/ofertas");
+        Assert.Equal(HttpStatusCode.OK, getInicial.StatusCode);
+        Assert.Equal("[]", (await getInicial.Content.ReadAsStringAsync()).Trim());
+
+        var createResponse = await client.PostAsync("/api/cv/ofertas", OfertaPayload("Desarrollador Backend", "Acme Corp"));
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
+        var ofertaId = created.GetProperty("ofertaId").GetInt32();
+        Assert.True(ofertaId > 0);
+        Assert.Equal("Desarrollador Backend", created.GetProperty("cargo").GetString());
+        Assert.Equal("Analizada", created.GetProperty("estado").GetString());
+
+        var updateResponse = await client.PutAsync(
+            $"/api/cv/ofertas/{ofertaId}", OfertaPayload("Desarrollador Backend Senior", "Acme Corp", "PerfilAsignado"));
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updated = JsonDocument.Parse(await updateResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal("Desarrollador Backend Senior", updated.GetProperty("cargo").GetString());
+        Assert.Equal("PerfilAsignado", updated.GetProperty("estado").GetString());
+
+        var getConDato = await client.GetAsync("/api/cv/ofertas");
+        var lista = JsonDocument.Parse(await getConDato.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(1, lista.GetArrayLength());
+
+        var deleteResponse = await client.DeleteAsync($"/api/cv/ofertas/{ofertaId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var getFinal = await client.GetAsync("/api/cv/ofertas");
+        Assert.Equal("[]", (await getFinal.Content.ReadAsStringAsync()).Trim());
+    }
+
+    [Fact]
+    public async Task Oferta_CrudGuardaYDevuelveLosAtributosDetallados()
+    {
+        var client = await CreateAuthenticatedClientAsync("oferta-atributos");
+
+        var payload = JsonPayload(new UpsertOfertaRequest(
+            Cargo: "Software Engineer", Empresa: "Knezevic", Descripcion: null, CorreoReclutador: null, NombreReclutador: null,
+            TextoOriginal: "Texto de prueba.", OrigenEntrada: "texto", Estado: "Analizada", PerfilId: null,
+            Modalidad: "100% remoto", TipoContrato: "Contractor", Moneda: "USD", Duracion: "6 meses",
+            Horario: "CST", ExperienciaRequerida: "3 a 5 años", StackTecnologico: "C#, .NET, React", NivelIdioma: "Inglés B2+"));
+
+        var createResponse = await client.PostAsync("/api/cv/ofertas", payload);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal("100% remoto", created.GetProperty("modalidad").GetString());
+        Assert.Equal("Contractor", created.GetProperty("tipoContrato").GetString());
+        Assert.Equal("C#, .NET, React", created.GetProperty("stackTecnologico").GetString());
+        Assert.Equal("Inglés B2+", created.GetProperty("nivelIdioma").GetString());
+
+        var lista = JsonDocument.Parse(await (await client.GetAsync("/api/cv/ofertas")).Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal("USD", lista[0].GetProperty("moneda").GetString());
+        Assert.Equal("3 a 5 años", lista[0].GetProperty("experienciaRequerida").GetString());
+    }
+
+    [Fact]
+    public async Task Oferta_Create_ConCargoYEmpresaDuplicados_Retorna400()
+    {
+        var client = await CreateAuthenticatedClientAsync("oferta-dup");
+
+        var primera = await client.PostAsync("/api/cv/ofertas", OfertaPayload("Analista QA", "Empresa Duplicada"));
+        Assert.Equal(HttpStatusCode.Created, primera.StatusCode);
+
+        // Mismo cargo/empresa, con distinto casing y espacios — debe normalizar y detectar el duplicado igual.
+        var segunda = await client.PostAsync("/api/cv/ofertas", OfertaPayload("  analista qa  ", "  EMPRESA DUPLICADA  "));
+
+        Assert.Equal(HttpStatusCode.BadRequest, segunda.StatusCode);
+    }
+
+    [Fact]
+    public async Task Oferta_Update_DeOtroUsuario_Retorna403()
+    {
+        var clientA = await CreateAuthenticatedClientAsync("oferta-owner");
+        var clientB = await CreateAuthenticatedClientAsync("oferta-intruder");
+
+        var createResponse = await clientA.PostAsync("/api/cv/ofertas", OfertaPayload("Oferta de A", "Empresa A"));
+        var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync()).RootElement;
+        var ofertaId = created.GetProperty("ofertaId").GetInt32();
+
+        var updateResponse = await clientB.PutAsync($"/api/cv/ofertas/{ofertaId}", OfertaPayload("Hackeado", "Empresa A"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, updateResponse.StatusCode);
     }
 }

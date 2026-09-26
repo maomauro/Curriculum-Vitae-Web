@@ -20,13 +20,14 @@ describe('HabilidadesComponent', () => {
     nivelEscritura: null,
     nivelEscucha: null,
     nivelHabla: null,
+    mostrarEnCv: true,
   };
   const blanda: HabilidadDto = { ...tecnica, habilidadId: 2, nombre: 'Liderazgo', tipo: 'Blanda' };
   const idioma: HabilidadDto = { ...tecnica, habilidadId: 3, nombre: 'Inglés', tipo: 'Idioma' };
 
   function setup(getHabilidadesResult = of([tecnica, blanda, idioma])): void {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
-      'getHabilidades', 'createHabilidad', 'updateHabilidad', 'deleteHabilidad',
+      'getHabilidades', 'createHabilidad', 'updateHabilidad', 'updateHabilidadVisibilidad', 'deleteHabilidad',
     ]);
     cvEditorService.getHabilidades.and.returnValue(getHabilidadesResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
@@ -106,6 +107,115 @@ describe('HabilidadesComponent', () => {
 
     expect(component.hayBorradorDe('Idioma')).toBeFalse();
     expect(cvEditorService.deleteHabilidad).not.toHaveBeenCalled();
+  });
+
+  describe('onMostrarEnCvChange', () => {
+    it('no hace nada para una habilidad nueva (id 0)', () => {
+      setup();
+      component.agregarHabilidad('Tecnica');
+      const draft = component.borradorDe('Tecnica')!;
+
+      component.onMostrarEnCvChange(draft, false);
+
+      expect(cvEditorService.updateHabilidadVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('no hace nada si ya hay un guardado de visibilidad en curso', () => {
+      setup();
+      component.ngOnInit();
+      const skill = component.guardadasDe('Tecnica')[0];
+      component.guardandoVisibilidadHabilidadId = skill.habilidadId;
+
+      component.onMostrarEnCvChange(skill, false);
+
+      expect(cvEditorService.updateHabilidadVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('actualiza y notifica exito', () => {
+      setup();
+      cvEditorService.updateHabilidadVisibilidad.and.returnValue(of({ ...tecnica, mostrarEnCv: false }));
+      component.ngOnInit();
+
+      component.onMostrarEnCvChange(component.guardadasDe('Tecnica')[0], false);
+
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+      expect(component.guardandoVisibilidadHabilidadId).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('revierte y notifica error si falla el backend', () => {
+      setup();
+      cvEditorService.updateHabilidadVisibilidad.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+      component.ngOnInit();
+      const skill = component.guardadasDe('Tecnica')[0];
+
+      component.onMostrarEnCvChange(skill, false);
+
+      expect(skill.mostrarEnCv).toBeTrue();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('activarTodasDe / inactivarTodasDe', () => {
+    const tecnicaOculta: HabilidadDto = { ...tecnica, habilidadId: 4, nombre: 'C#', mostrarEnCv: false };
+
+    it('hayOcultasDe/hayVisiblesDe reflejan el estado por seccion', () => {
+      setup(of([tecnica, tecnicaOculta, blanda, idioma]));
+      component.ngOnInit();
+
+      expect(component.hayOcultasDe('Tecnica')).toBeTrue();
+      expect(component.hayVisiblesDe('Tecnica')).toBeTrue();
+      expect(component.hayOcultasDe('Blanda')).toBeFalse();
+    });
+
+    it('activarTodasDe solo llama al backend para las ocultas de esa seccion', () => {
+      setup(of([tecnica, tecnicaOculta, blanda, idioma]));
+      cvEditorService.updateHabilidadVisibilidad.and.returnValue(of({ ...tecnicaOculta, mostrarEnCv: true }));
+      component.ngOnInit();
+
+      component.activarTodasDe('Tecnica');
+
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledWith(4, { mostrarEnCv: true });
+      expect(component.guardadasDe('Tecnica').every(h => h.mostrarEnCv)).toBeTrue();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('inactivarTodasDe solo llama al backend para las visibles de esa seccion', () => {
+      setup(of([tecnica, tecnicaOculta, blanda, idioma]));
+      cvEditorService.updateHabilidadVisibilidad.and.returnValue(of({ ...tecnica, mostrarEnCv: false }));
+      component.ngOnInit();
+
+      component.inactivarTodasDe('Tecnica');
+
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateHabilidadVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+      expect(cvEditorService.updateHabilidadVisibilidad).not.toHaveBeenCalledWith(2, jasmine.any(Object));
+    });
+
+    it('no llama al backend si no hay nada que cambiar', () => {
+      setup();
+      component.ngOnInit();
+
+      component.activarTodasDe('Tecnica');
+
+      expect(cvEditorService.updateHabilidadVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('notifica error si falla el guardado en bloque', () => {
+      setup(of([tecnicaOculta]));
+      cvEditorService.updateHabilidadVisibilidad.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+      component.ngOnInit();
+
+      component.activarTodasDe('Tecnica');
+
+      expect(component.guardandoVisibilidadBloque).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
   });
 
   describe('onSkillFieldCommit (autosave)', () => {

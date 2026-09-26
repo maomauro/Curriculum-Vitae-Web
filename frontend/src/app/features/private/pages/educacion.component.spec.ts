@@ -28,6 +28,7 @@ describe('EducacionComponent', () => {
   function setup(getResult = of([{ ...pregrado }])): void {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
       'getFormaciones', 'createFormacion', 'updateFormacion', 'deleteFormacion', 'updateFormacionVisibilidad',
+      'uploadAdjuntoFormacion', 'eliminarAdjuntoFormacion',
     ]);
     cvEditorService.getFormaciones.and.returnValue(getResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
@@ -218,6 +219,64 @@ describe('EducacionComponent', () => {
     });
   });
 
+  describe('activarTodas / inactivarTodas', () => {
+    const certificacionOculta: FormacionDto = { ...pregrado, formacionId: 2, mostrarEnCv: false };
+
+    it('hayFormacionesOcultas/hayFormacionesVisibles reflejan el estado cargado', () => {
+      setup(of([{ ...pregrado }, { ...certificacionOculta }]));
+      component.ngOnInit();
+
+      expect(component.hayFormacionesOcultas).toBeTrue();
+      expect(component.hayFormacionesVisibles).toBeTrue();
+    });
+
+    it('activarTodas solo llama al backend para las ocultas', () => {
+      setup(of([{ ...pregrado }, { ...certificacionOculta }]));
+      cvEditorService.updateFormacionVisibilidad.and.returnValue(of({ ...certificacionOculta, mostrarEnCv: true }));
+      component.ngOnInit();
+
+      component.activarTodas();
+
+      expect(cvEditorService.updateFormacionVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateFormacionVisibilidad).toHaveBeenCalledWith(2, { mostrarEnCv: true });
+      expect(component.formaciones.find(f => f.formacionId === 2)?.form.mostrarEnCv).toBeTrue();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('inactivarTodas solo llama al backend para las visibles', () => {
+      setup(of([{ ...pregrado }, { ...certificacionOculta }]));
+      cvEditorService.updateFormacionVisibilidad.and.returnValue(of({ ...pregrado, mostrarEnCv: false }));
+      component.ngOnInit();
+
+      component.inactivarTodas();
+
+      expect(cvEditorService.updateFormacionVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateFormacionVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+    });
+
+    it('no llama al backend si no hay nada que cambiar', () => {
+      setup(of([{ ...pregrado }]));
+      component.ngOnInit();
+
+      component.activarTodas();
+
+      expect(cvEditorService.updateFormacionVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('notifica error si falla el guardado en bloque', () => {
+      setup(of([{ ...certificacionOculta }]));
+      cvEditorService.updateFormacionVisibilidad.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+      component.ngOnInit();
+
+      component.activarTodas();
+
+      expect(component.guardandoVisibilidadBloque).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
   describe('agregar / cancelar', () => {
     it('agrega un borrador expandido con tipo Posgrado por defecto', () => {
       setup();
@@ -367,6 +426,100 @@ describe('EducacionComponent', () => {
 
       expect(component.guardando).toBeFalse();
       expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('onAdjuntoSeleccionado / eliminarAdjunto', () => {
+    function fakeInputEvent(archivo: File | null): Event {
+      const input = document.createElement('input');
+      input.type = 'file';
+      if (archivo) {
+        const dt = new DataTransfer();
+        dt.items.add(archivo);
+        input.files = dt.files;
+      }
+      return { target: input } as unknown as Event;
+    }
+
+    it('avisa si el archivo no es PDF', () => {
+      setup();
+      component.ngOnInit();
+      const edu = component.formaciones[0];
+      const archivo = new File(['contenido'], 'diploma.png', { type: 'image/png' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), edu);
+
+      expect(notificationService.warning).toHaveBeenCalled();
+      expect(cvEditorService.uploadAdjuntoFormacion).not.toHaveBeenCalled();
+    });
+
+    it('avisa si el archivo supera 3 MB', () => {
+      setup();
+      component.ngOnInit();
+      const edu = component.formaciones[0];
+      const contenidoGrande = new Uint8Array(3 * 1024 * 1024 + 1);
+      const archivo = new File([contenidoGrande], 'grande.pdf', { type: 'application/pdf' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), edu);
+
+      expect(notificationService.warning).toHaveBeenCalled();
+      expect(cvEditorService.uploadAdjuntoFormacion).not.toHaveBeenCalled();
+    });
+
+    it('sube el PDF y actualiza la formacion con la URL devuelta', () => {
+      setup();
+      cvEditorService.uploadAdjuntoFormacion.and.returnValue(
+        of({ ...pregrado, adjuntoSoporte: '/api/cv/formaciones/1/adjunto' })
+      );
+      component.ngOnInit();
+      const edu = component.formaciones[0];
+      const archivo = new File(['%PDF-1.4'], 'diploma.pdf', { type: 'application/pdf' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), edu);
+
+      expect(cvEditorService.uploadAdjuntoFormacion).toHaveBeenCalledWith(1, archivo);
+      expect(edu.adjuntoSoporte).toBe('/api/cv/formaciones/1/adjunto');
+      expect(component.subiendoAdjuntoFormacionId).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('notifica error si falla la subida', () => {
+      setup();
+      cvEditorService.uploadAdjuntoFormacion.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 400 }))
+      );
+      component.ngOnInit();
+      const edu = component.formaciones[0];
+      const archivo = new File(['%PDF-1.4'], 'diploma.pdf', { type: 'application/pdf' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), edu);
+
+      expect(component.subiendoAdjuntoFormacionId).toBeNull();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+
+    it('eliminarAdjunto quita el soporte actual', () => {
+      setup();
+      cvEditorService.eliminarAdjuntoFormacion.and.returnValue(of({ ...pregrado, adjuntoSoporte: null }));
+      component.ngOnInit();
+      const edu = component.formaciones[0];
+
+      component.eliminarAdjunto(edu);
+
+      expect(cvEditorService.eliminarAdjuntoFormacion).toHaveBeenCalledWith(1);
+      expect(edu.adjuntoSoporte).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('eliminarAdjunto no hace nada si ya hay una subida en curso para la misma formacion', () => {
+      setup();
+      component.ngOnInit();
+      const edu = component.formaciones[0];
+      component.subiendoAdjuntoFormacionId = edu.formacionId;
+
+      component.eliminarAdjunto(edu);
+
+      expect(cvEditorService.eliminarAdjuntoFormacion).not.toHaveBeenCalled();
     });
   });
 

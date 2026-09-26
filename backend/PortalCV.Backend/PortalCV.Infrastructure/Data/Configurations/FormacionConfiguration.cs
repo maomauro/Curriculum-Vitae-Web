@@ -16,8 +16,10 @@ public class FormacionConfiguration : IEntityTypeConfiguration<Formacion>
         builder.Property(f => f.Institucion).HasMaxLength(200);
         builder.Property(f => f.Area).HasMaxLength(300);
         builder.Property(f => f.TipoFormacion).HasMaxLength(50);
-        builder.Property(f => f.Descripcion).HasColumnType("nvarchar(max)");
+        builder.Property(f => f.Descripcion).HasColumnType("longtext");
         builder.Property(f => f.AdjuntoSoporte).HasMaxLength(500);
+        builder.Property(f => f.AdjuntoSoporteBytes).HasColumnType("longblob");
+        builder.Property(f => f.AdjuntoSoporteContentType).HasMaxLength(100);
         builder.Property(f => f.MostrarEnCv).HasDefaultValue(true);
 
         builder.HasOne(f => f.Curriculum)

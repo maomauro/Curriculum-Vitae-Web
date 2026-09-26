@@ -28,5 +28,8 @@ public class Curriculum
     public ICollection<VisitanteContacto> VisitantesContacto { get; set; } = new List<VisitanteContacto>();
     public ICollection<AlertaVisita> AlertasVisita { get; set; } = new List<AlertaVisita>();
     public ICollection<VisibilidadSeccion> VisibilidadesSeccion { get; set; } = new List<VisibilidadSeccion>();
+    public ICollection<Oferta> Ofertas { get; set; } = new List<Oferta>();
+    public ICollection<CvGenerado> CvsGenerados { get; set; } = new List<CvGenerado>();
+    public ConfiguracionCorreo? ConfiguracionCorreo { get; set; }
     public EstadisticasPublicas? EstadisticasPublicas { get; set; }
 }

@@ -51,7 +51,7 @@ public class PublicEndpointsTests : IClassFixture<TestWebApplicationFactory>
     [Fact]
     public async Task Health_SinAutenticacion_Retorna200YHealthy()
     {
-        // /health lo consume Azure Container Apps como liveness probe.
+        // /health lo consume el orquestador (Docker) como liveness probe.
         var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/health");

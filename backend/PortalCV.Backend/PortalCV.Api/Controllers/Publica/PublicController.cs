@@ -59,6 +59,30 @@ public class PublicController : ControllerBase
     }
 
     /// <summary>Estadisticas publicas de un CV (visitas, contactos, ultima visita).</summary>
+    /// <summary>Sirve la foto de perfil en crudo, respetando visibilidad y estado publicado.</summary>
+    [HttpGet("cvs/{urlPublica}/foto")]
+    public async Task<IActionResult> GetFotoPersonales(string urlPublica, CancellationToken ct = default)
+    {
+        var foto = await _publicCvService.GetFotoPersonalesPublicaAsync(urlPublica, ct);
+        return foto is null ? NotFound() : File(foto.Contenido, foto.ContentType);
+    }
+
+    /// <summary>Sirve el soporte de una experiencia laboral, respetando visibilidad.</summary>
+    [HttpGet("cvs/{urlPublica}/experiencias/{experienciaId:int}/adjunto")]
+    public async Task<IActionResult> GetAdjuntoExperiencia(string urlPublica, int experienciaId, CancellationToken ct = default)
+    {
+        var archivo = await _publicCvService.GetAdjuntoExperienciaPublicaAsync(urlPublica, experienciaId, ct);
+        return archivo is null ? NotFound() : File(archivo.Contenido, archivo.ContentType);
+    }
+
+    /// <summary>Sirve el soporte de una formación (diploma/certificado), respetando visibilidad.</summary>
+    [HttpGet("cvs/{urlPublica}/formaciones/{formacionId:int}/adjunto")]
+    public async Task<IActionResult> GetAdjuntoFormacion(string urlPublica, int formacionId, CancellationToken ct = default)
+    {
+        var archivo = await _publicCvService.GetAdjuntoFormacionPublicaAsync(urlPublica, formacionId, ct);
+        return archivo is null ? NotFound() : File(archivo.Contenido, archivo.ContentType);
+    }
+
     [HttpGet("cvs/{urlPublica}/stats")]
     public async Task<IActionResult> GetEstadisticas(string urlPublica, CancellationToken ct = default)
     {

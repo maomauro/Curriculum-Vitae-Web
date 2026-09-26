@@ -13,21 +13,29 @@
       </a>
 
       <ul class="nav gap-1 mb-3 cv-tabs-nav">
-        <li class="nav-item">
-          <a
-            class="nav-link fw-semibold cv-nav-link-passive text-muted"
-            routerLinkActive="cv-nav-link-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            [routerLink]="['/cv', urlPublica]">
-            <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
-          </a>
-        </li>
         <li class="nav-item" *ngIf="mostrarPestanaDashboard">
           <a
             class="nav-link fw-semibold cv-nav-link-passive text-muted"
             routerLinkActive="cv-nav-link-active"
             [routerLink]="['/cv', urlPublica, 'dashboard']">
             <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="mostrarPestanaProfesional">
+          <a
+            class="nav-link fw-semibold cv-nav-link-passive text-muted"
+            routerLinkActive="cv-nav-link-active"
+            [routerLink]="['/cv', urlPublica, 'profesional']">
+            <i class="bi bi-person-lines-fill me-1"></i>Información profesional
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="mostrarPestanaHojaDeVida">
+          <a
+            class="nav-link fw-semibold cv-nav-link-passive text-muted"
+            routerLinkActive="cv-nav-link-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [routerLink]="['/cv', urlPublica]">
+            <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
           </a>
         </li>
       </ul>

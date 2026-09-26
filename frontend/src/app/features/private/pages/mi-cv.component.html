@@ -1,74 +1,249 @@
-<div class="page-header cv-mi-screen-only">
+<div class="page-header d-print-none" *ngIf="!cvPerfilAbierto">
   <div>
     <h4><i class="bi bi-file-earmark-person-fill me-2 text-primary"></i>Mi CV</h4>
-    <span class="text-muted small">
-      Vista previa en ancho tamaño carta (8,5"); un solo bloque con scroll. Al imprimir o guardar PDF el
-      navegador pagina automáticamente.
-    </span>
-    <div *ngIf="!loading" class="mt-2 d-flex flex-wrap align-items-center gap-2 cv-mi-plantilla-bar">
-      <span class="small text-muted mb-0 d-inline-flex align-items-center text-nowrap">
-        <i class="bi bi-palette2 me-1 text-primary" aria-hidden="true"></i>
-        Plantilla
-      </span>
-      <div
-        class="d-inline-flex align-items-center cv-mi-plantilla-dots"
-        role="group"
-        aria-label="Elegir plantilla por color">
-        <button
-          *ngFor="let t of plantillas"
-          type="button"
-          class="cv-mi-plantilla-dot"
-          [class.cv-mi-plantilla-dot--active]="t.codigo === plantillaCodigo"
-          [style.background-color]="t.color"
-          [disabled]="savingPlantilla"
-          [attr.aria-pressed]="t.codigo === plantillaCodigo"
-          [attr.title]="t.nombre + ' — ' + t.resumen"
-          (click)="onPlantillaSelect(t.codigo)">
-          <span class="visually-hidden">{{ t.nombre }}</span>
+    <span class="text-muted small">Tu CV general por perfil, redactado por IA a partir de tu currículum.</span>
+  </div>
+</div>
+
+<div *ngIf="loading" class="text-center py-5 d-print-none">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando…</span>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading && !cvPerfilAbierto">
+  <!-- CV general por perfil -->
+  <div class="seccion-card d-print-none">
+    <div class="seccion-titulo"><i class="bi bi-magic"></i>CV general por perfil</div>
+    <div class="seccion-subtitulo">
+      Elegí uno de tus perfiles y la IA redacta el resumen del encabezado -- el resto se arma con tu currículum real, con la misma plantilla visual que "Profesional".
+    </div>
+
+    <div *ngIf="perfiles.length === 0" class="alert alert-warning d-flex align-items-start gap-2 py-2 px-3 small mb-0" role="alert">
+      <i class="bi bi-exclamation-triangle mt-1"></i>
+      <div>Todavía no tienes perfiles guardados. <a routerLink="/perfil" class="alert-link">Crea uno en Perfil Profesional</a> antes de continuar.</div>
+    </div>
+
+    <div class="row g-3 align-items-end" *ngIf="perfiles.length > 0">
+      <div class="col-md-6">
+        <label class="form-label" for="mi-cv-perfil">Perfil</label>
+        <select id="mi-cv-perfil" class="form-select" [(ngModel)]="perfilSeleccionadoId">
+          <option [ngValue]="null">Elige un perfil…</option>
+          <option *ngFor="let p of perfiles" [ngValue]="p.perfilId">{{ p.nombrePerfil }}</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <button type="button" class="btn btn-primary" [disabled]="perfilSeleccionadoId === null || generandoCvPerfil" (click)="generarCvDesdePerfil()">
+          <span *ngIf="generandoCvPerfil" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!generandoCvPerfil" class="bi bi-stars me-1"></i>
+          {{ generandoCvPerfil ? 'Generando…' : (cvExistenteParaPerfilSeleccionado ? 'Regenerar CV' : 'Generar CV') }}
         </button>
       </div>
-      <span
-        class="small cv-mi-plantilla-nombre text-truncate"
-        [style.borderLeftColor]="plantillaColor"
-        [attr.title]="plantillaNombre + ' — ' + plantillaResumen">
-        {{ plantillaNombre }}
-      </span>
-      <span *ngIf="savingPlantilla" class="small text-muted d-inline-flex align-items-center">
-        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-        Guardando…
-      </span>
-      <span *ngIf="hayCambiosPlantilla && !savingPlantilla" class="small text-warning-emphasis">
-        Cambios sin guardar
-      </span>
-      <button
-        type="button"
-        class="btn btn-primary btn-sm"
-        [disabled]="!hayCambiosPlantilla || savingPlantilla"
-        (click)="guardarPlantilla()">
-        Guardar plantilla
+    </div>
+
+    <div class="mt-4" *ngIf="cvsGenerados.length > 0">
+      <div *ngFor="let cv of cvsGenerados; trackBy: trackByCvGenerado" class="profile-card">
+        <div class="profile-card-header" style="margin-bottom: 0; align-items: center">
+          <div>
+            <div class="profile-name">{{ cv.perfilNombre }}</div>
+            <div class="text-muted small">Generado: {{ cv.fechaGeneracion | date: 'dd/MM/yyyy' }}</div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" (click)="abrirCvPerfil(cv)">
+            <i class="bi bi-eye me-1"></i>Ver CV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- CV por perfil abierto -- misma apariencia visual (colores, tipografía, foto y
+     encabezado) que "Profesional", con el contenido condensado que redactó la IA
+     (resumen, experiencia, formación, proyectos y habilidades) en bloques de texto, no
+     como tarjetas estructuradas con fecha/empresa/cargo separados. -->
+<ng-container *ngIf="cvPerfilAbierto as cv">
+  <div class="page-header cv-mi-screen-only">
+    <div>
+      <h4><i class="bi bi-file-earmark-person-fill me-2 text-primary"></i>{{ cv.perfilNombre }}</h4>
+      <span class="text-muted small">CV general por perfil · redactado por IA, máximo 3 hojas.</span>
+      <div class="mt-2 d-flex flex-wrap align-items-center gap-2 cv-mi-plantilla-bar">
+        <span class="small text-muted mb-0 d-inline-flex align-items-center text-nowrap">
+          <i class="bi bi-palette2 me-1 text-primary" aria-hidden="true"></i>
+          Plantilla
+        </span>
+        <div
+          class="d-inline-flex align-items-center cv-mi-plantilla-dots"
+          role="group"
+          aria-label="Elegir plantilla por color">
+          <button
+            *ngFor="let t of plantillas"
+            type="button"
+            class="cv-mi-plantilla-dot"
+            [class.cv-mi-plantilla-dot--active]="t.codigo === plantillaCodigo"
+            [style.background-color]="t.color"
+            [disabled]="savingPlantilla"
+            [attr.aria-pressed]="t.codigo === plantillaCodigo"
+            [attr.title]="t.nombre + ' — ' + t.resumen"
+            (click)="onPlantillaSelect(t.codigo)">
+            <span class="visually-hidden">{{ t.nombre }}</span>
+          </button>
+        </div>
+        <span
+          class="small cv-mi-plantilla-nombre text-truncate"
+          [style.borderLeftColor]="plantillaColor"
+          [attr.title]="plantillaNombre + ' — ' + plantillaResumen">
+          {{ plantillaNombre }}
+        </span>
+        <span *ngIf="savingPlantilla" class="small text-muted d-inline-flex align-items-center">
+          <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          Guardando…
+        </span>
+        <span *ngIf="hayCambiosPlantilla && !savingPlantilla" class="small text-warning-emphasis">
+          Cambios sin guardar
+        </span>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          [disabled]="!hayCambiosPlantilla || savingPlantilla"
+          (click)="guardarPlantilla()">
+          Guardar plantilla
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          [disabled]="!hayCambiosPlantilla || savingPlantilla"
+          (click)="revertirPlantilla()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cerrarCv()">
+        <i class="bi bi-arrow-left me-1"></i>Volver al listado
       </button>
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm"
-        [disabled]="!hayCambiosPlantilla || savingPlantilla"
-        (click)="revertirPlantilla()">
-        Cancelar
+      <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" (click)="imprimirCv()">
+        <i class="bi bi-printer-fill me-1"></i>Imprimir / PDF
       </button>
     </div>
   </div>
-  <div class="d-flex gap-2">
-    <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" (click)="imprimir()">
-      <i class="bi bi-printer-fill me-1"></i>Imprimir / PDF
-    </button>
-  </div>
-</div>
 
-<div *ngIf="loading" class="text-center py-5">
-  <div class="spinner-border text-primary" role="status">
-    <span class="visually-hidden">Cargando...</span>
-  </div>
-</div>
+  <div class="cv-mi-letter-wrap">
+    <div class="cv-mi-letter-zoom-root">
+      <div class="cv-mi-letter-zoom-frame">
+        <div class="cv-mi-preview bg-white rounded-3 overflow-hidden" [ngClass]="'cv-tpl--' + plantillaCodigo">
+          <div class="cv-mi-preview-stack">
+            <!-- Corporativo no usa el encabezado estándar -- su identidad va en la barra
+                 lateral oscura, igual que en Profesional (ver cv-plantilla-preview). -->
+            <div
+              *ngIf="plantillaCodigo !== 'corporativo'"
+              class="cv-preview-header d-flex align-items-start"
+              [class.text-white]="plantillaCodigo === 'clasico'">
+              <div class="d-flex align-items-start w-100 cv-preview-header-body">
+                <div class="cv-mi-photo-slot me-3">
+                  <img *ngIf="fotoHeaderUrl" [src]="fotoHeaderUrl" alt="Foto de perfil" class="cv-mi-photo-img" />
+                  <div *ngIf="!fotoHeaderUrl" class="cv-mi-photo-placeholder" aria-hidden="true">{{ inicialesFoto }}</div>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
+                  <div class="cv-preview-sub">{{ cv.perfilNombre }}</div>
+                  <div class="d-flex flex-wrap mt-2 cv-preview-meta">
+                    <span *ngIf="mostrarEmail"><i class="bi bi-envelope-fill"></i>{{ personales?.email }}</span>
+                    <span *ngIf="mostrarTelefono"><i class="bi bi-telephone-fill"></i>{{ telefonoContacto }}</span>
+                    <span *ngIf="mostrarCiudadPais"><i class="bi bi-geo-alt-fill"></i>{{ ciudadPais }}</span>
+                    <span *ngFor="let red of redesConTexto" class="cv-preview-meta-red">
+                      <i class="bi" [ngClass]="red.icono"></i>{{ red.texto }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-<div *ngIf="!loading">
-  <app-cv-plantilla-preview [vm]="previewVm" [vis]="this"></app-cv-plantilla-preview>
-</div>
+            <div class="cv-mi-body" [style.grid-template-columns]="plantillaCodigo === 'corporativo' ? null : 'minmax(0, 1fr)'">
+              <div class="cv-preview-sidebar" *ngIf="plantillaCodigo === 'corporativo'">
+                <div class="cv-corp-identity">
+                  <div class="cv-corp-name">{{ nombreCompleto }}</div>
+                  <div class="cv-corp-role">{{ cv.perfilNombre }}</div>
+                  <div class="cv-corp-contact">
+                    <div *ngIf="mostrarEmail"><i class="bi bi-envelope-fill me-1" aria-hidden="true"></i>{{ personales?.email }}</div>
+                    <div *ngIf="mostrarTelefono"><i class="bi bi-telephone-fill me-1" aria-hidden="true"></i>{{ telefonoContacto }}</div>
+                    <div *ngIf="mostrarCiudadPais"><i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>{{ ciudadPais }}</div>
+                    <div *ngFor="let red of redesConTexto">
+                      <i class="bi me-1" [ngClass]="red.icono" aria-hidden="true"></i>{{ red.texto }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cv-mi-cv-section" *ngIf="habilidadesPorTipo('tecnica').length">
+                  <div class="cv-mi-section-title">Habilidades Técnicas</div>
+                  <div class="cv-mi-skill-item" *ngFor="let h of habilidadesPorTipo('tecnica')">
+                    <div class="cv-skill-line">{{ h }}</div>
+                  </div>
+                </div>
+
+                <div class="cv-mi-cv-section" *ngIf="habilidadesPorTipo('blanda').length">
+                  <div class="cv-mi-section-title">Habilidades Blandas</div>
+                  <div class="cv-mi-skill-item" *ngFor="let h of habilidadesPorTipo('blanda')">
+                    <div class="cv-skill-line">{{ h }}</div>
+                  </div>
+                </div>
+
+                <div class="cv-mi-cv-section" *ngIf="habilidadesPorTipo('idioma').length">
+                  <div class="cv-mi-section-title">Idiomas</div>
+                  <div class="cv-mi-skill-item" *ngFor="let h of habilidadesPorTipo('idioma')">
+                    <div class="cv-skill-line">{{ h }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cv-preview-main">
+                <div class="cv-mi-section" *ngIf="perfilBaseAbierto?.descripcionPerfil">
+                  <div class="cv-mi-section-title">Perfil Profesional</div>
+                  <p class="cv-mi-prose cv-summary-text">{{ perfilBaseAbierto?.descripcionPerfil }}</p>
+                  <div class="cv-mi-profile-meta" *ngIf="perfilBaseAbierto?.experienciaPerfilAnios != null">
+                    <span class="text-muted">Experiencia (perfil)</span> · {{ perfilBaseAbierto?.experienciaPerfilAnios }} años
+                  </div>
+                  <div class="cv-mi-profile-meta" *ngIf="aspiracionTexto">
+                    <span class="text-muted">Aspiración salarial</span> · {{ aspiracionTexto }}
+                  </div>
+                </div>
+
+                <div class="cv-mi-section" *ngIf="cv.contenido.experiencia.length">
+                  <div class="cv-mi-section-title">Experiencia Laboral</div>
+                  <div class="cv-mi-timeline">
+                    <div class="timeline-item" *ngFor="let exp of cv.contenido.experiencia">
+                      <div class="timeline-title">{{ exp.cabecera }}</div>
+                      <ul class="cv-pro-list mb-0 mt-1" *ngIf="exp.funciones.length">
+                        <li *ngFor="let f of exp.funciones">{{ f }}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cv-mi-section" *ngIf="cv.contenido.educacion.length">
+                  <div class="cv-mi-section-title">Formación</div>
+                  <ul class="cv-pro-list mb-0">
+                    <li *ngFor="let linea of cv.contenido.educacion">{{ linea }}</li>
+                  </ul>
+                </div>
+
+                <div class="cv-mi-section" *ngIf="cv.contenido.proyectos.length">
+                  <div class="cv-mi-section-title">Proyectos Destacados</div>
+                  <ul class="cv-pro-list mb-0">
+                    <li *ngFor="let linea of cv.contenido.proyectos">{{ linea }}</li>
+                  </ul>
+                </div>
+
+                <div class="cv-mi-section" *ngIf="plantillaCodigo !== 'corporativo' && cv.contenido.habilidades.length">
+                  <div class="cv-mi-section-title">Habilidades</div>
+                  <div class="cv-mi-tags">
+                    <span class="cv-mi-tag" *ngFor="let h of cv.contenido.habilidades">{{ h.nombre }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

@@ -9,7 +9,8 @@ public record HabilidadDto(
     string? NivelLectura,
     string? NivelEscritura,
     string? NivelEscucha,
-    string? NivelHabla);
+    string? NivelHabla,
+    bool MostrarEnCv);
 
 public record UpsertHabilidadRequest(
     string Nombre,
@@ -19,5 +20,11 @@ public record UpsertHabilidadRequest(
     string? NivelLectura,
     string? NivelEscritura,
     string? NivelEscucha,
-    string? NivelHabla);
+    string? NivelHabla,
+    bool? MostrarEnCv);
+
+public sealed class UpdateHabilidadVisibilidadRequest
+{
+    public bool MostrarEnCv { get; set; }
+}
 

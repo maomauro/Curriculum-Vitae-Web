@@ -36,6 +36,9 @@ public record PersonalesDto(
     string? CodigoPostal,
     string? Direccion,
     string? TipoResidencia,
+    /// <summary>Calculado: apunta al endpoint de foto binaria si hay una subida, o a la
+    /// URL legacy pegada por el usuario si no. Nunca se escribe directo -- ver
+    /// PersonalesController: PUT/DELETE .../foto.</summary>
     string? FotoUrl);
 
 public record UpsertPersonalesRequest(
@@ -71,6 +74,9 @@ public record UpsertPersonalesRequest(
     string? Barrio,
     string? CodigoPostal,
     string? Direccion,
-    string? TipoResidencia,
-    string? FotoUrl);
+    string? TipoResidencia);
+
+/// <summary>Bytes crudos de una foto de perfil ya subida, listos para devolver con
+/// <c>File(Contenido, ContentType)</c>.</summary>
+public record ArchivoContenidoDto(byte[] Contenido, string ContentType);
 

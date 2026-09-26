@@ -1,324 +1,313 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError, Subject } from 'rxjs';
-import { NavigationEnd, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { MiCvComponent } from './mi-cv.component';
+import { CvGeneradoService, CvGeneradoDto } from '../../../core/services/private/cv-generado.service';
 import {
   CvEditorService,
-  PersonalesDto,
   PerfilDto,
-  ExperienciaDto,
-  FormacionDto,
-  HabilidadDto,
-  ProyectoDto,
-  RedSocialDto,
-  ReferenciaDto,
-  VisibilidadSeccionDto,
+  PersonalesDto,
   PresentacionCvDto,
+  RedSocialDto,
+  VisibilidadSeccionDto,
 } from '../../../core/services/private/cv-editor.service';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
 describe('MiCvComponent', () => {
   let component: MiCvComponent;
+  let cvGeneradoService: jasmine.SpyObj<CvGeneradoService>;
   let cvEditorService: jasmine.SpyObj<CvEditorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
-  let routerEvents: Subject<unknown>;
 
-  const presentacion: PresentacionCvDto = {
-    plantillaCodigo: 'clasico', experienciaLaboralMesesAcumulados: 18, urlPublica: 'cv-test', publicado: false,
-  };
-  const visibilidad: VisibilidadSeccionDto[] = [
-    { seccion: 'proyectos', visible: false },
-    { seccion: 'referencias', visible: true },
-  ];
-  // Cuando el CV no tiene Personales guardados, el backend devuelve este DTO "vacio"
-  // (nunca null: GetPersonalesAsync siempre retorna un objeto, ver CvEditorService.cs).
-  const personalesVacio: PersonalesDto = {
-    personalesId: 0, curriculumId: 0, tipoIdentificacion: null, numeroDocumento: null,
-    fechaExpedicion: null, lugarExpedicion: null, libretaMilitarNumero: null, libretaMilitarClase: null,
-    pasaporteNumero: null, pasaporteVigencia: null, visaNumero: null, visaVigencia: null, visaClase: null,
-    primerNombre: '', segundoNombre: null, primerApellido: '', segundoApellido: null,
-    fechaNacimiento: null, lugarNacimiento: null, genero: null, nacionalidad: null, tipoSangre: null,
-    eps: null, pencion: null, cesantias: null, email: null, celular: null, telefonoFijo: null,
-    pais: null, departamento: null, ciudad: null, barrio: null, codigoPostal: null, direccion: null,
-    tipoResidencia: null, fotoUrl: null,
-  };
-
-  function setupCargaOk(overrides: Partial<{
-    personales: PersonalesDto; perfiles: PerfilDto[]; experiencias: ExperienciaDto[];
-    formaciones: FormacionDto[]; habilidades: HabilidadDto[]; proyectos: ProyectoDto[];
-    redes: RedSocialDto[]; referencias: ReferenciaDto[]; visibilidad: VisibilidadSeccionDto[];
-    presentacion: PresentacionCvDto;
-  }> = {}): void {
-    cvEditorService.getPersonales.and.returnValue(of(overrides.personales ?? personalesVacio));
-    cvEditorService.getPerfiles.and.returnValue(of(overrides.perfiles ?? []));
-    cvEditorService.getExperiencias.and.returnValue(of(overrides.experiencias ?? []));
-    cvEditorService.getFormaciones.and.returnValue(of(overrides.formaciones ?? []));
-    cvEditorService.getHabilidades.and.returnValue(of(overrides.habilidades ?? []));
-    cvEditorService.getProyectos.and.returnValue(of(overrides.proyectos ?? []));
-    cvEditorService.getRedesSociales.and.returnValue(of(overrides.redes ?? []));
-    cvEditorService.getReferencias.and.returnValue(of(overrides.referencias ?? []));
-    cvEditorService.getVisibilidad.and.returnValue(of(overrides.visibilidad ?? visibilidad));
-    cvEditorService.getPresentacion.and.returnValue(of(overrides.presentacion ?? presentacion));
+  function cvGeneradoDto(over: Partial<CvGeneradoDto> = {}): CvGeneradoDto {
+    return {
+      cvGeneradoId: 1,
+      perfilId: 5,
+      perfilNombre: 'Arquitecto de Datos',
+      contenido: {
+        experiencia: [
+          { cabecera: 'Arquitecta de Datos -- Acme, 2020-2024', funciones: ['Diseñó el pipeline de analítica.', 'Lideró la migración a Azure.'] },
+        ],
+        educacion: ['Ingeniería de Sistemas -- Universidad X (2015)'],
+        proyectos: ['Data Lake corporativo -- Azure, Spark.'],
+        habilidades: [
+          { nombre: 'SQL', tipo: 'Tecnica' },
+          { nombre: 'Azure Data Factory', tipo: null },
+          { nombre: 'Liderazgo', tipo: 'Blanda' },
+          { nombre: 'Ingles', tipo: 'Idioma' },
+        ],
+      },
+      fechaGeneracion: '2026-08-20T00:00:00Z',
+      promptPorDefecto: false,
+      ...over,
+    };
   }
 
-  function setup(): void {
+  function perfilDto(over: Partial<PerfilDto> = {}): PerfilDto {
+    return {
+      perfilId: 5, nombrePerfil: 'Arquitecto de Datos', descripcionPerfil: 'Descripción guardada.',
+      experienciaPerfilAnios: 5, aspiracionSalarialPesos: 10000000, aspiracionSalarialDolares: 2500, esActivo: true,
+      mostrarExperienciaPerfil: true, mostrarAspiracionSalarial: true,
+      ...over,
+    };
+  }
+
+  function personalesDto(): PersonalesDto {
+    return {
+      personalesId: 1, curriculumId: 2, tipoIdentificacion: null, numeroDocumento: null,
+      fechaExpedicion: null, lugarExpedicion: null, libretaMilitarNumero: null, libretaMilitarClase: null,
+      pasaporteNumero: null, pasaporteVigencia: null, visaNumero: null, visaVigencia: null, visaClase: null,
+      primerNombre: 'Ana', segundoNombre: null, primerApellido: 'Ríos', segundoApellido: null,
+      fechaNacimiento: null, lugarNacimiento: null, genero: null, nacionalidad: null, tipoSangre: null,
+      eps: null, pencion: null, cesantias: null, email: 'ana@example.com', celular: '3001234567', telefonoFijo: null,
+      pais: 'Colombia', departamento: null, ciudad: 'Bogotá', barrio: null, codigoPostal: null, direccion: null,
+      tipoResidencia: null, fotoUrl: null,
+    } as PersonalesDto;
+  }
+
+  function presentacionDto(over: Partial<PresentacionCvDto> = {}): PresentacionCvDto {
+    return { plantillaCodigo: 'clasico', experienciaLaboralMesesAcumulados: 0, urlPublica: 'ana-rios', publicado: false, ...over };
+  }
+
+  function setup(
+    listarPerfilResult = of([cvGeneradoDto()]),
+    getPerfilesResult = of([perfilDto()]),
+    visibilidadResult = of([] as VisibilidadSeccionDto[])
+  ): void {
+    cvGeneradoService = jasmine.createSpyObj('CvGeneradoService', ['listar', 'generar']);
+    cvGeneradoService.listar.and.returnValue(listarPerfilResult);
+
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
-      'getPersonales', 'getPerfiles', 'getExperiencias', 'getFormaciones', 'getHabilidades',
-      'getProyectos', 'getRedesSociales', 'getReferencias', 'getVisibilidad', 'getPresentacion',
-      'updatePresentacion',
+      'getPerfiles', 'getPersonales', 'getRedesSociales', 'getVisibilidad', 'getPresentacion', 'updatePresentacion',
     ]);
+    cvEditorService.getPerfiles.and.returnValue(getPerfilesResult);
+    cvEditorService.getPersonales.and.returnValue(of(personalesDto()));
+    cvEditorService.getRedesSociales.and.returnValue(of([] as RedSocialDto[]));
+    cvEditorService.getVisibilidad.and.returnValue(visibilidadResult);
+    cvEditorService.getPresentacion.and.returnValue(of(presentacionDto()));
+
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
-    routerEvents = new Subject<unknown>();
-    const routerStub = { events: routerEvents.asObservable(), navigate: jasmine.createSpy('navigate') };
-    setupCargaOk();
 
     TestBed.configureTestingModule({
       providers: [
         MiCvComponent,
+        { provide: CvGeneradoService, useValue: cvGeneradoService },
         { provide: CvEditorService, useValue: cvEditorService },
         { provide: NotificationService, useValue: notificationService },
-        { provide: Router, useValue: routerStub },
       ],
     });
     component = TestBed.inject(MiCvComponent);
   }
 
-  it('carga todos los datos del CV y la plantilla persistida al inicializar', () => {
+  it('ngOnInit carga los perfiles y los CVs por perfil ya generados', () => {
     setup();
     component.ngOnInit();
 
     expect(component.loading).toBeFalse();
-    expect(component.plantillaCodigo).toBe('clasico');
-    expect(component.experienciaLaboralMesesAcumulados).toBe(18);
+    expect(component.cvsGenerados.length).toBe(1);
+    expect(component.perfiles.length).toBe(1);
   });
 
-  it('notifica error si falla la carga', () => {
-    setup();
-    cvEditorService.getPersonales.and.returnValue(throwError(() => new Error('boom')));
+  it('ngOnInit notifica error si falla la carga', () => {
+    setup(throwError(() => new Error('boom')));
     component.ngOnInit();
 
     expect(component.loading).toBeFalse();
     expect(notificationService.error).toHaveBeenCalled();
   });
 
-  it('recarga los datos cuando la navegacion vuelve a /mi-cv (ignora la primera emision)', () => {
+  it('trackByCvGenerado devuelve el id', () => {
     setup();
-    component.ngOnInit();
-    cvEditorService.getPersonales.calls.reset();
-
-    routerEvents.next(new NavigationEnd(1, '/otra-ruta', '/otra-ruta'));
-    expect(cvEditorService.getPersonales).not.toHaveBeenCalled();
-
-    routerEvents.next(new NavigationEnd(2, '/mi-cv', '/mi-cv'));
-    expect(cvEditorService.getPersonales).toHaveBeenCalled();
+    expect(component.trackByCvGenerado(0, cvGeneradoDto())).toBe(1);
   });
 
-  it('ngOnDestroy completa el subject de destruccion (no vuelve a recargar tras destruir)', () => {
-    setup();
-    component.ngOnInit();
-    component.ngOnDestroy();
-    cvEditorService.getPersonales.calls.reset();
-
-    routerEvents.next(new NavigationEnd(2, '/mi-cv', '/mi-cv'));
-
-    expect(cvEditorService.getPersonales).not.toHaveBeenCalled();
-  });
-
-  it('imprimir llama a window.print', () => {
-    setup();
-    spyOn(window, 'print');
-
-    component.imprimir();
-
-    expect(window.print).toHaveBeenCalled();
-  });
-
-  describe('onPlantillaSelect', () => {
-    it('cambia la plantilla seleccionada', () => {
+  describe('generarCvDesdePerfil', () => {
+    it('no hace nada si no hay perfil seleccionado', () => {
       setup();
-      component.onPlantillaSelect('profesional');
-      expect(component.plantillaCodigo).toBe('profesional');
+      component.perfilSeleccionadoId = null;
+
+      component.generarCvDesdePerfil();
+
+      expect(cvGeneradoService.generar).not.toHaveBeenCalled();
     });
 
-    it('no hace nada si ya esta guardando', () => {
+    it('genera el CV, recarga el listado y lo abre (cargando los datos del encabezado)', () => {
       setup();
-      component.savingPlantilla = true;
-      component.onPlantillaSelect('profesional');
-      expect(component.plantillaCodigo).toBe('clasico');
-    });
-  });
-
-  describe('guardarPlantilla', () => {
-    it('no hace nada si no hay cambios pendientes', () => {
-      setup();
-      component.guardarPlantilla();
-      expect(cvEditorService.updatePresentacion).not.toHaveBeenCalled();
-    });
-
-    it('guarda la nueva plantilla y notifica exito', () => {
-      setup();
-      cvEditorService.updatePresentacion.and.returnValue(of({ ...presentacion, plantillaCodigo: 'profesional', experienciaLaboralMesesAcumulados: 20 }));
       component.ngOnInit();
-      component.onPlantillaSelect('profesional');
+      cvGeneradoService.generar.and.returnValue(of(cvGeneradoDto()));
+      component.perfilSeleccionadoId = 5;
 
-      component.guardarPlantilla();
+      component.generarCvDesdePerfil();
 
-      expect(component.plantillaCodigo).toBe('profesional');
-      expect(component.hayCambiosPlantilla).toBeFalse();
-      expect(component.experienciaLaboralMesesAcumulados).toBe(20);
-      expect(component.savingPlantilla).toBeFalse();
-      expect(notificationService.success).toHaveBeenCalled();
+      expect(cvGeneradoService.generar).toHaveBeenCalledWith(5);
+      expect(component.generandoCvPerfil).toBeFalse();
+      expect(cvGeneradoService.listar).toHaveBeenCalledTimes(2);
+      expect(component.cvPerfilAbierto).toEqual(cvGeneradoDto());
+      expect(cvEditorService.getPersonales).toHaveBeenCalled();
     });
 
-    it('revierte a la plantilla anterior y notifica error si falla el backend', () => {
+    it('notifica error si falla la generacion', () => {
       setup();
-      cvEditorService.updatePresentacion.and.returnValue(throwError(() => new Error('boom')));
-      component.ngOnInit();
-      component.onPlantillaSelect('profesional');
+      cvGeneradoService.generar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      component.perfilSeleccionadoId = 5;
 
-      component.guardarPlantilla();
+      component.generarCvDesdePerfil();
 
-      expect(component.plantillaCodigo).toBe('clasico');
-      expect(component.savingPlantilla).toBeFalse();
+      expect(component.generandoCvPerfil).toBeFalse();
       expect(notificationService.error).toHaveBeenCalled();
     });
   });
 
-  describe('revertirPlantilla', () => {
-    it('descarta la seleccion sin guardar y vuelve a la persistida', () => {
+  it('cvExistenteParaPerfilSeleccionado encuentra el CV ya generado para ese perfil', () => {
+    setup();
+    component.ngOnInit();
+
+    expect(component.cvExistenteParaPerfilSeleccionado).toBeNull();
+
+    component.perfilSeleccionadoId = 5;
+    expect(component.cvExistenteParaPerfilSeleccionado?.perfilId).toBe(5);
+
+    component.perfilSeleccionadoId = 999;
+    expect(component.cvExistenteParaPerfilSeleccionado).toBeNull();
+  });
+
+  it('abrirCvPerfil carga los datos del encabezado solo la primera vez', () => {
+    setup();
+
+    component.abrirCvPerfil(cvGeneradoDto());
+    expect(component.cvPerfilAbierto).toEqual(cvGeneradoDto());
+    expect(cvEditorService.getPersonales).toHaveBeenCalledTimes(1);
+    expect(component.plantillaCodigo).toBe('clasico');
+
+    component.abrirCvPerfil(cvGeneradoDto({ cvGeneradoId: 2, perfilId: 9, perfilNombre: 'Backend' }));
+    expect(component.cvPerfilAbierto?.perfilId).toBe(9);
+    expect(cvEditorService.getPersonales).toHaveBeenCalledTimes(1);
+  });
+
+  it('cerrarCv cierra el CV por perfil abierto', () => {
+    setup();
+    component.abrirCvPerfil(cvGeneradoDto());
+
+    component.cerrarCv();
+
+    expect(component.cvPerfilAbierto).toBeNull();
+  });
+
+  describe('encabezado del CV por perfil (datos reales de Personales, no de la IA)', () => {
+    it('perfilBaseAbierto es null si no hay ningun CV por perfil abierto', () => {
+      setup();
+      expect(component.perfilBaseAbierto).toBeNull();
+    });
+
+    it('arma nombre, foto, contacto y aspiracion a partir de Personales y del Perfil guardado', () => {
       setup();
       component.ngOnInit();
+      component.abrirCvPerfil(cvGeneradoDto());
+
+      expect(component.nombreCompleto).toBe('Ana Ríos');
+      expect(component.mostrarEmail).toBeTrue();
+      expect(component.telefonoContacto).toBe('3001234567');
+      expect(component.ciudadPais).toBe('Bogotá, Colombia');
+      expect(component.perfilBaseAbierto?.perfilId).toBe(5);
+      expect(component.aspiracionTexto).toContain('COP');
+      expect(component.plantillaCodigo).toBe('clasico');
+    });
+
+    it('perfilBaseAbierto y aspiracionTexto son null si el perfil ya no esta en la lista cargada', () => {
+      setup();
+      component.abrirCvPerfil(cvGeneradoDto({ perfilId: 999, perfilNombre: 'Perfil eliminado' }));
+
+      expect(component.perfilBaseAbierto).toBeNull();
+      expect(component.aspiracionTexto).toBeNull();
+    });
+
+    it('respeta los interruptores de visibilidad de Configuración para foto/email/telefono/ciudad', () => {
+      setup(undefined, undefined, of([
+        { seccion: 'datos-personales.foto', visible: false },
+        { seccion: 'datos-personales.email', visible: false },
+      ] as VisibilidadSeccionDto[]));
+      component.abrirCvPerfil(cvGeneradoDto());
+
+      expect(component.fotoHeaderUrl).toBeNull();
+      expect(component.mostrarEmail).toBeFalse();
+      expect(component.mostrarTelefono).toBeTrue();
+    });
+  });
+
+  it('imprimirCv llama a window.print', () => {
+    setup();
+    spyOn(window, 'print');
+
+    component.imprimirCv();
+
+    expect(window.print).toHaveBeenCalled();
+  });
+
+  describe('habilidadesPorTipo (agrupación para la barra lateral de Corporativo)', () => {
+    it('es una lista vacia si no hay ningun CV por perfil abierto', () => {
+      setup();
+      expect(component.habilidadesPorTipo('tecnica')).toEqual([]);
+    });
+
+    it('agrupa por Tecnica/Blanda/Idioma, y sin tipo reconocido cae en tecnica', () => {
+      setup();
+      component.abrirCvPerfil(cvGeneradoDto());
+
+      expect(component.habilidadesPorTipo('tecnica')).toEqual(['SQL', 'Azure Data Factory']);
+      expect(component.habilidadesPorTipo('blanda')).toEqual(['Liderazgo']);
+      expect(component.habilidadesPorTipo('idioma')).toEqual(['Ingles']);
+    });
+  });
+
+  describe('selector de plantilla (mismo control que Información Profesional)', () => {
+    it('onPlantillaSelect cambia la plantilla en memoria sin guardar', () => {
+      setup();
+      component.abrirCvPerfil(cvGeneradoDto());
+
       component.onPlantillaSelect('profesional');
+
+      expect(component.plantillaCodigo).toBe('profesional');
+      expect(component.hayCambiosPlantilla).toBeTrue();
+      expect(cvEditorService.updatePresentacion).not.toHaveBeenCalled();
+    });
+
+    it('guardarPlantilla persiste el cambio y limpia hayCambiosPlantilla', () => {
+      setup();
+      component.abrirCvPerfil(cvGeneradoDto());
+      component.onPlantillaSelect('ejecutivo');
+      cvEditorService.updatePresentacion.and.returnValue(of(presentacionDto({ plantillaCodigo: 'ejecutivo' })));
+
+      component.guardarPlantilla();
+
+      expect(cvEditorService.updatePresentacion).toHaveBeenCalledWith({ plantillaCodigo: 'ejecutivo' });
+      expect(component.plantillaCodigo).toBe('ejecutivo');
+      expect(component.hayCambiosPlantilla).toBeFalse();
+      expect(component.savingPlantilla).toBeFalse();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('guardarPlantilla revierte al valor persistido y notifica error si falla', () => {
+      setup();
+      component.abrirCvPerfil(cvGeneradoDto());
+      component.onPlantillaSelect('ejecutivo');
+      cvEditorService.updatePresentacion.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+      component.guardarPlantilla();
+
+      expect(component.plantillaCodigo).toBe('clasico');
+      expect(component.hayCambiosPlantilla).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+
+    it('revertirPlantilla descarta el cambio en memoria', () => {
+      setup();
+      component.abrirCvPerfil(cvGeneradoDto());
+      component.onPlantillaSelect('ats');
 
       component.revertirPlantilla();
 
       expect(component.plantillaCodigo).toBe('clasico');
-    });
-  });
-
-  describe('previewVm', () => {
-    it('usa "Tu nombre" cuando Personales viene vacio (sin nombre/apellido guardados)', () => {
-      setup();
-      component.ngOnInit();
-
-      expect(component.previewVm.personales?.nombreCompleto).toBe('Tu nombre');
-    });
-
-    it('arma el nombre completo y contacto desde personales', () => {
-      const personales = {
-        primerNombre: 'Juan', segundoNombre: null, primerApellido: 'Pérez', segundoApellido: 'Ruiz',
-        fotoUrl: ' foto.png ', email: ' juan@example.com ', celular: ' 3001234567 ', telefonoFijo: null,
-        ciudad: ' Bogotá ', pais: ' Colombia ',
-      } as unknown as PersonalesDto;
-      setup();
-      setupCargaOk({ personales });
-      component.ngOnInit();
-
-      expect(component.previewVm.personales).toEqual({
-        nombreCompleto: 'Juan Pérez Ruiz',
-        fotoUrl: 'foto.png',
-        email: 'juan@example.com',
-        telefono: '3001234567',
-        ciudad: 'Bogotá',
-        pais: 'Colombia',
-      });
-    });
-
-    it('filtra experiencias, formaciones y proyectos con mostrarEnCv en false', () => {
-      const experiencias = [{ experienciaId: 1, mostrarEnCv: false }, { experienciaId: 2, mostrarEnCv: true }] as ExperienciaDto[];
-      const formaciones = [{ formacionId: 1, mostrarEnCv: false }, { formacionId: 2, mostrarEnCv: true }] as FormacionDto[];
-      const proyectos = [{ proyectoId: 1, mostrarEnCv: false }, { proyectoId: 2, mostrarEnCv: true }] as ProyectoDto[];
-      setup();
-      setupCargaOk({ experiencias, formaciones, proyectos });
-      component.ngOnInit();
-
-      expect(component.previewVm.experiencias.length).toBe(1);
-      expect(component.previewVm.experiencias[0].experienciaId).toBe(2);
-      expect(component.previewVm.formaciones.length).toBe(1);
-      expect(component.previewVm.proyectos.length).toBe(1);
-    });
-
-    it('solo incluye referencias de tipo Laboral', () => {
-      const referencias = [
-        { referenciaId: 1, tipoReferencia: 'Personal' },
-        { referenciaId: 2, tipoReferencia: 'Laboral' },
-        { referenciaId: 3, tipoReferencia: 'LABORAL' },
-      ] as ReferenciaDto[];
-      setup();
-      setupCargaOk({ referencias });
-      component.ngOnInit();
-
-      expect(component.previewVm.referenciasLaborales.map(r => r.referenciaId)).toEqual([2, 3]);
-    });
-  });
-
-  describe('visibilidad', () => {
-    it('las secciones "siempre visibles" lo son aunque esten desactivadas en el mapa', () => {
-      setup();
-      setupCargaOk({ visibilidad: [{ seccion: 'perfil', visible: false }] });
-      component.ngOnInit();
-
-      expect(component.visibleSeccion('perfil')).toBeTrue();
-      expect(component.visibleSeccion('datos-personales')).toBeTrue();
-      expect(component.visibleSeccion('experiencia')).toBeTrue();
-      expect(component.visibleSeccion('formacion-academica')).toBeTrue();
-    });
-
-    it('una seccion sin entrada en el mapa se considera visible (retrocompatibilidad)', () => {
-      setup();
-      setupCargaOk({ visibilidad: [] });
-      component.ngOnInit();
-
-      expect(component.visibleSeccion('proyectos')).toBeTrue();
-    });
-
-    it('respeta el mapa de visibilidad para secciones normales', () => {
-      setup();
-      component.ngOnInit();
-
-      expect(component.visibleSeccion('proyectos')).toBeFalse();
-      expect(component.visibleSeccion('referencias')).toBeTrue();
-    });
-
-    it('visibleAtributo exige que la seccion y el atributo esten visibles', () => {
-      setup();
-      setupCargaOk({ visibilidad: [{ seccion: 'experiencia', visible: true }, { seccion: 'experiencia.funciones', visible: false }] });
-      component.ngOnInit();
-
-      expect(component.visibleAtributo('experiencia', 'funciones')).toBeFalse();
-    });
-
-    it('visibleAtributoSafe devuelve true si el atributo no esta en el mapa', () => {
-      setup();
-      setupCargaOk({ visibilidad: [{ seccion: 'experiencia', visible: true }] });
-      component.ngOnInit();
-
-      expect(component.visibleAtributoSafe('experiencia', 'funciones')).toBeTrue();
-    });
-
-    it('visibleAtributoSafe devuelve false si la seccion no es visible', () => {
-      setup();
-      setupCargaOk({ visibilidad: [{ seccion: 'proyectos', visible: false }] });
-      component.ngOnInit();
-
-      expect(component.visibleAtributoSafe('proyectos', 'aporte')).toBeFalse();
-    });
-
-    it('visibleBloqueFormacion usa el bloque especifico si existe, si no cae a "educacion"', () => {
-      setup();
-      setupCargaOk({ visibilidad: [{ seccion: 'diplomados', visible: false }, { seccion: 'educacion', visible: true }] });
-      component.ngOnInit();
-
-      expect(component.visibleBloqueFormacion('diplomados')).toBeFalse();
-      expect(component.visibleBloqueFormacion('cursos')).toBeTrue();
-    });
-
-    it('visibleDescargarSoporte depende del bloque de formacion y del atributo puntual', () => {
-      setup();
-      setupCargaOk({ visibilidad: [{ seccion: 'diplomados', visible: false }] });
-      component.ngOnInit();
-
-      expect(component.visibleDescargarSoporte('diplomados', 'adjuntoSoporte')).toBeFalse();
+      expect(component.hayCambiosPlantilla).toBeFalse();
     });
   });
 });

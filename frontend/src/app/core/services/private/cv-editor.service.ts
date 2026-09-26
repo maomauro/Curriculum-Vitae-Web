@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { API_BASE_URL } from '../../constants/api-base-url';
+import type { CvDetalleDto } from '../public/public.service';
 
 // ── DTOs — Personales ─────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export interface PersonalesDto {
   fotoUrl: string | null;
 }
 
-export type UpsertPersonalesRequest = Omit<PersonalesDto, 'personalesId' | 'curriculumId'>;
+export type UpsertPersonalesRequest = Omit<PersonalesDto, 'personalesId' | 'curriculumId' | 'fotoUrl'>;
 
 // ── DTOs — Perfiles ────────────────────────────────────────────────────────────
 
@@ -57,9 +58,36 @@ export interface PerfilDto {
   aspiracionSalarialPesos: number | null;
   aspiracionSalarialDolares: number | null;
   esActivo: boolean;
+  /** Mostrar la experiencia/aspiración salarial de ESTE perfil en el CV público --
+   * interruptor por perfil (antes era un único interruptor global en Configuración). */
+  mostrarExperienciaPerfil: boolean;
+  mostrarAspiracionSalarial: boolean;
 }
 
 export type UpsertPerfilRequest = Omit<PerfilDto, 'perfilId'>;
+
+/** Borrador generado con IA a partir de un enfoque corto -- no persiste nada. */
+export interface PerfilGeneradoIaDto {
+  nombrePerfil: string;
+  descripcionPerfil: string;
+  /** true si el CV todavía no tiene una versión activa propia de GENERADOR_PERFIL
+   * y se usó el prompt por defecto del sistema. */
+  promptPorDefecto: boolean;
+}
+
+/** Idea de enfoque sugerida por IA a partir de todo el currículum -- no crea ni genera
+ * nada por sí sola, solo precarga el campo "enfoque" del formulario de "Nuevo perfil". */
+export interface EnfoqueSugeridoDto {
+  nombre: string;
+  razon: string;
+}
+
+export interface SugerirEnfoquesPerfilResponse {
+  sugerencias: EnfoqueSugeridoDto[];
+  /** true si el CV todavía no tiene una versión activa propia de
+   * SUGERIDOR_ENFOQUE_PERFIL y se usó el prompt por defecto del sistema. */
+  promptPorDefecto: boolean;
+}
 
 // ── DTOs — Experiencias ────────────────────────────────────────────────────────
 
@@ -80,7 +108,7 @@ export interface ExperienciaDto {
   fechaRegistro: string;
 }
 
-export type UpsertExperienciaRequest = Omit<ExperienciaDto, 'experienciaId' | 'fechaRegistro'>;
+export type UpsertExperienciaRequest = Omit<ExperienciaDto, 'experienciaId' | 'fechaRegistro' | 'adjuntoSoporte'>;
 export interface UpdateExperienciaVisibilidadRequest {
   mostrarEnCv: boolean;
 }
@@ -102,7 +130,7 @@ export interface FormacionDto {
   mostrarEnCv: boolean;
 }
 
-export type UpsertFormacionRequest = Omit<FormacionDto, 'formacionId'>;
+export type UpsertFormacionRequest = Omit<FormacionDto, 'formacionId' | 'adjuntoSoporte'>;
 export interface UpdateFormacionVisibilidadRequest {
   mostrarEnCv: boolean;
 }
@@ -119,9 +147,13 @@ export interface HabilidadDto {
   nivelEscritura: string | null;
   nivelEscucha: string | null;
   nivelHabla: string | null;
+  mostrarEnCv: boolean;
 }
 
 export type UpsertHabilidadRequest = Omit<HabilidadDto, 'habilidadId'>;
+export interface UpdateHabilidadVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Proyectos ───────────────────────────────────────────────────────────
 
@@ -160,9 +192,13 @@ export interface ReferenciaDto {
   observaciones: string | null;
   adjuntoSoporte: string | null;
   fechaRegistro: string;
+  mostrarEnCv: boolean;
 }
 
 export type UpsertReferenciaRequest = Omit<ReferenciaDto, 'referenciaId' | 'fechaRegistro'>;
+export interface UpdateReferenciaVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Redes Sociales ──────────────────────────────────────────────────────
 
@@ -171,9 +207,13 @@ export interface RedSocialDto {
   nombreRed: string;
   linkPublico: string | null;
   usuarioContacto: string | null;
+  mostrarEnCv: boolean;
 }
 
 export type UpsertRedSocialRequest = Omit<RedSocialDto, 'redSocialId'>;
+export interface UpdateRedSocialVisibilidadRequest {
+  mostrarEnCv: boolean;
+}
 
 // ── DTOs — Familiares / Contactos de emergencia ────────────────────────────────
 
@@ -223,6 +263,19 @@ export interface UpdatePresentacionCvRequest {
 
 // ── Servicio ───────────────────────────────────────────────────────────────────
 
+/** El backend devuelve `fotoUrl` como ruta relativa (`/api/cv/personales/foto`) cuando
+ * hay una foto subida como binario -- se antepone API_BASE_URL para que sea usable
+ * directo en `<img [src]>`. Las URLs legacy pegadas por el usuario ya son absolutas
+ * y se dejan intactas. */
+function conFotoUrlAbsoluta(dto: PersonalesDto): PersonalesDto {
+  return dto.fotoUrl?.startsWith('/') ? { ...dto, fotoUrl: `${API_BASE_URL}${dto.fotoUrl}` } : dto;
+}
+
+/** Mismo criterio que conFotoUrlAbsoluta, para el soporte (PDF) de Experiencia/Formación. */
+function conAdjuntoUrlAbsoluta<T extends { adjuntoSoporte: string | null }>(dto: T): T {
+  return dto.adjuntoSoporte?.startsWith('/') ? { ...dto, adjuntoSoporte: `${API_BASE_URL}${dto.adjuntoSoporte}` } : dto;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CvEditorService {
   private readonly BASE = `${API_BASE_URL}/api/cv`;
@@ -231,10 +284,18 @@ export class CvEditorService {
 
   // — Personales —
   getPersonales(): Observable<PersonalesDto> {
-    return this.http.get<PersonalesDto>(`${this.BASE}/personales`);
+    return this.http.get<PersonalesDto>(`${this.BASE}/personales`).pipe(map(conFotoUrlAbsoluta));
   }
   upsertPersonales(data: UpsertPersonalesRequest): Observable<PersonalesDto> {
-    return this.http.put<PersonalesDto>(`${this.BASE}/personales`, data);
+    return this.http.put<PersonalesDto>(`${this.BASE}/personales`, data).pipe(map(conFotoUrlAbsoluta));
+  }
+  uploadFotoPersonales(archivo: File): Observable<PersonalesDto> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return this.http.put<PersonalesDto>(`${this.BASE}/personales/foto`, formData).pipe(map(conFotoUrlAbsoluta));
+  }
+  eliminarFotoPersonales(): Observable<PersonalesDto> {
+    return this.http.delete<PersonalesDto>(`${this.BASE}/personales/foto`).pipe(map(conFotoUrlAbsoluta));
   }
 
   // — Perfiles —
@@ -247,48 +308,78 @@ export class CvEditorService {
   updatePerfil(id: number, data: UpsertPerfilRequest): Observable<PerfilDto> {
     return this.http.put<PerfilDto>(`${this.BASE}/perfiles/${id}`, data);
   }
+  generarPerfilConIa(enfoque: string): Observable<PerfilGeneradoIaDto> {
+    return this.http.post<PerfilGeneradoIaDto>(`${this.BASE}/perfiles/generar-ia`, { enfoque });
+  }
+  sugerirEnfoquesPerfil(): Observable<SugerirEnfoquesPerfilResponse> {
+    return this.http.post<SugerirEnfoquesPerfilResponse>(`${this.BASE}/perfiles/sugerir-enfoques`, null);
+  }
   deletePerfil(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/perfiles/${id}`);
   }
 
   // — Experiencias —
   getExperiencias(): Observable<ExperienciaDto[]> {
-    return this.http.get<ExperienciaDto[]>(`${this.BASE}/experiencias`);
+    return this.http.get<ExperienciaDto[]>(`${this.BASE}/experiencias`)
+      .pipe(map(list => list.map(conAdjuntoUrlAbsoluta)));
   }
   createExperiencia(data: UpsertExperienciaRequest): Observable<ExperienciaDto> {
-    return this.http.post<ExperienciaDto>(`${this.BASE}/experiencias`, data);
+    return this.http.post<ExperienciaDto>(`${this.BASE}/experiencias`, data).pipe(map(conAdjuntoUrlAbsoluta));
   }
   updateExperiencia(id: number, data: UpsertExperienciaRequest): Observable<ExperienciaDto> {
-    return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}`, data);
+    return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}`, data).pipe(map(conAdjuntoUrlAbsoluta));
   }
   updateExperienciaVisibilidad(
     id: number,
     data: UpdateExperienciaVisibilidadRequest
   ): Observable<ExperienciaDto> {
-    return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}/visibilidad`, data);
+    return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}/visibilidad`, data)
+      .pipe(map(conAdjuntoUrlAbsoluta));
   }
   deleteExperiencia(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/experiencias/${id}`);
   }
+  uploadAdjuntoExperiencia(id: number, archivo: File): Observable<ExperienciaDto> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return this.http.put<ExperienciaDto>(`${this.BASE}/experiencias/${id}/adjunto`, formData)
+      .pipe(map(conAdjuntoUrlAbsoluta));
+  }
+  eliminarAdjuntoExperiencia(id: number): Observable<ExperienciaDto> {
+    return this.http.delete<ExperienciaDto>(`${this.BASE}/experiencias/${id}/adjunto`)
+      .pipe(map(conAdjuntoUrlAbsoluta));
+  }
 
   // — Formaciones —
   getFormaciones(): Observable<FormacionDto[]> {
-    return this.http.get<FormacionDto[]>(`${this.BASE}/formaciones`);
+    return this.http.get<FormacionDto[]>(`${this.BASE}/formaciones`)
+      .pipe(map(list => list.map(conAdjuntoUrlAbsoluta)));
   }
   createFormacion(data: UpsertFormacionRequest): Observable<FormacionDto> {
-    return this.http.post<FormacionDto>(`${this.BASE}/formaciones`, data);
+    return this.http.post<FormacionDto>(`${this.BASE}/formaciones`, data).pipe(map(conAdjuntoUrlAbsoluta));
   }
   updateFormacion(id: number, data: UpsertFormacionRequest): Observable<FormacionDto> {
-    return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}`, data);
+    return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}`, data).pipe(map(conAdjuntoUrlAbsoluta));
   }
   updateFormacionVisibilidad(
     id: number,
     data: UpdateFormacionVisibilidadRequest
   ): Observable<FormacionDto> {
-    return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}/visibilidad`, data);
+    return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}/visibilidad`, data)
+      .pipe(map(conAdjuntoUrlAbsoluta));
   }
   deleteFormacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/formaciones/${id}`);
+  }
+  uploadAdjuntoFormacion(id: number, archivo: File): Observable<FormacionDto> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return this.http.put<FormacionDto>(`${this.BASE}/formaciones/${id}/adjunto`, formData)
+      .pipe(map(conAdjuntoUrlAbsoluta));
+  }
+  eliminarAdjuntoFormacion(id: number): Observable<FormacionDto> {
+    return this.http.delete<FormacionDto>(`${this.BASE}/formaciones/${id}/adjunto`)
+      .pipe(map(conAdjuntoUrlAbsoluta));
   }
 
   // — Habilidades —
@@ -300,6 +391,12 @@ export class CvEditorService {
   }
   updateHabilidad(id: number, data: UpsertHabilidadRequest): Observable<HabilidadDto> {
     return this.http.put<HabilidadDto>(`${this.BASE}/habilidades/${id}`, data);
+  }
+  updateHabilidadVisibilidad(
+    id: number,
+    data: UpdateHabilidadVisibilidadRequest
+  ): Observable<HabilidadDto> {
+    return this.http.put<HabilidadDto>(`${this.BASE}/habilidades/${id}/visibilidad`, data);
   }
   deleteHabilidad(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/habilidades/${id}`);
@@ -335,6 +432,9 @@ export class CvEditorService {
   updateReferencia(id: number, data: UpsertReferenciaRequest): Observable<ReferenciaDto> {
     return this.http.put<ReferenciaDto>(`${this.BASE}/referencias/${id}`, data);
   }
+  updateReferenciaVisibilidad(id: number, data: UpdateReferenciaVisibilidadRequest): Observable<ReferenciaDto> {
+    return this.http.put<ReferenciaDto>(`${this.BASE}/referencias/${id}/visibilidad`, data);
+  }
   deleteReferencia(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/referencias/${id}`);
   }
@@ -348,6 +448,12 @@ export class CvEditorService {
   }
   updateRedSocial(id: number, data: UpsertRedSocialRequest): Observable<RedSocialDto> {
     return this.http.put<RedSocialDto>(`${this.BASE}/redes-sociales/${id}`, data);
+  }
+  updateRedSocialVisibilidad(
+    id: number,
+    data: UpdateRedSocialVisibilidadRequest
+  ): Observable<RedSocialDto> {
+    return this.http.put<RedSocialDto>(`${this.BASE}/redes-sociales/${id}/visibilidad`, data);
   }
   deleteRedSocial(id: number): Observable<void> {
     return this.http.delete<void>(`${this.BASE}/redes-sociales/${id}`);
@@ -391,6 +497,12 @@ export class CvEditorService {
         }))
       )
     );
+  }
+
+  /** Cómo se vería el CV público con la visibilidad actual -- funciona aunque el CV
+   * esté en Borrador. Mismo CvDetalleDto que consume el CV público real. */
+  getPreviewPublico(): Observable<CvDetalleDto> {
+    return this.http.get<CvDetalleDto>(`${this.BASE}/visibilidad/preview-publico`);
   }
 
   // — Presentación / plantilla —

@@ -1,3 +1,30 @@
+<div class="row g-3 mb-4" *ngIf="!loadingStats && !statsError && stats as s">
+  <div class="col-6 col-md-3">
+    <div class="bg-white rounded-3 p-3 shadow-sm text-center">
+      <div class="fw-bold fs-4 text-success">{{ s.totalVisitas }}</div>
+      <div class="text-muted small">Visitas totales</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="bg-white rounded-3 p-3 shadow-sm text-center">
+      <div class="fw-bold fs-4 text-primary">{{ s.totalContactos }}</div>
+      <div class="text-muted small">Contactos totales</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="bg-white rounded-3 p-3 shadow-sm text-center">
+      <div class="fw-bold fs-4 text-warning">{{ s.alertasNoLeidas }}</div>
+      <div class="text-muted small">Alertas sin leer</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="bg-white rounded-3 p-3 shadow-sm text-center">
+      <div class="fw-bold fs-6 mt-1">{{ s.ultimaVisita ? (s.ultimaVisita | date:'dd/MM/yyyy HH:mm') : 'Sin visitas aún' }}</div>
+      <div class="text-muted small">Última visita</div>
+    </div>
+  </div>
+</div>
+
 <div *ngIf="loadingCvAnaliticas" class="text-center py-5">
   <div class="spinner-border text-primary" role="status">
     <span class="visually-hidden">Cargando dashboard…</span>

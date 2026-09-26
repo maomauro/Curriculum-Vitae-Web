@@ -1,172 +1,262 @@
 # Plan de Trabajo para Salida a Produccion — PortalCV
 
-> Nota de vigencia: este plan conserva el contexto historico del corte 23-04-2026.
-> Para retomar trabajo con estado consolidado, usar primero:
-> - `docs/archivo/Estado-Actual-2026-08-07.md`
-> - `docs/devops/Smoke-Test-Produccion.md`
-> - `docs/archivo/Sprint-Cierre-GoLive-2026-08.md`
-
-Estado del plan: En ejecucion
-Fecha de corte: 23-04-2026
-Rama de trabajo actual: `feat/backend` (operativo)
+Estado del plan: En definicion de infraestructura
+Fecha de este corte: 2026-09-25
+Rama de trabajo actual: `feature/portal-cv-mejoras-adjuntos-ia` (PR abierto hacia `main`)
 
 ---
 
 ## Objetivo
 
-Publicar PortalCV en Azure con riesgo controlado, validando seguridad minima, CI/CD, infraestructura y pruebas funcionales end-to-end.
+Publicar PortalCV en un VPS de Contabo, con Cloudflare administrando el DNS
+y el subdominio publico, con riesgo controlado: seguridad minima, CI/CD
+reproducible, base de datos persistente con backups, y validacion funcional
+completa antes de exponerlo a usuarios reales.
 
 ---
 
-## Estado actual (resumen)
+## Infraestructura decidida
 
-- Completado:
-  - Azure SQL Database Free Tier creado
-  - Build backend Release OK
-  - Build frontend produccion OK
-  - Swagger y rutas principales alineadas
-  - Secretos retirados de `launchSettings.json` (flujo con `dotnet user-secrets` y `docker/backend.local.env`)
-  - Tests frontend en CI con `--configuration=ci` (headless) y cobertura LCOV subida a SonarCloud
-  - SonarCloud Quality Gate en verde en `main`; 6 security hotspots resueltos
-  - Docker Compose retirado del repo; Dockerfile del backend endurecido (usuario `app`, binarios read-only)
-  - Runbook de despliegue en Azure con comandos `az` ejecutables (`docs/devops/Runbook-Azure.md`)
-  - Workflow de publicacion a GHCR (`.github/workflows/publish-backend-image.yml`): publica `ghcr.io/<owner>/portalcv-backend:latest` + `sha-<short>` en cada merge a `main`
-  - CD backend a Azure Container Apps en el workflow (`deploy-aca`) con login por service principal usando `AZURE_CREDENTIALS`
-  - Proyecto de tests backend `PortalCV.Api.Tests` (xUnit + WebApplicationFactory + EF InMemory) ejecutandose en CI (job `backend`)
-  - Endpoint `/health` habilitado y respondiendo `200` en produccion
-  - ACA operativo en `CV-Mao`: `env-portalcv` + `portalcv-api` con ingress publico y variables/sensibles cargados
-  - Conectividad SQL validada en runtime con `portalcv_app_prod` (incluye correccion de permisos `dbo` y prueba de endpoint publico)
-- Pendiente critico:
-  - Cierre de checklist de despliegue (smoke funcional completo + rollback probado)
+| Componente | Decision |
+|---|---|
+| **Hosting (backend + frontend + BD)** | VPS de Contabo — Cloud VPS 6 (2026), ubicacion Hub Europe, IP `13.140.188.159`, acceso root vía SSH |
+| **DNS / proxy / TLS de borde** | Cloudflare, dominio `sitiosapps.com` (gestionado en `dash.cloudflare.com`) |
+| **Subdominio publico** | Pendiente de elegir (ej. `portalcv.sitiosapps.com` o `cv.sitiosapps.com`) — un unico subdominio para frontend + API (ver "Decision de arquitectura" abajo) |
+| **Motor de base de datos** | MariaDB (`mariadb:11`), contenedor Docker en el mismo VPS, volumen persistente |
+| **Imagen del backend** | Publicada a GHCR por CI (`.github/workflows/publish-backend-image.yml`, ya activo) |
+| **Reverse proxy / TLS de origen** | Nginx (o Caddy) en el VPS, delante de backend + build estatico del frontend |
 
----
+### Decision de arquitectura: un solo origen (subdominio unico)
 
-## Tablero de trabajo (checklist)
+Frontend y backend quedan detras del **mismo subdominio**: el reverse proxy
+del VPS enruta por path — `/api/*` (y `/health`) hacia el contenedor del
+backend, todo lo demas hacia los archivos estaticos de Angular. Es el mismo
+esquema que ya usa `ng serve` en local (proxy a `/api`), solo que en
+produccion lo hace Nginx en vez del dev-server de Angular.
 
-### Fase 1 — Hardening tecnico minimo (bloqueante)
+Esta decision resuelve de una vez varios puntos que quedarian abiertos con
+dos subdominios separados (`api.` / `app.`):
+- El frontend sigue usando las rutas relativas `/api` que ya tiene hoy — no
+  hace falta crear `src/environments/environment.prod.ts` ni bakear una URL
+  absoluta del backend en el build.
+- La cookie JWT (`portalcv_auth`) puede usar `SameSite=Lax` en vez de
+  `SameSite=None` (mismo origen), mas simple y mas segura.
+- No hay CORS cross-origin que configurar entre frontend y backend (si sigue
+  existiendo `Cors:AllowedOrigins`, pero apuntando al mismo dominio).
 
-- [x] Mover secretos hardcodeados de launchSettings a user-secrets o configuracion local no versionada
-  - Criterio de cierre: launchSettings sin valores sensibles reales ✅
-- [x] Corregir comando de tests frontend en CI
-  - Criterio de cierre: job frontend ejecuta tests en modo CI de forma deterministica ✅ (`--configuration=ci` + cobertura hacia Sonar)
-- [x] Definir puerta minima de pruebas backend ✅
-  - Criterio de cierre: existe al menos 1 proyecto de test backend y CI lo ejecuta — `PortalCV.Api.Tests` con 5 tests de integracion (WebApplicationFactory + EF InMemory); ejecutado en job `backend` y con artifact `backend-test-results`
-- [ ] Endurecer manejo de errores en frontend (status 0, 4xx, 5xx)
-  - Criterio de cierre: notificacion centralizada y flujo de sesion coherente
-- [ ] Validar expiracion de token antes de adjuntar Authorization
-  - Criterio de cierre: interceptor evita enviar token expirado
-- [ ] Agregar validaciones declarativas en contratos de entrada criticos
-  - Criterio de cierre: DTO de registro validado en API
-
-### Fase 2 — Preparacion CI/CD para despliegue
-
-- [x] Definir estrategia de versionado de imagen backend (latest + sha) ✅
-  - Criterio de cierre: tags claros y trazables → `latest` (solo en `main`) + `sha-<short>` (trazabilidad del commit)
-- [x] Agregar job de package/deploy para main ✅ (parcial — fase build+push a GHCR)
-  - Criterio de cierre: workflow listo para publicar imagen backend a GHCR (`.github/workflows/publish-backend-image.yml`)
-  - Estado actual: incluye `az containerapp update` por digest en ACA; queda pendiente `staticwebapp deploy` al crear SWA
-- [x] Ajustar salida y rutas de artefactos frontend para SWA
-  - Criterio de cierre: output_location validado en pipeline
-
-### Fase 3 — Provision de Azure Container Apps
-
-- [x] Crear Container Apps Environment
-  - Criterio de cierre: entorno creado en el resource group correcto
-- [x] Crear Container App portalcv-api
-  - Criterio de cierre: ingress externo y puerto 8080 funcional
-- [x] Configurar secretos y variables de entorno en Container App
-  - Variables minimas esperadas:
-    - ConnectionStrings__DefaultConnection
-    - ASPNETCORE_ENVIRONMENT=Production
-    - Jwt__Issuer
-    - Jwt__Audience
-    - Jwt__Key
-    - Cors__AllowedOrigins__0
-- [x] Publicar imagen backend en GHCR y desplegar en ACA
-  - Criterio de cierre: API responde endpoints principales
-
-### Fase 4 — Provision de Azure Static Web Apps
-
-- [x] Crear recurso portalcv-web conectado al repo (rama main)
-  - Criterio de cierre: build/deploy inicial exitoso
-- [x] Validar configuracion SPA (navigation fallback)
-  - Criterio de cierre: rutas directas como /auth/login no retornan 404
-- [x] Validar conectividad SWA -> ACA
-  - Criterio de cierre: frontend consume /api sin errores CORS
-
-### Fase 5 — Validacion de salida y go-live
-
-- [ ] Smoke test funcional completo
-  - Flujo minimo: login, dashboard, CV publico, contacto, alertas
-- [ ] Verificar observabilidad operativa
-  - Criterio de cierre: logs utiles en runtime cloud
-- [ ] Definir rollback rapido
-  - Criterio de cierre: version anterior identificada y procedimiento probado
-- [ ] Corte de salida
-  - Criterio de cierre: aprobacion final y despliegue en main
+No se necesita `appsettings.Production.json`: toda la configuracion de
+produccion (`Cors:AllowedOrigins`, `Jwt:Key`, `Encryption:Key`,
+`ConnectionStrings:DefaultConnection`) se inyecta por variables de entorno,
+que ASP.NET Core lee automaticamente con `ASPNETCORE_ENVIRONMENT=Production`.
 
 ---
 
-## Checklist operativo por recurso Azure
+## Tablero de trabajo (checklist por fases)
 
-### Azure SQL Database (ya creado)
+### Fase 0 — Decisiones a cerrar antes de tocar el servidor
 
-- [x] Recurso existente
-- [x] Verificar conectividad desde ACA usando portalcv_app_prod
-- [x] Verificar reglas de firewall necesarias para runtime
-- [x] Verificar estado de esquema/scripts aplicados en produccion
+- [ ] Elegir el subdominio exacto en Cloudflare (ej. `portalcv.sitiosapps.com`)
+- [ ] Elegir el modo SSL/TLS de Cloudflare: **Full (strict)** recomendado —
+  requiere certificado valido en el origen (Let's Encrypt en el VPS, o el
+  certificado de origen que emite el propio Cloudflare)
+- [ ] Confirmar el sistema operativo del VPS entregado por Contabo (para
+  saber el gestor de paquetes al instalar Docker)
 
-### Azure Container Apps (operativo)
+### Fase 1 — Preparacion del servidor (Contabo VPS)
 
-- [x] Crear env-portalcv
-- [x] Crear portalcv-api
-- [x] Configurar variables y secretos
-- [x] Configurar escalado minimo/maximo
-- [x] Probar endpoint base y endpoints de auth/public
+- [ ] Hardening SSH: crear usuario no-root para operar; deshabilitar login
+  de `root` por password; acceso solo por llave SSH
+  - Criterio de cierre: `ssh root@<ip>` con password ya no funciona
+- [ ] Firewall (`ufw` o equivalente): permitir SSH (puerto propio si se
+  cambia el 22 por defecto) y 80/443; si se usa el proxy naranja de
+  Cloudflare, restringir 80/443 solo a los rangos de IP de Cloudflare
+  - Criterio de cierre: `ufw status` muestra solo los puertos necesarios
+- [ ] Instalar `fail2ban` (mitiga fuerza bruta sobre SSH)
+- [ ] Instalar Docker Engine + Docker Compose plugin
+  - Criterio de cierre: `docker compose version` funciona sin `sudo`
+    (usuario en el grupo `docker`)
 
-### Azure Static Web Apps (operativo)
+### Fase 2 — DNS y Cloudflare
 
-- [x] Crear portalcv-web
-- [x] Conectar repo y rama main
-- [x] Confirmar app_location y output_location
-- [x] Confirmar enrutamiento SPA
-- [x] Validar llamadas a API en dominio de produccion
+- [ ] Crear el registro `A` del subdominio elegido apuntando a
+  `13.140.188.159`
+- [ ] Activar el proxy de Cloudflare (nube naranja) sobre ese registro
+- [ ] Configurar el modo SSL/TLS elegido en Fase 0
+- [ ] Si es Full (strict): generar el certificado de origen de Cloudflare
+  (o emitir uno con Let's Encrypt/`certbot` en el VPS) e instalarlo en Nginx
 
-### Corte actual (23-04-2026)
+### Fase 3 — Contenerizacion de produccion (falta crear, hoy no existe)
 
-- SWA operativo con workflow de deploy en `main` y dominio `*.azurestaticapps.net`.
-- CORS enlazado al dominio real del frontend; registro web validado desde UI.
-- Verificacion final pendiente: smoke funcional completo y rollback documentado/probado.
+- [ ] Crear `frontend/Dockerfile` de produccion (build multi-stage: `ng
+  build --configuration production` -> imagen Nginx sirviendo `dist/`
+  con fallback SPA a `index.html`)
+  - Hoy solo existe `frontend/Dockerfile.dev`, pensado unicamente para
+    desarrollo local con `ng serve`
+- [ ] Crear un `docker-compose` de produccion (archivo nuevo, ej.
+  `docker-compose.prod.yml`) con 3 servicios:
+  - `db`: `mariadb:11` con volumen nombrado persistente (mismo patron que
+    el compose de desarrollo, pero sin exponer el puerto 3306 al exterior)
+  - `backend`: imagen publicada en GHCR (no build local) +
+    `backend/Dockerfile` de produccion (ya existe, multi-stage, ya endurecido)
+  - `nginx`: sirve el build de Angular y hace proxy de `/api`+`/health`
+    hacia `backend`
+- [ ] Una vez que el Nginx de produccion exista: restringir
+  `KnownProxies`/`KnownIPNetworks` de `ForwardedHeadersOptions` en
+  `Program.cs` a la IP/red real de ese Nginx, en vez de confiar en cualquier
+  origen
+  - Criterio de cierre: `docker compose -f docker-compose.prod.yml up -d`
+    levanta los 3 servicios sanos en el VPS
+
+### Fase 4 — Base de datos en produccion
+
+- [ ] Levantar el contenedor MariaDB en el VPS con volumen persistente
+- [ ] Ejecutar `database/01_CreateSchema.sql` contra la base nueva (arranca
+  vacia; no se migran datos de desarrollo/local)
+- [ ] Automatizar backup diario (`mariadb-dump` o `mariabackup`) via cron —
+  procedimiento ya documentado en `docs/devops/Plan-Backup-Mantenimiento.md`
+  - Criterio de cierre: existe al menos un backup automatico verificado
+
+### Fase 5 — Secretos y configuracion del backend
+
+- [ ] Generar `Jwt:Key` (>= 32 caracteres) y `Encryption:Key` (AES-256
+  base64) de produccion, **distintos** a los de local
+- [ ] `ConnectionStrings:DefaultConnection` apuntando al MariaDB del VPS
+  (usuario de aplicacion con permisos minimos, no `root`)
+- [ ] `Cors:AllowedOrigins__0` con el subdominio real elegido en Fase 0
+- [ ] `ASPNETCORE_ENVIRONMENT=Production`
+- [ ] Decidir si `Auth:DemoUser` se deshabilita en produccion
+- [ ] Archivo de secretos en el VPS (`env_file` del compose de produccion),
+  nunca versionado en git — mismo criterio que `docker/backend.local.env`
+
+### Fase 6 — CI/CD: automatizar el despliegue
+
+- [ ] Ya activo: build + test + publicacion de imagen backend a GHCR
+  (`.github/workflows/publish-backend-image.yml`)
+- [ ] Nuevo job de deploy backend: conexion SSH al VPS y
+  `docker compose -f docker-compose.prod.yml pull && ... up -d` (secret
+  `SSH_PRIVATE_KEY`/`SSH_HOST` en GitHub Actions)
+- [ ] Nuevo job de deploy frontend: `ng build --configuration production`
+  en CI y copiar el resultado al VPS (o construir la imagen Nginx del
+  Fase 3 y desplegarla igual que el backend)
+  - Criterio de cierre: un merge a `main` termina publicado en el VPS sin
+    pasos manuales
+
+### Fase 7 — Validacion y go-live
+
+- [ ] Smoke test funcional completo contra el dominio real: login,
+  dashboard, CV publico, hoja de vida, contacto, alertas, panel privado
+- [ ] Verificar que el certificado HTTPS es valido (sin warnings de
+  navegador) y que la cookie JWT se guarda/envia correctamente
+- [ ] Verificar `Cors:AllowedOrigins` no bloquea nada real (con el esquema
+  de un solo origen, no deberia hacer falta CORS cross-site)
+- [ ] Definir rollback rapido: mantener el tag de imagen backend anterior
+  en GHCR + version anterior del build de frontend en el VPS
+- [ ] Monitoreo basico de uptime (Cloudflare o un servicio externo tipo
+  UptimeRobot — no hay equivalente al "log stream" de un PaaS en un VPS
+  propio, asi que esto sustituye esa visibilidad)
+
+---
+
+## Checklist operativo por componente
+
+### VPS Contabo
+
+- [ ] SSH endurecido (sin password, usuario no-root)
+- [ ] Firewall activo
+- [ ] Docker + Docker Compose instalados
+- [ ] `docker-compose.prod.yml` corriendo los 3 servicios
+
+### Cloudflare
+
+- [ ] Registro `A` del subdominio creado y proxied
+- [ ] Modo SSL/TLS configurado
+- [ ] Certificado de origen instalado en Nginx (si Full strict)
+
+### MariaDB
+
+- [ ] Contenedor con volumen persistente
+- [ ] Esquema aplicado (`01_CreateSchema.sql`)
+- [ ] Backup automatico configurado y probado
+
+### Backend / Frontend
+
+- [ ] Secretos de produccion cargados (distintos a local)
+- [ ] `Cors:AllowedOrigins` con el dominio real
+- [ ] Imagen backend en GHCR desplegandose por CI
+- [ ] Imagen/artefacto frontend desplegandose por CI
 
 ---
 
 ## Riesgos principales y mitigacion
 
-- Riesgo: despliegue con secretos inseguros en repo
-  - Mitigacion: limpiar launchSettings y usar secretos de entorno
-- Riesgo: CI verde sin pruebas reales backend
-  - Mitigacion: crear suite minima y ejecutar en pipeline
-- Riesgo: falla de frontend en rutas directas en SWA
-  - Mitigacion: navigation fallback validado antes de go-live
-- Riesgo: CORS bloqueando consumo desde SWA
-  - Mitigacion: configurar Cors__AllowedOrigins__0 con URL final del frontend
+- Riesgo: exponer el VPS con SSH por password o root abierto
+  - Mitigacion: Fase 1 (llave SSH, sin root, fail2ban) antes de cualquier otra cosa
+- Riesgo: perder datos de MariaDB por no tener backup automatizado
+  - Mitigacion: Fase 4, backup diario verificado antes del go-live
+- Riesgo: secretos de produccion iguales a los de desarrollo
+  - Mitigacion: generar `Jwt:Key`/`Encryption:Key` nuevos, nunca reusar los locales
+- Riesgo: certificado HTTPS invalido o modo SSL de Cloudflare mal elegido
+  - Mitigacion: probar el dominio real en un navegador antes de anunciar el go-live
+- Riesgo: despliegue manual propenso a error humano
+  - Mitigacion: Fase 6, automatizar el deploy completo desde CI
 
 ---
 
-## Orden recomendado de ejecucion (secuencia corta)
+## Orden recomendado de ejecucion
 
-1. Cerrar Fase 1
-2. Cerrar Fase 2
-3. Provisionar ACA (Fase 3)
-4. Provisionar SWA (Fase 4)
-5. Ejecutar Fase 5 y salir a produccion
+1. Fase 0 (decisiones) y Fase 1 (servidor)
+2. Fase 2 (DNS/Cloudflare) en paralelo con Fase 3 (contenerizacion)
+3. Fase 4 (base de datos) y Fase 5 (secretos)
+4. Fase 6 (CI/CD de deploy)
+5. Fase 7 (validacion y go-live)
 
 ---
 
-## Criterio final de “Listo para produccion”
+## Criterio final de "Listo para produccion"
 
-- Seguridad minima cerrada
-- CI/CD reproducible para build, test y deploy
-- ACA y SWA operativos y conectados
-- Smoke test completo en entorno real
-- Rollback definido
+- Servidor endurecido (SSH, firewall, fail2ban)
+- Dominio real con HTTPS valido servido desde Cloudflare
+- MariaDB con backup automatico probado
+- Secretos de produccion propios, no reusados de local
+- Deploy reproducible desde CI (push a `main` -> publicado sin pasos manuales)
+- Smoke test funcional completo en el dominio real
+- Rollback definido y probado
+
+---
+
+## Deuda de gobierno relacionada (no bloquea el go-live, pero quedo pendiente)
+
+Detectada en un diagnostico tecnico externo (2026-09-24) y solo parcialmente resuelta hasta
+ahora. No son requisitos para publicar en el VPS, pero conviene no perderlos de vista:
+
+- [x] Headers de seguridad HTTP (HSTS, CSP, X-Content-Type-Options, Referrer-Policy,
+  X-Frame-Options) en el backend — aplicado en `Program.cs`
+- [x] Branch protection de GitHub alineada con `docs/devops/Politica-Proteccion-Ramas.md`
+  (exigia 0 aprobaciones en vez de 1 en `main`/`develop`) — corregido
+- [x] ADRs retroactivos de decisiones ya tomadas — ver `docs/arquitectura/adr/`
+  (conector MariaDB, QuestPDF, MailKit, VPS vs cloud gestionado)
+- [ ] **Infraestructura como codigo (IaC)** del VPS y Cloudflare (Terraform u equivalente) —
+  hoy la Fase 1-2 de este plan se ejecuta a mano; sin IaC, reproducir el entorno ante un
+  incidente depende de seguir este documento paso a paso. Ver ADR-0004 (consecuencias)
+- [ ] **Tags SemVer** en cada deploy a produccion — fortalece el rollback de Fase 7 (hoy
+  dice "mantener el tag de imagen anterior en GHCR", pero sin versionado formal no hay forma
+  de correlacionar un incidente con una version exacta del codigo)
+- [ ] **Smoke test / e2e automatizado** para los flujos criticos (login, publicar/despublicar
+  CV, busqueda publica) — hoy el smoke test de Fase 7 y
+  `docs/devops/Smoke-Test-Produccion.md` son manuales
+- [ ] **Metricas DORA basicas** (lead time, frecuencia de despliegue) — el pipeline de CI ya
+  genera los datos crudos (duracion de jobs, frecuencia de merges a `main`), falta instrumentar
+  algo que las calcule/reporte
+- [ ] **Documentacion arc42 / diagramas C4** — `docs/arquitectura/Documentacion.md` no sigue
+  las secciones estandar de arc42 y no hay diagrama de contexto/contenedores; util para
+  onboarding, no bloqueante para operar
+
+---
+
+## Ver tambien
+
+- [docs/devops/Plan-Backup-Mantenimiento.md](../devops/Plan-Backup-Mantenimiento.md) — backups y mantenimiento de MariaDB
+- [docs/devops/Checklist-Produccion.md](../devops/Checklist-Produccion.md) — checklist previo a publicar
+- [database/README.md](../../database/README.md) — esquema y modelo de datos (MariaDB, fuente de verdad)
+- [docs/arquitectura/adr/](../arquitectura/adr/) — decisiones de arquitectura registradas (ADRs)
+- `CLAUDE.md` — estado general del stack y decisiones de arquitectura

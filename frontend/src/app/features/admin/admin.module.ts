@@ -6,6 +6,7 @@ import { RouterModule } from '@angular/router';
 import { AdminPanelComponent } from './pages/admin-panel.component';
 import { AdminRolesComponent } from './pages/admin-roles.component';
 import { AdminAuditoriaComponent } from './pages/admin-auditoria.component';
+import { AdminProveedoresIaComponent } from './pages/admin-proveedores-ia.component';
 
 /** Componentes admin; rutas en <c>AppRoutingModule</c> (eager en main, no lazy). */
 @NgModule({
@@ -13,8 +14,9 @@ import { AdminAuditoriaComponent } from './pages/admin-auditoria.component';
     AdminPanelComponent,
     AdminRolesComponent,
     AdminAuditoriaComponent,
+    AdminProveedoresIaComponent,
   ],
   imports: [CommonModule, FormsModule, RouterModule],
-  exports: [AdminPanelComponent, AdminRolesComponent, AdminAuditoriaComponent],
+  exports: [AdminPanelComponent, AdminRolesComponent, AdminAuditoriaComponent, AdminProveedoresIaComponent],
 })
 export class AdminModule {}

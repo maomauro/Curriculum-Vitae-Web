@@ -49,6 +49,46 @@ public static class ApiMessages
     }
 
     /// <summary>
+    /// Prompts de IA del área privada (propios de cada Publicador).
+    /// </summary>
+    public static class PromptIa
+    {
+        public const string CodigoRequerido = "El código del prompt es requerido.";
+        public const string CodigoInvalido =
+            "El código del prompt solo puede tener letras, números y guion bajo (p. ej. EXTRACTOR_OFERTA).";
+        public const string CodigoDuplicado = "Ya tienes un prompt con ese código.";
+        public const string NombreRequerido = "El nombre del prompt es requerido.";
+        public const string RolContextoRequerido = "El rol/contexto del prompt es requerido.";
+        public const string TareaRequerida = "La tarea del prompt es requerida.";
+        public const string FormatoSalidaRequerido = "El formato de salida del prompt es requerido.";
+        public const string NoEncontrado = "No existe un prompt activo con ese código.";
+        public const string VersionNoEncontrada = "No existe esa versión de prompt.";
+    }
+
+    /// <summary>
+    /// Compartidos por cualquier paso del flujo de Ofertas que invoque a la IA
+    /// (extracción, selección de perfil, generación de CV) -- ver IIaPromptInvoker.
+    /// </summary>
+    public static class Ia
+    {
+        public const string SinProveedorActivo = "No hay un proveedor de IA activo configurado. Contactá al administrador del portal.";
+        public const string RespuestaNoEsJsonValido = "La IA no devolvió un formato válido. Intenta de nuevo.";
+
+        public static string ProveedorSinClienteReal(string proveedor) =>
+            $"El proveedor \"{proveedor}\" todavía no tiene análisis real implementado.";
+    }
+
+    /// <summary>
+    /// Extracción de datos de una oferta laboral con IA (POST /api/cv/ofertas/analizar).
+    /// </summary>
+    public static class OfertaAnalisis
+    {
+        public const string SinEntrada = "Debes pegar el texto de la oferta, adjuntar una imagen, o ambos.";
+        public const string ImagenNoSoportada = "Formato de imagen no soportado. Usa JPG, PNG o WEBP.";
+        public const string ImagenDemasiadoGrande = "La imagen no puede superar 5 MB.";
+    }
+
+    /// <summary>
     /// Autenticación y registro.
     /// </summary>
     public static class Auth

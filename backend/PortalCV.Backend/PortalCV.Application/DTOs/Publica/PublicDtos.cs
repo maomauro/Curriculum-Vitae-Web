@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using PortalCV.Application.DTOs.Privada;
 
 namespace PortalCV.Application.DTOs.Publica;
 
@@ -40,7 +41,23 @@ public record CvDetalleDto(
     /// <summary>Métricas en dashboard público (maestro ∧ <c>dashboard.metricas</c>).</summary>
     bool DashboardMostrarMetricas,
     /// <summary>Gráficas en dashboard público (maestro ∧ <c>dashboard.graficas</c>).</summary>
-    bool DashboardMostrarGraficas);
+    bool DashboardMostrarGraficas,
+    /// <summary>Pestaña "Información profesional" del CV público (VisibilidadSeccion <c>profesional.publico</c>).</summary>
+    bool InformacionProfesionalPublicaActiva,
+    /// <summary>Pestaña "Hoja de vida" del CV público (VisibilidadSeccion <c>hoja-de-vida.publico</c>).</summary>
+    bool HojaDeVidaPublicaActiva,
+    /// <summary>Contenido del CV generado por IA del Perfil marcado como activo
+    /// (<c>Perfil.EsActivo</c>) -- null si no hay Perfil activo o el activo todavía no
+    /// tiene un CvGenerado. Mismo shape que consume "Mi CV" en la zona privada.</summary>
+    ContenidoCvGeneradoDto? HojaDeVidaContenido,
+    /// <summary>Filas crudas de VisibilidadSeccion (secciones/atributos de "Información Personal" y
+    /// "Información Profesional") para que el frontend filtre el consolidado -- mismo criterio que
+    /// usaba antes la vista privada. Nota: las colecciones (Proyectos, Habilidades, Formaciones, etc.)
+    /// viajan completas igual; lo que decide esta lista es solo qué se renderiza, no qué se envía --
+    /// el filtrado real de datos ocurre en PublicCvService, ver mostrarEmail/mostrarTelefono.</summary>
+    IEnumerable<VisibilidadSeccionPublicaDto> VisibilidadSeccion);
+
+public record VisibilidadSeccionPublicaDto(string Seccion, bool Visible);
 
 public record PersonalesPublicoDto(
     string? NombreCompleto,
@@ -54,6 +71,7 @@ public record PerfilPublicoDto(
     int PerfilId,
     string? NombrePerfil,
     string? DescripcionPerfil,
+    decimal? ExperienciaPerfilAnios,
     decimal? AspiracionSalarialPesos,
     decimal? AspiracionSalarialDolares,
     bool EsActivo);
@@ -67,7 +85,10 @@ public record ExperienciaPublicoDto(
     DateOnly? FechaFin,
     bool EsActual,
     string? Funciones,
-    string? TipoContrato);
+    string? TipoContrato,
+    /// <summary>Solo presente si el visitante tiene permitido ver el soporte
+    /// (VisibilidadSeccion <c>experiencia.soporte-certificacion-laboral</c>).</summary>
+    string? AdjuntoSoporte);
 
 public record FormacionPublicoDto(
     int FormacionId,
@@ -76,7 +97,10 @@ public record FormacionPublicoDto(
     string? Area,
     string? TipoFormacion,
     DateOnly? FechaInicio,
-    DateOnly? FechaFin);
+    DateOnly? FechaFin,
+    /// <summary>Solo presente si el visitante tiene permitido descargar el soporte para el
+    /// bloque de este tipo de formación (ver PublicCvService.VisibleDescargarSoporteFormacion).</summary>
+    string? AdjuntoSoporte);
 
 public record HabilidadPublicoDto(
     int HabilidadId,

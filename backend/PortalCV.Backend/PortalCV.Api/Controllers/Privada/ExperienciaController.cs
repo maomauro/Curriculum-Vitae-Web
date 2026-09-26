@@ -43,5 +43,31 @@ public class ExperienciaController : CvControllerBase
         await _editor.DeleteExperienciaAsync(GetCurriculumId(), id, ct);
         return NoContent();
     }
+
+    /// <summary>Sube (o reemplaza) el soporte de esta experiencia (carta laboral, contrato). Solo PDF.</summary>
+    [HttpPut("{id:int}/adjunto")]
+    [RequestSizeLimit(4 * 1024 * 1024)]
+    public async Task<IActionResult> SubirAdjunto(int id, IFormFile? archivo, CancellationToken ct = default)
+    {
+        if (archivo is null)
+            return BadRequest(new { message = "Selecciona un archivo PDF." });
+
+        using var ms = new MemoryStream();
+        await archivo.CopyToAsync(ms, ct);
+        var result = await _editor.UpsertAdjuntoExperienciaAsync(GetCurriculumId(), id, ms.ToArray(), archivo.ContentType, ct);
+        return Ok(result);
+    }
+
+    [HttpDelete("{id:int}/adjunto")]
+    public async Task<IActionResult> EliminarAdjunto(int id, CancellationToken ct = default)
+        => Ok(await _editor.EliminarAdjuntoExperienciaAsync(GetCurriculumId(), id, ct));
+
+    /// <summary>Sirve el adjunto en crudo (para el propio editor privado).</summary>
+    [HttpGet("{id:int}/adjunto")]
+    public async Task<IActionResult> GetAdjunto(int id, CancellationToken ct = default)
+    {
+        var archivo = await _editor.GetAdjuntoExperienciaAsync(GetCurriculumId(), id, ct);
+        return archivo is null ? NotFound() : File(archivo.Contenido, archivo.ContentType);
+    }
 }
 

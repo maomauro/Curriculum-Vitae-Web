@@ -15,6 +15,7 @@ public class RedSocialConfiguration : IEntityTypeConfiguration<RedSocial>
         builder.Property(r => r.NombreRed).IsRequired().HasMaxLength(50);
         builder.Property(r => r.LinkPublico).HasMaxLength(500);
         builder.Property(r => r.UsuarioContacto).HasMaxLength(100);
+        builder.Property(r => r.MostrarEnCv).HasDefaultValue(true);
 
         builder.HasOne(r => r.Curriculum)
             .WithMany(c => c.RedesSociales)

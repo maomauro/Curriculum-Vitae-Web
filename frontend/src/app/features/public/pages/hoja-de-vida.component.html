@@ -1,0 +1,18 @@
+<div *ngIf="!hayContenido" class="text-center py-5">
+  <i class="bi bi-file-earmark-person display-4 text-muted"></i>
+  <p class="text-muted mt-3 mb-1">Este postulante todavía no tiene una hoja de vida generada.</p>
+  <p class="text-muted small mb-4">Mientras tanto, puedes ver su información profesional completa.</p>
+  <a routerLink="../profesional" class="btn btn-outline-primary">
+    <i class="bi bi-person-lines-fill me-1"></i>Ver información profesional
+  </a>
+</div>
+
+<app-cv-hoja-de-vida-contenido
+  *ngIf="hayContenido"
+  [contenido]="contenido"
+  [personales]="personales"
+  [redesSociales]="redesSociales"
+  [perfilActivo]="perfilActivo"
+  [plantillaCodigo]="plantillaCodigo"
+  [vis]="visibilidad">
+</app-cv-hoja-de-vida-contenido>

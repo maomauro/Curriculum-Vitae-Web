@@ -8,8 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.5" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
+    <!-- 10.0.9 (no 10.0.5): version minima que exige MySql.EntityFrameworkCore 10.0.9 -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="QuestPDF" Version="2026.7.3" />
+    <!-- Referencia explicita: AuthService.cs la usa directo para firmar el JWT a mano. -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
 
   <ItemGroup>

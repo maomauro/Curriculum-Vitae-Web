@@ -1,0 +1,71 @@
+# Compose de PRODUCCION para el VPS de Contabo (ver
+# docs/produccion/Plan-Trabajo-Produccion.md Fase 3). NO se usa para desarrollo
+# local -- para eso esta docker-compose.yml (con Dockerfile.dev).
+#
+# Diferencias clave con el compose de desarrollo:
+#   - backend: usa la imagen ya publicada en GHCR (no build local)
+#   - db: sin exponer 3306 al exterior (solo accesible dentro de la red de compose)
+#   - nginx: sirve el build de produccion de Angular + hace de reverse proxy hacia el backend
+#
+# Uso en el VPS:
+#   1. Completar docker/backend.prod.env (secretos de produccion, NO versionado -- Fase 5)
+#   2. Completar docker/mariadb.prod.env (credenciales de produccion, NO versionado -- Fase 5)
+#   3. Confirmar que /etc/nginx/ssl/ ya tiene el certificado de Origen de Cloudflare instalado
+#   4. docker compose -f docker-compose.prod.yml up -d
+
+services:
+
+  db:
+    image: mariadb:11
+    container_name: portalcv-mariadb-prod
+    restart: unless-stopped
+    env_file:
+      - ./docker/mariadb.prod.env
+    volumes:
+      - portalcv_db_data_prod:/var/lib/mysql
+      # Solo corre la primera vez, con el volumen vacio (creacion inicial del esquema).
+      - ./database/01_CreateSchema.sql:/docker-entrypoint-initdb.d/01_CreateSchema.sql:ro
+    networks:
+      - portalcv-net-prod
+
+  backend:
+    image: ghcr.io/maomauro/portalcv-backend:latest
+    container_name: portalcv-backend-prod
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./docker/backend.prod.env
+      - ./docker/mariadb.prod.env
+    networks:
+      - portalcv-net-prod
+
+  nginx:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: portalcv-nginx-prod
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Certificado de Origen de Cloudflare, instalado a mano en el VPS (Fase 2).
+      - /etc/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - portalcv-net-prod
+
+networks:
+  portalcv-net-prod:
+    driver: bridge
+    ipam:
+      config:
+        # Subred fija: Program.cs restringe ForwardedHeadersOptions.KnownIPNetworks
+        # a esta subred (unico origen valido de X-Forwarded-For), asi que si se
+        # cambia aqui hay que cambiarlo tambien alla.
+        - subnet: 172.28.0.0/24
+
+volumes:
+  portalcv_db_data_prod:

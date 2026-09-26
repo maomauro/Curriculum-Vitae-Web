@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -224,30 +225,48 @@ namespace PortalCV.Api
 
             // Health checks:
             // - /health: liveness basico (la API responde; sin dependencias externas).
-            // - /health/ready: readiness con conexion a SQL (Azure SQL puede tardar en despertar).
+            // - /health/ready: readiness con conexion a MariaDB.
             builder.Services
                 .AddHealthChecks()
                 .AddDbContextCheck<PortalCvDbContext>("database");
 
             var app = builder.Build();
 
-            // Detrás del ingress de Azure Container Apps la IP real del visitante viaja en
-            // X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress solo vería la
-            // IP interna del proxy de la plataforma. KnownNetworks/KnownProxies se limpian
-            // porque el proxy de Container Apps no tiene una IP fija conocida de antemano
-            // (mismo patrón recomendado por Microsoft para apps detrás de un PaaS gestionado).
+            // Detrás del reverse proxy (Nginx en el VPS de Contabo, delante de Cloudflare) la IP
+            // real del visitante viaja en X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress
+            // solo vería la IP interna del proxy. Restringido a la subred fija de la red de
+            // Docker Compose de produccion (portalcv-net-prod, 172.28.0.0/24 -- ver
+            // docker-compose.prod.yml), el unico origen valido de ese header: si algun dia
+            // cambia la subred del compose, hay que actualizarla tambien aqui.
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             };
             forwardedHeadersOptions.KnownIPNetworks.Clear();
             forwardedHeadersOptions.KnownProxies.Clear();
+            forwardedHeadersOptions.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("172.28.0.0"), 24));
             app.UseForwardedHeaders(forwardedHeadersOptions);
 
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.UseSerilogRequestLogging();
 
             app.UseCors("AllowFrontend");
+
+            // Headers de seguridad HTTP (OWASP). El CSP estricto solo aplica fuera de
+            // Development porque Swagger UI (solo habilitado en dev) necesita scripts/estilos
+            // inline que ese CSP bloquearía; en producción este backend solo devuelve JSON
+            // (el HTML del SPA lo sirve Nginx, no este proceso), así que "default-src 'none'" es seguro.
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+                context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+                context.Response.Headers.Append("X-Frame-Options", "DENY");
+                if (!app.Environment.IsDevelopment())
+                {
+                    context.Response.Headers.Append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+                }
+                await next();
+            });
 
             if (app.Environment.IsDevelopment())
             {
@@ -268,6 +287,7 @@ namespace PortalCV.Api
             // usuario abre https:// en un puerto que solo sirve HTTP → "invalid response".
             if (!app.Environment.IsDevelopment())
             {
+                app.UseHsts();
                 app.UseHttpsRedirection();
             }
 
@@ -280,7 +300,7 @@ namespace PortalCV.Api
                 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
             }
 
-            // Endpoint de health publico (no requiere JWT). Azure Container Apps lo
+            // Endpoint de health publico (no requiere JWT). El orquestador (Docker) lo
             // usa como liveness probe y curl lo usa como smoke test post-deploy.
             app.MapHealthChecks("/health").AllowAnonymous();
             app.MapHealthChecks("/health/ready", new HealthCheckOptions

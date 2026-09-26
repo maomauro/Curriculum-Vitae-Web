@@ -14,7 +14,8 @@ public record ReferenciaDto(
     string? Relacion,
     string? Observaciones,
     string? AdjuntoSoporte,
-    DateTime FechaRegistro);
+    DateTime FechaRegistro,
+    bool MostrarEnCv = true);
 
 public record UpsertReferenciaRequest(
     string TipoReferencia,
@@ -28,5 +29,11 @@ public record UpsertReferenciaRequest(
     string? Empresa,
     string? Relacion,
     string? Observaciones,
-    string? AdjuntoSoporte);
+    string? AdjuntoSoporte,
+    bool? MostrarEnCv = null);
+
+public sealed class UpdateReferenciaVisibilidadRequest
+{
+    public bool MostrarEnCv { get; set; }
+}
 

@@ -5,13 +5,27 @@
       Muestra los proyectos más relevantes de tu carrera: rol, impacto y tecnologías usadas
     </p>
   </div>
-  <button
-    type="button"
-    class="btn btn-primary"
-    (click)="agregar()"
-    [disabled]="!!borrador">
-    <i class="bi bi-plus-circle me-2"></i>Agregar proyecto
-  </button>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="activarTodos()"
+            *ngIf="hayProyectosGuardados"
+            [disabled]="guardandoVisibilidadBloque || !hayProyectosOcultos"
+            title="Muestra en el CV todos los proyectos registrados">
+      <i class="bi bi-eye me-1"></i>Activar todos
+    </button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="inactivarTodos()"
+            *ngIf="hayProyectosGuardados"
+            [disabled]="guardandoVisibilidadBloque || !hayProyectosVisibles"
+            title="Oculta del CV todos los proyectos registrados">
+      <i class="bi bi-eye-slash me-1"></i>Inactivar todos
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary btn-sm"
+      (click)="agregar()"
+      [disabled]="!!borrador">
+      <i class="bi bi-plus-circle me-1"></i>Agregar proyecto
+    </button>
+  </div>
 </div>
 
 <div *ngIf="loading" class="text-center py-5">

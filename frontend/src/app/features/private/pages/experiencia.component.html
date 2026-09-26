@@ -3,9 +3,23 @@
     <h4><i class="bi bi-briefcase-fill me-2 text-primary"></i>Experiencia Laboral</h4>
     <p class="text-muted small mb-0">Registra tu trayectoria profesional y las referencias de cada empleo</p>
   </div>
-  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
-    <i class="bi bi-plus-circle me-2"></i>Agregar empleo
-  </button>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="activarTodos()"
+            *ngIf="hayExperienciasGuardadas"
+            [disabled]="guardandoVisibilidadBloque || !hayExperienciasOcultas"
+            title="Muestra en el CV todos los empleos registrados">
+      <i class="bi bi-eye me-1"></i>Activar todos
+    </button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="inactivarTodos()"
+            *ngIf="hayExperienciasGuardadas"
+            [disabled]="guardandoVisibilidadBloque || !hayExperienciasVisibles"
+            title="Oculta del CV todos los empleos registrados">
+      <i class="bi bi-eye-slash me-1"></i>Inactivar todos
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+      <i class="bi bi-plus-circle me-1"></i>Agregar empleo
+    </button>
+  </div>
 </div>
 
 <div *ngIf="loading" class="text-center py-5">
@@ -152,13 +166,33 @@
                   placeholder="Describe tus principales responsabilidades y logros…"></textarea>
       </div>
       <div class="col-12">
-        <label class="form-label" [for]="'exp-certificacion-'+i">
+        <label class="form-label d-block" [for]="'exp-certificacion-'+i">
           Certificación laboral
-          <small class="text-muted fw-normal">Carta laboral, contrato u otro soporte — PDF / JPG / PNG</small>
+          <small class="text-muted fw-normal">Carta laboral, contrato u otro soporte — solo PDF</small>
         </label>
-        <input [id]="'exp-certificacion-'+i" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" disabled
-               [title]="hintAdjunto">
-        <small class="text-muted">La carga de archivos se habilitará próximamente; por ahora el CV no almacena el adjunto desde el navegador.</small>
+        <ng-container *ngIf="exp.experienciaId !== 0; else expCertNuevoHint">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a *ngIf="exp.adjuntoSoporte" [href]="exp.adjuntoSoporte" target="_blank" rel="noopener"
+               class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-file-earmark-pdf me-1"></i>Ver soporte actual
+            </a>
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+                    [disabled]="subiendoAdjuntoExpId === exp.experienciaId" (click)="certInput.click()">
+              <span *ngIf="subiendoAdjuntoExpId === exp.experienciaId" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="subiendoAdjuntoExpId !== exp.experienciaId" class="bi bi-upload me-1"></i>{{ exp.adjuntoSoporte ? 'Cambiar soporte' : 'Subir soporte' }}
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" *ngIf="exp.adjuntoSoporte"
+                    [disabled]="subiendoAdjuntoExpId === exp.experienciaId" (click)="eliminarAdjunto(exp)">
+              <i class="bi bi-trash3 me-1"></i>Quitar
+            </button>
+          </div>
+          <input #certInput [id]="'exp-certificacion-'+i" type="file" class="d-none" accept="application/pdf"
+                 (change)="onAdjuntoSeleccionado($event, exp)">
+          <small class="text-muted d-block mt-1">Máximo 3 MB.</small>
+        </ng-container>
+        <ng-template #expCertNuevoHint>
+          <small class="text-muted d-block">Guarda el empleo primero para poder adjuntar el soporte en PDF.</small>
+        </ng-template>
       </div>
     </div>
     </div>
@@ -275,7 +309,7 @@
               <button *ngIf="exp.experienciaId === 0 && b.committed" type="button"
                       class="btn btn-outline-danger btn-sm" (click)="cancelarBorradorLaboral(b)"
                       [disabled]="guardandoRef || guardando">
-                <i class="bi bi-trash me-1"></i>Eliminar
+                <i class="bi bi-trash3 me-1"></i>Eliminar
               </button>
               <button type="button" class="btn btn-primary btn-sm" (click)="guardarBorradorLaboral(b, exp)"
                       [disabled]="guardandoRef || guardando">
@@ -303,6 +337,16 @@
               <div class="cv-accordion-sub-primary">{{ subtituloLaboralCabecera(ref) }}</div>
             </div>
             <span class="badge rounded-pill badge-ref-type badge-ref-type--laboral">Laboral</span>
+            <div class="profile-toggle-row flex-shrink-0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+              <span class="profile-toggle-label">Mostrar en Mi CV</span>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       [id]="'exp-ref-cv-'+ref.referenciaId"
+                       [(ngModel)]="ref.mostrarEnCv"
+                       (ngModelChange)="onMostrarEnCvChangeRef(ref, $event)"
+                       [disabled]="guardandoRef || guardandoVisibilidadRefId === ref.referenciaId">
+              </div>
+            </div>
             <i class="bi ms-2 cv-chevron-muted flex-shrink-0"
                [class.bi-chevron-down]="!getLaborRefUi(ref).expanded"
                [class.bi-chevron-up]="getLaborRefUi(ref).expanded" aria-hidden="true"></i>
@@ -359,7 +403,7 @@
             <div class="d-flex gap-2 mt-3 justify-content-end">
               <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminarReferencia(ref)"
                       [disabled]="guardandoRef || guardando">
-                <i class="bi bi-trash me-1"></i>Eliminar
+                <i class="bi bi-trash3 me-1"></i>Eliminar
               </button>
               <button type="button" class="btn btn-primary btn-sm" (click)="guardarReferenciaLaboral(ref, exp)"
                       [disabled]="guardandoRef || guardando">

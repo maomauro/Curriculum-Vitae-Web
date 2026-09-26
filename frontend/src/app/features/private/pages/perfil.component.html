@@ -12,7 +12,7 @@
 
 <div class="perfil-gap-notice">
   <i class="bi bi-info-circle-fill me-1"></i>
-  El perfil <strong>activo</strong> es el que se prioriza en búsquedas y vistas públicas. Al activar uno, los demás se desactivan automáticamente al guardar el cambio de estado.
+  El perfil <strong>activo</strong> es el que se prioriza en búsquedas y vistas públicas, y también el que se muestra en la pestaña <strong>Hoja de vida</strong> de tu CV público. Al activar uno, los demás se desactivan automáticamente al guardar el cambio de estado.
 </div>
 
 <div *ngIf="loading" class="text-center py-5">
@@ -32,6 +32,57 @@
       <i class="bi bi-x-lg me-1"></i>Cancelar
     </button>
   </div>
+
+  <div class="bg-light border rounded-3 p-3 mb-3">
+    <label class="form-label" for="perfil-nuevo-enfoque">
+      <i class="bi bi-stars text-primary me-1"></i>Crear con ayuda de IA (opcional)
+    </label>
+    <div class="d-flex flex-wrap gap-2">
+      <input id="perfil-nuevo-enfoque" type="text" class="form-control" style="max-width: 420px"
+             placeholder="Ej: Arquitecto de Datos, Líder Técnico de Desarrollo…"
+             [(ngModel)]="enfoqueIa" [disabled]="generandoConIa"
+             (keydown.enter)="generarConIa()">
+      <button type="button" class="btn btn-outline-primary" [disabled]="!enfoqueIa.trim() || generandoConIa" (click)="generarConIa()">
+        <span *ngIf="generandoConIa" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!generandoConIa" class="bi bi-magic me-1"></i>{{ generandoConIa ? 'Generando…' : 'Generar con IA' }}
+      </button>
+    </div>
+
+    <div class="mt-2">
+      <button type="button" class="btn btn-link btn-sm p-0" [disabled]="sugiriendoEnfoques" (click)="sugerirEnfoques()">
+        <span *ngIf="sugiriendoEnfoques" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!sugiriendoEnfoques" class="bi bi-lightbulb me-1"></i>{{ sugiriendoEnfoques ? 'Buscando ideas…' : '¿No sabés qué enfoque poner? Sugerime opciones' }}
+      </button>
+      <div *ngIf="sugerenciasEnfoque.length > 0" class="d-flex flex-wrap gap-2 mt-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" *ngFor="let s of sugerenciasEnfoque; trackBy: trackBySugerenciaEnfoque"
+                [title]="s.razon" (click)="usarSugerenciaEnfoque(s)">
+          {{ s.nombre }}
+        </button>
+      </div>
+      <div class="alert alert-secondary d-flex align-items-start gap-2 py-2 px-3 small mt-2 mb-0" *ngIf="promptSugeridorPorDefecto" role="note">
+        <i class="bi bi-info-circle mt-1"></i>
+        <div>
+          Estas ideas de enfoque usaron el prompt de generación <strong>por defecto</strong> — tu CV todavía no
+          tiene un prompt propio con código <code>SUGERIDOR_ENFOQUE_PERFIL</code>.
+          <a routerLink="/prompts-ia" class="alert-link">Crear el mío en Prompts de IA</a>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-muted small mb-0 mt-2">
+      Escribe el enfoque que querés (ej. "Arquitecto de Datos") y la IA redacta el nombre y la descripción usando tu Experiencia,
+      Formación, Proyectos y Habilidades reales. Se precargan los campos de abajo -- podés editarlos antes de crear el perfil.
+    </p>
+    <div class="alert alert-secondary d-flex align-items-start gap-2 py-2 px-3 small mt-2 mb-0" *ngIf="promptGeneradorPorDefecto" role="note">
+      <i class="bi bi-info-circle mt-1"></i>
+      <div>
+        Esta sugerencia usó el prompt de generación <strong>por defecto</strong> — tu CV todavía no
+        tiene un prompt propio con código <code>GENERADOR_PERFIL</code>.
+        <a routerLink="/prompts-ia" class="alert-link">Crear el mío en Prompts de IA</a>
+      </div>
+    </div>
+  </div>
+
   <div class="row g-3">
     <div class="col-md-5">
       <label class="form-label" for="perfil-nuevo-nombre">Nombre del perfil / Cargo objetivo <span class="text-danger">*</span></label>
@@ -63,6 +114,18 @@
         <span class="input-group-text">$</span>
         <input id="perfil-nuevo-aspiracion-usd" type="number" class="form-control" min="0" placeholder="0"
                [(ngModel)]="formNuevo.aspiracionSalarialDolares">
+      </div>
+    </div>
+    <div class="col-12 d-flex flex-wrap gap-3">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="mostrarExperienciaNuevo"
+               [(ngModel)]="formNuevo.mostrarExperienciaPerfil" [disabled]="guardando">
+        <label class="form-check-label" for="mostrarExperienciaNuevo">Mostrar experiencia en el CV público</label>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="mostrarAspiracionNuevo"
+               [(ngModel)]="formNuevo.mostrarAspiracionSalarial" [disabled]="guardando">
+        <label class="form-check-label" for="mostrarAspiracionNuevo">Mostrar aspiración salarial en el CV público</label>
       </div>
     </div>
     <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -152,6 +215,18 @@
           <span class="input-group-text">$</span>
           <input type="number" class="form-control" [id]="'aspiracion-usd-' + p.perfilId" min="0"
                  [(ngModel)]="p.form.aspiracionSalarialDolares">
+        </div>
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-3">
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" [id]="'mostrar-experiencia-' + p.perfilId"
+                 [(ngModel)]="p.form.mostrarExperienciaPerfil" [disabled]="guardando">
+          <label class="form-check-label" [attr.for]="'mostrar-experiencia-' + p.perfilId">Mostrar experiencia en el CV público</label>
+        </div>
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" [id]="'mostrar-aspiracion-' + p.perfilId"
+                 [(ngModel)]="p.form.mostrarAspiracionSalarial" [disabled]="guardando">
+          <label class="form-check-label" [attr.for]="'mostrar-aspiracion-' + p.perfilId">Mostrar aspiración salarial en el CV público</label>
         </div>
       </div>
     </div>

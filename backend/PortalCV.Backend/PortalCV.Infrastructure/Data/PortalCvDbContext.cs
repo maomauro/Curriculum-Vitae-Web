@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data.Configurations;
 
@@ -8,6 +9,25 @@ public class PortalCvDbContext : DbContext
 {
     public PortalCvDbContext(DbContextOptions<PortalCvDbContext> options) : base(options)
     {
+    }
+
+    // MySql.EntityFrameworkCore (conector oficial de Oracle) no sobreescribe
+    // GetFieldValue<DateOnly> en su MySqlDataReader -- al leer una columna DATE con una
+    // fecha real, EF cae al cast generico de DbDataReader (DateTime -> DateOnly) y lanza
+    // InvalidCastException. Se fuerza la conversion a DateTime (si soportada) para las
+    // columnas DATE; se aplica igual a las propiedades DateOnly? gracias a como EF maneja
+    // Properties<T> en ConfigureConventions para tipos de valor nullable.
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateOnly>().HaveConversion<DateOnlyToDateTimeConverter>();
+    }
+
+    private sealed class DateOnlyToDateTimeConverter : ValueConverter<DateOnly, DateTime>
+    {
+        public DateOnlyToDateTimeConverter()
+            : base(d => d.ToDateTime(TimeOnly.MinValue), d => DateOnly.FromDateTime(d))
+        {
+        }
     }
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
@@ -30,6 +50,11 @@ public class PortalCvDbContext : DbContext
     public DbSet<AuditoriaAdmin> AuditoriasAdmin => Set<AuditoriaAdmin>();
     public DbSet<AuditoriaCv> AuditoriasCv => Set<AuditoriaCv>();
     public DbSet<AuditoriaAuth> AuditoriasAuth => Set<AuditoriaAuth>();
+    public DbSet<PromptIa> PromptsIa => Set<PromptIa>();
+    public DbSet<Oferta> Ofertas => Set<Oferta>();
+    public DbSet<ProveedorIa> ProveedoresIa => Set<ProveedorIa>();
+    public DbSet<CvGenerado> CvsGenerados => Set<CvGenerado>();
+    public DbSet<ConfiguracionCorreo> ConfiguracionesCorreo => Set<ConfiguracionCorreo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,6 +78,11 @@ public class PortalCvDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AuditoriaAdminConfiguration());
         modelBuilder.ApplyConfiguration(new AuditoriaCvConfiguration());
         modelBuilder.ApplyConfiguration(new AuditoriaAuthConfiguration());
+        modelBuilder.ApplyConfiguration(new PromptIaConfiguration());
+        modelBuilder.ApplyConfiguration(new OfertaConfiguration());
+        modelBuilder.ApplyConfiguration(new ProveedorIaConfiguration());
+        modelBuilder.ApplyConfiguration(new CvGeneradoConfiguration());
+        modelBuilder.ApplyConfiguration(new ConfiguracionCorreoConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

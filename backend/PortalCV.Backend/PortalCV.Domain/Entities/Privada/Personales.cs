@@ -46,7 +46,11 @@ public class Personales
     public string? Direccion { get; set; }
     public string? TipoResidencia { get; set; }
 
+    /// <summary>URL pegada por el usuario (legacy). Si <see cref="FotoBytes"/> tiene valor,
+    /// se ignora en favor de la foto subida como binario.</summary>
     public string? FotoUrl { get; set; }
+    public byte[]? FotoBytes { get; set; }
+    public string? FotoContentType { get; set; }
 
     public Curriculum Curriculum { get; set; } = null!;
 }

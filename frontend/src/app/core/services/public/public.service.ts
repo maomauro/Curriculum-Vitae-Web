@@ -55,6 +55,7 @@ export interface PerfilPublicoDto {
   perfilId: number;
   nombrePerfil: string | null;
   descripcionPerfil: string | null;
+  experienciaPerfilAnios: number | null;
   aspiracionSalarialPesos: number | null;
   aspiracionSalarialDolares: number | null;
   esActivo: boolean;
@@ -70,6 +71,7 @@ export interface ExperienciaPublicoDto {
   esActual: boolean;
   funciones: string | null;
   tipoContrato: string | null;
+  adjuntoSoporte: string | null;
 }
 
 export interface FormacionPublicoDto {
@@ -80,6 +82,7 @@ export interface FormacionPublicoDto {
   tipoFormacion: string | null;
   fechaInicio: string | null;
   fechaFin: string | null;
+  adjuntoSoporte: string | null;
 }
 
 export interface HabilidadPublicoDto {
@@ -121,6 +124,37 @@ export interface ReferenciaPublicoDto {
   empresa: string | null;
 }
 
+export interface ExperienciaCondensadaPublicaDto {
+  cabecera: string;
+  funciones: string[];
+}
+
+export interface HabilidadCondensadaPublicaDto {
+  nombre: string;
+  tipo: string | null;
+}
+
+/** Contenido del CV generado por IA del Perfil que el candidato marcó como activo --
+ * mismo shape que consume "Mi CV" en la zona privada (cv-generado.service.ts). */
+export interface HojaDeVidaContenidoDto {
+  experiencia: ExperienciaCondensadaPublicaDto[];
+  educacion: string[];
+  proyectos: string[];
+  habilidades: HabilidadCondensadaPublicaDto[];
+}
+
+/** true si el contenido tiene al menos una sección con datos -- compartido entre la
+ * pestaña pública "Hoja de vida" y el panel de vista previa de Configuración. */
+export function hayContenidoHojaDeVida(contenido: HojaDeVidaContenidoDto | null | undefined): boolean {
+  if (!contenido) return false;
+  return (
+    contenido.experiencia.length > 0 ||
+    contenido.educacion.length > 0 ||
+    contenido.proyectos.length > 0 ||
+    contenido.habilidades.length > 0
+  );
+}
+
 export interface CvDetalleDto {
   curriculumId: number;
   urlPublica: string;
@@ -140,6 +174,21 @@ export interface CvDetalleDto {
   dashboardMostrarMetricas?: boolean;
   /** Gráficas (4) en el dashboard público. */
   dashboardMostrarGraficas?: boolean;
+  /** Pestaña "Información profesional" del CV público (default true si la API no envía el campo). */
+  informacionProfesionalPublicaActiva?: boolean;
+  /** Pestaña "Hoja de vida" del CV público (default true si la API no envía el campo). */
+  hojaDeVidaPublicaActiva?: boolean;
+  /** Contenido a mostrar en "Hoja de vida" -- el CV generado del Perfil activo. Null si
+   * no hay Perfil activo o el activo todavía no tiene un CV generado. */
+  hojaDeVidaContenido?: HojaDeVidaContenidoDto | null;
+  /** Filas crudas de VisibilidadSeccion -- para filtrar el consolidado (Información
+   * Personal/Profesional) igual que hacía antes la vista privada. */
+  visibilidadSeccion?: VisibilidadSeccionPublicaDto[];
+}
+
+export interface VisibilidadSeccionPublicaDto {
+  seccion: string;
+  visible: boolean;
 }
 
 /** Espejo de CvEstadisticasDto (backend). */
@@ -169,6 +218,14 @@ export interface BuscarCvsParams {
 
 // ── Servicio ─────────────────────────────────────────────────────────────────
 
+/** El backend devuelve `fotoUrl`/`adjuntoSoporte` como ruta relativa (p. ej.
+ * `/api/public/cvs/{slug}/foto`) cuando hay un archivo subido como binario -- se
+ * antepone API_BASE_URL para que sea usable directo en `<img [src]>` / `<a [href]>`.
+ * Las URLs legacy pegadas por el usuario ya son absolutas y se dejan intactas. */
+function absolutizarUrl(url: string | null): string | null {
+  return url?.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PublicService {
   private readonly BASE = `${API_BASE_URL}/api/public`;
@@ -183,7 +240,12 @@ export class PublicService {
     if (params.page)      httpParams = httpParams.set('page', String(params.page));
     if (params.pageSize)  httpParams = httpParams.set('pageSize', String(params.pageSize));
 
-    return this.http.get<CvListadoResponse>(`${this.BASE}/cvs`, { params: httpParams });
+    return this.http.get<CvListadoResponse>(`${this.BASE}/cvs`, { params: httpParams }).pipe(
+      map(res => ({
+        ...res,
+        items: res.items.map(item => ({ ...item, fotoUrl: absolutizarUrl(item.fotoUrl) })),
+      }))
+    );
   }
 
   getDetalle(urlPublica: string): Observable<CvDetalleDto> {
@@ -194,7 +256,17 @@ export class PublicService {
     }
     return this.http
       .get<unknown>(`${this.BASE}/cvs/${encodeURIComponent(urlPublica)}`, { params })
-      .pipe(map(raw => deepToCamel(raw) as CvDetalleDto));
+      .pipe(
+        map(raw => deepToCamel(raw) as CvDetalleDto),
+        map(dto => ({
+          ...dto,
+          personales: dto.personales
+            ? { ...dto.personales, fotoUrl: absolutizarUrl(dto.personales.fotoUrl) }
+            : dto.personales,
+          experiencias: dto.experiencias.map(e => ({ ...e, adjuntoSoporte: absolutizarUrl(e.adjuntoSoporte) })),
+          formaciones: dto.formaciones.map(f => ({ ...f, adjuntoSoporte: absolutizarUrl(f.adjuntoSoporte) })),
+        }))
+      );
   }
 
   getEstadisticas(urlPublica: string): Observable<CvEstadisticasDto> {

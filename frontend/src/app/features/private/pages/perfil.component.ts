@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { CvEditorService, PerfilDto, UpsertPerfilRequest } from '../../../core/services/private/cv-editor.service';
+import { CvEditorService, PerfilDto, UpsertPerfilRequest, EnfoqueSugeridoDto } from '../../../core/services/private/cv-editor.service';
 import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
@@ -24,6 +24,19 @@ export class PerfilComponent implements OnInit {
   mostrarFormNuevo = false;
   private perfilesAbiertos = new Set<number>();
 
+  enfoqueIa = '';
+  generandoConIa = false;
+  /** true si el CV todavía no tiene una versión activa propia de GENERADOR_PERFIL
+   * y se usó el prompt por defecto del sistema en la última generación. */
+  promptGeneradorPorDefecto = false;
+
+  sugerenciasEnfoque: EnfoqueSugeridoDto[] = [];
+  sugiriendoEnfoques = false;
+  /** true si el CV todavía no tiene una versión activa propia de
+   * SUGERIDOR_ENFOQUE_PERFIL y se usó el prompt por defecto del sistema en la última
+   * sugerencia. */
+  promptSugeridorPorDefecto = false;
+
   formNuevo: UpsertPerfilRequest = {
     nombrePerfil: null,
     descripcionPerfil: null,
@@ -31,6 +44,8 @@ export class PerfilComponent implements OnInit {
     aspiracionSalarialPesos: null,
     aspiracionSalarialDolares: null,
     esActivo: true,
+    mostrarExperienciaPerfil: true,
+    mostrarAspiracionSalarial: true,
   };
 
   constructor(
@@ -66,6 +81,8 @@ export class PerfilComponent implements OnInit {
       aspiracionSalarialPesos: p.aspiracionSalarialPesos,
       aspiracionSalarialDolares: p.aspiracionSalarialDolares,
       esActivo: p.esActivo,
+      mostrarExperienciaPerfil: p.mostrarExperienciaPerfil,
+      mostrarAspiracionSalarial: p.mostrarAspiracionSalarial,
     };
   }
 
@@ -78,6 +95,8 @@ export class PerfilComponent implements OnInit {
       aspiracionSalarialPesos: f.aspiracionSalarialPesos ?? null,
       aspiracionSalarialDolares: f.aspiracionSalarialDolares ?? null,
       esActivo: f.esActivo,
+      mostrarExperienciaPerfil: f.mostrarExperienciaPerfil,
+      mostrarAspiracionSalarial: f.mostrarAspiracionSalarial,
     };
   }
 
@@ -106,12 +125,72 @@ export class PerfilComponent implements OnInit {
       aspiracionSalarialPesos: null,
       aspiracionSalarialDolares: null,
       esActivo: true,
+      mostrarExperienciaPerfil: true,
+      mostrarAspiracionSalarial: true,
     };
+    this.enfoqueIa = '';
+    this.promptGeneradorPorDefecto = false;
+    this.sugerenciasEnfoque = [];
+    this.promptSugeridorPorDefecto = false;
     this.mostrarFormNuevo = true;
   }
 
   cancelarNuevo(): void {
     this.mostrarFormNuevo = false;
+    this.sugerenciasEnfoque = [];
+  }
+
+  trackBySugerenciaEnfoque(_index: number, s: EnfoqueSugeridoDto): string {
+    return s.nombre;
+  }
+
+  /** Pide a la IA ideas de enfoque a partir de todo el currículum (Experiencia,
+   * Formación, Proyectos, Habilidades) -- para el usuario que no sabe qué escribir en
+   * "enfoque". Elegir una sugerencia solo precarga el campo, no genera el perfil por sí
+   * sola: el usuario sigue con "Generar con IA" como siempre, o edita el texto antes. */
+  sugerirEnfoques(): void {
+    if (this.sugiriendoEnfoques) return;
+
+    this.sugiriendoEnfoques = true;
+    this.sugerenciasEnfoque = [];
+    this.cvEditorService.sugerirEnfoquesPerfil().subscribe({
+      next: respuesta => {
+        this.sugiriendoEnfoques = false;
+        this.sugerenciasEnfoque = respuesta.sugerencias;
+        this.promptSugeridorPorDefecto = respuesta.promptPorDefecto;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.sugiriendoEnfoques = false;
+        this.notificationService.warning(extractApiErrorMessage(error) || 'No se pudieron sugerir enfoques con IA.');
+      },
+    });
+  }
+
+  usarSugerenciaEnfoque(s: EnfoqueSugeridoDto): void {
+    this.enfoqueIa = s.nombre;
+    this.sugerenciasEnfoque = [];
+  }
+
+  /** Genera con IA un borrador de Nombre + Descripción a partir del enfoque escrito y
+   * el currículum real -- solo precarga los campos, el usuario los revisa y edita antes
+   * de "Crear perfil" (no persiste nada por sí solo). */
+  generarConIa(): void {
+    const enfoque = this.enfoqueIa.trim();
+    if (!enfoque || this.generandoConIa) return;
+
+    this.generandoConIa = true;
+    this.cvEditorService.generarPerfilConIa(enfoque).subscribe({
+      next: borrador => {
+        this.generandoConIa = false;
+        this.formNuevo.nombrePerfil = borrador.nombrePerfil;
+        this.formNuevo.descripcionPerfil = borrador.descripcionPerfil;
+        this.promptGeneradorPorDefecto = borrador.promptPorDefecto;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.generandoConIa = false;
+        this.notificationService.warning(extractApiErrorMessage(error) || 'No se pudo generar el perfil con IA.');
+      },
+    });
   }
 
   /** Al activar un perfil, se desactivan el resto en servidor y se refresca la lista. */
@@ -180,6 +259,8 @@ export class PerfilComponent implements OnInit {
       aspiracionSalarialPesos: this.formNuevo.aspiracionSalarialPesos ?? null,
       aspiracionSalarialDolares: this.formNuevo.aspiracionSalarialDolares ?? null,
       esActivo: this.formNuevo.esActivo,
+      mostrarExperienciaPerfil: this.formNuevo.mostrarExperienciaPerfil,
+      mostrarAspiracionSalarial: this.formNuevo.mostrarAspiracionSalarial,
     };
 
     this.guardando = true;

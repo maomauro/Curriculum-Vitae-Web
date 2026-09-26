@@ -7,8 +7,8 @@ Mantener un inventario unico de credenciales y secretos requeridos por el proyec
 Esta guia cubre:
 - Desarrollo local (maquina del dev: `dotnet user-secrets` o `docker/backend.local.env`).
 - CI (GitHub Actions a nivel de repositorio; no hay GitHub Environment separado hoy).
-- Produccion (`main` / release en Azure Container Apps + Azure Static Web Apps + Azure SQL).
-- Herramientas: GitHub, SonarCloud, Azure, base de datos, servicios externos.
+- Produccion (`main` / release; VPS de Contabo + Cloudflare, base de datos MariaDB — ver `docs/produccion/Plan-Trabajo-Produccion.md`).
+- Herramientas: GitHub, SonarCloud, Contabo, Cloudflare, base de datos, servicios externos.
 
 ## Reglas obligatorias
 - No guardar secretos reales en archivos `.md`, `appsettings*.json`, `launchSettings.json`, `.env` versionado o issues.
@@ -27,9 +27,9 @@ Usar esta plantilla por cada secreto:
 | Nombre tecnico | (ej: `Jwt__Key`) |
 | Categoria | DB / Auth / API / CI-CD / Observabilidad / Infra |
 | Ambientes | Local / Develop / Production |
-| Ubicacion | User-Secrets / GitHub Environment / Azure Key Vault / Runtime Env |
+| Ubicacion | User-Secrets / GitHub Environment / archivo env_file en el VPS / Runtime Env |
 | Owner | Persona o rol responsable |
-| Consumido por | Backend / Frontend / Pipeline / Recurso Azure |
+| Consumido por | Backend / Frontend / Pipeline / VPS de produccion |
 | Rotacion | Mensual / Trimestral / Semestral / Evento |
 | Ultima rotacion | YYYY-MM-DD |
 | Proxima rotacion | YYYY-MM-DD |
@@ -48,7 +48,7 @@ Usar esta plantilla por cada secreto:
 - [ ] `Auth__DemoUser__Email` (si se usa usuario demo)
 - [ ] `Auth__DemoUser__Password` (si se usa usuario demo)
 
-### 2.2 Base de datos (SQL Server / Azure SQL)
+### 2.2 Base de datos (MariaDB)
 - [ ] Credencial admin de base de datos (uso restringido)
 - [ ] Credencial de aplicacion (runtime) con minimo privilegio
 - [ ] Credencial de migraciones (si aplica, separada de runtime)
@@ -58,10 +58,10 @@ Usar esta plantilla por cada secreto:
 - [ ] `SONAR_TOKEN` (Secret)
 - [ ] `SONAR_ORGANIZATION` (Variable)
 - [ ] `SONAR_PROJECT_KEY` (Variable)
-- [ ] Credenciales Azure para despliegue (preferir OIDC)
+- [ ] Credenciales SSH para desplegar al VPS de Contabo
 - [ ] Tokens de integraciones externas usadas por pipeline
 
-### 2.4 Azure (runtime)
+### 2.4 VPS de produccion (runtime)
 - [ ] Secrets de app en entorno `develop`
 - [ ] Secrets de app en entorno `production`
 - [ ] Cadenas de conexion por ambiente (nunca compartidas)
@@ -86,7 +86,7 @@ Usar esta plantilla por cada secreto:
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si | maomauro | Activo — nativo via `Trusted_Connection=true` (ver `launchSettings.json`); Docker via `docker/backend.local.env` con `portalcv_app` |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Activo — MariaDB via `dotnet user-secrets` (flujo `dotnet run`) o `docker/backend.local.env` (flujo Docker), ambos contra el contenedor `db` de `docker-compose.yml` |
 | `Jwt__Key` | Si | maomauro | Activo en `docker/backend.local.env`; Pendiente en `dotnet user-secrets` |
 | `Jwt__Issuer` | Si (no sensible) | maomauro | Activo (`PortalCV.Api`) |
 | `Jwt__Audience` | Si (no sensible) | maomauro | Activo (`PortalCV.Client`) |
@@ -94,7 +94,7 @@ Usar esta plantilla por cada secreto:
 | `Auth__DemoUser__Password` | Opcional | maomauro | No configurado |
 
 Checklist:
-- [x] `launchSettings.json` sin secretos reales (solo cadena a `SQLEXPRESS` con `Trusted_Connection`).
+- [x] `launchSettings.json` sin secretos reales (cadena a MariaDB via `dotnet user-secrets`/`docker/backend.local.env`, no hardcodeada).
 - [x] `docker/backend.local.env` excluido de git (`.gitignore`).
 - [x] Plantilla `docker/backend.local.env.example` versionada con placeholders.
 - [ ] User-secrets configurados para el flujo nativo `dotnet run`.
@@ -109,36 +109,35 @@ Checklist:
 | `SONAR_TOKEN` | Secret | Si | maomauro | Activo |
 | `SONAR_ORGANIZATION` | Variable | Si | maomauro | Activo |
 | `SONAR_PROJECT_KEY` | Variable | Si | maomauro | Activo |
-| `AZURE_CREDENTIALS` | Secret | Para deploy | maomauro | Pendiente (workflow de deploy aun no existe) |
-| `AZURE_STATIC_WEB_APPS_TOKEN` | Secret | Para deploy SWA | maomauro | Pendiente |
-| `JWT_KEY_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
-| `AZURE_SQL_CONN_PROD` | Secret | Para deploy ACA | maomauro | Pendiente |
+| `CONTABO_SSH_HOST` | Secret | Para deploy | maomauro | Pendiente (workflow de deploy aun no existe) |
+| `CONTABO_SSH_USER` | Secret | Para deploy | maomauro | Pendiente |
+| `CONTABO_SSH_KEY` | Secret | Para deploy | maomauro | Pendiente |
+| `JWT_KEY_PROD` | Secret | Para deploy | maomauro | Pendiente |
+| `DB_CONNECTION_PROD` | Secret | Para deploy | maomauro | Pendiente — cadena a MariaDB en el VPS de Contabo |
 
 Checklist:
 - [x] Secret `SONAR_TOKEN` y variables `SONAR_*` cargados.
 - [x] Quality Gate de SonarCloud "Passed" en `main`.
-- [ ] Secrets de Azure creados cuando se implemente el job de deploy.
-- [ ] Evaluar migracion a OIDC (sin password estatico) para `AZURE_CREDENTIALS`.
+- [ ] Secrets SSH del VPS creados cuando se implemente el job de deploy.
 
-## Production (Azure)
-**Ubicacion recomendada:** variables de entorno de Azure Container Apps (y Azure Key Vault si se decide centralizar).
+## Production (Contabo + Cloudflare)
+**Ubicacion recomendada:** archivo de entorno (`env_file`) del compose de produccion en el VPS, no versionado.
 
 | Nombre tecnico | Requerido | Owner | Estado |
 |---|---|---|---|
-| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a `sql-portalcv-mao.database.windows.net` con `portalcv_app_prod` |
+| `ConnectionStrings__DefaultConnection` | Si | maomauro | Pendiente — cadena a la instancia MariaDB en el VPS de Contabo |
 | `Jwt__Key` | Si | maomauro | Pendiente — clave distinta a la de local/develop (≥ 32 chars) |
 | `Jwt__Issuer` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Api` |
 | `Jwt__Audience` | Si (no sensible) | maomauro | Pendiente — valor: `PortalCV.Client` |
 | `ASPNETCORE_ENVIRONMENT` | Si (no sensible) | maomauro | Pendiente — valor: `Production` |
-| `Cors__AllowedOrigins__0` | Si (no sensible) | maomauro | Pendiente — URL final del Static Web App |
+| `Cors__AllowedOrigins__0` | Si (no sensible) | maomauro | Pendiente — subdominio final en Cloudflare |
 
 Checklist:
 - [ ] Secrets de produccion distintos a los de local y CI.
 - [ ] Aprobacion para despliegues a `production` (GitHub Environment con reviewers).
 - [ ] Politica de rotacion activa (90 dias para criticos).
 - [ ] Plan de respuesta ante exposicion validado.
-- [ ] Firewall Azure SQL: `Allow Azure services ON`.
-- [ ] `portalcv_app_prod` con permisos minimos (SELECT/INSERT/UPDATE/DELETE/EXECUTE sobre `dbo`).
+- [ ] Usuario de aplicacion en MariaDB con permisos minimos (SELECT/INSERT/UPDATE/DELETE, sin privilegios de administracion).
 
 ---
 
@@ -167,7 +166,7 @@ Checklist:
 
 1. Identificar archivo y secreto reportado.
 2. Remover valor real del codigo y usar placeholder.
-3. Mover secreto a fuente segura (user-secrets / GitHub / Azure).
+3. Mover secreto a fuente segura (user-secrets / GitHub / env_file del VPS).
 4. Rotar el secreto comprometido.
 5. Commit + PR + reanalizar Sonar.
 6. Registrar incidente en backlog tecnico.
