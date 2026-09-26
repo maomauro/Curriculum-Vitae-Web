@@ -40,6 +40,7 @@ public static class CvAuditoriaAcciones
 
     public const string PresentacionPlantilla = "cv.presentacion_plantilla";
     public const string CurriculumPublicacion = "cv.curriculum_publicacion";
+    public const string PresentacionUrlPublica = "cv.presentacion_url_publica";
 
     public const string PromptIaCreate = "cv.prompt_ia_create";
     public const string PromptIaVersionCreate = "cv.prompt_ia_version_create";
