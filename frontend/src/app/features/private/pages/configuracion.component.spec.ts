@@ -47,7 +47,7 @@ describe('ConfiguracionComponent', () => {
       'getPresentacion', 'getVisibilidad', 'updateVisibilidad', 'updateCurriculumPublicacion',
       'getExperiencias', 'getFormaciones', 'getProyectos', 'getHabilidades',
       'updateExperienciaVisibilidad', 'updateFormacionVisibilidad', 'updateProyectoVisibilidad',
-      'updateHabilidadVisibilidad',
+      'updateHabilidadVisibilidad', 'actualizarUrlPublica',
     ]);
     cvEditorService.getPresentacion.and.returnValue(presentacionResult);
     cvEditorService.getVisibilidad.and.returnValue(visibilidadResult);
@@ -281,6 +281,156 @@ describe('ConfiguracionComponent', () => {
       tick(2000);
       expect(component.copiado).toBeFalse();
     }));
+  });
+
+  describe('edicion de la URL publica del CV', () => {
+    describe('iniciarEdicionUrl / cancelarEdicionUrl / aceptarSugerenciaUrl', () => {
+      it('iniciarEdicionUrl no hace nada si la presentacion todavia no cargo', () => {
+        setup();
+        component.presentacionLista = false;
+
+        component.iniciarEdicionUrl();
+
+        expect(component.editandoUrl).toBeFalse();
+      });
+
+      it('iniciarEdicionUrl copia el slug actual y abre el modo edicion', () => {
+        setup();
+        component.ngOnInit();
+        component.sugerenciaUrl = 'algo-viejo';
+
+        component.iniciarEdicionUrl();
+
+        expect(component.editandoUrl).toBeTrue();
+        expect(component.slugEditado).toBe('ana-cv');
+        expect(component.sugerenciaUrl).toBeNull();
+      });
+
+      it('cancelarEdicionUrl descarta cambios y cierra el modo edicion', () => {
+        setup();
+        component.ngOnInit();
+        component.editandoUrl = true;
+        component.slugEditado = 'algo-que-no-se-guardo';
+        component.sugerenciaUrl = 'una-sugerencia';
+
+        component.cancelarEdicionUrl();
+
+        expect(component.editandoUrl).toBeFalse();
+        expect(component.slugEditado).toBe('ana-cv');
+        expect(component.sugerenciaUrl).toBeNull();
+      });
+
+      it('aceptarSugerenciaUrl no hace nada si no hay sugerencia', () => {
+        setup();
+        component.slugEditado = 'lo-que-sea';
+
+        component.aceptarSugerenciaUrl();
+
+        expect(component.slugEditado).toBe('lo-que-sea');
+      });
+
+      it('aceptarSugerenciaUrl carga la sugerencia en el input y la limpia', () => {
+        setup();
+        component.sugerenciaUrl = 'ana-cv-1';
+
+        component.aceptarSugerenciaUrl();
+
+        expect(component.slugEditado).toBe('ana-cv-1');
+        expect(component.sugerenciaUrl).toBeNull();
+      });
+    });
+
+    describe('guardarUrlPublica', () => {
+      it('avisa y no llama al backend si el valor normalizado queda vacio', () => {
+        setup();
+        component.ngOnInit();
+        component.slugEditado = '@@@';
+
+        component.guardarUrlPublica();
+
+        expect(notificationService.warning).toHaveBeenCalled();
+        expect(cvEditorService.actualizarUrlPublica).not.toHaveBeenCalled();
+      });
+
+      it('si el slug normalizado es igual al actual, solo cierra el modo edicion sin llamar al backend', () => {
+        setup();
+        component.ngOnInit();
+        component.editandoUrl = true;
+        component.slugEditado = 'Ana-CV';
+
+        component.guardarUrlPublica();
+
+        expect(component.editandoUrl).toBeFalse();
+        expect(cvEditorService.actualizarUrlPublica).not.toHaveBeenCalled();
+      });
+
+      it('si el usuario cancela la confirmacion, no llama al backend', () => {
+        setup();
+        component.ngOnInit();
+        component.slugEditado = 'nuevo-slug';
+        spyOn(window, 'confirm').and.returnValue(false);
+
+        component.guardarUrlPublica();
+
+        expect(cvEditorService.actualizarUrlPublica).not.toHaveBeenCalled();
+      });
+
+      it('si el backend confirma disponibilidad, actualiza el estado y notifica exito', () => {
+        setup();
+        component.ngOnInit();
+        component.editandoUrl = true;
+        component.slugEditado = 'nuevo-slug';
+        spyOn(window, 'confirm').and.returnValue(true);
+        const actualizado = { ...presentacion, urlPublica: 'nuevo-slug' };
+        cvEditorService.actualizarUrlPublica.and.returnValue(
+          of({ disponible: true, sugerencia: null, presentacion: actualizado })
+        );
+
+        component.guardarUrlPublica();
+
+        expect(cvEditorService.actualizarUrlPublica).toHaveBeenCalledWith('nuevo-slug');
+        expect(component.slugActual).toBe('nuevo-slug');
+        expect(component.editandoUrl).toBeFalse();
+        expect(component.guardandoUrl).toBeFalse();
+        expect(notificationService.success).toHaveBeenCalled();
+      });
+
+      it('si el backend responde que el slug esta ocupado, guarda la sugerencia y avisa sin cerrar la edicion', () => {
+        setup();
+        component.ngOnInit();
+        component.editandoUrl = true;
+        component.slugEditado = 'admin';
+        spyOn(window, 'confirm').and.returnValue(true);
+        cvEditorService.actualizarUrlPublica.and.returnValue(
+          of({ disponible: false, sugerencia: 'admin-1', presentacion: null })
+        );
+
+        component.guardarUrlPublica();
+
+        expect(component.sugerenciaUrl).toBe('admin-1');
+        expect(component.editandoUrl).toBeTrue();
+        expect(component.slugActual).toBe('ana-cv');
+        expect(notificationService.warning).toHaveBeenCalled();
+      });
+
+      it('si el backend falla, notifica error y no cambia el estado', () => {
+        setup();
+        component.ngOnInit();
+        component.editandoUrl = true;
+        component.slugEditado = 'nuevo-slug';
+        spyOn(window, 'confirm').and.returnValue(true);
+        cvEditorService.actualizarUrlPublica.and.returnValue(
+          throwError(() => new HttpErrorResponse({ status: 500 }))
+        );
+
+        component.guardarUrlPublica();
+
+        expect(component.guardandoUrl).toBeFalse();
+        expect(component.editandoUrl).toBeTrue();
+        expect(component.slugActual).toBe('ana-cv');
+        expect(notificationService.error).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('onCvPublicacionClick', () => {
