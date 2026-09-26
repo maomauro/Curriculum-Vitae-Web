@@ -261,6 +261,18 @@ export interface UpdatePresentacionCvRequest {
   plantillaCodigo: string;
 }
 
+export interface ActualizarUrlPublicaRequest {
+  urlPublica: string;
+}
+
+/** Si `disponible` es false, `sugerencia` trae una alternativa libre (sufijo numérico) y
+ * `presentacion` viene null -- no se aplicó ningún cambio todavía. */
+export interface ActualizarUrlPublicaResultDto {
+  disponible: boolean;
+  sugerencia: string | null;
+  presentacion: PresentacionCvDto | null;
+}
+
 // ── Servicio ───────────────────────────────────────────────────────────────────
 
 /** El backend devuelve `fotoUrl` como ruta relativa (`/api/cv/personales/foto`) cuando
@@ -516,5 +528,9 @@ export class CvEditorService {
 
   updateCurriculumPublicacion(publicado: boolean): Observable<PresentacionCvDto> {
     return this.http.put<PresentacionCvDto>(`${this.BASE}/presentacion/publicacion`, { publicado });
+  }
+
+  actualizarUrlPublica(urlPublica: string): Observable<ActualizarUrlPublicaResultDto> {
+    return this.http.put<ActualizarUrlPublicaResultDto>(`${this.BASE}/presentacion/url-publica`, { urlPublica });
   }
 }

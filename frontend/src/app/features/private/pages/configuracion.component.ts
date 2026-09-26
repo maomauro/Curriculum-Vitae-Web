@@ -83,11 +83,6 @@ export class ConfiguracionComponent implements OnInit {
   /** Origen del navegador (para mostrar "{origen}/cv/" como prefijo fijo al editar). */
   origenActual = '';
 
-  // TODO(backend real): esta lista simula qué slugs ya existen. Reemplazar
-  // simularVerificarDisponibilidadUrl() por una llamada real al backend
-  // (endpoint todavía no existe) cuando se implemente la Fase 2 de esta feature.
-  private readonly slugsMockOcupados = ['mao-cifuentes', 'admin', 'test', 'demo', 'juan-perez'];
-
   /** Curriculum en estado Publicado (visible en API pública). */
   cvPublicado = false;
   presentacionLista = false;
@@ -633,17 +628,23 @@ export class ConfiguracionComponent implements OnInit {
 
     this.guardandoUrl = true;
     this.sugerenciaUrl = null;
-    this.simularVerificarDisponibilidadUrl(propuesta).subscribe(res => {
-      this.guardandoUrl = false;
-      if (res.disponible) {
-        this.slugActual = propuesta;
-        this.urlCv = this.construirUrlCvPublico(propuesta);
-        this.editandoUrl = false;
-        this.notificationService.success('URL pública actualizada correctamente.');
-      } else {
-        this.sugerenciaUrl = res.sugerencia ?? null;
-        this.notificationService.warning('Esa URL ya está en uso. Te sugerimos una alternativa disponible.');
-      }
+    this.cvEditorService.actualizarUrlPublica(propuesta).subscribe({
+      next: res => {
+        this.guardandoUrl = false;
+        if (res.disponible && res.presentacion) {
+          this.slugActual = res.presentacion.urlPublica;
+          this.urlCv = this.construirUrlCvPublico(this.slugActual);
+          this.editandoUrl = false;
+          this.notificationService.success('URL pública actualizada correctamente.');
+        } else {
+          this.sugerenciaUrl = res.sugerencia;
+          this.notificationService.warning('Esa URL ya está en uso. Te sugerimos una alternativa disponible.');
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoUrl = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
     });
   }
 
@@ -659,33 +660,6 @@ export class ConfiguracionComponent implements OnInit {
       .replace(/[\s_]+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
-  }
-
-  /**
-   * MOCK temporal (frontend-only): simula la verificación de disponibilidad del slug con un
-   * pequeño delay, como haría una llamada real al backend. El endpoint real todavía no existe
-   * (ver Fase 2 de esta feature) — reemplazar este método por una llamada a
-   * `cvEditorService.actualizarUrlPublica(...)` cuando se implemente.
-   */
-  private simularVerificarDisponibilidadUrl(slug: string): Observable<{ disponible: boolean; sugerencia?: string }> {
-    return new Observable(observer => {
-      const timeoutId = setTimeout(() => {
-        const ocupado = this.slugsMockOcupados.includes(slug);
-        if (!ocupado) {
-          observer.next({ disponible: true });
-        } else {
-          let sugerido = slug;
-          let n = 1;
-          while (this.slugsMockOcupados.includes(sugerido)) {
-            sugerido = `${slug}-${n}`;
-            n++;
-          }
-          observer.next({ disponible: false, sugerencia: sugerido });
-        }
-        observer.complete();
-      }, 600);
-      return () => clearTimeout(timeoutId);
-    });
   }
 
   /**

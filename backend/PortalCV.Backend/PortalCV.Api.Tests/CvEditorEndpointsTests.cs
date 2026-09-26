@@ -541,6 +541,60 @@ public class CvEditorEndpointsTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
+    public async Task UrlPublica_Update_CambiaCuandoEstaLibre()
+    {
+        var client = await CreateAuthenticatedClientAsync("url-libre");
+        var nuevoSlug = $"nuevo-slug-{Guid.NewGuid():N}".Substring(0, 24);
+
+        var response = await client.PutAsync("/api/cv/presentacion/url-publica",
+            JsonPayload(new ActualizarUrlPublicaRequest(nuevoSlug)));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var dto = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        Assert.True(dto.GetProperty("disponible").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, dto.GetProperty("sugerencia").ValueKind);
+        Assert.Equal(nuevoSlug, dto.GetProperty("presentacion").GetProperty("urlPublica").GetString());
+
+        var getResponse = await client.GetAsync("/api/cv/presentacion");
+        var verificacion = JsonDocument.Parse(await getResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(nuevoSlug, verificacion.GetProperty("urlPublica").GetString());
+    }
+
+    [Fact]
+    public async Task UrlPublica_Update_SugiereAlternativaCuandoEstaOcupadaPorOtroCv()
+    {
+        var clientOcupante = await CreateAuthenticatedClientAsync("url-ocupante");
+        var getOcupante = await clientOcupante.GetAsync("/api/cv/presentacion");
+        var slugOcupado = JsonDocument.Parse(await getOcupante.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("urlPublica").GetString()!;
+
+        var client = await CreateAuthenticatedClientAsync("url-colision");
+        var response = await client.PutAsync("/api/cv/presentacion/url-publica",
+            JsonPayload(new ActualizarUrlPublicaRequest(slugOcupado)));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var dto = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        Assert.False(dto.GetProperty("disponible").GetBoolean());
+        Assert.Equal($"{slugOcupado}-1", dto.GetProperty("sugerencia").GetString());
+        Assert.Equal(JsonValueKind.Null, dto.GetProperty("presentacion").ValueKind);
+
+        // La URL original del segundo CV no debe haber cambiado.
+        var getResponse = await client.GetAsync("/api/cv/presentacion");
+        var verificacion = JsonDocument.Parse(await getResponse.Content.ReadAsStringAsync()).RootElement;
+        Assert.NotEqual(slugOcupado, verificacion.GetProperty("urlPublica").GetString());
+    }
+
+    [Fact]
+    public async Task UrlPublica_Update_RechazaValorSinCaracteresValidos()
+    {
+        var client = await CreateAuthenticatedClientAsync("url-invalida");
+
+        var response = await client.PutAsync("/api/cv/presentacion/url-publica",
+            JsonPayload(new ActualizarUrlPublicaRequest("@@")));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Perfil_CrudCompleto_FuncionaDePrincipioAFin()
     {
         var client = await CreateAuthenticatedClientAsync("perfil-crud");

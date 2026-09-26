@@ -11,6 +11,7 @@ using PortalCV.Application.DTOs.Auth;
 using PortalCV.Application.Interfaces;
 using PortalCV.Domain.Entities;
 using PortalCV.Infrastructure.Data;
+using PortalCV.Infrastructure.Utils;
 
 namespace PortalCV.Infrastructure.Services;
 
@@ -195,8 +196,8 @@ public class AuthService : IAuthService
         string nombreCompleto, string email, CancellationToken ct)
     {
         var base64 = !string.IsNullOrWhiteSpace(nombreCompleto)
-            ? NormalizarSlug(nombreCompleto)
-            : NormalizarSlug(email.Split('@')[0]);
+            ? SlugHelper.Normalizar(nombreCompleto)
+            : SlugHelper.Normalizar(email.Split('@')[0]);
 
         if (base64.Length < 3) base64 = "cv-" + base64;
 
@@ -209,33 +210,5 @@ public class AuthService : IAuthService
         }
 
         return url;
-    }
-
-    private static string NormalizarSlug(string input)
-    {
-        var mapa = new Dictionary<char, char>
-        {
-            ['á'] = 'a', ['à'] = 'a', ['ä'] = 'a', ['â'] = 'a',
-            ['é'] = 'e', ['è'] = 'e', ['ë'] = 'e', ['ê'] = 'e',
-            ['í'] = 'i', ['ì'] = 'i', ['ï'] = 'i', ['î'] = 'i',
-            ['ó'] = 'o', ['ò'] = 'o', ['ö'] = 'o', ['ô'] = 'o',
-            ['ú'] = 'u', ['ù'] = 'u', ['ü'] = 'u', ['û'] = 'u',
-            ['ñ'] = 'n', ['ç'] = 'c'
-        };
-
-        var sb = new System.Text.StringBuilder();
-        foreach (var c in input.ToLowerInvariant())
-        {
-            if (mapa.TryGetValue(c, out var mapped)) sb.Append(mapped);
-            else if (char.IsLetterOrDigit(c)) sb.Append(c);
-            else if (c == ' ' || c == '-') sb.Append('-');
-        }
-
-        // Eliminar guiones dobles o al inicio/final
-        var slug = sb.ToString().Trim('-');
-        while (slug.Contains("--"))
-            slug = slug.Replace("--", "-");
-
-        return slug;
     }
 }

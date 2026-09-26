@@ -24,6 +24,9 @@ public static class ApiMessages
 
         public const string PlantillaInvalida =
             "La plantilla indicada no es válida. Usa: clasico, profesional, ats, corporativo o ejecutivo.";
+
+        public const string UrlPublicaInvalida =
+            "La URL debe tener al menos 3 caracteres válidos (letras, números o guiones).";
     }
 
     /// <summary>
