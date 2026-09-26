@@ -5,7 +5,7 @@ WORKDIR /app
 
 # package*.json aparte del resto del codigo para cachear "npm ci" entre builds.
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY . .
 RUN npm run build -- --configuration production
