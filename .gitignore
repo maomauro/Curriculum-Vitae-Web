@@ -40,6 +40,8 @@ frontend/*.log
 # Dumps SQL de ejemplo con datos reales (documento, direccion, hash de password).
 # Nunca versionar: si necesitas un script de ejemplo para el equipo, usar datos ficticios.
 scripts/ejemplo/
+# Dump local de la base de datos (datos reales, generado con mariadb-dump) — nunca versionar.
+scripts/mariadb/portalcv_local_dump.sql
 
 # ── Sistema operativo ────────────────────────────────────────────────────────
 .DS_Store
