@@ -1,0 +1,42 @@
+name: Deploy frontend to VPS
+
+# Reconstruye la imagen de Nginx (build de Angular + servido estatico) y la
+# despliega en el VPS de produccion cuando hay cambios en frontend/**. A
+# diferencia del backend, esta imagen no se publica en GHCR: se construye
+# directamente en el VPS (ver docs/produccion/Plan-Trabajo-Produccion.md
+# Fase 3/6).
+#
+# Requiere los mismos secrets SSH_HOST, SSH_USER y SSH_PRIVATE_KEY que
+# deploy-backend.yml.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/Curriculum-Vitae-Web
+            git fetch origin main
+            git checkout main
+            git pull origin main
+            docker compose -f docker-compose.prod.yml build --no-cache nginx
+            docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
+            sleep 3
+            curl -skf https://localhost/ > /dev/null
