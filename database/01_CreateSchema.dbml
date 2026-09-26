@@ -25,26 +25,16 @@ Table Curriculum {
   CurriculumId int [pk, increment, not null]
   UsuarioId int [not null]
   UrlPublica varchar(255) [not null]
-  Estado varchar(20) [not null, default: 'Borrador']
+  Estado varchar(20) [not null, default: 'Borrador', note: 'Borrador | Publicado | Oculto']
   ContadorVisitas int [not null, default: 0]
   ContadorContactos int [not null, default: 0]
+  PlantillaCodigo varchar(32) [not null, default: 'clasico']
   FechaCreacion datetime [not null, default: `now()`]
   FechaActualizacion datetime [not null, default: `now()`]
   indexes {
     (UrlPublica) [name: "IX_Curriculum_UrlPublica"]
-    (Estado) [name: "IX_Curriculum_Estado"]
+    (Estado, ContadorVisitas, CurriculumId, UrlPublica) [name: "IX_Curriculum_Estado_Visitas"]
   }
-}
-
-Table PublicStaticSnapshotState {
-  Id tinyint [pk, not null, note: 'Solo fila Id=1']
-  SiteSnapshotStale bit [not null, default: 0]
-}
-
-Table PublicCvSnapshotExport {
-  CurriculumId int [pk, not null]
-  ItemJson text [not null]
-  UpdatedAtUtc datetime [not null]
 }
 
 Table Personales {
@@ -83,7 +73,9 @@ Table Personales {
   CodigoPostal varchar(20)
   Direccion varchar(255)
   TipoResidencia varchar(50)
-  FotoUrl varchar(500)
+  FotoUrl varchar(500) [note: 'Legacy: URL pegada por el usuario. Ignorada si FotoBytes tiene valor.']
+  FotoBytes blob
+  FotoContentType varchar(100)
 }
 
 Table Referencia {
@@ -99,8 +91,9 @@ Table Referencia {
   Cargo varchar(100)
   Empresa varchar(150)
   Relacion varchar(100)
-  Observaciones varchar(500)
+  Observaciones text
   AdjuntoSoporte varchar(500)
+  MostrarEnCv boolean [not null, default: true]
   FechaRegistro datetime [not null, default: `now()`]
   indexes {
     (CurriculumId) [name: "IX_Referencia_CurriculumId"]
@@ -125,6 +118,7 @@ Table RedSocial {
   NombreRed varchar(50) [not null]
   LinkPublico varchar(500)
   UsuarioContacto varchar(100)
+  MostrarEnCv boolean [not null, default: 1]
 }
 
 Table Perfil {
@@ -132,9 +126,49 @@ Table Perfil {
   CurriculumId int [not null]
   NombrePerfil varchar(100)
   DescripcionPerfil text
+  ExperienciaPerfilAnios decimal(5,2)
   AspiracionSalarialPesos decimal(18,2)
   AspiracionSalarialDolares decimal(18,2)
   EsActivo boolean [not null, default: 1]
+  MostrarExperienciaPerfil boolean [not null, default: true]
+  MostrarAspiracionSalarial boolean [not null, default: true]
+}
+
+Table CvGenerado {
+  CvGeneradoId int [pk, increment, not null]
+  CurriculumId int [not null]
+  PerfilId int [not null, note: 'Uno por Perfil -- regenerar reemplaza el contenido en vez de crear una fila nueva']
+  ContenidoJson text [not null, note: 'Experiencia/Educacion/Proyectos/Habilidades condensados por IA para "Mi CV"']
+  PromptPorDefecto boolean [not null, default: 0]
+  FechaGeneracion datetime [not null, default: `now()`]
+  indexes {
+    (CurriculumId) [name: "IX_CvGenerado_CurriculumId"]
+    (PerfilId) [unique, name: "UQ_CvGenerado_PerfilId"]
+  }
+}
+
+Table Oferta {
+  OfertaId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Cargo varchar(150) [not null]
+  Empresa varchar(150) [not null]
+  Descripcion text
+  CorreoReclutador varchar(150)
+  NombreReclutador varchar(150)
+  Modalidad varchar(150) [note: 'Texto libre, ej: "100% remoto desde México o Colombia"']
+  TipoContrato varchar(100) [note: 'Texto libre, ej: "Contractor"']
+  Moneda varchar(20) [note: 'Texto libre, ej: "USD"']
+  Duracion varchar(150) [note: 'Texto libre, ej: "6 meses + posibilidad de extensión"']
+  Horario varchar(100) [note: 'Texto libre, ej: "CST"']
+  ExperienciaRequerida varchar(100) [note: 'Texto libre, ej: "3 a 5 años"']
+  StackTecnologico text [note: 'Texto libre, lista de tecnologías/herramientas pedidas']
+  NivelIdioma varchar(100) [note: 'Texto libre, ej: "Inglés B2+/C1"']
+  TextoOriginal text [not null]
+  OrigenEntrada varchar(20) [not null, note: 'texto | imagen | ambos']
+  Estado varchar(20) [not null, note: 'Analizada | PerfilAsignado | EnviadaPorCorreo']
+  PerfilId int
+  FechaAnalisis datetime [not null]
+  FechaEnvioCorreo datetime [note: 'Cuándo se envió el correo con el CV adjunto -- null si todavía no se envió']
 }
 
 Table Experiencia {
@@ -150,7 +184,9 @@ Table Experiencia {
   Funciones text
   EsActual boolean [not null, default: 0]
   MostrarEnCv boolean [not null, default: 1]
-  AdjuntoSoporte varchar(500)
+  AdjuntoSoporte varchar(500) [note: 'Legacy: URL pegada por el usuario. Ignorada si AdjuntoSoporteBytes tiene valor.']
+  AdjuntoSoporteBytes blob
+  AdjuntoSoporteContentType varchar(100)
   FechaRegistro datetime [not null, default: `now()`]
   indexes {
     (CurriculumId) [name: "IX_Experiencia_CurriculumId"]
@@ -162,12 +198,14 @@ Table Formacion {
   CurriculumId int [not null]
   Titulo varchar(200)
   Institucion varchar(200)
-  Area varchar(100)
+  Area varchar(300)
   FechaInicio date
   FechaFin date
   TipoFormacion varchar(50)
   Descripcion text
-  AdjuntoSoporte varchar(500)
+  AdjuntoSoporte varchar(500) [note: 'Legacy: URL pegada por el usuario. Ignorada si AdjuntoSoporteBytes tiene valor.']
+  AdjuntoSoporteBytes blob
+  AdjuntoSoporteContentType varchar(100)
   FechaVigencia date
   DuracionHoras int
   MostrarEnCv boolean [not null, default: 1]
@@ -184,9 +222,10 @@ Table Habilidad {
   NivelEscritura varchar(5)
   NivelEscucha varchar(5)
   NivelHabla varchar(5)
+  MostrarEnCv boolean [not null, default: 1]
   indexes {
     (CurriculumId) [name: "IX_Habilidad_CurriculumId"]
-    (Nombre) [name: "IX_Habilidad_Nombre"]
+    (Nombre, CurriculumId, Tipo, Nivel) [name: "IX_Habilidad_Nombre_Curriculum"]
   }
 }
 
@@ -215,7 +254,7 @@ Table VisitanteContacto {
   ComoMeEncontraste varchar(255)
   Mensaje text
   FechaContacto datetime [not null, default: `now()`]
-  EsLeido bit [not null, default: 0]
+  EsLeida boolean [not null, default: 0]
   indexes {
     (CurriculumId) [name: "IX_VisitanteContacto_CurriculumId"]
     (FechaContacto) [name: "IX_VisitanteContacto_FechaContacto"]
@@ -233,9 +272,18 @@ Table AlertaVisita {
   Descripcion text
   Ciudad varchar(100)
   Pais varchar(100)
+  VisitanteAnonimoId varchar(36) [note: 'Id anonimo de cookie/localStorage del visitante -- para deduplicar Vista/Descarga']
+  VistasAcumuladas int [not null, default: 1]
+  VisitanteContactoId int
+  VisitanteAnonimoIdSiVista varchar(36) [note: 'Generada: VisitanteAnonimoId si TipoVisita=Vista, si no NULL. Emula un indice unico filtrado']
+  VisitanteAnonimoIdSiDescarga varchar(36) [note: 'Generada: VisitanteAnonimoId si TipoVisita=Descarga, si no NULL']
+  VisitanteContactoIdSiContacto int [note: 'Generada: VisitanteContactoId si TipoVisita=Contacto, si no NULL']
   indexes {
     (CurriculumId) [name: "IX_AlertaVisita_CurriculumId"]
     (FechaVisita) [name: "IX_AlertaVisita_FechaVisita"]
+    (CurriculumId, VisitanteAnonimoIdSiVista) [unique, name: "UQ_AlertaVisita_Curriculum_Visitante_Vista"]
+    (CurriculumId, VisitanteAnonimoIdSiDescarga) [unique, name: "UQ_AlertaVisita_Curriculum_Visitante_Descarga"]
+    (VisitanteContactoIdSiContacto) [unique, name: "UQ_AlertaVisita_VisitanteContacto_Contacto"]
   }
 }
 
@@ -292,25 +340,86 @@ Table AuditoriaCv {
   DetalleJson text
 }
 
+Table PromptIa {
+  PromptIaId int [pk, increment, not null]
+  CurriculumId int [not null, note: 'Dueño del prompt: cada CV administra los suyos']
+  Codigo varchar(50) [not null, note: 'Identifica el prompt para su dueño, p. ej. EXTRACTOR_OFERTA. Repetido entre versiones y entre CV distintos']
+  Nombre varchar(150) [not null]
+  Descripcion varchar(500)
+  RolContexto text [not null, note: 'Quién es la IA, para qué sistema trabaja']
+  Tarea text [not null, note: 'Qué debe hacer, incluye dónde va el marcador de entrada (ej. {{OFERTA_TEXTO}})']
+  Reglas text [note: 'Restricciones y casos especiales (opcional)']
+  FormatoSalida text [not null, note: 'Schema/ejemplo exacto de la respuesta esperada']
+  Ejemplos text [note: 'Ejemplos few-shot (opcional)']
+  Contenido text [not null, note: 'Ensamblado por la app desde las 5 columnas de arriba; nunca se edita a mano']
+  Version int [not null, default: 1]
+  EsActivo boolean [not null, default: true, note: 'Solo una fila activa por (CurriculumId, Codigo)']
+  FechaCreacion datetime [not null, default: `now()`]
+  ActualizadoPorUsuarioId int
+  CodigoSiActivo varchar(50) [note: 'Generada: Codigo si EsActivo=1, si no NULL. Emula un indice unico filtrado']
+  indexes {
+    (CurriculumId, Codigo) [unique, name: "UQ_PromptIa_Curriculum_Codigo_Activo", note: 'Filtrado por EsActivo=1']
+    (CurriculumId, Codigo, Version) [unique, name: "UQ_PromptIa_Curriculum_Codigo_Version"]
+    (CurriculumId, Codigo) [name: "IX_PromptIa_Curriculum_Codigo"]
+  }
+}
+
+Table ProveedorIa {
+  ProveedorIaId int [pk, increment, not null]
+  Proveedor varchar(20) [not null, note: 'claude | openai | gemini | groq | ollama | otro']
+  Nombre varchar(100) [note: 'Alias opcional para distinguir varias conexiones del mismo proveedor']
+  Modelo varchar(100)
+  Endpoint varchar(500) [note: 'URL del servidor; obligatorio para proveedores self-hosted (ollama)']
+  ApiKeyCifrada text [note: 'AES-256-GCM (AesGcmApiKeyCipher); opcional (ollama local no siempre la requiere); nunca se devuelve al front-end']
+  EsActivo boolean [not null, default: false, note: 'Solo una activa a la vez en TODA la plataforma -- conexion global, no por CV, administrada solo por Admin']
+  FechaCreacion datetime [not null, default: `now()`]
+  FechaActualizacion datetime [not null, default: `now()`]
+  EsActivoUnico tinyint [note: 'Generada: 1 si EsActivo=1, si no NULL. Emula un indice unico filtrado']
+  indexes {
+    (EsActivoUnico) [unique, name: "UQ_ProveedorIa_Activo", note: 'Filtrado por EsActivo=1']
+  }
+}
+
+Table ConfiguracionCorreo {
+  ConfiguracionCorreoId int [pk, increment, not null]
+  CurriculumId int [not null]
+  Host varchar(200) [not null, default: 'smtp.gmail.com']
+  Puerto int [not null, default: 587]
+  UsarTls boolean [not null, default: true]
+  PasswordCifrada text [note: 'AES-256-GCM, mismo criterio que ProveedorIa.ApiKeyCifrada. El remitente siempre es Personales.Email, no hay un login SMTP aparte']
+  FechaCreacion datetime [not null, default: `now()`]
+  FechaActualizacion datetime [not null, default: `now()`]
+  indexes {
+    (CurriculumId) [unique, name: "UQ_ConfiguracionCorreo_CurriculumId"]
+  }
+}
+
 Ref: UsuarioRol.UsuarioId > Usuario.UsuarioId
 Ref: UsuarioRol.RolId > Rol.RolId
 Ref: Curriculum.UsuarioId > Usuario.UsuarioId
-Ref: PublicCvSnapshotExport.CurriculumId > Curriculum.CurriculumId
 Ref: Personales.CurriculumId > Curriculum.CurriculumId
 Ref: Referencia.CurriculumId > Curriculum.CurriculumId
 Ref: Referencia.ExperienciaId > Experiencia.ExperienciaId
 Ref: FamiliarContacto.CurriculumId > Curriculum.CurriculumId
 Ref: RedSocial.CurriculumId > Curriculum.CurriculumId
 Ref: Perfil.CurriculumId > Curriculum.CurriculumId
+Ref: CvGenerado.CurriculumId > Curriculum.CurriculumId
+Ref: CvGenerado.PerfilId > Perfil.PerfilId
+Ref: Oferta.CurriculumId > Curriculum.CurriculumId
+Ref: Oferta.PerfilId > Perfil.PerfilId
 Ref: Experiencia.CurriculumId > Curriculum.CurriculumId
 Ref: Formacion.CurriculumId > Curriculum.CurriculumId
 Ref: Habilidad.CurriculumId > Curriculum.CurriculumId
 Ref: Proyecto.CurriculumId > Curriculum.CurriculumId
 Ref: VisitanteContacto.CurriculumId > Curriculum.CurriculumId
 Ref: AlertaVisita.CurriculumId > Curriculum.CurriculumId
+Ref: AlertaVisita.VisitanteContactoId > VisitanteContacto.VisitanteContactoId
 Ref: VisibilidadSeccion.CurriculumId > Curriculum.CurriculumId
 Ref: EstadisticasPublicas.CurriculumId > Curriculum.CurriculumId
 Ref: AuditoriaAdmin.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaAuth.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaCv.ActorUsuarioId > Usuario.UsuarioId
 Ref: AuditoriaCv.CurriculumId > Curriculum.CurriculumId
+Ref: PromptIa.CurriculumId > Curriculum.CurriculumId
+Ref: PromptIa.ActualizadoPorUsuarioId > Usuario.UsuarioId
+Ref: ConfiguracionCorreo.CurriculumId > Curriculum.CurriculumId

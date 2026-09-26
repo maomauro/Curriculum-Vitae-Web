@@ -92,12 +92,79 @@ public class CvEditorService : ICvEditorService
         existing.CodigoPostal = r.CodigoPostal;
         existing.Direccion = r.Direccion;
         existing.TipoResidencia = r.TipoResidencia;
-        existing.FotoUrl = r.FotoUrl;
 
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PersonalesUpsert, "Personales", existing.PersonalesId,
             new Dictionary<string, string> { ["personalesId"] = existing.PersonalesId.ToString() }, ct);
         return MapPersonales(existing);
+    }
+
+    private static readonly HashSet<string> FotoContentTypesPermitidos = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg", "image/png", "image/webp"
+    };
+    private const long FotoMaxBytes = 1 * 1024 * 1024;
+
+    /// <summary>Soporte de experiencia/formación (carta laboral, diploma, certificado): solo PDF.
+    /// Tope más alto que la foto porque un documento escaneado real suele pesar varios MB.</summary>
+    private const long AdjuntoMaxBytes = 3 * 1024 * 1024;
+
+    private static void ValidarAdjuntoPdf(byte[] contenido, string? contentType)
+    {
+        if (contenido.Length == 0)
+            throw new ArgumentException("El archivo está vacío.");
+        if (contenido.Length > AdjuntoMaxBytes)
+            throw new ArgumentException("El archivo no puede superar 3 MB.");
+        if (!string.Equals(contentType, "application/pdf", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Solo se admiten archivos PDF.");
+    }
+
+    public async Task<PersonalesDto> UpsertFotoPersonalesAsync(
+        int curriculumId, byte[] contenido, string? contentType, CancellationToken ct = default)
+    {
+        if (contenido.Length == 0)
+            throw new ArgumentException("El archivo está vacío.");
+        if (contenido.Length > FotoMaxBytes)
+            throw new ArgumentException("La foto no puede superar 1 MB.");
+        if (string.IsNullOrWhiteSpace(contentType) || !FotoContentTypesPermitidos.Contains(contentType))
+            throw new ArgumentException("Formato de imagen no soportado. Usa JPG, PNG o WEBP.");
+
+        var existing = await _context.Personales.FirstOrDefaultAsync(p => p.CurriculumId == curriculumId, ct);
+        if (existing is null)
+        {
+            existing = new Personales { CurriculumId = curriculumId, PrimerNombre = string.Empty, PrimerApellido = string.Empty };
+            _context.Personales.Add(existing);
+        }
+        existing.FotoBytes = contenido;
+        existing.FotoContentType = contentType;
+
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PersonalesUpsert, "Personales", existing.PersonalesId,
+            new Dictionary<string, string> { ["personalesId"] = existing.PersonalesId.ToString(), ["accion"] = "foto" }, ct);
+        return MapPersonales(existing);
+    }
+
+    public async Task<PersonalesDto> EliminarFotoPersonalesAsync(int curriculumId, CancellationToken ct = default)
+    {
+        var existing = await _context.Personales.FirstOrDefaultAsync(p => p.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException("No hay datos personales guardados.");
+
+        existing.FotoBytes = null;
+        existing.FotoContentType = null;
+        existing.FotoUrl = null;
+
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PersonalesUpsert, "Personales", existing.PersonalesId,
+            new Dictionary<string, string> { ["personalesId"] = existing.PersonalesId.ToString(), ["accion"] = "foto_eliminada" }, ct);
+        return MapPersonales(existing);
+    }
+
+    public async Task<ArchivoContenidoDto?> GetFotoPersonalesAsync(int curriculumId, CancellationToken ct = default)
+    {
+        var e = await _context.Personales.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.CurriculumId == curriculumId, ct);
+        if (e?.FotoBytes is null || e.FotoContentType is null) return null;
+        return new ArchivoContenidoDto(e.FotoBytes, e.FotoContentType);
     }
 
     // --- Perfil ---
@@ -117,7 +184,9 @@ public class CvEditorService : ICvEditorService
             ExperienciaPerfilAnios = r.ExperienciaPerfilAnios,
             AspiracionSalarialPesos = r.AspiracionSalarialPesos,
             AspiracionSalarialDolares = r.AspiracionSalarialDolares,
-            EsActivo = r.EsActivo
+            EsActivo = r.EsActivo,
+            MostrarExperienciaPerfil = r.MostrarExperienciaPerfil,
+            MostrarAspiracionSalarial = r.MostrarAspiracionSalarial
         };
         _context.Perfiles.Add(e);
         await GuardarCambiosAsync(ct);
@@ -135,24 +204,46 @@ public class CvEditorService : ICvEditorService
         e.AspiracionSalarialPesos = r.AspiracionSalarialPesos;
         e.AspiracionSalarialDolares = r.AspiracionSalarialDolares;
         e.EsActivo = r.EsActivo;
+        e.MostrarExperienciaPerfil = r.MostrarExperienciaPerfil;
+        e.MostrarAspiracionSalarial = r.MostrarAspiracionSalarial;
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PerfilUpdate, "Perfil", e.PerfilId,
             new Dictionary<string, string> { ["perfilId"] = e.PerfilId.ToString() }, ct);
         return MapPerfil(e);
     }
 
-    public Task DeletePerfilAsync(int curriculumId, int id, CancellationToken ct = default)
-        => DeleteEntidadAsync(_context.Perfiles, curriculumId, id, CvAuditoriaAcciones.PerfilDelete, "Perfil", "perfilId", ct);
+    public async Task DeletePerfilAsync(int curriculumId, int id, CancellationToken ct = default)
+    {
+        // CvGenerado.PerfilId es ON DELETE NO ACTION: si el perfil ya tiene un CV
+        // generado asociado, hay que borrarlo primero o el DELETE de abajo choca con la FK.
+        var cvGenerado = await _context.CvsGenerados.FirstOrDefaultAsync(c => c.PerfilId == id, ct);
+        if (cvGenerado is not null)
+            _context.CvsGenerados.Remove(cvGenerado);
+
+        await DeleteEntidadAsync(_context.Perfiles, curriculumId, id, CvAuditoriaAcciones.PerfilDelete, "Perfil", "perfilId", ct);
+    }
 
     // --- Experiencia ---
 
+    /// <summary>Proyección inline (no MapExperiencia) a propósito: así EF Core puede
+    /// traducir el chequeo "AdjuntoSoporteBytes is not null" a SQL sin pedir el LOB
+    /// completo -- delegar en un método aparte fuerza a EF a materializar la entidad
+    /// entera (con el archivo adjunto de varios MB) por cada fila, aunque el DTO nunca
+    /// use esos bytes. Con varias experiencias/formaciones con soporte adjunto, esto
+    /// volvía este listado muy lento (varios segundos) en cada carga de "Profesional"/
+    /// "Mi CV".</summary>
     public async Task<IReadOnlyList<ExperienciaDto>> GetExperienciasAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Experiencias.AsNoTracking()
             .Where(e => e.CurriculumId == curriculumId)
             .OrderByDescending(e => e.EsActual)
             .ThenByDescending(e => e.FechaInicio)
             .ThenByDescending(e => e.FechaFin)
-            .Select(e => MapExperiencia(e)).ToListAsync(ct);
+            .Select(e => new ExperienciaDto(
+                e.ExperienciaId, e.Empresa, e.Cargo, e.Sector, e.FechaInicio, e.FechaFin,
+                e.TipoContrato, e.MotivoRetiro, e.Funciones, e.EsActual, e.MostrarEnCv,
+                e.AdjuntoSoporteBytes != null ? $"/api/cv/experiencias/{e.ExperienciaId}/adjunto" : e.AdjuntoSoporte,
+                e.FechaRegistro))
+            .ToListAsync(ct);
 
     public async Task<ExperienciaDto> CreateExperienciaAsync(int curriculumId, UpsertExperienciaRequest r, CancellationToken ct = default)
     {
@@ -165,7 +256,6 @@ public class CvEditorService : ICvEditorService
             TipoContrato = r.TipoContrato, MotivoRetiro = r.MotivoRetiro,
             Funciones = r.Funciones, EsActual = r.EsActual,
             MostrarEnCv = r.MostrarEnCv ?? true,
-            AdjuntoSoporte = r.AdjuntoSoporte,
             FechaRegistro = DateTime.UtcNow
         };
         _context.Experiencias.Add(e);
@@ -188,7 +278,6 @@ public class CvEditorService : ICvEditorService
         e.TipoContrato = r.TipoContrato; e.MotivoRetiro = r.MotivoRetiro;
         e.Funciones = r.Funciones; e.EsActual = r.EsActual;
         e.MostrarEnCv = r.MostrarEnCv ?? true;
-        e.AdjuntoSoporte = r.AdjuntoSoporte;
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
             new Dictionary<string, string> { ["experienciaId"] = e.ExperienciaId.ToString() }, ct);
@@ -216,13 +305,52 @@ public class CvEditorService : ICvEditorService
     public Task DeleteExperienciaAsync(int curriculumId, int id, CancellationToken ct = default)
         => DeleteEntidadAsync(_context.Experiencias, curriculumId, id, CvAuditoriaAcciones.ExperienciaDelete, "Experiencia", "experienciaId", ct);
 
+    public async Task<ExperienciaDto> UpsertAdjuntoExperienciaAsync(
+        int curriculumId, int id, byte[] contenido, string? contentType, CancellationToken ct = default)
+    {
+        ValidarAdjuntoPdf(contenido, contentType);
+        var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
+        e.AdjuntoSoporteBytes = contenido;
+        e.AdjuntoSoporteContentType = contentType;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
+            new Dictionary<string, string> { ["experienciaId"] = e.ExperienciaId.ToString(), ["accion"] = "adjunto" }, ct);
+        return MapExperiencia(e);
+    }
+
+    public async Task<ExperienciaDto> EliminarAdjuntoExperienciaAsync(int curriculumId, int id, CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
+        e.AdjuntoSoporteBytes = null;
+        e.AdjuntoSoporteContentType = null;
+        e.AdjuntoSoporte = null;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ExperienciaUpdate, "Experiencia", e.ExperienciaId,
+            new Dictionary<string, string> { ["experienciaId"] = e.ExperienciaId.ToString(), ["accion"] = "adjunto_eliminado" }, ct);
+        return MapExperiencia(e);
+    }
+
+    public async Task<ArchivoContenidoDto?> GetAdjuntoExperienciaAsync(int curriculumId, int id, CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Experiencias, id, curriculumId, ct);
+        if (e.AdjuntoSoporteBytes is null || e.AdjuntoSoporteContentType is null) return null;
+        return new ArchivoContenidoDto(e.AdjuntoSoporteBytes, e.AdjuntoSoporteContentType);
+    }
+
     // --- Formación ---
 
+    /// <summary>Proyección inline -- mismo motivo que GetExperienciasAsync: evita que EF
+    /// materialice AdjuntoSoporteBytes completo por cada fila.</summary>
     public async Task<IReadOnlyList<FormacionDto>> GetFormacionesAsync(int curriculumId, CancellationToken ct = default)
         => await _context.Formaciones.AsNoTracking()
             .Where(f => f.CurriculumId == curriculumId)
             .OrderByDescending(f => f.FechaInicio)
-            .Select(f => MapFormacion(f)).ToListAsync(ct);
+            .Select(f => new FormacionDto(
+                f.FormacionId, f.Titulo, f.Institucion, f.Area, f.FechaInicio, f.FechaFin,
+                f.TipoFormacion, f.Descripcion,
+                f.AdjuntoSoporteBytes != null ? $"/api/cv/formaciones/{f.FormacionId}/adjunto" : f.AdjuntoSoporte,
+                f.FechaVigencia, f.DuracionHoras, f.MostrarEnCv))
+            .ToListAsync(ct);
 
     public async Task<FormacionDto> CreateFormacionAsync(int curriculumId, UpsertFormacionRequest r, CancellationToken ct = default)
     {
@@ -232,7 +360,7 @@ public class CvEditorService : ICvEditorService
             Titulo = r.Titulo, Institucion = r.Institucion, Area = r.Area,
             FechaInicio = r.FechaInicio, FechaFin = r.FechaFin,
             TipoFormacion = r.TipoFormacion, Descripcion = r.Descripcion,
-            AdjuntoSoporte = r.AdjuntoSoporte, FechaVigencia = r.FechaVigencia,
+            FechaVigencia = r.FechaVigencia,
             DuracionHoras = r.DuracionHoras,
             MostrarEnCv = r.MostrarEnCv ?? true
         };
@@ -253,7 +381,7 @@ public class CvEditorService : ICvEditorService
         e.Titulo = r.Titulo; e.Institucion = r.Institucion; e.Area = r.Area;
         e.FechaInicio = r.FechaInicio; e.FechaFin = r.FechaFin;
         e.TipoFormacion = r.TipoFormacion; e.Descripcion = r.Descripcion;
-        e.AdjuntoSoporte = r.AdjuntoSoporte; e.FechaVigencia = r.FechaVigencia;
+        e.FechaVigencia = r.FechaVigencia;
         e.DuracionHoras = r.DuracionHoras;
         e.MostrarEnCv = r.MostrarEnCv ?? true;
         await GuardarCambiosAsync(ct);
@@ -283,6 +411,38 @@ public class CvEditorService : ICvEditorService
     public Task DeleteFormacionAsync(int curriculumId, int id, CancellationToken ct = default)
         => DeleteEntidadAsync(_context.Formaciones, curriculumId, id, CvAuditoriaAcciones.FormacionDelete, "Formacion", "formacionId", ct);
 
+    public async Task<FormacionDto> UpsertAdjuntoFormacionAsync(
+        int curriculumId, int id, byte[] contenido, string? contentType, CancellationToken ct = default)
+    {
+        ValidarAdjuntoPdf(contenido, contentType);
+        var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
+        e.AdjuntoSoporteBytes = contenido;
+        e.AdjuntoSoporteContentType = contentType;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
+            new Dictionary<string, string> { ["formacionId"] = e.FormacionId.ToString(), ["accion"] = "adjunto" }, ct);
+        return MapFormacion(e);
+    }
+
+    public async Task<FormacionDto> EliminarAdjuntoFormacionAsync(int curriculumId, int id, CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
+        e.AdjuntoSoporteBytes = null;
+        e.AdjuntoSoporteContentType = null;
+        e.AdjuntoSoporte = null;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.FormacionUpdate, "Formacion", e.FormacionId,
+            new Dictionary<string, string> { ["formacionId"] = e.FormacionId.ToString(), ["accion"] = "adjunto_eliminado" }, ct);
+        return MapFormacion(e);
+    }
+
+    public async Task<ArchivoContenidoDto?> GetAdjuntoFormacionAsync(int curriculumId, int id, CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Formaciones, id, curriculumId, ct);
+        if (e.AdjuntoSoporteBytes is null || e.AdjuntoSoporteContentType is null) return null;
+        return new ArchivoContenidoDto(e.AdjuntoSoporteBytes, e.AdjuntoSoporteContentType);
+    }
+
     // --- Habilidades ---
 
     public async Task<IReadOnlyList<HabilidadDto>> GetHabilidadesAsync(int curriculumId, CancellationToken ct = default)
@@ -300,7 +460,8 @@ public class CvEditorService : ICvEditorService
             CurriculumId = curriculumId, Nombre = r.Nombre, Tipo = r.Tipo,
             Nivel = NormalizeHabilidadNivelForStorage(r.Nivel), Descripcion = r.Descripcion,
             NivelLectura = r.NivelLectura, NivelEscritura = r.NivelEscritura,
-            NivelEscucha = r.NivelEscucha, NivelHabla = r.NivelHabla
+            NivelEscucha = r.NivelEscucha, NivelHabla = r.NivelHabla,
+            MostrarEnCv = r.MostrarEnCv ?? true
         };
         _context.Habilidades.Add(e);
         await GuardarCambiosAsync(ct);
@@ -315,9 +476,28 @@ public class CvEditorService : ICvEditorService
         e.Nombre = r.Nombre; e.Tipo = r.Tipo; e.Nivel = NormalizeHabilidadNivelForStorage(r.Nivel); e.Descripcion = r.Descripcion;
         e.NivelLectura = r.NivelLectura; e.NivelEscritura = r.NivelEscritura;
         e.NivelEscucha = r.NivelEscucha; e.NivelHabla = r.NivelHabla;
+        e.MostrarEnCv = r.MostrarEnCv ?? true;
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadUpdate, "Habilidad", e.HabilidadId,
             new Dictionary<string, string> { ["habilidadId"] = e.HabilidadId.ToString() }, ct);
+        return MapHabilidad(e);
+    }
+
+    public async Task<HabilidadDto> UpdateHabilidadVisibilidadAsync(
+        int curriculumId,
+        int id,
+        UpdateHabilidadVisibilidadRequest r,
+        CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Habilidades, id, curriculumId, ct);
+        e.MostrarEnCv = r.MostrarEnCv;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.HabilidadUpdate, "Habilidad", e.HabilidadId,
+            new Dictionary<string, string>
+            {
+                ["habilidadId"] = e.HabilidadId.ToString(),
+                ["mostrarEnCv"] = e.MostrarEnCv ? "true" : "false"
+            }, ct);
         return MapHabilidad(e);
     }
 
@@ -399,6 +579,7 @@ public class CvEditorService : ICvEditorService
             Email = r.Email, Telefono = r.Telefono, Parentesco = r.Parentesco,
             Cargo = r.Cargo, Empresa = r.Empresa, Relacion = r.Relacion,
             Observaciones = r.Observaciones, AdjuntoSoporte = r.AdjuntoSoporte,
+            MostrarEnCv = r.MostrarEnCv ?? true,
             FechaRegistro = DateTime.UtcNow
         };
         _context.Referencias.Add(e);
@@ -420,9 +601,25 @@ public class CvEditorService : ICvEditorService
         e.Telefono = r.Telefono; e.Parentesco = r.Parentesco; e.Cargo = r.Cargo;
         e.Empresa = r.Empresa; e.Relacion = r.Relacion; e.Observaciones = r.Observaciones;
         e.AdjuntoSoporte = r.AdjuntoSoporte;
+        e.MostrarEnCv = r.MostrarEnCv ?? true;
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaUpdate, "Referencia", e.ReferenciaId,
             new Dictionary<string, string> { ["referenciaId"] = e.ReferenciaId.ToString() }, ct);
+        return MapReferencia(e);
+    }
+
+    public async Task<ReferenciaDto> UpdateReferenciaVisibilidadAsync(
+        int curriculumId, int id, UpdateReferenciaVisibilidadRequest r, CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Referencias, id, curriculumId, ct);
+        e.MostrarEnCv = r.MostrarEnCv;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.ReferenciaUpdate, "Referencia", e.ReferenciaId,
+            new Dictionary<string, string>
+            {
+                ["referenciaId"] = e.ReferenciaId.ToString(),
+                ["mostrarEnCv"] = e.MostrarEnCv ? "true" : "false"
+            }, ct);
         return MapReferencia(e);
     }
 
@@ -438,7 +635,11 @@ public class CvEditorService : ICvEditorService
 
     public async Task<RedSocialDto> CreateRedSocialAsync(int curriculumId, UpsertRedSocialRequest r, CancellationToken ct = default)
     {
-        var e = new RedSocial { CurriculumId = curriculumId, NombreRed = r.NombreRed, LinkPublico = r.LinkPublico, UsuarioContacto = r.UsuarioContacto };
+        var e = new RedSocial
+        {
+            CurriculumId = curriculumId, NombreRed = r.NombreRed, LinkPublico = r.LinkPublico,
+            UsuarioContacto = r.UsuarioContacto, MostrarEnCv = r.MostrarEnCv ?? true
+        };
         _context.RedesSociales.Add(e);
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialCreate, "RedSocial", e.RedSocialId,
@@ -450,9 +651,28 @@ public class CvEditorService : ICvEditorService
     {
         var e = await GetOwnedOrThrowAsync(_context.RedesSociales, id, curriculumId, ct);
         e.NombreRed = r.NombreRed; e.LinkPublico = r.LinkPublico; e.UsuarioContacto = r.UsuarioContacto;
+        e.MostrarEnCv = r.MostrarEnCv ?? true;
         await GuardarCambiosAsync(ct);
         await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialUpdate, "RedSocial", e.RedSocialId,
             new Dictionary<string, string> { ["redSocialId"] = e.RedSocialId.ToString() }, ct);
+        return MapRedSocial(e);
+    }
+
+    public async Task<RedSocialDto> UpdateRedSocialVisibilidadAsync(
+        int curriculumId,
+        int id,
+        UpdateRedSocialVisibilidadRequest r,
+        CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.RedesSociales, id, curriculumId, ct);
+        e.MostrarEnCv = r.MostrarEnCv;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.RedSocialUpdate, "RedSocial", e.RedSocialId,
+            new Dictionary<string, string>
+            {
+                ["redSocialId"] = e.RedSocialId.ToString(),
+                ["mostrarEnCv"] = e.MostrarEnCv ? "true" : "false"
+            }, ct);
         return MapRedSocial(e);
     }
 
@@ -594,6 +814,104 @@ public class CvEditorService : ICvEditorService
         return await GetPresentacionAsync(curriculumId, ct);
     }
 
+    // --- Ofertas analizadas ---
+
+    private static readonly string[] OfertaOrigenesValidos = { "texto", "imagen", "ambos" };
+    private static readonly string[] OfertaEstadosValidos = { "Analizada", "PerfilAsignado", "EnviadaPorCorreo" };
+
+    public async Task<IReadOnlyList<OfertaDto>> GetOfertasAsync(int curriculumId, CancellationToken ct = default)
+        => await _context.Ofertas.AsNoTracking()
+            .Where(o => o.CurriculumId == curriculumId)
+            .OrderByDescending(o => o.FechaAnalisis)
+            .Select(o => MapOferta(o)).ToListAsync(ct);
+
+    public async Task<OfertaDto> CreateOfertaAsync(int curriculumId, UpsertOfertaRequest r, CancellationToken ct = default)
+    {
+        await ValidarOfertaAsync(curriculumId, r, ofertaIdActual: null, ct);
+
+        var e = new Oferta
+        {
+            CurriculumId = curriculumId,
+            Cargo = r.Cargo.Trim(),
+            Empresa = r.Empresa.Trim(),
+            Descripcion = r.Descripcion,
+            CorreoReclutador = r.CorreoReclutador,
+            NombreReclutador = r.NombreReclutador,
+            Modalidad = r.Modalidad,
+            TipoContrato = r.TipoContrato,
+            Moneda = r.Moneda,
+            Duracion = r.Duracion,
+            Horario = r.Horario,
+            ExperienciaRequerida = r.ExperienciaRequerida,
+            StackTecnologico = r.StackTecnologico,
+            NivelIdioma = r.NivelIdioma,
+            TextoOriginal = r.TextoOriginal,
+            OrigenEntrada = r.OrigenEntrada,
+            Estado = r.Estado,
+            PerfilId = r.PerfilId,
+            FechaAnalisis = DateTime.UtcNow
+        };
+        _context.Ofertas.Add(e);
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.OfertaCreate, "Oferta", e.OfertaId,
+            new Dictionary<string, string> { ["cargo"] = e.Cargo, ["empresa"] = e.Empresa }, ct);
+        return MapOferta(e);
+    }
+
+    public async Task<OfertaDto> UpdateOfertaAsync(int curriculumId, int id, UpsertOfertaRequest r, CancellationToken ct = default)
+    {
+        var e = await GetOwnedOrThrowAsync(_context.Ofertas, id, curriculumId, ct);
+        await ValidarOfertaAsync(curriculumId, r, ofertaIdActual: id, ct);
+
+        e.Cargo = r.Cargo.Trim();
+        e.Empresa = r.Empresa.Trim();
+        e.Descripcion = r.Descripcion;
+        e.CorreoReclutador = r.CorreoReclutador;
+        e.NombreReclutador = r.NombreReclutador;
+        e.Modalidad = r.Modalidad;
+        e.TipoContrato = r.TipoContrato;
+        e.Moneda = r.Moneda;
+        e.Duracion = r.Duracion;
+        e.Horario = r.Horario;
+        e.ExperienciaRequerida = r.ExperienciaRequerida;
+        e.StackTecnologico = r.StackTecnologico;
+        e.NivelIdioma = r.NivelIdioma;
+        e.TextoOriginal = r.TextoOriginal;
+        e.OrigenEntrada = r.OrigenEntrada;
+        e.Estado = r.Estado;
+        e.PerfilId = r.PerfilId;
+        await GuardarCambiosAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.OfertaUpdate, "Oferta", e.OfertaId,
+            new Dictionary<string, string> { ["ofertaId"] = e.OfertaId.ToString() }, ct);
+        return MapOferta(e);
+    }
+
+    public async Task DeleteOfertaAsync(int curriculumId, int id, CancellationToken ct = default)
+        => await DeleteEntidadAsync(_context.Ofertas, curriculumId, id, CvAuditoriaAcciones.OfertaDelete, "Oferta", "ofertaId", ct);
+
+    /// <summary>Duplicados: mismo (Cargo, Empresa) normalizado (trim + mayúsculas) para el mismo curriculum —
+    /// propuesta simple de la sección 3 del roadmap, sin matching difuso.</summary>
+    private async Task ValidarOfertaAsync(int curriculumId, UpsertOfertaRequest r, int? ofertaIdActual, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(r.Cargo)) throw new ArgumentException("El cargo de la oferta es requerido.");
+        if (string.IsNullOrWhiteSpace(r.Empresa)) throw new ArgumentException("La empresa de la oferta es requerida.");
+        if (string.IsNullOrWhiteSpace(r.TextoOriginal)) throw new ArgumentException("El texto original de la oferta es requerido.");
+        if (!OfertaOrigenesValidos.Contains(r.OrigenEntrada))
+            throw new ArgumentException("El origen de entrada de la oferta no es válido.");
+        if (!OfertaEstadosValidos.Contains(r.Estado))
+            throw new ArgumentException("El estado de la oferta no es válido.");
+
+        var cargoNorm = r.Cargo.Trim().ToUpperInvariant();
+        var empresaNorm = r.Empresa.Trim().ToUpperInvariant();
+
+        var duplicada = await _context.Ofertas.AsNoTracking()
+            .Where(o => o.CurriculumId == curriculumId && (ofertaIdActual == null || o.OfertaId != ofertaIdActual.Value))
+            .AnyAsync(o => o.Cargo.ToUpper() == cargoNorm && o.Empresa.ToUpper() == empresaNorm, ct);
+
+        if (duplicada)
+            throw new ArgumentException("Ya existe una oferta guardada con el mismo cargo y empresa.");
+    }
+
     private async Task<int> CalcularExperienciaLaboralMesesAcumuladosAsync(int curriculumId, CancellationToken ct)
     {
         var rows = await _context.Experiencias.AsNoTracking()
@@ -705,19 +1023,24 @@ public class CvEditorService : ICvEditorService
         e.FechaNacimiento, e.LugarNacimiento, e.Genero, e.Nacionalidad, e.TipoSangre,
         e.EPS, e.Pencion, e.Cesantias, e.Email, e.Celular, e.TelefonoFijo,
         e.Pais, e.Departamento, e.Ciudad, e.Barrio, e.CodigoPostal, e.Direccion,
-        e.TipoResidencia, e.FotoUrl);
+        e.TipoResidencia, e.FotoBytes is not null ? "/api/cv/personales/foto" : e.FotoUrl);
 
     private static PerfilDto MapPerfil(Perfil e) => new(
         e.PerfilId, e.NombrePerfil, e.DescripcionPerfil,
-        e.ExperienciaPerfilAnios, e.AspiracionSalarialPesos, e.AspiracionSalarialDolares, e.EsActivo);
+        e.ExperienciaPerfilAnios, e.AspiracionSalarialPesos, e.AspiracionSalarialDolares, e.EsActivo,
+        e.MostrarExperienciaPerfil, e.MostrarAspiracionSalarial);
 
     private static ExperienciaDto MapExperiencia(Experiencia e) => new(
         e.ExperienciaId, e.Empresa, e.Cargo, e.Sector, e.FechaInicio, e.FechaFin,
-        e.TipoContrato, e.MotivoRetiro, e.Funciones, e.EsActual, e.MostrarEnCv, e.AdjuntoSoporte, e.FechaRegistro);
+        e.TipoContrato, e.MotivoRetiro, e.Funciones, e.EsActual, e.MostrarEnCv,
+        e.AdjuntoSoporteBytes is not null ? $"/api/cv/experiencias/{e.ExperienciaId}/adjunto" : e.AdjuntoSoporte,
+        e.FechaRegistro);
 
     private static FormacionDto MapFormacion(Formacion e) => new(
         e.FormacionId, e.Titulo, e.Institucion, e.Area, e.FechaInicio, e.FechaFin,
-        e.TipoFormacion, e.Descripcion, e.AdjuntoSoporte, e.FechaVigencia, e.DuracionHoras, e.MostrarEnCv);
+        e.TipoFormacion, e.Descripcion,
+        e.AdjuntoSoporteBytes is not null ? $"/api/cv/formaciones/{e.FormacionId}/adjunto" : e.AdjuntoSoporte,
+        e.FechaVigencia, e.DuracionHoras, e.MostrarEnCv);
 
     /// <summary>CK SQL histórico: solo 'Basico' sin tilde; el front envía 'Básico'.</summary>
     private static string? NormalizeHabilidadNivelForStorage(string? nivel)
@@ -737,7 +1060,7 @@ public class CvEditorService : ICvEditorService
 
     private static HabilidadDto MapHabilidad(Habilidad e) => new(
         e.HabilidadId, e.Nombre, e.Tipo, NormalizeHabilidadNivelForApi(e.Nivel), e.Descripcion,
-        e.NivelLectura, e.NivelEscritura, e.NivelEscucha, e.NivelHabla);
+        e.NivelLectura, e.NivelEscritura, e.NivelEscucha, e.NivelHabla, e.MostrarEnCv);
 
     private static ProyectoDto MapProyecto(Proyecto e) => new(
         e.ProyectoId, e.NombreProyecto, e.Rol, e.EquipoTamano, e.DuracionMeses,
@@ -746,12 +1069,18 @@ public class CvEditorService : ICvEditorService
     private static ReferenciaDto MapReferencia(Referencia e) => new(
         e.ReferenciaId, e.TipoReferencia, e.ExperienciaId, e.Nombre, e.Apellido,
         e.Email, e.Telefono, e.Parentesco, e.Cargo, e.Empresa, e.Relacion,
-        e.Observaciones, e.AdjuntoSoporte, e.FechaRegistro);
+        e.Observaciones, e.AdjuntoSoporte, e.FechaRegistro, e.MostrarEnCv);
 
     private static RedSocialDto MapRedSocial(RedSocial e) => new(
-        e.RedSocialId, e.NombreRed, e.LinkPublico, e.UsuarioContacto);
+        e.RedSocialId, e.NombreRed, e.LinkPublico, e.UsuarioContacto, e.MostrarEnCv);
 
     private static FamiliarContactoDto MapFamiliar(FamiliarContacto e) => new(
         e.FamiliarId, e.Parentesco, e.Nombres, e.Apellidos, e.Email, e.Telefono, e.EsContactoPrincipal);
+
+    private static OfertaDto MapOferta(Oferta e) => new(
+        e.OfertaId, e.Cargo, e.Empresa, e.Descripcion, e.CorreoReclutador, e.NombreReclutador,
+        e.TextoOriginal, e.OrigenEntrada, e.Estado, e.PerfilId, e.FechaAnalisis, e.FechaEnvioCorreo,
+        e.Modalidad, e.TipoContrato, e.Moneda, e.Duracion, e.Horario, e.ExperienciaRequerida,
+        e.StackTecnologico, e.NivelIdioma);
 }
 

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import {
   CvEditorService,
   ProyectoDto,
@@ -37,6 +38,7 @@ export class ProyectosComponent implements OnInit {
   loading = false;
   guardando = false;
   guardandoVisibilidadProyectoId: number | null = null;
+  guardandoVisibilidadBloque = false;
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -105,6 +107,59 @@ export class ProyectosComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         p.form.mostrarEnCv = prev;
         this.guardandoVisibilidadProyectoId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  get hayProyectosGuardados(): boolean {
+    return this.proyectos.some(p => p.proyectoId !== 0);
+  }
+
+  get hayProyectosOcultos(): boolean {
+    return this.proyectos.some(p => p.proyectoId !== 0 && !p.form.mostrarEnCv);
+  }
+
+  get hayProyectosVisibles(): boolean {
+    return this.proyectos.some(p => p.proyectoId !== 0 && p.form.mostrarEnCv);
+  }
+
+  activarTodos(): void {
+    this.actualizarVisibilidadEnBloque(true);
+  }
+
+  inactivarTodos(): void {
+    this.actualizarVisibilidadEnBloque(false);
+  }
+
+  private actualizarVisibilidadEnBloque(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloque) {
+      return;
+    }
+    const objetivo = this.proyectos.filter(
+      p => p.proyectoId !== 0 && p.form.mostrarEnCv !== mostrar
+    );
+    if (objetivo.length === 0) {
+      return;
+    }
+    this.guardandoVisibilidadBloque = true;
+    forkJoin(
+      objetivo.map(p =>
+        this.cvEditorService.updateProyectoVisibilidad(p.proyectoId, { mostrarEnCv: mostrar })
+      )
+    ).subscribe({
+      next: actualizados => {
+        actualizados.forEach(actualizado => {
+          const p = this.proyectos.find(x => x.proyectoId === actualizado.proyectoId);
+          if (p) {
+            Object.assign(p, this.dtoToUi(actualizado, p.expanded));
+          }
+        });
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoVisibilidadBloque = false;
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
       },
     });

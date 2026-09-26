@@ -1,54 +1,71 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { forkJoin, Subject } from 'rxjs';
-import { filter, skip, takeUntil } from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
+import { CvGeneradoService, CvGeneradoDto } from '../../../core/services/private/cv-generado.service';
 import {
   CvEditorService,
-  ExperienciaDto,
-  FormacionDto,
-  HabilidadDto,
   PerfilDto,
   PersonalesDto,
-  ProyectoDto,
   RedSocialDto,
-  ReferenciaDto,
   VisibilidadSeccionDto,
 } from '../../../core/services/private/cv-editor.service';
-import {
-  CV_PLANTILLAS,
-  type CvPlantillaCodigo,
-  normalizeCvPlantillaCodigo,
-} from '../../../core/constants/cv-plantillas';
+import { CV_PLANTILLAS, normalizeCvPlantillaCodigo, type CvPlantillaCodigo } from '../../../core/constants/cv-plantillas';
+import { VisibilidadSeccionResolver } from '../../../core/utils/visibilidad-seccion-resolver';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
-import type { CvPreviewVm, CvPreviewVisibilidad } from '../../../shared/models/cv-preview-vm';
+import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
 
+/** Icono por red social conocida (mismo criterio que cv-plantilla-preview.component.ts). */
+const ICONOS_RED: Record<string, string> = {
+  linkedin: 'bi-linkedin',
+  github: 'bi-github',
+  x: 'bi-twitter-x',
+  twitter: 'bi-twitter-x',
+  instagram: 'bi-instagram',
+  facebook: 'bi-facebook',
+  youtube: 'bi-youtube',
+  portafolio: 'bi-globe',
+};
+
+/** "Mi CV": general por Perfil (perfil + currículum completo, sin oferta de por medio):
+ * la IA redacta un resumen y condensa experiencia/formación/proyectos/habilidades para
+ * caber en máximo 3 hojas, mostrado con la misma apariencia visual (colores, tipografía,
+ * foto y encabezado) que "Profesional", pero como bloques de texto, no como las tarjetas
+ * estructuradas de esa vista -- el encabezado (foto, nombre, contacto) sí usa los datos
+ * reales de Personales tal cual, nunca los de la IA.
+ * El consolidado de toda la información profesional (lo que esta página mostraba antes)
+ * vive ahora en ProfesionalComponent. */
 @Component({
   selector: 'app-mi-cv',
   standalone: false,
   templateUrl: './mi-cv.component.html',
 })
-export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
-  readonly plantillas = CV_PLANTILLAS;
+export class MiCvComponent implements OnInit {
+  loading = true;
 
-  loading = false;
-  savingPlantilla = false;
-
-  personales: PersonalesDto | null = null;
   perfiles: PerfilDto[] = [];
-  experiencias: ExperienciaDto[] = [];
-  formaciones: FormacionDto[] = [];
-  habilidades: HabilidadDto[] = [];
-  proyectos: ProyectoDto[] = [];
-  redes: RedSocialDto[] = [];
-  referencias: ReferenciaDto[] = [];
-  private visibilidadMap = new Map<string, boolean>();
-  private readonly destroy$ = new Subject<void>();
+  cvsGenerados: CvGeneradoDto[] = [];
+  perfilSeleccionadoId: number | null = null;
+  generandoCvPerfil = false;
 
-  /** Plantilla de presentación (API). */
+  cvPerfilAbierto: CvGeneradoDto | null = null;
+
+  /** Datos crudos del encabezado (foto, nombre, contacto, plantilla) para el CV por
+   * perfil -- se cargan una sola vez, recién cuando se abre el primer CV por perfil (no
+   * hace falta si el usuario solo mira CVs por oferta). */
+  private datosEncabezadoCargados = false;
+  /** Público: el encabezado del CV por perfil lo lee directo desde la plantilla
+   * (personales?.email). */
+  personales: PersonalesDto | null = null;
+  private redes: RedSocialDto[] = [];
+  private visibilidadSeccion: VisibilidadSeccionDto[] = [];
   plantillaCodigo: CvPlantillaCodigo = 'clasico';
   private plantillaCodigoPersistida: CvPlantillaCodigo = 'clasico';
-  experienciaLaboralMesesAcumulados = 0;
+
+  /** Selector de plantilla (mismo control que ProfesionalComponent) -- la plantilla es
+   * una preferencia única del currículum, compartida con Profesional y el CV público. */
+  readonly plantillas = CV_PLANTILLAS;
+  savingPlantilla = false;
 
   get plantillaResumen(): string {
     return CV_PLANTILLAS.find(p => p.codigo === this.plantillaCodigo)?.resumen ?? '';
@@ -67,32 +84,77 @@ export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
   }
 
   constructor(
+    private cvGeneradoService: CvGeneradoService,
     private cvEditorService: CvEditorService,
-    private notificationService: NotificationService,
-    private router: Router
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
-    this.cargarDatos();
-    this.router.events
-      .pipe(
-        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-        skip(1),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(e => {
-        if (e.urlAfterRedirects.includes('/mi-cv')) {
-          this.cargarDatos();
-        }
-      });
+    this.loading = true;
+    forkJoin({
+      perfiles: this.cvEditorService.getPerfiles(),
+      cvsGenerados: this.cvGeneradoService.listar(),
+    }).subscribe({
+      next: ({ perfiles, cvsGenerados }) => {
+        this.perfiles = perfiles;
+        this.cvsGenerados = cvsGenerados;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      },
+    });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  private cargarCvsPorPerfil(): void {
+    this.cvGeneradoService.listar().subscribe({
+      next: data => (this.cvsGenerados = data),
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
+    });
   }
 
-  imprimir(): void {
+  trackByCvGenerado(_index: number, cv: CvGeneradoDto): number {
+    return cv.cvGeneradoId;
+  }
+
+  /** Fecha del CV ya generado (si existe) para el Perfil seleccionado en el combo --
+   * el botón dice "Regenerar" en vez de "Generar" cuando ya hay uno. */
+  get cvExistenteParaPerfilSeleccionado(): CvGeneradoDto | null {
+    if (this.perfilSeleccionadoId === null) return null;
+    return this.cvsGenerados.find(c => c.perfilId === this.perfilSeleccionadoId) ?? null;
+  }
+
+  generarCvDesdePerfil(): void {
+    if (this.perfilSeleccionadoId === null || this.generandoCvPerfil) return;
+
+    this.generandoCvPerfil = true;
+    this.cvGeneradoService.generar(this.perfilSeleccionadoId).subscribe({
+      next: cv => {
+        this.generandoCvPerfil = false;
+        this.cargarCvsPorPerfil();
+        this.abrirCvPerfil(cv);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.generandoCvPerfil = false;
+        this.notificationService.error(extractApiErrorMessage(error) || 'No se pudo generar el CV.');
+      },
+    });
+  }
+
+  abrirCvPerfil(cv: CvGeneradoDto): void {
+    if (this.datosEncabezadoCargados) {
+      this.cvPerfilAbierto = cv;
+      return;
+    }
+    this.cargarDatosEncabezado(() => (this.cvPerfilAbierto = cv));
+  }
+
+  cerrarCv(): void {
+    this.cvPerfilAbierto = null;
+  }
+
+  imprimirCv(): void {
     window.print();
   }
 
@@ -113,7 +175,6 @@ export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
       next: p => {
         this.plantillaCodigo = normalizeCvPlantillaCodigo(p.plantillaCodigo);
         this.plantillaCodigoPersistida = this.plantillaCodigo;
-        this.experienciaLaboralMesesAcumulados = p.experienciaLaboralMesesAcumulados ?? 0;
         this.savingPlantilla = false;
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
       },
@@ -131,201 +192,119 @@ export class MiCvComponent implements OnInit, OnDestroy, CvPreviewVisibilidad {
     this.plantillaCodigo = this.plantillaCodigoPersistida;
   }
 
-  /** Modelo único para la vista de plantilla (compartida con el portal público). */
-  get previewVm(): CvPreviewVm {
+  /** Nombres de las habilidades elegidas por la IA para el CV por perfil abierto, según
+   * su tipo real -- usado por la plantilla Corporativo para agruparlas en la barra
+   * lateral (Técnicas/Blandas/Idiomas), igual que en Profesional. Sin tipo reconocido
+   * (o "Otra") cae en "tecnica", mismo criterio que CvPlantillaPreviewComponent. */
+  habilidadesPorTipo(tipo: 'tecnica' | 'blanda' | 'idioma'): string[] {
+    const habilidades = this.cvPerfilAbierto?.contenido.habilidades ?? [];
+    return habilidades
+      .filter(h => {
+        const t = (h.tipo ?? '').trim();
+        if (tipo === 'blanda') return t === 'Blanda';
+        if (tipo === 'idioma') return t === 'Idioma';
+        return t === 'Tecnica' || t === 'Otra' || !t;
+      })
+      .map(h => h.nombre);
+  }
+
+  /** Datos del Perfil elegido tal cual están guardados (para años/aspiración salarial
+   * en el bloque "Perfil Profesional" -- la IA no toca esos campos). */
+  get perfilBaseAbierto(): PerfilDto | null {
+    if (!this.cvPerfilAbierto) return null;
+    return this.perfiles.find(p => p.perfilId === this.cvPerfilAbierto!.perfilId) ?? null;
+  }
+
+  get nombreCompleto(): string {
     const p = this.personales;
-    const nombreCompleto = !p
-      ? 'Tu nombre'
-      : [p.primerNombre, p.segundoNombre, p.primerApellido, p.segundoApellido]
-          .filter(Boolean)
-          .join(' ')
-          .trim() || 'Tu nombre';
-    return {
-      plantillaCodigo: this.plantillaCodigo,
-      experienciaLaboralMesesAcumulados: this.experienciaLaboralMesesAcumulados,
-      personales: !p
-        ? null
-        : {
-            nombreCompleto,
-            fotoUrl: p.fotoUrl?.trim() || null,
-            email: p.email?.trim() || null,
-            telefono: p.celular?.trim() || p.telefonoFijo?.trim() || null,
-            ciudad: p.ciudad?.trim() || null,
-            pais: p.pais?.trim() || null,
-          },
-      perfiles: this.perfiles.map(x => ({
-        perfilId: x.perfilId,
-        nombrePerfil: x.nombrePerfil,
-        descripcionPerfil: x.descripcionPerfil,
-        esActivo: x.esActivo,
-        aspiracionSalarialPesos: x.aspiracionSalarialPesos,
-        aspiracionSalarialDolares: x.aspiracionSalarialDolares,
-        experienciaPerfilAnios: x.experienciaPerfilAnios,
-      })),
-      experiencias: this.experiencias
-        .filter(e => e.mostrarEnCv !== false)
-        .map(e => ({
-          experienciaId: e.experienciaId,
-          empresa: e.empresa,
-          cargo: e.cargo,
-          fechaInicio: e.fechaInicio,
-          fechaFin: e.fechaFin,
-          esActual: e.esActual,
-          funciones: e.funciones,
-          tipoContrato: e.tipoContrato,
-          adjuntoSoporte: e.adjuntoSoporte,
-        })),
-      formaciones: this.formaciones.filter(f => f.mostrarEnCv !== false).map(f => ({
-        formacionId: f.formacionId,
-        titulo: f.titulo,
-        institucion: f.institucion,
-        tipoFormacion: f.tipoFormacion,
-        fechaInicio: f.fechaInicio,
-        fechaFin: f.fechaFin,
-        adjuntoSoporte: f.adjuntoSoporte,
-      })),
-      habilidades: this.habilidades.map(h => ({
-        habilidadId: h.habilidadId,
-        nombre: h.nombre,
-        tipo: h.tipo,
-        nivel: h.nivel,
-        descripcion: h.descripcion,
-        nivelLectura: h.nivelLectura,
-        nivelEscritura: h.nivelEscritura,
-        nivelEscucha: h.nivelEscucha,
-        nivelHabla: h.nivelHabla,
-      })),
-      proyectos: this.proyectos.filter(pr => pr.mostrarEnCv !== false).map(pr => ({
-        proyectoId: pr.proyectoId,
-        nombreProyecto: pr.nombreProyecto,
-        rol: pr.rol,
-        equipoTamano: pr.equipoTamano,
-        duracionMeses: pr.duracionMeses,
-        stackTecnologico: pr.stackTecnologico,
-        aporte: pr.aporte,
-        logro: pr.logro,
-        desafio: pr.desafio,
-      })),
-      redesSociales: this.redes.map(r => ({
-        redSocialId: r.redSocialId,
-        nombreRed: r.nombreRed,
-        linkPublico: r.linkPublico,
-        usuarioContacto: r.usuarioContacto,
-      })),
-      referenciasLaborales: this.referencias
-        .filter(r => (r.tipoReferencia ?? '').toLowerCase() === 'laboral')
-        .map(r => ({
-          referenciaId: r.referenciaId,
-          experienciaId: r.experienciaId,
-          nombre: r.nombre,
-          apellido: r.apellido,
-          cargo: r.cargo,
-          empresa: r.empresa,
-          telefono: r.telefono,
-        })),
-    };
-  }
-
-  visibleSeccion(seccion: string): boolean {
-    return this.isVisible(seccion);
-  }
-
-  visibleAtributo(seccion: string, attr: string): boolean {
-    return this.isVisible(seccion) && this.isVisible(`${seccion}.${attr}`);
-  }
-
-  /** Si la clave no está guardada en BD, se considera visible (retrocompatibilidad). */
-  visibleAtributoSafe(seccion: string, attr: string): boolean {
-    if (!this.isVisible(seccion)) return false;
-    const key = `${seccion}.${attr}`;
-    if (!this.visibilidadMap.has(key)) return true;
-    return this.visibilidadMap.get(key) === true;
-  }
-
-  visibleBloqueFormacion(bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos'): boolean {
-    if (this.visibilidadMap.has(bloque)) {
-      return this.isVisible(bloque);
-    }
-    return this.isVisible('educacion');
-  }
-
-  visibleDescargarSoporte(
-    bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos',
-    attr: string
-  ): boolean {
-    if (!this.visibleBloqueFormacion(bloque)) return false;
-    const key = `${bloque}.${attr}`;
-    if (!this.visibilidadMap.has(key)) return true;
-    return this.visibilidadMap.get(key) === true;
-  }
-
-  /** Secciones que siguen presentes en el CV aunque no tengan interruptor de sección en configuración. */
-  private seccionSiempreVisibleEnCv(key: string): boolean {
-    const k = (key ?? '').trim().toLowerCase();
+    if (!p) return 'Tu nombre';
     return (
-      k === 'datos-personales' ||
-      k === 'perfil' ||
-      k === 'experiencia' ||
-      k === 'formacion-academica'
+      [p.primerNombre, p.segundoNombre, p.primerApellido, p.segundoApellido].filter(Boolean).join(' ').trim() ||
+      'Tu nombre'
     );
   }
 
-  private isVisible(key: string): boolean {
-    const k = key.trim().toLowerCase();
-    if (this.seccionSiempreVisibleEnCv(k)) return true;
-    if (!this.visibilidadMap.has(k)) return true;
-    return this.visibilidadMap.get(k) === true;
+  get inicialesFoto(): string {
+    const parts = this.nombreCompleto.split(/\s+/).filter(Boolean);
+    const a = (parts[0]?.[0] ?? '').toUpperCase();
+    const b = (parts[1]?.[0] ?? parts[0]?.[1] ?? '').toUpperCase();
+    return a + b || 'CV';
   }
 
-  private cargarDatos(): void {
-    this.loading = true;
+  get fotoHeaderUrl(): string | null {
+    const u = this.personales?.fotoUrl?.trim();
+    if (!u) return null;
+    return this.visibilidad.visibleAtributoSafe('datos-personales', 'foto') ? u : null;
+  }
+
+  get mostrarEmail(): boolean {
+    return this.visibilidad.visibleAtributoSafe('datos-personales', 'email') && !!this.personales?.email?.trim();
+  }
+
+  get telefonoContacto(): string | null {
+    return this.personales?.celular?.trim() || this.personales?.telefonoFijo?.trim() || null;
+  }
+
+  get mostrarTelefono(): boolean {
+    return this.visibilidad.visibleAtributoSafe('datos-personales', 'telefono') && !!this.telefonoContacto;
+  }
+
+  get ciudadPais(): string | null {
+    const ciudad = this.personales?.ciudad?.trim();
+    const pais = this.personales?.pais?.trim();
+    if (!ciudad && !pais) return null;
+    return ciudad && pais ? `${ciudad}, ${pais}` : ciudad || pais || null;
+  }
+
+  get mostrarCiudadPais(): boolean {
+    return this.visibilidad.visibleAtributoSafe('datos-personales', 'ciudad-pais') && !!this.ciudadPais;
+  }
+
+  get redesConTexto(): { icono: string; texto: string }[] {
+    return this.redes
+      .filter(r => r.mostrarEnCv !== false)
+      .map(r => ({
+        icono: ICONOS_RED[(r.nombreRed ?? '').trim().toLowerCase()] ?? 'bi-link-45deg',
+        texto: (r.linkPublico?.trim() || r.usuarioContacto?.trim() || '').trim(),
+      }))
+      .filter(r => r.texto);
+  }
+
+  get aspiracionTexto(): string | null {
+    const p = this.perfilBaseAbierto;
+    if (!p) return null;
+    const cop = p.aspiracionSalarialPesos;
+    const usd = p.aspiracionSalarialDolares;
+    if (cop == null && usd == null) return null;
+    const parts: string[] = [];
+    if (cop != null) parts.push(`$${Math.round(Number(cop)).toLocaleString('es-CO', { maximumFractionDigits: 0 })} COP`);
+    if (usd != null) parts.push(`$${Number(usd).toLocaleString('en-US', { maximumFractionDigits: 0 })} USD mensuales`);
+    return parts.join(' / ');
+  }
+
+  private cargarDatosEncabezado(alTerminar: () => void): void {
     forkJoin({
       personales: this.cvEditorService.getPersonales(),
-      perfiles: this.cvEditorService.getPerfiles(),
-      experiencias: this.cvEditorService.getExperiencias(),
-      formaciones: this.cvEditorService.getFormaciones(),
-      habilidades: this.cvEditorService.getHabilidades(),
-      proyectos: this.cvEditorService.getProyectos(),
       redes: this.cvEditorService.getRedesSociales(),
-      referencias: this.cvEditorService.getReferencias(),
-      visibilidad: this.cvEditorService.getVisibilidad(),
+      visibilidadSeccion: this.cvEditorService.getVisibilidad(),
       presentacion: this.cvEditorService.getPresentacion(),
     }).subscribe({
-      next: ({
-        personales,
-        perfiles,
-        experiencias,
-        formaciones,
-        habilidades,
-        proyectos,
-        redes,
-        referencias,
-        visibilidad,
-        presentacion,
-      }) => {
+      next: ({ personales, redes, visibilidadSeccion, presentacion }) => {
         this.personales = personales;
-        this.perfiles = perfiles;
-        this.experiencias = experiencias;
-        this.formaciones = formaciones;
-        this.habilidades = habilidades;
-        this.proyectos = proyectos;
         this.redes = redes;
-        this.referencias = referencias;
-        this.setVisibilidad(visibilidad);
+        this.visibilidadSeccion = visibilidadSeccion;
         this.plantillaCodigo = normalizeCvPlantillaCodigo(presentacion.plantillaCodigo);
         this.plantillaCodigoPersistida = this.plantillaCodigo;
-        this.experienciaLaboralMesesAcumulados = presentacion.experienciaLaboralMesesAcumulados ?? 0;
-        this.loading = false;
+        this.datosEncabezadoCargados = true;
+        alTerminar();
       },
-      error: () => {
-        this.loading = false;
-        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
-      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
   }
 
-  private setVisibilidad(data: VisibilidadSeccionDto[]): void {
-    this.visibilidadMap.clear();
-    data.forEach(v => this.visibilidadMap.set((v.seccion ?? '').trim().toLowerCase(), v.visible));
+  // Misma lógica de visibilidad que ProfesionalComponent -- respeta los interruptores
+  // de "Contenido de cada pestaña" de Configuración (solo para el encabezado acá).
+  private get visibilidad(): VisibilidadSeccionResolver {
+    return new VisibilidadSeccionResolver(this.visibilidadSeccion);
   }
 }

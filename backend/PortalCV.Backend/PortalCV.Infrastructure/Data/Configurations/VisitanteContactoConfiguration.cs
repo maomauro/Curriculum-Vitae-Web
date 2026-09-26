@@ -18,8 +18,8 @@ public class VisitanteContactoConfiguration : IEntityTypeConfiguration<Visitante
         builder.Property(v => v.MotivoContacto).HasMaxLength(100);
         builder.Property(v => v.Asunto).HasMaxLength(200);
         builder.Property(v => v.ComoMeEncontraste).HasMaxLength(100);
-        builder.Property(v => v.Mensaje).HasColumnType("nvarchar(max)");
-        builder.Property(v => v.FechaContacto).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(v => v.Mensaje).HasColumnType("longtext");
+        builder.Property(v => v.FechaContacto).HasDefaultValueSql("UTC_TIMESTAMP()");
         builder.Property(v => v.EsLeido)
             .HasColumnName("EsLeida")
             .HasDefaultValue(false);

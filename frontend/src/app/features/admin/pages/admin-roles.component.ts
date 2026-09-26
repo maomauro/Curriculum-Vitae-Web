@@ -69,7 +69,7 @@ export class AdminRolesComponent implements OnInit {
       case this.publicador:
         return 'Dueño de CV y módulos del candidato.';
       case this.admin:
-        return 'Usuarios, roles y (próximamente) auditoría.';
+        return 'Usuarios, roles y auditoría.';
       default:
         return '';
     }

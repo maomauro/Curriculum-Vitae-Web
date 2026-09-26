@@ -23,8 +23,8 @@ En lugar de crear una rama por historia técnica, se mantienen **cuatro ramas de
 |------|------|-------------|
 | `feat/frontend` | Frontend Angular | Layouts, AdminLTE, páginas, componentes, services, environments |
 | `feat/backend` | Backend .NET | Endpoints, CRUDs, middleware, servicios de aplicación |
-| `feat/database` | Base de datos | Scripts SQL Server (DDL + datos de prueba) y scripts Azure SQL |
-| `feat/infra` | Infraestructura | Docker, GitHub Actions, configuración Azure |
+| `feat/database` | Base de datos | Script DDL de MariaDB (`database/01_CreateSchema.sql`) y su modelo (DBML/diccionario de datos) |
+| `feat/infra` | Infraestructura | Docker, GitHub Actions, configuración del VPS de Contabo |
 | `feat/docs` | Documentación | Cambios en `/docs`, `README.md`, `database/README.md` |
 
 **Ciclo de vida de una rama de trabajo:**

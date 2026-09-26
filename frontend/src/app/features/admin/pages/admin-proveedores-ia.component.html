@@ -1,0 +1,191 @@
+<div class="seccion-card">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <div class="seccion-titulo mb-0">
+      <i class="bi bi-robot me-2 text-primary"></i>Proveedores de IA
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" *ngIf="!mostrarForm" (click)="abrirNuevaConexion()">
+      <i class="bi bi-plus-circle me-1"></i>Agregar conexión
+    </button>
+  </div>
+  <p class="text-muted small mb-3">
+    Esta es la <strong>única conexión de IA de toda la plataforma</strong> — la usan
+    <strong>Analizar Oferta</strong>, <strong>Generar Perfil</strong>, <strong>Generar CV</strong> y los
+    prompts de todos los Publicadores por igual (una sola factura, una sola cuota compartida). Puedes
+    guardar varias (Claude, OpenAI, Gemini, un Ollama local, etc.) y elegir cuál está activa en cada
+    momento. Las claves se guardan de forma segura en el servidor — nunca vuelven a mostrarse una vez
+    guardadas.
+  </p>
+
+  <div *ngIf="loading" class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="visually-hidden">Cargando conexiones…</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && proveedoresIa.length === 0 && !mostrarForm" class="text-muted small py-2">
+    Todavía no hay ninguna conexión guardada.
+  </div>
+
+  <!-- Cabecera de columnas (solo escritorio) -- misma estructura de .row/col que cada
+       fila de datos, para que las columnas alineen exactamente. -->
+  <div *ngIf="proveedoresIa.length > 0" class="d-none d-md-block">
+    <div class="vis-row py-1">
+      <div class="row flex-grow-1 min-w-0 gx-2">
+        <div class="col-3 text-start small text-muted fw-semibold">Nombre</div>
+        <div class="col-2 text-start small text-muted fw-semibold">Proveedor</div>
+        <div class="col-3 text-start small text-muted fw-semibold">Modelo</div>
+        <div class="col-4 text-start small text-muted fw-semibold">Endpoint</div>
+      </div>
+      <div class="vis-ia-acciones" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- Lista de conexiones guardadas -->
+  <div *ngFor="let p of proveedoresIa; trackBy: trackByProveedorIa" class="vis-row align-items-center py-2">
+    <div class="row flex-grow-1 min-w-0 gx-2 align-items-center">
+      <div class="col-12 col-md-3 text-start text-truncate">
+        <span class="vis-name">{{ etiquetaConexionIa(p) }}</span>
+        <span class="badge rounded-pill ms-2" [class.badge-cv-publicado]="p.esActivo" [class.badge-cv-borrador]="!p.esActivo">
+          {{ p.esActivo ? 'Activa' : 'Inactiva' }}
+        </span>
+      </div>
+      <div class="col-6 col-md-2 small text-muted text-start text-truncate">{{ nombreProveedor(p.proveedor) }}</div>
+      <div class="col-6 col-md-3 small text-muted text-start text-truncate">
+        <code *ngIf="p.modelo">{{ p.modelo }}</code>
+      </div>
+      <div class="col-12 col-md-4 small text-muted text-start text-truncate">
+        <code *ngIf="p.endpoint">{{ p.endpoint }}</code>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0 vis-ia-acciones">
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm"
+        *ngIf="!p.esActivo"
+        title="Usar esta conexión"
+        [attr.aria-label]="'Usar esta conexión: ' + etiquetaConexionIa(p)"
+        [disabled]="activandoId === p.proveedorIaId"
+        (click)="activarConexion(p)">
+        <span *ngIf="activandoId === p.proveedorIaId" class="spinner-border spinner-border-sm"></span>
+        <i *ngIf="activandoId !== p.proveedorIaId" class="bi bi-check2-circle"></i>
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        title="Probar conexión"
+        [attr.aria-label]="'Probar conexión: ' + etiquetaConexionIa(p)"
+        [disabled]="probandoGuardadaId === p.proveedorIaId"
+        (click)="probarConexionGuardada(p)">
+        <span *ngIf="probandoGuardadaId === p.proveedorIaId" class="spinner-border spinner-border-sm"></span>
+        <i *ngIf="probandoGuardadaId !== p.proveedorIaId" class="bi bi-plug"></i>
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        title="Editar"
+        [attr.aria-label]="'Editar: ' + etiquetaConexionIa(p)"
+        (click)="editarConexion(p)">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-danger btn-sm"
+        title="Eliminar"
+        [attr.aria-label]="'Eliminar: ' + etiquetaConexionIa(p)"
+        [disabled]="eliminandoId === p.proveedorIaId"
+        (click)="eliminarConexion(p)">
+        <span *ngIf="eliminandoId === p.proveedorIaId" class="spinner-border spinner-border-sm"></span>
+        <i *ngIf="eliminandoId !== p.proveedorIaId" class="bi bi-trash3"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario: agregar una conexión nueva o editar una existente -->
+  <div *ngIf="mostrarForm" class="row g-3 mt-1 pt-3 cv-border-t-soft">
+    <div class="col-md-4">
+      <label class="form-label" for="admin_ia_proveedor">Proveedor <span class="text-danger">*</span></label>
+      <select
+        id="admin_ia_proveedor"
+        class="form-select"
+        [(ngModel)]="form.proveedor"
+        (ngModelChange)="onProveedorChange()">
+        <option value="claude">Claude (Anthropic)</option>
+        <option value="openai">OpenAI</option>
+        <option value="gemini">Gemini (Google)</option>
+        <option value="groq">Groq</option>
+        <option value="ollama">Ollama (local / self-hosted)</option>
+        <option value="otro">Otro (compatible con API REST)</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="admin_ia_nombre">Nombre <small class="text-muted fw-normal">(opcional)</small></label>
+      <input
+        id="admin_ia_nombre"
+        type="text"
+        class="form-control"
+        [(ngModel)]="form.nombre"
+        placeholder="Ej: Cuenta de la plataforma">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="admin_ia_modelo">Modelo <small class="text-muted fw-normal">(opcional)</small></label>
+      <input
+        id="admin_ia_modelo"
+        type="text"
+        class="form-control"
+        [(ngModel)]="form.modelo"
+        placeholder="Ej: claude-opus-4-20250514">
+    </div>
+    <div class="col-md-6" *ngIf="requiereEndpoint">
+      <label class="form-label" for="admin_ia_endpoint">URL del servidor <span class="text-danger">*</span></label>
+      <input
+        id="admin_ia_endpoint"
+        type="text"
+        class="form-control"
+        [(ngModel)]="form.endpoint"
+        placeholder="http://localhost:11434">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" for="admin_ia_apikey">
+        Clave de API
+        <span class="text-danger" *ngIf="requiereApiKey">*</span>
+        <small class="text-muted fw-normal" *ngIf="!requiereApiKey">(opcional)</small>
+      </label>
+      <input
+        id="admin_ia_apikey"
+        type="password"
+        class="form-control"
+        [(ngModel)]="form.apiKey"
+        autocomplete="off"
+        [placeholder]="editandoId !== null ? 'Dejar en blanco para no cambiarla' : 'sk-ant-...'">
+    </div>
+
+    <div class="col-12 d-flex flex-wrap align-items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        [disabled]="probandoConexion"
+        (click)="probarConexion()">
+        <span *ngIf="probandoConexion" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!probandoConexion" class="bi bi-plug me-1"></i>Probar conexión
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="guardando"
+        (click)="guardarConexion()">
+        <span *ngIf="guardando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!guardando" class="bi bi-check2-circle me-1"></i>
+        {{ editandoId !== null ? 'Guardar cambios' : 'Agregar conexión' }}
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarForm()">
+        Cancelar
+      </button>
+      <span *ngIf="resultadoPrueba === 'ok'" class="small text-success">
+        <i class="bi bi-check-circle-fill me-1"></i>{{ mensajePrueba }}
+      </span>
+      <span *ngIf="resultadoPrueba === 'error'" class="small text-danger">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ mensajePrueba }}
+      </span>
+    </div>
+  </div>
+</div>

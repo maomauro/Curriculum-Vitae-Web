@@ -12,6 +12,8 @@ public record ExperienciaDto(
     string? Funciones,
     bool EsActual,
     bool MostrarEnCv,
+    /// <summary>Calculado: apunta al endpoint de adjunto binario si hay una subida, o a la
+    /// URL legacy pegada por el usuario si no.</summary>
     string? AdjuntoSoporte,
     DateTime FechaRegistro);
 
@@ -30,7 +32,6 @@ public class UpsertExperienciaRequest
     public string? MotivoRetiro { get; set; }
     public string? Funciones { get; set; }
     public bool EsActual { get; set; }
-    public string? AdjuntoSoporte { get; set; }
     /// <summary>Si es null en JSON, el servicio asume true (retrocompatibilidad).</summary>
     public bool? MostrarEnCv { get; set; }
 }

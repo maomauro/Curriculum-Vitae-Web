@@ -29,6 +29,14 @@ public class ReferenciaController : CvControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpsertReferenciaRequest request, CancellationToken ct = default)
         => Ok(await _editor.UpdateReferenciaAsync(GetCurriculumId(), id, request, ct));
 
+    [HttpPatch("{id:int}/visibilidad")]
+    [HttpPut("{id:int}/visibilidad")]
+    public async Task<IActionResult> UpdateVisibilidad(
+        int id,
+        [FromBody] UpdateReferenciaVisibilidadRequest request,
+        CancellationToken ct = default)
+        => Ok(await _editor.UpdateReferenciaVisibilidadAsync(GetCurriculumId(), id, request, ct));
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {

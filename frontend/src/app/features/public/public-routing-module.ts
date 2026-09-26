@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home.component';
 import { BuscarCvsComponent } from './pages/buscar-cvs.component';
 import { CvPublicoShellComponent } from './pages/cv-publico-shell.component';
-import { DetalleCvComponent } from './pages/detalle-cv.component';
+import { HojaDeVidaComponent } from './pages/hoja-de-vida.component';
+import { InformacionProfesionalComponent } from './pages/informacion-profesional.component';
 import { DashboardCandidatoComponent } from '../../shared/components/dashboard-candidato.component';
 
 const routes: Routes = [
@@ -13,7 +14,8 @@ const routes: Routes = [
     path: 'cv/:urlPublica',
     component: CvPublicoShellComponent,
     children: [
-      { path: '', pathMatch: 'full', component: DetalleCvComponent },
+      { path: '', pathMatch: 'full', component: HojaDeVidaComponent },
+      { path: 'profesional', component: InformacionProfesionalComponent },
       { path: 'dashboard', component: DashboardCandidatoComponent },
     ],
   },

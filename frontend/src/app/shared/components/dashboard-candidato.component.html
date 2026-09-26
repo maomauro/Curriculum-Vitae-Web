@@ -55,28 +55,28 @@
 <div class="row g-3 mb-5" *ngIf="mostrarGraficas">
   <div class="col-lg-6">
     <div class="cv-chart-card">
-      <div class="cv-ct-title">Participación por tiempo (proyectos)</div>
+      <div class="cv-ct-title">Tecnologías más usadas en proyectos</div>
       <div class="cv-ct-subtitle">
-        Porcentaje de los meses totales dedicados a cada proyecto (solo proyectos con duración declarada).
+        Cantidad de proyectos en los que aparece cada tecnología o herramienta (un proyecto puede usar varias).
       </div>
       <p *ngIf="proyectosRawCount === 0" class="text-muted small mb-0">No hay proyectos en este CV.</p>
-      <p *ngIf="proyectosRawCount > 0 && !proyectosChart.length" class="text-muted small mb-0">
-        Los proyectos no tienen duración en meses; no se puede calcular la participación.
+      <p *ngIf="proyectosRawCount > 0 && !tecnologiasProyectos.length" class="text-muted small mb-0">
+        Tus proyectos no tienen tecnologías o herramientas declaradas.
       </p>
-      <div *ngIf="proyectosChart.length" class="cv-chart-canvas-dona" [style.height.px]="chartProyectosHeightPx">
+      <div *ngIf="tecnologiasProyectos.length" class="cv-chart-canvas-dona" [style.height.px]="chartProyectosHeightPx">
         <canvas #cvDashChartProyectos></canvas>
       </div>
-      <div *ngIf="proyectosChart.length" class="mt-3 d-grid gap-2">
-        <div
-          *ngFor="let proyecto of proyectosChart; let i = index"
-          class="d-flex align-items-start gap-2 small min-w-0">
-          <span
-            class="rounded-circle flex-shrink-0 mt-1"
-            [style.background-color]="getProyectoColor(i)"
-            style="width:12px;height:12px;"></span>
-          <div class="min-w-0 flex-grow-1">
-            <div class="fw-semibold text-break">{{ proyecto.nombreLargo }}</div>
-            <div class="text-muted">{{ proyecto.porcentajeTiempo }}% · {{ proyecto.meses }} meses</div>
+      <div *ngIf="tecnologiasProyectos.length" class="mt-3 row g-2">
+        <div *ngFor="let t of tecnologiasProyectosVisible; let i = index" class="col-12 col-xl-6">
+          <div class="d-flex align-items-start gap-2 small border-top pt-2">
+            <span
+              class="rounded-circle flex-shrink-0 mt-1"
+              [style.background-color]="getTecnologiaColor(t, i)"
+              style="width:10px;height:10px;"></span>
+            <div class="d-flex justify-content-between gap-3 min-w-0 flex-grow-1">
+              <div class="fw-semibold text-break">{{ t.etiqueta }}</div>
+              <div class="text-muted text-end text-nowrap">{{ t.cantidadProyectos }} proy.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -85,16 +85,22 @@
   <div class="col-lg-6">
     <div class="cv-chart-card">
       <div class="cv-ct-title">Mapa estratégico de capacidades</div>
-      <div class="cv-ct-subtitle">Cada grupo combina cobertura total y madurez promedio declarada.</div>
+      <div class="cv-ct-subtitle">Cobertura vs. madurez por grupo, dividido en cuadrantes según tu propio perfil.</div>
       <p *ngIf="!habilidadStrategicPoints.length" class="text-muted small mb-0">No hay niveles categorizados para mapear.</p>
       <div *ngIf="habilidadStrategicPoints.length" class="cv-chart-canvas-radar" [style.height.px]="chartHabilidadesHeightPx">
         <canvas #cvDashChartRadar></canvas>
       </div>
       <div *ngIf="habilidadStrategicPoints.length" class="mt-3 row g-2">
-        <div *ngFor="let p of habilidadStrategicPointsVisible" class="col-12 col-xl-6">
-          <div class="d-flex justify-content-between gap-3 small border-top pt-2">
-            <div class="fw-semibold text-break">{{ p.grupo }}</div>
-            <div class="text-muted text-end text-nowrap">{{ p.total }} hab. · {{ p.madurezPromedio }}/4</div>
+        <div *ngFor="let p of habilidadStrategicPointsVisible; let i = index" class="col-12 col-xl-6">
+          <div class="d-flex align-items-start gap-2 small border-top pt-2">
+            <span
+              class="rounded-circle flex-shrink-0 mt-1"
+              [style.background-color]="getHabilidadColor(i)"
+              style="width:10px;height:10px;"></span>
+            <div class="d-flex justify-content-between gap-3 min-w-0 flex-grow-1">
+              <div class="fw-semibold text-break">{{ p.grupo }}</div>
+              <div class="text-muted text-end text-nowrap">{{ p.total }} hab. · {{ p.madurezPromedio }}/4</div>
+            </div>
           </div>
         </div>
       </div>

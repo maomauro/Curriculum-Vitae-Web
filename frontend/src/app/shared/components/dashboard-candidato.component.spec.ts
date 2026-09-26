@@ -3,6 +3,8 @@ import {
   buildExpPorEmpresa,
   buildHabilidadNivelSerie,
   buildHabilidadStrategicPoints,
+  buildTecnologiasProyectos,
+  buildTecnologiasProyectosDona,
   clasificarGrupoHabilidad,
   contieneAlguno,
   normalizarNivelHabilidad,
@@ -12,6 +14,7 @@ import type {
   ExperienciaPublicoDto,
   FormacionPublicoDto,
   HabilidadPublicoDto,
+  ProyectoPublicoDto,
 } from '../../core/services/public/public.service';
 
 function experiencia(over: Partial<ExperienciaPublicoDto>): ExperienciaPublicoDto {
@@ -25,6 +28,7 @@ function experiencia(over: Partial<ExperienciaPublicoDto>): ExperienciaPublicoDt
     esActual: false,
     funciones: null,
     tipoContrato: null,
+    adjuntoSoporte: null,
     ...over,
   };
 }
@@ -38,6 +42,21 @@ function formacion(over: Partial<FormacionPublicoDto>): FormacionPublicoDto {
     tipoFormacion: 'Pregrado',
     fechaInicio: '2015-01-01',
     fechaFin: '2019-01-01',
+    adjuntoSoporte: null,
+    ...over,
+  };
+}
+
+function proyecto(over: Partial<ProyectoPublicoDto>): ProyectoPublicoDto {
+  return {
+    proyectoId: 1,
+    nombreProyecto: 'Portal de CV',
+    rol: null,
+    stackTecnologico: null,
+    aporte: null,
+    logro: null,
+    equipoTamano: null,
+    duracionMeses: null,
     ...over,
   };
 }
@@ -240,6 +259,79 @@ describe('dashboard-candidato chart builders', () => {
 
     it('devuelve arreglo vacio sin habilidades con nivel reconocido', () => {
       expect(buildHabilidadStrategicPoints([habilidad({ nivel: null })])).toEqual([]);
+    });
+  });
+
+  describe('buildTecnologiasProyectos', () => {
+    it('cuenta en cuantos proyectos aparece cada tecnologia', () => {
+      const rows = buildTecnologiasProyectos([
+        proyecto({ proyectoId: 1, nombreProyecto: 'Portal CV', stackTecnologico: 'Angular, .NET, SQL Server' }),
+        proyecto({ proyectoId: 2, nombreProyecto: 'App Móvil', stackTecnologico: 'Angular; Firebase' }),
+      ]);
+      const angular = rows.find(r => r.etiqueta === 'Angular');
+      expect(angular?.cantidadProyectos).toBe(2);
+      expect(angular?.proyectos).toEqual(['Portal CV', 'App Móvil']);
+    });
+
+    it('ordena por cantidad de proyectos descendente', () => {
+      const rows = buildTecnologiasProyectos([
+        proyecto({ proyectoId: 1, nombreProyecto: 'A', stackTecnologico: 'Angular, Docker' }),
+        proyecto({ proyectoId: 2, nombreProyecto: 'B', stackTecnologico: 'Angular' }),
+      ]);
+      expect(rows[0].etiqueta).toBe('Angular');
+      expect(rows[0].cantidadProyectos).toBe(2);
+    });
+
+    it('no cuenta un mismo proyecto dos veces si repite la tecnologia', () => {
+      const rows = buildTecnologiasProyectos([
+        proyecto({ proyectoId: 1, nombreProyecto: 'A', stackTecnologico: 'Angular, angular' }),
+      ]);
+      expect(rows.length).toBe(1);
+      expect(rows[0].cantidadProyectos).toBe(1);
+    });
+
+    it('ignora proyectos sin stack tecnologico declarado', () => {
+      expect(buildTecnologiasProyectos([proyecto({ stackTecnologico: null })])).toEqual([]);
+      expect(buildTecnologiasProyectos([proyecto({ stackTecnologico: '' })])).toEqual([]);
+    });
+
+    it('devuelve arreglo vacio sin proyectos', () => {
+      expect(buildTecnologiasProyectos([])).toEqual([]);
+    });
+  });
+
+  describe('buildTecnologiasProyectosDona', () => {
+    function fila(etiqueta: string, cantidadProyectos: number): ReturnType<typeof buildTecnologiasProyectos>[number] {
+      return { etiqueta, cantidadProyectos, proyectos: [`Proyecto de ${etiqueta}`] };
+    }
+
+    it('devuelve las filas tal cual si entran dentro del limite', () => {
+      const rows = [fila('Angular', 3), fila('Docker', 2)];
+      expect(buildTecnologiasProyectosDona(rows, 8)).toEqual(rows);
+    });
+
+    it('agrupa el resto en un pedazo "Otras" cuando supera el limite', () => {
+      const rows = [fila('Angular', 5), fila('Docker', 3), fila('Redis', 1), fila('Jest', 1)];
+      const dona = buildTecnologiasProyectosDona(rows, 2);
+
+      expect(dona.length).toBe(3);
+      expect(dona[0].etiqueta).toBe('Angular');
+      expect(dona[1].etiqueta).toBe('Docker');
+      expect(dona[2].etiqueta).toBe('Otras (2)');
+      expect(dona[2].esOtras).toBeTrue();
+      expect(dona[2].cantidadProyectos).toBe(2);
+      expect(dona[2].proyectos).toEqual(['Proyecto de Redis', 'Proyecto de Jest']);
+    });
+
+    it('no duplica un proyecto en "Otras" si aparece en varias tecnologias agrupadas', () => {
+      const rows = [
+        fila('Angular', 5),
+        { etiqueta: 'Redis', cantidadProyectos: 1, proyectos: ['Portal CV'] },
+        { etiqueta: 'Jest', cantidadProyectos: 1, proyectos: ['Portal CV'] },
+      ];
+      const dona = buildTecnologiasProyectosDona(rows, 1);
+
+      expect(dona[1].proyectos).toEqual(['Portal CV']);
     });
   });
 });

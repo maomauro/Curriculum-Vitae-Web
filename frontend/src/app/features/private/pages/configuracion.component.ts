@@ -1,11 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CvEditorService } from '../../../core/services/private/cv-editor.service';
+import { forkJoin, Observable } from 'rxjs';
+import {
+  CvEditorService,
+  ExperienciaDto,
+  FormacionDto,
+  HabilidadDto,
+  ProyectoDto,
+} from '../../../core/services/private/cv-editor.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import {
+  ConfiguracionCorreoService,
+  ConfiguracionCorreoDto,
+} from '../../../core/services/private/configuracion-correo.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { APP_MESSAGES, DEFAULT_APP_LOCALE } from '../../../core/constants/messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
+import { PreviewPublicoPanelComponent } from './preview-publico-panel.component';
 
 interface ConfigVisItem {
   key: string;
@@ -34,6 +46,17 @@ interface ConfigVisGroup {
   accordionOpen: boolean;
 }
 
+interface ConfiguracionCorreoForm {
+  host: string;
+  puerto: number;
+  usarTls: boolean;
+  password: string;
+}
+
+function configuracionCorreoFormVacio(): ConfiguracionCorreoForm {
+  return { host: 'smtp.gmail.com', puerto: 587, usarTls: true, password: '' };
+}
+
 @Component({
   selector: 'app-configuracion',
   standalone: false,
@@ -41,6 +64,10 @@ interface ConfigVisGroup {
 })
 export class ConfiguracionComponent implements OnInit {
   readonly pwdFormMsg = APP_MESSAGES[DEFAULT_APP_LOCALE].forms.configuracion;
+
+  /** Panel de vista previa en vivo (Dashboard/Información profesional) -- se recarga
+   * después de cada cambio de visibilidad guardado, ver guardarVisibilidad(). */
+  @ViewChild(PreviewPublicoPanelComponent) previewPanel?: PreviewPublicoPanelComponent;
 
   /** URL absoluta del CV público (origen actual + /cv/{slug}). */
   urlCv = '';
@@ -56,6 +83,51 @@ export class ConfiguracionComponent implements OnInit {
   passwordNueva = '';
   passwordNueva2 = '';
   guardandoContrasena = false;
+
+  /** Configuración SMTP para enviar correos a reclutadores desde Analizar Oferta ->
+   * Enviar correo. Una sola por CV -- el remitente/login SMTP siempre es el correo de
+   * Información Personal, no se pide otro dato acá. */
+  loadingCorreo = true;
+  correoConfig: ConfiguracionCorreoDto | null = null;
+  correoForm: ConfiguracionCorreoForm = configuracionCorreoFormVacio();
+  guardandoCorreo = false;
+
+  /** Listas completas de Experiencia/Educación/Proyectos/Habilidades -- solo para los
+   * controles "Activar todos"/"Inactivar todos" en bloque de acá abajo (accesos rápidos
+   * a la misma acción que ya existe en cada vista de edición; no se editan acá). */
+  experiencias: ExperienciaDto[] = [];
+  formaciones: FormacionDto[] = [];
+  proyectos: ProyectoDto[] = [];
+  habilidades: HabilidadDto[] = [];
+  guardandoVisibilidadBloqueExperiencia = false;
+  guardandoVisibilidadBloqueFormacion = false;
+  guardandoVisibilidadBloqueProyecto = false;
+  guardandoVisibilidadBloqueHabilidad = false;
+
+  get hayExperienciasOcultas(): boolean {
+    return this.experiencias.some(e => !e.mostrarEnCv);
+  }
+  get hayExperienciasVisibles(): boolean {
+    return this.experiencias.some(e => e.mostrarEnCv);
+  }
+  get hayFormacionesOcultas(): boolean {
+    return this.formaciones.some(f => !f.mostrarEnCv);
+  }
+  get hayFormacionesVisibles(): boolean {
+    return this.formaciones.some(f => f.mostrarEnCv);
+  }
+  get hayProyectosOcultos(): boolean {
+    return this.proyectos.some(p => !p.mostrarEnCv);
+  }
+  get hayProyectosVisibles(): boolean {
+    return this.proyectos.some(p => p.mostrarEnCv);
+  }
+  get hayHabilidadesOcultas(): boolean {
+    return this.habilidades.some(h => !h.mostrarEnCv);
+  }
+  get hayHabilidadesVisibles(): boolean {
+    return this.habilidades.some(h => h.mostrarEnCv);
+  }
 
   /** Hay texto en “repetir” y no coincide con “nueva” (validación mientras escribe). */
   get repetirContrasenaMismatchEnVivo(): boolean {
@@ -82,7 +154,63 @@ export class ConfiguracionComponent implements OnInit {
     return this.repetirContrasenaMismatchEnVivo;
   }
 
+  /** Interruptores maestros: si la pestaña existe en el CV público. Mismo orden que los
+   * tabs (Dashboard -> Profesional -> Hoja de vida). Se guardan igual que cualquier otro
+   * ConfigVisItem (ver allVisItems/onToggleSeccion) -- solo se muestran fuera del
+   * acordeón, sin agrupar, porque no tienen atributos propios. */
+  pestanasPublicasCv: ConfigVisItem[] = [
+    {
+      key: 'dashboard.publico',
+      label: 'Dashboard analítico',
+      icon: 'bi-bar-chart-line',
+      iconStyle: 'vis-icon--perfil',
+      visible: true,
+      atributos: [],
+    },
+    {
+      key: 'profesional.publico',
+      label: 'Información profesional',
+      icon: 'bi-person-lines-fill',
+      iconStyle: 'vis-icon--datos',
+      visible: true,
+      atributos: [],
+    },
+    {
+      key: 'hoja-de-vida.publico',
+      label: 'Hoja de vida',
+      icon: 'bi-file-earmark-person',
+      iconStyle: 'vis-icon--proyectos',
+      visible: true,
+      atributos: [],
+    },
+  ];
+
   visibilidadGrupos: ConfigVisGroup[] = [
+    {
+      id: 'dashboard-publico',
+      titulo: 'Contenido del Dashboard analítico',
+      icon: 'bi-bar-chart-steps',
+      clase: 'vis-group-label--profesional',
+      accordionOpen: false,
+      items: [
+        {
+          key: 'dashboard.metricas',
+          label: 'Tarjetas de métricas (3)',
+          icon: 'bi-speedometer2',
+          iconStyle: 'vis-icon--datos',
+          visible: true,
+          atributos: [],
+        },
+        {
+          key: 'dashboard.graficas',
+          label: 'Gráficas analíticas (4)',
+          icon: 'bi-pie-chart-fill',
+          iconStyle: 'vis-icon--proyectos',
+          visible: true,
+          atributos: [],
+        },
+      ],
+    },
     {
       id: 'personal',
       titulo: 'Información Personal',
@@ -102,7 +230,6 @@ export class ConfiguracionComponent implements OnInit {
             { key: 'datos-personales.email', label: 'Correo electrónico', visible: true },
             { key: 'datos-personales.telefono', label: 'Teléfono', visible: true },
             { key: 'datos-personales.ciudad-pais', label: 'Ciudad y país', visible: true },
-            { key: 'datos-personales.linkedin', label: 'LinkedIn', visible: true },
           ],
         },
       ],
@@ -113,152 +240,7 @@ export class ConfiguracionComponent implements OnInit {
       icon: 'bi-briefcase-fill',
       clase: 'vis-group-label--profesional',
       accordionOpen: false,
-      items: [
-        {
-          key: 'perfil',
-          label: 'Perfil',
-          icon: 'bi-person-badge-fill',
-          iconStyle: 'vis-icon--perfil',
-          visible: true,
-          sinSwitchSeccion: true,
-          atributos: [
-            { key: 'perfil.experiencia-perfil', label: 'Experiencia (perfil)', visible: true },
-            { key: 'perfil.aspiracion-salarial', label: 'Salarios', visible: true },
-          ],
-        },
-        {
-          key: 'experiencia',
-          label: 'Experiencia',
-          icon: 'bi-briefcase-fill',
-          iconStyle: 'vis-icon--experiencia',
-          visible: true,
-          sinSwitchSeccion: true,
-          atributos: [
-            { key: 'experiencia.referencia-laboral', label: 'Referencia laboral', visible: true },
-            {
-              key: 'experiencia.soporte-certificacion-laboral',
-              label: 'Soportes certificación laboral',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'formacion-academica',
-          label: 'Formación Académica',
-          icon: 'bi-mortarboard-fill',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          sinSwitchSeccion: true,
-          atributos: [
-            { key: 'formacion-academica.descargar-soporte', label: 'Descargar soporte', visible: true },
-          ],
-        },
-        {
-          key: 'diplomados',
-          label: 'Diplomados',
-          icon: 'bi-award-fill',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          atributos: [
-            {
-              key: 'diplomados.descargar-soporte-certificado',
-              label: 'Descargar soporte certificado',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'certificaciones',
-          label: 'Certificaciones',
-          icon: 'bi-patch-check-fill',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          atributos: [
-            {
-              key: 'certificaciones.descargar-soporte-certificado',
-              label: 'Descargar soporte certificado',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'cursos',
-          label: 'Cursos',
-          icon: 'bi-book-half',
-          iconStyle: 'vis-icon--educacion',
-          visible: true,
-          atributos: [
-            {
-              key: 'cursos.descargar-soporte-certificado',
-              label: 'Descargar soporte certificado',
-              visible: true,
-            },
-          ],
-        },
-        {
-          key: 'proyectos',
-          label: 'Proyectos',
-          icon: 'bi-kanban-fill',
-          iconStyle: 'vis-icon--proyectos',
-          visible: true,
-          atributos: [
-            { key: 'proyectos.nombre', label: 'Nombre', visible: true },
-            { key: 'proyectos.rol', label: 'Rol', visible: true },
-            { key: 'proyectos.equipo', label: 'Tamaño del equipo', visible: true },
-            { key: 'proyectos.duracion', label: 'Duración', visible: true },
-            { key: 'proyectos.stack', label: 'Stack tecnológico', visible: true },
-            { key: 'proyectos.aporte', label: 'Aporte', visible: true },
-            { key: 'proyectos.logro', label: 'Logro', visible: true },
-            { key: 'proyectos.desafio', label: 'Desafío', visible: true },
-          ],
-        },
-        {
-          key: 'habilidades',
-          label: 'Habilidades',
-          icon: 'bi-stars',
-          iconStyle: 'vis-icon--habilidades',
-          visible: true,
-          atributos: [
-            { key: 'habilidades.nombre', label: 'Nombre', visible: true },
-            { key: 'habilidades.tipo', label: 'Tipo', visible: true },
-            { key: 'habilidades.nivel', label: 'Nivel', visible: true },
-            { key: 'habilidades.descripcion', label: 'Descripción', visible: true },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'dashboard-publico',
-      titulo: 'Dashboard en CV público',
-      icon: 'bi-bar-chart-steps',
-      clase: 'vis-group-label--profesional',
-      accordionOpen: false,
-      items: [
-        {
-          key: 'dashboard.publico',
-          label: 'Dashboard analítico (interruptor principal)',
-          icon: 'bi-bar-chart-line',
-          iconStyle: 'vis-icon--perfil',
-          visible: true,
-          atributos: [],
-        },
-        {
-          key: 'dashboard.metricas',
-          label: 'Tarjetas de métricas (3)',
-          icon: 'bi-speedometer2',
-          iconStyle: 'vis-icon--datos',
-          visible: true,
-          atributos: [],
-        },
-        {
-          key: 'dashboard.graficas',
-          label: 'Gráficas analíticas (4)',
-          icon: 'bi-pie-chart-fill',
-          iconStyle: 'vis-icon--proyectos',
-          visible: true,
-          atributos: [],
-        },
-      ],
+      items: [],
     },
   ];
 
@@ -273,6 +255,7 @@ export class ConfiguracionComponent implements OnInit {
   constructor(
     private cvEditorService: CvEditorService,
     private authService: AuthService,
+    private configuracionCorreoService: ConfiguracionCorreoService,
     private notificationService: NotificationService
   ) {}
 
@@ -322,27 +305,209 @@ export class ConfiguracionComponent implements OnInit {
             campo.visible = false;
           }
         });
+      },
+      error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
+    });
 
-        const educLegacy = map.get('educacion');
-        const subFormKeys = ['formacion-academica', 'diplomados', 'certificaciones', 'cursos'] as const;
-        if (educLegacy != null) {
-          subFormKeys.forEach(k => {
-            if (map.has(k)) return;
-            const item = this.allVisItems().find(i => i.key === k);
-            if (!item) return;
-            item.visible = educLegacy;
-            item.atributos.forEach(a => {
-              if (!map.has(a.key)) a.visible = educLegacy;
-            });
-          });
-        }
+    this.cargarConfiguracionCorreo();
+    this.cargarListasProfesional();
+  }
+
+  private cargarListasProfesional(): void {
+    forkJoin({
+      experiencias: this.cvEditorService.getExperiencias(),
+      formaciones: this.cvEditorService.getFormaciones(),
+      proyectos: this.cvEditorService.getProyectos(),
+      habilidades: this.cvEditorService.getHabilidades(),
+    }).subscribe({
+      next: ({ experiencias, formaciones, proyectos, habilidades }) => {
+        this.experiencias = experiencias;
+        this.formaciones = formaciones;
+        this.proyectos = proyectos;
+        this.habilidades = habilidades;
       },
       error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
   }
 
+  private actualizarVisibilidadEnBloque<T extends { mostrarEnCv: boolean }>(
+    items: T[],
+    getId: (item: T) => number,
+    mostrar: boolean,
+    actualizarUno: (id: number) => Observable<T>,
+    aplicarResultado: (items: T[], actualizado: T) => void,
+    guardando: (valor: boolean) => void
+  ): void {
+    const objetivo = items.filter(i => i.mostrarEnCv !== mostrar);
+    if (objetivo.length === 0) {
+      return;
+    }
+    guardando(true);
+    forkJoin(objetivo.map(i => actualizarUno(getId(i)))).subscribe({
+      next: actualizados => {
+        actualizados.forEach(actualizado => aplicarResultado(items, actualizado));
+        guardando(false);
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        this.previewPanel?.recargar();
+      },
+      error: (error: HttpErrorResponse) => {
+        guardando(false);
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  activarTodasExperiencias(): void {
+    this.actualizarVisibilidadEnBloqueExperiencia(true);
+  }
+  inactivarTodasExperiencias(): void {
+    this.actualizarVisibilidadEnBloqueExperiencia(false);
+  }
+  /** Switch único "Experiencia" del bloque de acciones: ON = mostrar todas, OFF = ocultar todas. */
+  onToggleBloqueExperiencias(checked: boolean): void {
+    if (checked) this.activarTodasExperiencias();
+    else this.inactivarTodasExperiencias();
+  }
+  private actualizarVisibilidadEnBloqueExperiencia(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueExperiencia) return;
+    this.actualizarVisibilidadEnBloque(
+      this.experiencias,
+      e => e.experienciaId,
+      mostrar,
+      id => this.cvEditorService.updateExperienciaVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(e => e.experienciaId === actualizado.experienciaId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueExperiencia = v)
+    );
+  }
+
+  activarTodasFormaciones(): void {
+    this.actualizarVisibilidadEnBloqueFormacion(true);
+  }
+  inactivarTodasFormaciones(): void {
+    this.actualizarVisibilidadEnBloqueFormacion(false);
+  }
+  onToggleBloqueFormaciones(checked: boolean): void {
+    if (checked) this.activarTodasFormaciones();
+    else this.inactivarTodasFormaciones();
+  }
+  private actualizarVisibilidadEnBloqueFormacion(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueFormacion) return;
+    this.actualizarVisibilidadEnBloque(
+      this.formaciones,
+      f => f.formacionId,
+      mostrar,
+      id => this.cvEditorService.updateFormacionVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(f => f.formacionId === actualizado.formacionId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueFormacion = v)
+    );
+  }
+
+  activarTodosProyectos(): void {
+    this.actualizarVisibilidadEnBloqueProyecto(true);
+  }
+  inactivarTodosProyectos(): void {
+    this.actualizarVisibilidadEnBloqueProyecto(false);
+  }
+  onToggleBloqueProyectos(checked: boolean): void {
+    if (checked) this.activarTodosProyectos();
+    else this.inactivarTodosProyectos();
+  }
+  private actualizarVisibilidadEnBloqueProyecto(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueProyecto) return;
+    this.actualizarVisibilidadEnBloque(
+      this.proyectos,
+      p => p.proyectoId,
+      mostrar,
+      id => this.cvEditorService.updateProyectoVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(p => p.proyectoId === actualizado.proyectoId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueProyecto = v)
+    );
+  }
+
+  activarTodasHabilidades(): void {
+    this.actualizarVisibilidadEnBloqueHabilidad(true);
+  }
+  inactivarTodasHabilidades(): void {
+    this.actualizarVisibilidadEnBloqueHabilidad(false);
+  }
+  onToggleBloqueHabilidades(checked: boolean): void {
+    if (checked) this.activarTodasHabilidades();
+    else this.inactivarTodasHabilidades();
+  }
+  private actualizarVisibilidadEnBloqueHabilidad(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloqueHabilidad) return;
+    this.actualizarVisibilidadEnBloque(
+      this.habilidades,
+      h => h.habilidadId,
+      mostrar,
+      id => this.cvEditorService.updateHabilidadVisibilidad(id, { mostrarEnCv: mostrar }),
+      (items, actualizado) => {
+        const i = items.find(h => h.habilidadId === actualizado.habilidadId);
+        if (i) Object.assign(i, actualizado);
+      },
+      v => (this.guardandoVisibilidadBloqueHabilidad = v)
+    );
+  }
+
+  private cargarConfiguracionCorreo(): void {
+    this.loadingCorreo = true;
+    this.configuracionCorreoService.getConfig().subscribe({
+      next: data => {
+        this.correoConfig = data;
+        this.correoForm = { host: data.host, puerto: data.puerto, usarTls: data.usarTls, password: '' };
+        this.loadingCorreo = false;
+      },
+      error: () => {
+        this.loadingCorreo = false;
+        this.notificationService.error(NOTIFICATION_MESSAGES.loadError);
+      },
+    });
+  }
+
+  guardarConfiguracionCorreo(): void {
+    if (this.guardandoCorreo) return;
+    if (!this.correoForm.host.trim()) {
+      this.notificationService.warning('El host SMTP es requerido.');
+      return;
+    }
+    if (!this.correoConfig?.tieneConfiguracion && !this.correoForm.password.trim()) {
+      this.notificationService.warning('La contraseña es requerida para configurar el correo por primera vez.');
+      return;
+    }
+
+    this.guardandoCorreo = true;
+    this.configuracionCorreoService
+      .guardarConfig({
+        host: this.correoForm.host.trim(),
+        puerto: this.correoForm.puerto,
+        usarTls: this.correoForm.usarTls,
+        password: this.correoForm.password.trim() || null,
+      })
+      .subscribe({
+        next: data => {
+          this.correoConfig = data;
+          this.correoForm = { host: data.host, puerto: data.puerto, usarTls: data.usarTls, password: '' };
+          this.guardandoCorreo = false;
+          this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.guardandoCorreo = false;
+          this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+        },
+      });
+  }
+
   private allVisItems(): ConfigVisItem[] {
-    return this.visibilidadGrupos.flatMap(g => g.items);
+    return [...this.pestanasPublicasCv, ...this.visibilidadGrupos.flatMap(g => g.items)];
   }
 
   private normalizeSeccionKey(seccion: string | null | undefined): string {
@@ -357,28 +522,6 @@ export class ConfiguracionComponent implements OnInit {
       case 'email':
       case 'telefono':
         return 'datos-personales';
-      case 'perfil':
-      case 'salario':
-        return 'perfil';
-      case 'experiencia':
-      case 'experiencia-laboral':
-        return 'experiencia';
-      case 'formacion':
-      case 'educacion':
-        return 'educacion';
-      case 'formacion-academica':
-      case 'formacionacademica':
-        return 'formacion-academica';
-      case 'diplomados':
-        return 'diplomados';
-      case 'certificaciones':
-        return 'certificaciones';
-      case 'cursos':
-        return 'cursos';
-      case 'habilidades':
-        return 'habilidades';
-      case 'proyectos':
-        return 'proyectos';
       default:
         return raw;
     }
@@ -388,6 +531,7 @@ export class ConfiguracionComponent implements OnInit {
     this.cvEditorService.updateVisibilidad(cambios).subscribe({
       next: () => {
         this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+        this.previewPanel?.recargar();
       },
       error: (error: HttpErrorResponse) =>
         this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError),
@@ -519,4 +663,5 @@ export class ConfiguracionComponent implements OnInit {
     const origin = window.location.origin.replace(/\/$/, '');
     return `${origin}/cv/${encodeURIComponent(slug)}`;
   }
+
 }

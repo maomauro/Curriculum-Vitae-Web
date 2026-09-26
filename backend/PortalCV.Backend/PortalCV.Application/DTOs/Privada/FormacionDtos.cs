@@ -9,6 +9,8 @@ public record FormacionDto(
     DateOnly? FechaFin,
     string? TipoFormacion,
     string? Descripcion,
+    /// <summary>Calculado: apunta al endpoint de adjunto binario si hay una subida, o a la
+    /// URL legacy pegada por el usuario si no.</summary>
     string? AdjuntoSoporte,
     DateOnly? FechaVigencia,
     int? DuracionHoras,
@@ -22,7 +24,6 @@ public record UpsertFormacionRequest(
     DateOnly? FechaFin,
     string? TipoFormacion,
     string? Descripcion,
-    string? AdjuntoSoporte,
     DateOnly? FechaVigencia,
     int? DuracionHoras,
     bool? MostrarEnCv);

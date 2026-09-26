@@ -947,7 +947,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombre\": \"C#\",\n  \"tipo\": \"Tecnica\",\n  \"nivel\": \"Avanzado\",\n  \"descripcion\": null,\n  \"nivelLectura\": null,\n  \"nivelEscritura\": null,\n  \"nivelEscucha\": null,\n  \"nivelHabla\": null\n}"
+                  "raw": "{\n  \"nombre\": \"C#\",\n  \"tipo\": \"Tecnica\",\n  \"nivel\": \"Avanzado\",\n  \"descripcion\": null,\n  \"nivelLectura\": null,\n  \"nivelEscritura\": null,\n  \"nivelEscucha\": null,\n  \"nivelHabla\": null,\n  \"mostrarEnCv\": true\n}"
                 },
                 "description": "Para tipo Idioma, usar nivelLectura/nivelEscritura/nivelEscucha/nivelHabla con valores A1-C2."
               },
@@ -977,9 +977,70 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombre\": \"C#\",\n  \"tipo\": \"Tecnica\",\n  \"nivel\": \"Experto\",\n  \"descripcion\": \"Actualizado\",\n  \"nivelLectura\": null,\n  \"nivelEscritura\": null,\n  \"nivelEscucha\": null,\n  \"nivelHabla\": null\n}"
+                  "raw": "{\n  \"nombre\": \"C#\",\n  \"tipo\": \"Tecnica\",\n  \"nivel\": \"Experto\",\n  \"descripcion\": \"Actualizado\",\n  \"nivelLectura\": null,\n  \"nivelEscritura\": null,\n  \"nivelEscucha\": null,\n  \"nivelHabla\": null,\n  \"mostrarEnCv\": true\n}"
                 },
                 "description": "Reemplazar el 1 del path por un HabilidadId real."
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH /api/cv/habilidades/{id}/visibilidad",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/habilidades/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "habilidades",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/habilidades/{id}/visibilidad",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/habilidades/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "habilidades",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                },
+                "description": "Misma accion que el PATCH anterior; el backend acepta ambos verbos."
               },
               "response": []
             },
@@ -1051,7 +1112,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, Azure SQL\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start en capa gratuita de Azure\",\n  \"mostrarEnCv\": true\n}"
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, MariaDB\",\n  \"aporte\": \"Diseño e implementacion completa\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Despliegue en VPS propio con Docker\",\n  \"mostrarEnCv\": true\n}"
                 }
               },
               "response": []
@@ -1080,7 +1141,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, Azure SQL\",\n  \"aporte\": \"Actualizado\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start\",\n  \"mostrarEnCv\": true\n}"
+                  "raw": "{\n  \"nombreProyecto\": \"Portal CV\",\n  \"rol\": \"Desarrollador Full Stack\",\n  \"equipoTamano\": 1,\n  \"duracionMeses\": 4,\n  \"stackTecnologico\": \".NET 10, Angular 20, MariaDB\",\n  \"aporte\": \"Actualizado\",\n  \"logro\": \"Publicado en produccion\",\n  \"desafio\": \"Cold start\",\n  \"mostrarEnCv\": true\n}"
                 },
                 "description": "Reemplazar el 1 del path por un ProyectoId real."
               },
@@ -1319,7 +1380,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreRed\": \"LinkedIn\",\n  \"linkPublico\": \"https://linkedin.com/in/usuario-demo\",\n  \"usuarioContacto\": null\n}"
+                  "raw": "{\n  \"nombreRed\": \"LinkedIn\",\n  \"linkPublico\": \"https://linkedin.com/in/usuario-demo\",\n  \"usuarioContacto\": null,\n  \"mostrarEnCv\": true\n}"
                 }
               },
               "response": []
@@ -1348,9 +1409,70 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombreRed\": \"LinkedIn\",\n  \"linkPublico\": \"https://linkedin.com/in/usuario-demo-actualizado\",\n  \"usuarioContacto\": null\n}"
+                  "raw": "{\n  \"nombreRed\": \"LinkedIn\",\n  \"linkPublico\": \"https://linkedin.com/in/usuario-demo-actualizado\",\n  \"usuarioContacto\": null,\n  \"mostrarEnCv\": true\n}"
                 },
                 "description": "Reemplazar el 1 del path por un RedSocialId real."
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH /api/cv/redes-sociales/{id}/visibilidad",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/redes-sociales/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "redes-sociales",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /api/cv/redes-sociales/{id}/visibilidad",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cv/redes-sociales/1/visibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "cv",
+                    "redes-sociales",
+                    "1",
+                    "visibilidad"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mostrarEnCv\": false\n}"
+                },
+                "description": "Misma accion que el PATCH anterior; el backend acepta ambos verbos."
               },
               "response": []
             },
@@ -2117,7 +2239,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "https://portalcv-api.wittyriver-e6fd0cd4.brazilsouth.azurecontainerapps.io"
+      "value": "http://localhost:5005"
     }
   ]
 }

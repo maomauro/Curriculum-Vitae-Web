@@ -7,6 +7,9 @@ public interface ICvEditorService
     // Personales (1:1 con Curriculum)
     Task<PersonalesDto?> GetPersonalesAsync(int curriculumId, CancellationToken ct = default);
     Task<PersonalesDto> UpsertPersonalesAsync(int curriculumId, UpsertPersonalesRequest request, CancellationToken ct = default);
+    Task<PersonalesDto> UpsertFotoPersonalesAsync(int curriculumId, byte[] contenido, string? contentType, CancellationToken ct = default);
+    Task<PersonalesDto> EliminarFotoPersonalesAsync(int curriculumId, CancellationToken ct = default);
+    Task<ArchivoContenidoDto?> GetFotoPersonalesAsync(int curriculumId, CancellationToken ct = default);
 
     // Perfil
     Task<IReadOnlyList<PerfilDto>> GetPerfilesAsync(int curriculumId, CancellationToken ct = default);
@@ -24,6 +27,9 @@ public interface ICvEditorService
         UpdateExperienciaVisibilidadRequest request,
         CancellationToken ct = default);
     Task DeleteExperienciaAsync(int curriculumId, int experienciaId, CancellationToken ct = default);
+    Task<ExperienciaDto> UpsertAdjuntoExperienciaAsync(int curriculumId, int experienciaId, byte[] contenido, string? contentType, CancellationToken ct = default);
+    Task<ExperienciaDto> EliminarAdjuntoExperienciaAsync(int curriculumId, int experienciaId, CancellationToken ct = default);
+    Task<ArchivoContenidoDto?> GetAdjuntoExperienciaAsync(int curriculumId, int experienciaId, CancellationToken ct = default);
 
     // Formación
     Task<IReadOnlyList<FormacionDto>> GetFormacionesAsync(int curriculumId, CancellationToken ct = default);
@@ -35,11 +41,19 @@ public interface ICvEditorService
         UpdateFormacionVisibilidadRequest request,
         CancellationToken ct = default);
     Task DeleteFormacionAsync(int curriculumId, int formacionId, CancellationToken ct = default);
+    Task<FormacionDto> UpsertAdjuntoFormacionAsync(int curriculumId, int formacionId, byte[] contenido, string? contentType, CancellationToken ct = default);
+    Task<FormacionDto> EliminarAdjuntoFormacionAsync(int curriculumId, int formacionId, CancellationToken ct = default);
+    Task<ArchivoContenidoDto?> GetAdjuntoFormacionAsync(int curriculumId, int formacionId, CancellationToken ct = default);
 
     // Habilidades
     Task<IReadOnlyList<HabilidadDto>> GetHabilidadesAsync(int curriculumId, CancellationToken ct = default);
     Task<HabilidadDto> CreateHabilidadAsync(int curriculumId, UpsertHabilidadRequest request, CancellationToken ct = default);
     Task<HabilidadDto> UpdateHabilidadAsync(int curriculumId, int habilidadId, UpsertHabilidadRequest request, CancellationToken ct = default);
+    Task<HabilidadDto> UpdateHabilidadVisibilidadAsync(
+        int curriculumId,
+        int habilidadId,
+        UpdateHabilidadVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteHabilidadAsync(int curriculumId, int habilidadId, CancellationToken ct = default);
 
     // Proyectos
@@ -57,12 +71,22 @@ public interface ICvEditorService
     Task<IReadOnlyList<ReferenciaDto>> GetReferenciasAsync(int curriculumId, CancellationToken ct = default);
     Task<ReferenciaDto> CreateReferenciaAsync(int curriculumId, UpsertReferenciaRequest request, CancellationToken ct = default);
     Task<ReferenciaDto> UpdateReferenciaAsync(int curriculumId, int referenciaId, UpsertReferenciaRequest request, CancellationToken ct = default);
+    Task<ReferenciaDto> UpdateReferenciaVisibilidadAsync(
+        int curriculumId,
+        int referenciaId,
+        UpdateReferenciaVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteReferenciaAsync(int curriculumId, int referenciaId, CancellationToken ct = default);
 
     // Redes sociales
     Task<IReadOnlyList<RedSocialDto>> GetRedesSocialesAsync(int curriculumId, CancellationToken ct = default);
     Task<RedSocialDto> CreateRedSocialAsync(int curriculumId, UpsertRedSocialRequest request, CancellationToken ct = default);
     Task<RedSocialDto> UpdateRedSocialAsync(int curriculumId, int redSocialId, UpsertRedSocialRequest request, CancellationToken ct = default);
+    Task<RedSocialDto> UpdateRedSocialVisibilidadAsync(
+        int curriculumId,
+        int redSocialId,
+        UpdateRedSocialVisibilidadRequest request,
+        CancellationToken ct = default);
     Task DeleteRedSocialAsync(int curriculumId, int redSocialId, CancellationToken ct = default);
 
     // Familiares / contactos de emergencia
@@ -79,5 +103,11 @@ public interface ICvEditorService
     Task<PresentacionCvDto> GetPresentacionAsync(int curriculumId, CancellationToken ct = default);
     Task<PresentacionCvDto> UpdatePresentacionAsync(int curriculumId, UpdatePresentacionCvRequest request, CancellationToken ct = default);
     Task<PresentacionCvDto> UpdateCurriculumPublicacionAsync(int curriculumId, bool publicado, CancellationToken ct = default);
+
+    // Ofertas analizadas
+    Task<IReadOnlyList<OfertaDto>> GetOfertasAsync(int curriculumId, CancellationToken ct = default);
+    Task<OfertaDto> CreateOfertaAsync(int curriculumId, UpsertOfertaRequest request, CancellationToken ct = default);
+    Task<OfertaDto> UpdateOfertaAsync(int curriculumId, int ofertaId, UpsertOfertaRequest request, CancellationToken ct = default);
+    Task DeleteOfertaAsync(int curriculumId, int ofertaId, CancellationToken ct = default);
 }
 

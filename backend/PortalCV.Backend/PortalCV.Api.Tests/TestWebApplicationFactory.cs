@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -10,7 +11,7 @@ namespace PortalCV.Api.Tests;
 
 /// <summary>
 /// Factory de tests de integracion. Levanta el host de PortalCV.Api en memoria y
-/// reemplaza el DbContext configurado con SQL Server por uno con proveedor
+/// reemplaza el DbContext configurado con MariaDB por uno con proveedor
 /// InMemory, de manera que los tests no dependen de una base de datos real.
 ///
 /// Tambien fuerza valores minimos de configuracion (Jwt y ConnectionString) para
@@ -25,6 +26,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     public const string TestJwtIssuer = "PortalCV.Api.Tests";
     public const string TestJwtAudience = "PortalCV.Client.Tests";
 
+    // Clave AES-256 (32 bytes) solo para tests, en base64 — ver AesGcmApiKeyCipher.
+    public static readonly string TestEncryptionKeyBase64 =
+        Convert.ToBase64String(Encoding.UTF8.GetBytes("TestEncryptionKey32BytesLong!!!!"));
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
@@ -34,24 +39,25 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         // por InMemory en ConfigureTestServices.
         builder.UseSetting(
             "ConnectionStrings:DefaultConnection",
-            "Server=(localdb);Database=Test;Trusted_Connection=True;");
+            "server=localhost;port=3306;database=test;user=test;password=test;");
         builder.UseSetting("Jwt:Key", TestJwtKey);
         builder.UseSetting("Jwt:Issuer", TestJwtIssuer);
         builder.UseSetting("Jwt:Audience", TestJwtAudience);
+        builder.UseSetting("Encryption:Key", TestEncryptionKeyBase64);
 
         builder.ConfigureTestServices(services =>
         {
-            // Retira el DbContext de SQL Server registrado por AddInfrastructure.
+            // Retira el DbContext de MariaDB registrado por AddInfrastructure.
             // Si ademas no se aisla el provider interno, EF aborta con
-            // "Services for database providers 'SqlServer','InMemory' have been
+            // "Services for database providers 'MySql','InMemory' have been
             // registered" porque AddInfrastructure registro los servicios
-            // internos de SqlServer como singletons en el mismo contenedor.
+            // internos de MySQL como singletons en el mismo contenedor.
             var dbContextDescriptor = services.Single(
                 s => s.ServiceType == typeof(DbContextOptions<PortalCvDbContext>));
             services.Remove(dbContextDescriptor);
 
             // Proveedor interno de EF Core exclusivo para InMemory, aislado del
-            // contenedor principal (evita colision con el provider de SqlServer).
+            // contenedor principal (evita colision con el provider de MySQL).
             var efInMemoryProvider = new ServiceCollection()
                 .AddEntityFrameworkInMemoryDatabase()
                 .BuildServiceProvider();

@@ -20,6 +20,7 @@ describe('ExperienciaComponent', () => {
     referenciaId: 10, tipoReferencia: 'Laboral', experienciaId: 1, nombre: 'Jefe',
     apellido: 'Directo', email: null, telefono: null, parentesco: null, cargo: 'Gerente', empresa: 'Acme',
     relacion: null, observaciones: null, adjuntoSoporte: null, fechaRegistro: '2020-01-01T00:00:00Z',
+    mostrarEnCv: true,
   };
 
   function setup(
@@ -29,6 +30,7 @@ describe('ExperienciaComponent', () => {
     cvEditorService = jasmine.createSpyObj('CvEditorService', [
       'getExperiencias', 'getReferencias', 'createExperiencia', 'updateExperiencia', 'deleteExperiencia',
       'updateExperienciaVisibilidad', 'createReferencia', 'updateReferencia', 'deleteReferencia',
+      'uploadAdjuntoExperiencia', 'eliminarAdjuntoExperiencia',
     ]);
     cvEditorService.getExperiencias.and.returnValue(experienciasResult);
     cvEditorService.getReferencias.and.returnValue(referenciasResult);
@@ -432,6 +434,65 @@ describe('ExperienciaComponent', () => {
     });
   });
 
+  describe('activarTodos / inactivarTodos', () => {
+    const empleoOculto: ExperienciaDto = { ...empleo, experienciaId: 2, mostrarEnCv: false };
+
+    it('hayExperienciasOcultas/hayExperienciasVisibles reflejan el estado cargado', () => {
+      setup(of([{ ...empleo }, { ...empleoOculto }]));
+      component.ngOnInit();
+
+      expect(component.hayExperienciasOcultas).toBeTrue();
+      expect(component.hayExperienciasVisibles).toBeTrue();
+    });
+
+    it('activarTodos solo llama al backend para las ocultas y actualiza su estado', () => {
+      setup(of([{ ...empleo }, { ...empleoOculto }]));
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(of({ ...empleoOculto, mostrarEnCv: true }));
+      component.ngOnInit();
+
+      component.activarTodos();
+
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledWith(2, { mostrarEnCv: true });
+      expect(component.experiencias.find(e => e.experienciaId === 2)?.form.mostrarEnCv).toBeTrue();
+      expect(component.guardandoVisibilidadBloque).toBeFalse();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('inactivarTodos solo llama al backend para las visibles', () => {
+      setup(of([{ ...empleo }, { ...empleoOculto }]));
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(of({ ...empleo, mostrarEnCv: false }));
+      component.ngOnInit();
+
+      component.inactivarTodos();
+
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledTimes(1);
+      expect(cvEditorService.updateExperienciaVisibilidad).toHaveBeenCalledWith(1, { mostrarEnCv: false });
+    });
+
+    it('no llama al backend si no hay nada que cambiar', () => {
+      setup(of([{ ...empleo }]));
+      component.ngOnInit();
+
+      component.activarTodos();
+
+      expect(cvEditorService.updateExperienciaVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('notifica error si falla el guardado en bloque', () => {
+      setup(of([{ ...empleoOculto }]));
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 }))
+      );
+      component.ngOnInit();
+
+      component.activarTodos();
+
+      expect(component.guardandoVisibilidadBloque).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
   describe('agregar / cancelarNuevo', () => {
     it('agrega un borrador con esActual=true por defecto', () => {
       setup();
@@ -620,6 +681,100 @@ describe('ExperienciaComponent', () => {
         expect(component.guardando).toBeFalse();
         expect(notificationService.error).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('onAdjuntoSeleccionado / eliminarAdjunto', () => {
+    function fakeInputEvent(archivo: File | null): Event {
+      const input = document.createElement('input');
+      input.type = 'file';
+      if (archivo) {
+        const dt = new DataTransfer();
+        dt.items.add(archivo);
+        input.files = dt.files;
+      }
+      return { target: input } as unknown as Event;
+    }
+
+    it('avisa si el archivo no es PDF', () => {
+      setup();
+      component.ngOnInit();
+      const exp = component.experiencias[0];
+      const archivo = new File(['contenido'], 'foto.png', { type: 'image/png' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), exp);
+
+      expect(notificationService.warning).toHaveBeenCalled();
+      expect(cvEditorService.uploadAdjuntoExperiencia).not.toHaveBeenCalled();
+    });
+
+    it('avisa si el archivo supera 3 MB', () => {
+      setup();
+      component.ngOnInit();
+      const exp = component.experiencias[0];
+      const contenidoGrande = new Uint8Array(3 * 1024 * 1024 + 1);
+      const archivo = new File([contenidoGrande], 'grande.pdf', { type: 'application/pdf' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), exp);
+
+      expect(notificationService.warning).toHaveBeenCalled();
+      expect(cvEditorService.uploadAdjuntoExperiencia).not.toHaveBeenCalled();
+    });
+
+    it('sube el PDF y actualiza el empleo con la URL devuelta', () => {
+      setup();
+      cvEditorService.uploadAdjuntoExperiencia.and.returnValue(
+        of({ ...empleo, adjuntoSoporte: '/api/cv/experiencias/1/adjunto' })
+      );
+      component.ngOnInit();
+      const exp = component.experiencias[0];
+      const archivo = new File(['%PDF-1.4'], 'soporte.pdf', { type: 'application/pdf' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), exp);
+
+      expect(cvEditorService.uploadAdjuntoExperiencia).toHaveBeenCalledWith(1, archivo);
+      expect(exp.adjuntoSoporte).toBe('/api/cv/experiencias/1/adjunto');
+      expect(component.subiendoAdjuntoExpId).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('notifica error si falla la subida', () => {
+      setup();
+      cvEditorService.uploadAdjuntoExperiencia.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 400 }))
+      );
+      component.ngOnInit();
+      const exp = component.experiencias[0];
+      const archivo = new File(['%PDF-1.4'], 'soporte.pdf', { type: 'application/pdf' });
+
+      component.onAdjuntoSeleccionado(fakeInputEvent(archivo), exp);
+
+      expect(component.subiendoAdjuntoExpId).toBeNull();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+
+    it('eliminarAdjunto quita el soporte actual', () => {
+      setup();
+      cvEditorService.eliminarAdjuntoExperiencia.and.returnValue(of({ ...empleo, adjuntoSoporte: null }));
+      component.ngOnInit();
+      const exp = component.experiencias[0];
+
+      component.eliminarAdjunto(exp);
+
+      expect(cvEditorService.eliminarAdjuntoExperiencia).toHaveBeenCalledWith(1);
+      expect(exp.adjuntoSoporte).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('eliminarAdjunto no hace nada si ya hay una subida en curso para el mismo empleo', () => {
+      setup();
+      component.ngOnInit();
+      const exp = component.experiencias[0];
+      component.subiendoAdjuntoExpId = exp.experienciaId;
+
+      component.eliminarAdjunto(exp);
+
+      expect(cvEditorService.eliminarAdjuntoExperiencia).not.toHaveBeenCalled();
     });
   });
 

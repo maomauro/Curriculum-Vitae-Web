@@ -40,4 +40,15 @@ public static class CvAuditoriaAcciones
 
     public const string PresentacionPlantilla = "cv.presentacion_plantilla";
     public const string CurriculumPublicacion = "cv.curriculum_publicacion";
+
+    public const string PromptIaCreate = "cv.prompt_ia_create";
+    public const string PromptIaVersionCreate = "cv.prompt_ia_version_create";
+    public const string PromptIaVersionActivar = "cv.prompt_ia_version_activar";
+
+    public const string OfertaCreate = "cv.oferta_create";
+    public const string OfertaUpdate = "cv.oferta_update";
+    public const string OfertaDelete = "cv.oferta_delete";
+    public const string OfertaCorreoEnviar = "cv.oferta_correo_enviar";
+
+    public const string CvGeneradoGenerar = "cv.cv_generado_generar";
 }

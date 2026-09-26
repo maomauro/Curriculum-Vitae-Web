@@ -5,11 +5,6 @@ export interface CvPreviewVisibilidad {
   visibleSeccion(seccion: string): boolean;
   visibleAtributo(seccion: string, attr: string): boolean;
   visibleAtributoSafe(seccion: string, attr: string): boolean;
-  visibleBloqueFormacion(bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos'): boolean;
-  visibleDescargarSoporte(
-    bloque: 'formacion-academica' | 'diplomados' | 'certificaciones' | 'cursos',
-    attr: string
-  ): boolean;
 }
 
 export interface CvPreviewPersonalesVm {

@@ -85,7 +85,7 @@
             <ng-container [ngSwitch]="r.nombreRol">
               <span *ngSwitchCase="visitante">Solo referencia; acceso público sin sesión.</span>
               <span *ngSwitchCase="publicador">Dueño de CV y módulos del candidato.</span>
-              <span *ngSwitchCase="admin">Usuarios, roles y (próximamente) auditoría.</span>
+              <span *ngSwitchCase="admin">Usuarios, roles y auditoría.</span>
               <span *ngSwitchDefault>—</span>
             </ng-container>
           </td>

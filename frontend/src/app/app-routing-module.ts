@@ -14,6 +14,7 @@ import { adminGuard } from './core/guards/admin.guard';
 import { AdminPanelComponent } from './features/admin/pages/admin-panel.component';
 import { AdminRolesComponent } from './features/admin/pages/admin-roles.component';
 import { AdminAuditoriaComponent } from './features/admin/pages/admin-auditoria.component';
+import { AdminProveedoresIaComponent } from './features/admin/pages/admin-proveedores-ia.component';
 
 const routes: Routes = [
   // ── Módulo público ──────────────────────────────────────────────────────────
@@ -69,6 +70,7 @@ const routes: Routes = [
           { path: 'usuarios', component: AdminPanelComponent },
           { path: 'roles', component: AdminRolesComponent },
           { path: 'auditoria', component: AdminAuditoriaComponent },
+          { path: 'proveedores-ia', component: AdminProveedoresIaComponent },
           { path: 'panel', redirectTo: 'usuarios', pathMatch: 'full' },
           { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
         ],

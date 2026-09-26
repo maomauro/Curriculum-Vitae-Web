@@ -4,13 +4,39 @@
     <h4><i class="bi bi-share-fill me-2 text-primary"></i>Redes Sociales</h4>
     <span class="text-muted small">Perfil público, portafolio y redes profesionales</span>
   </div>
-  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
-    <i class="bi bi-plus-circle me-1"></i>Agregar red
-  </button>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="activarTodas()"
+            *ngIf="hayRedesGuardadas"
+            [disabled]="guardandoVisibilidadBloque || !hayRedesOcultas"
+            title="Muestra en el CV todas las redes registradas">
+      <i class="bi bi-eye me-1"></i>Activar todas
+    </button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="inactivarTodas()"
+            *ngIf="hayRedesGuardadas"
+            [disabled]="guardandoVisibilidadBloque || !hayRedesVisibles"
+            title="Oculta del CV todas las redes registradas">
+      <i class="bi bi-eye-slash me-1"></i>Inactivar todas
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
+      <i class="bi bi-plus-circle me-1"></i>Agregar red
+    </button>
+  </div>
 </div>
 
-<div class="d-flex justify-content-end mb-2" *ngIf="embedded">
-  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="agregar()">
+<div class="d-flex flex-wrap justify-content-end gap-2 mb-2" *ngIf="embedded">
+  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="activarTodas()"
+          *ngIf="hayRedesGuardadas"
+          [disabled]="guardandoVisibilidadBloque || !hayRedesOcultas"
+          title="Muestra en el CV todas las redes registradas">
+    <i class="bi bi-eye me-1"></i>Activar todas
+  </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="inactivarTodas()"
+          *ngIf="hayRedesGuardadas"
+          [disabled]="guardandoVisibilidadBloque || !hayRedesVisibles"
+          title="Oculta del CV todas las redes registradas">
+    <i class="bi bi-eye-slash me-1"></i>Inactivar todas
+  </button>
+  <button type="button" class="btn btn-primary btn-sm" (click)="agregar()">
     <i class="bi bi-plus-circle me-1"></i>Agregar red
   </button>
 </div>
@@ -33,24 +59,35 @@
   <div class="bg-white rounded-3 shadow-sm mb-3 overflow-hidden">
 
     <!-- Vista normal -->
-    <div *ngIf="!red.editando" class="p-4 d-flex align-items-center gap-3">
+    <div *ngIf="!red.editando" class="p-4 d-flex align-items-center gap-3" [class.opacity-50]="!red.mostrarEnCv">
       <div class="cv-icon-box--social"
            [style.color]="iconoColor(red.nombreRed)">
         <i class="bi" [class]="iconoClase(red.nombreRed)"></i>
       </div>
       <div class="flex-grow-1 overflow-hidden">
-        <div class="fw-semibold">{{ red.nombreRed }}</div>
+        <div class="fw-semibold">
+          {{ red.nombreRed }}
+          <span *ngIf="red.mostrarEnCv" class="badge-active"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>En CV</span>
+          <span *ngIf="!red.mostrarEnCv" class="badge-inactive">No visible en CV</span>
+        </div>
         <div class="text-muted small text-truncate">
           {{ red.linkPublico || red.usuarioContacto || '—' }}
         </div>
+      </div>
+      <div class="form-check form-switch mb-0 flex-shrink-0" title="Mostrar en Mi CV">
+        <input class="form-check-input" type="checkbox" role="switch"
+               aria-label="Mostrar en Mi CV"
+               [ngModel]="red.mostrarEnCv"
+               (ngModelChange)="onMostrarEnCvChange(red, $event)"
+               [disabled]="guardandoVisibilidadRedSocialId === red.redSocialId">
       </div>
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-sm btn-outline-secondary"
                 (click)="red.editando = true; red.form = toForm(red)">
           <i class="bi bi-pencil"></i>
         </button>
-        <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminar(red)">
-          <i class="bi bi-trash"></i>
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminar(red)">
+          <i class="bi bi-trash3 me-1"></i>Eliminar
         </button>
       </div>
     </div>

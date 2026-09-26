@@ -456,6 +456,70 @@
 .cv-border-t-soft {
   border-top: 1px solid #f0f0f0;
 }
+// Ancho fijo -- igual en el encabezado (vacio) y en cada fila (3 o 4 botones segun
+// esActivo) -- para que las columnas de info alineen entre filas sin importar cuantos
+// botones tenga cada una.
+.vis-ia-acciones {
+  width: 172px;
+  justify-content: flex-end;
+}
+
+// Panel de vista previa en vivo (Configuración -> Visibilidad del CV). Fijo al hacer
+// scroll en pantallas grandes; en angostas se apila debajo de los controles (columna
+// Bootstrap col-lg-* ya se encarga de eso). La tarjeta se estira en flex-column para
+// que el panel ocupe todo el alto disponible (igualando la columna de la izquierda,
+// que suele ser más alta) en vez de quedar con una franja vacía debajo de un cuerpo
+// con max-height fijo.
+.cv-preview-panel-card {
+  @media (min-width: 992px) {
+    position: sticky;
+    top: 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 24px);
+  }
+}
+app-preview-publico-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+  }
+}
+.cv-preview-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+  }
+}
+.cv-preview-panel-tabs .nav-link {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.cv-preview-panel-body {
+  overflow-y: auto;
+  @media (min-width: 992px) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  @media (max-width: 991.98px) {
+    max-height: 70vh;
+  }
+
+  // La plantilla de CV (app-cv-plantilla-preview) trae su propia ventana con scroll
+  // (.cv-mi-letter-zoom-root, pensada para Mi CV con controles de zoom). Acá esa misma
+  // ventana queda anidada dentro de este panel, que ya tiene su propio scroll -- sin
+  // esto se ven dos barras de scroll una al lado de la otra. Se anula solo en este
+  // contexto; Mi CV sigue usando su scroll propio normalmente.
+  .cv-mi-letter-zoom-root {
+    max-height: none;
+    overflow: visible;
+  }
+}
 .cv-actions-row-soft {
   border-top: 1px solid #f0f0f0;
 }
@@ -773,6 +837,9 @@
   font-size: 0.85rem;
   opacity: 0.85;
 }
+.cv-preview-meta-red {
+  flex: 1 0 100%;
+}
 .cv-preview-sidebar {
   background: #f8f9fa;
   border-right: 1px solid #dee2e6;
@@ -951,6 +1018,9 @@
 
   .cv-mi-photo-img {
     object-fit: cover;
+    // Sesga el recorte hacia arriba: en fotos tipo retrato, centrar al 50% vertical
+    // suele cortar la frente/parte superior de la cabeza.
+    object-position: center 20%;
     display: block;
   }
 
@@ -2135,7 +2205,7 @@
   display: block;
   max-width: 100%;
 }
-// Dona “participación por tiempo” (proyectos): un poco más ancho por la leyenda inferior
+// Dona "tecnologías más usadas en proyectos".
 .public-cv-ficha .cv-chart-canvas-dona,
 .cv-dash-analytics-host .cv-chart-canvas-dona {
   position: relative;
@@ -2148,11 +2218,12 @@
   display: block;
   max-width: 100%;
 }
+// Mapa de cuadrantes "capacidades": ancho completo de la columna (necesita espacio
+// para los rótulos de cuadrante y los nombres de grupo junto a cada punto).
 .public-cv-ficha .cv-chart-canvas-radar,
 .cv-dash-analytics-host .cv-chart-canvas-radar {
   position: relative;
-  max-width: min(100%, 420px);
-  height: 320px;
+  width: 100%;
   margin: 0 auto;
 }
 .public-cv-ficha .cv-chart-canvas-radar canvas,
@@ -2447,27 +2518,19 @@
     min-width: 0;
   }
 
-  .skill-actions {
-    flex: 0 0 40px;
-    text-align: right;
+  .skill-visible {
+    flex: 0 0 84px;
+    text-align: center;
   }
-}
 
-.hab-tecnica-block .btn-hab-del,
-.hab-blanda-block .btn-hab-del,
-.hab-idioma-block .btn-hab-del {
-  background: none;
-  border: none;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 0.9rem;
-  border-radius: 4px;
-  padding: 4px 6px;
-  line-height: 1;
+  .skill-row--oculta {
+    opacity: 0.55;
+  }
 
-  &:hover {
-    background: #fff5f5;
-    color: #dc3545;
+  .skill-actions {
+    flex: 0 0 auto;
+    min-width: 110px;
+    text-align: right;
   }
 }
 
@@ -2647,6 +2710,44 @@
   font-size: 0.85rem;
   margin-right: auto;
   max-width: 520px;
+}
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
 }
 .cv-notif-dropdown {
   width: 340px;

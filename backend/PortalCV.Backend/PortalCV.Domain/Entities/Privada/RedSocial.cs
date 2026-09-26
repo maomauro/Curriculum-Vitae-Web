@@ -7,6 +7,7 @@ public class RedSocial
     public string NombreRed { get; set; } = string.Empty;
     public string? LinkPublico { get; set; }
     public string? UsuarioContacto { get; set; }
+    public bool MostrarEnCv { get; set; } = true;
 
     public Curriculum Curriculum { get; set; } = null!;
 }

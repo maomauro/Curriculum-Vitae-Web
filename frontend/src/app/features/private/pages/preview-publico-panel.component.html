@@ -1,0 +1,85 @@
+<div class="cv-preview-panel">
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <div class="fw-semibold small text-muted">
+      <i class="bi bi-eye me-1"></i>Así lo ve un visitante
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="cargando" (click)="recargar()">
+      <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+      <i *ngIf="!cargando" class="bi bi-arrow-clockwise me-1"></i>Actualizar
+    </button>
+  </div>
+
+  <ul class="nav gap-1 mb-2 cv-tabs-nav cv-preview-panel-tabs">
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link fw-semibold cv-nav-link-passive text-muted"
+        [class.cv-nav-link-active]="pestanaActiva === 'dashboard'"
+        (click)="seleccionarPestana('dashboard')">
+        <i class="bi bi-bar-chart-fill me-1"></i>Dashboard analítico
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link fw-semibold cv-nav-link-passive text-muted"
+        [class.cv-nav-link-active]="pestanaActiva === 'profesional'"
+        (click)="seleccionarPestana('profesional')">
+        <i class="bi bi-person-lines-fill me-1"></i>Información profesional
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link fw-semibold cv-nav-link-passive text-muted"
+        [class.cv-nav-link-active]="pestanaActiva === 'hoja-de-vida'"
+        (click)="seleccionarPestana('hoja-de-vida')">
+        <i class="bi bi-file-earmark-person me-1"></i>Hoja de vida
+      </button>
+    </li>
+  </ul>
+
+  <div *ngIf="cargando" class="text-center py-5">
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="visually-hidden">Cargando vista previa…</span>
+    </div>
+  </div>
+
+  <div *ngIf="!cargando && error" class="text-center text-muted small py-5">
+    <i class="bi bi-wifi-off display-6"></i>
+    <p class="mt-2 mb-0">No se pudo cargar la vista previa.</p>
+  </div>
+
+  <div *ngIf="!cargando && !error" class="cv-preview-panel-body">
+    <div *ngIf="pestanaActiva === 'dashboard'" class="cv-dash-analytics-host">
+      <app-dashboard-candidato [modoVistaPrevia]="true"></app-dashboard-candidato>
+    </div>
+    <div *ngIf="pestanaActiva === 'profesional'">
+      <app-cv-plantilla-preview
+        *ngIf="vistaPlantilla"
+        [vm]="vistaPlantilla"
+        [vis]="visibilidad"
+        [mostrarControlesZoom]="false">
+      </app-cv-plantilla-preview>
+    </div>
+    <div *ngIf="pestanaActiva === 'hoja-de-vida'">
+      <app-cv-hoja-de-vida-contenido
+        *ngIf="hayContenidoHojaDeVida"
+        [contenido]="hojaDeVidaContenido"
+        [personales]="personales"
+        [redesSociales]="redesSociales"
+        [perfilActivo]="perfilActivoHojaDeVida"
+        [plantillaCodigo]="plantillaCodigo"
+        [vis]="visibilidad"
+        [mostrarControlesZoom]="false">
+      </app-cv-hoja-de-vida-contenido>
+      <div *ngIf="!hayContenidoHojaDeVida" class="text-center text-muted small py-5">
+        <i class="bi bi-file-earmark-person display-6"></i>
+        <p class="mt-2 mb-0">
+          Todavía no tienes una hoja de vida generada para el perfil activo.<br>
+          Generala desde "Mi CV" en el perfil que marques como activo.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

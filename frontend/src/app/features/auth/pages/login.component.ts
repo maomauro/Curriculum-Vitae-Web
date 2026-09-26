@@ -21,6 +21,7 @@ export class LoginComponent extends AuthReadinessLifecycle {
   password = '';
   loading = false;
   errorMsg = '';
+  mostrarPassword = false;
 
   readonly authModal = inject(AuthModalService);
 
@@ -31,6 +32,10 @@ export class LoginComponent extends AuthReadinessLifecycle {
     startupReadiness: StartupReadinessService
   ) {
     super(startupReadiness);
+  }
+
+  toggleMostrarPassword(): void {
+    this.mostrarPassword = !this.mostrarPassword;
   }
 
   onLogin(): void {

@@ -1,0 +1,17 @@
+# Imagen SOLO para desarrollo local con hot-reload (docker-compose.yml).
+# No reemplaza a backend/Dockerfile, que sigue siendo el build de produccion
+# usado para desplegar al VPS de Contabo.
+#
+# El codigo fuente real llega por bind mount en tiempo de ejecucion
+# (ver "volumes" del servicio backend en docker-compose.yml); esta imagen solo
+# necesita el SDK completo (no el runtime minimo) para que "dotnet watch" compile.
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /src/PortalCV.Backend
+
+COPY entrypoint.dev.sh /entrypoint.dev.sh
+RUN chmod +x /entrypoint.dev.sh
+
+EXPOSE 8080
+
+ENTRYPOINT ["/entrypoint.dev.sh"]

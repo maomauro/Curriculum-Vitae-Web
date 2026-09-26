@@ -1,0 +1,278 @@
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h4>
+      <i class="bi bi-robot me-2 text-primary"></i>
+      Prompts de IA
+    </h4>
+    <p class="text-muted small mb-0">
+      Personaliza los prompts que usa el asistente de IA para ti. Editar crea una versión nueva, no sobrescribe la anterior.
+    </p>
+  </div>
+  <button type="button" class="btn btn-primary btn-sm" (click)="abrirNuevo()">
+    <i class="bi bi-plus-circle me-1"></i>Agregar prompt
+  </button>
+</div>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando prompts…</span>
+  </div>
+</div>
+
+<!-- Nuevo prompt -->
+<div *ngIf="!loading && mostrarFormNuevo" class="perfil-nuevo-card">
+  <div class="profile-card-header">
+    <div class="profile-name">
+      <i class="bi bi-plus-circle text-primary" aria-hidden="true"></i>
+      Nuevo prompt
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarNuevo()">
+      <i class="bi bi-x-lg me-1"></i>Cancelar
+    </button>
+  </div>
+
+  <div *ngIf="errorNuevo" class="alert alert-danger py-2 small mb-3">{{ errorNuevo }}</div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label" for="prompt-nuevo-codigo">Código <span class="text-danger">*</span></label>
+      <input
+        id="prompt-nuevo-codigo"
+        type="text"
+        class="form-control text-uppercase"
+        maxlength="50"
+        placeholder="Ej: EXTRACTOR_OFERTA"
+        [(ngModel)]="formNuevo.codigo" />
+      <small class="text-muted">Solo mayúsculas, números y guion bajo. No se puede cambiar luego de creado.</small>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" for="prompt-nuevo-nombre">Nombre <span class="text-danger">*</span></label>
+      <input id="prompt-nuevo-nombre" type="text" class="form-control" placeholder="Ej: Extractor de oferta laboral"
+             [(ngModel)]="formNuevo.nombre" />
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="prompt-nuevo-descripcion">Descripción <small class="text-muted fw-normal">(opcional)</small></label>
+      <textarea id="prompt-nuevo-descripcion" class="form-control" rows="2" placeholder="Para qué usas este prompt"
+                [(ngModel)]="formNuevo.descripcion"></textarea>
+    </div>
+
+    <div class="col-12">
+      <hr class="cv-sidebar-hr my-1">
+      <div class="fw-semibold small text-muted mb-2">Estructura del prompt</div>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label" for="prompt-nuevo-rol">Rol y contexto <span class="text-danger">*</span></label>
+      <textarea id="prompt-nuevo-rol" class="form-control" rows="2"
+                placeholder="Ej: Eres un asistente experto en análisis de ofertas laborales para candidatos técnicos."
+                [(ngModel)]="formNuevo.rolContexto"></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="prompt-nuevo-tarea">Tarea <span class="text-danger">*</span></label>
+      <textarea id="prompt-nuevo-tarea" class="form-control" rows="3" [placeholder]="tareaPlaceholder"
+                [(ngModel)]="formNuevo.tarea"></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="prompt-nuevo-reglas">Reglas <small class="text-muted fw-normal">(opcional)</small></label>
+      <textarea id="prompt-nuevo-reglas" class="form-control" rows="2"
+                placeholder="Ej: Responde siempre en español, en un tono profesional y directo."
+                [(ngModel)]="formNuevo.reglas"></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="prompt-nuevo-formato">Formato de salida <span class="text-danger">*</span></label>
+      <textarea id="prompt-nuevo-formato" class="form-control font-monospace small" rows="4"
+                placeholder='Ej: {"cargo": string, "empresa": string, "descripcion": string}'
+                [(ngModel)]="formNuevo.formatoSalida"></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="prompt-nuevo-ejemplos">Ejemplos <small class="text-muted fw-normal">(opcional)</small></label>
+      <textarea id="prompt-nuevo-ejemplos" class="form-control font-monospace small" rows="4"
+                placeholder="Ejemplos de entrada/salida (few-shot)"
+                [(ngModel)]="formNuevo.ejemplos"></textarea>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end">
+      <button type="button" class="btn btn-primary px-4" (click)="crear()" [disabled]="guardandoNuevo">
+        <span *ngIf="guardandoNuevo" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!guardandoNuevo" class="bi bi-floppy-fill me-2"></i>Crear prompt
+      </button>
+    </div>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading">
+  <h6 *ngIf="prompts.length > 0" class="d-flex align-items-center gap-2">
+    <i class="bi bi-person-check text-primary"></i>Prompts personalizados
+  </h6>
+
+  <div *ngIf="prompts.length === 0 && !mostrarFormNuevo" class="text-center py-5 text-muted">
+    <i class="bi bi-robot display-5"></i>
+    <p class="mt-3">Todavía no tienes prompts configurados. Crea el primero.</p>
+  </div>
+
+  <div *ngFor="let p of prompts; trackBy: trackByPrompt" class="profile-card">
+    <div class="profile-card-header">
+      <div class="profile-name cv-cursor-pointer"
+           role="button"
+           tabindex="0"
+           [attr.aria-expanded]="isPromptAccordionOpen(p.codigo)"
+           [attr.aria-controls]="'prompt-panel-' + p.codigo"
+           (click)="togglePromptAccordion(p)"
+           (keydown.enter)="togglePromptAccordion(p)"
+           (keydown.space)="$event.preventDefault(); togglePromptAccordion(p)">
+        <i class="bi cv-chevron-muted" aria-hidden="true"
+           [class.bi-chevron-down]="!isPromptAccordionOpen(p.codigo)"
+           [class.bi-chevron-up]="isPromptAccordionOpen(p.codigo)"></i>
+        {{ p.nombre }}
+        <span class="badge rounded-pill cv-badge-neutral ms-2">v{{ p.versionActiva }}</span>
+      </div>
+      <div class="text-muted small"><code>{{ p.codigo }}</code> · {{ p.fechaActualizacion | date: 'dd/MM/yyyy HH:mm' }}</div>
+    </div>
+
+    <div *ngIf="isPromptAccordionOpen(p.codigo)" [id]="'prompt-panel-' + p.codigo" role="region">
+      <div *ngIf="p.error" class="alert alert-danger py-2 small mb-3">{{ p.error }}</div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" [attr.for]="'nombre-' + p.codigo">Nombre <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [id]="'nombre-' + p.codigo" [(ngModel)]="p.form.nombre" />
+        </div>
+        <div class="col-12">
+          <label class="form-label" [attr.for]="'descripcion-' + p.codigo">Descripción <small class="text-muted fw-normal">(opcional)</small></label>
+          <textarea class="form-control" rows="2" [id]="'descripcion-' + p.codigo" [(ngModel)]="p.form.descripcion"></textarea>
+        </div>
+
+        <div class="col-12">
+          <hr class="cv-sidebar-hr my-1">
+          <div class="fw-semibold small text-muted mb-2">Estructura del prompt</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label" [attr.for]="'rol-' + p.codigo">Rol y contexto <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="2" [id]="'rol-' + p.codigo" [(ngModel)]="p.form.rolContexto"></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label" [attr.for]="'tarea-' + p.codigo">Tarea <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="3" [id]="'tarea-' + p.codigo" [(ngModel)]="p.form.tarea"></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label" [attr.for]="'reglas-' + p.codigo">Reglas <small class="text-muted fw-normal">(opcional)</small></label>
+          <textarea class="form-control" rows="2" [id]="'reglas-' + p.codigo" [(ngModel)]="p.form.reglas"></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label" [attr.for]="'formato-' + p.codigo">Formato de salida <span class="text-danger">*</span></label>
+          <textarea class="form-control font-monospace small" rows="4" [id]="'formato-' + p.codigo" [(ngModel)]="p.form.formatoSalida"></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label" [attr.for]="'ejemplos-' + p.codigo">Ejemplos <small class="text-muted fw-normal">(opcional)</small></label>
+          <textarea class="form-control font-monospace small" rows="4" [id]="'ejemplos-' + p.codigo" [(ngModel)]="p.form.ejemplos"></textarea>
+        </div>
+      </div>
+
+      <div class="cv-border-t-soft pt-3 mt-4">
+        <div class="fw-semibold small mb-2">Historial de versiones</div>
+
+        <div *ngIf="p.cargandoHistorial" class="text-center py-2">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Cargando historial…</span>
+          </div>
+        </div>
+
+        <div *ngFor="let v of p.historial" class="py-2 px-2 admin-roles-row rounded-3 mb-2">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="fw-semibold">v{{ v.version }}</span>
+              <span class="badge rounded-pill ms-2" [class.badge-cv-publicado]="v.esActivo" [class.badge-cv-borrador]="!v.esActivo">
+                {{ v.esActivo ? 'Activa' : 'Inactiva' }}
+              </span>
+              <div class="text-muted small">{{ v.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleVersionExpandida(v)">
+                <i class="bi" [class.bi-chevron-down]="versionExpandidaId !== v.promptIaId" [class.bi-chevron-up]="versionExpandidaId === v.promptIaId"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                *ngIf="!v.esActivo"
+                [disabled]="activandoVersionId === v.promptIaId"
+                (click)="activarVersion(p, v)">
+                <span *ngIf="activandoVersionId === v.promptIaId" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="activandoVersionId !== v.promptIaId" class="bi bi-arrow-counterclockwise me-1"></i>Activar
+              </button>
+            </div>
+          </div>
+          <pre *ngIf="versionExpandidaId === v.promptIaId" class="border rounded-3 p-3 bg-light mt-2 mb-0 small">{{ v.contenido }}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isPromptAccordionOpen(p.codigo)" class="perfil-action-row">
+      <button type="button" class="btn btn-primary px-4" (click)="guardarVersion(p)" [disabled]="p.guardando">
+        <span *ngIf="p.guardando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!p.guardando" class="bi bi-floppy-fill me-2"></i>Guardar nueva versión
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <hr class="cv-sidebar-hr">
+    <h6 class="d-flex align-items-center gap-2">
+      <i class="bi bi-journal-text text-primary"></i>Prompts del sistema
+    </h6>
+    <p class="text-muted small mb-3">
+      Todos los prompts que usa el asistente de IA, personalizados o no. Los que ya tenés como propios se editan arriba, en
+      "Prompts personalizados" -- acá podés verlos igual como referencia, o usar uno como base para crear tu versión.
+    </p>
+
+    <div *ngFor="let c of catalogo; trackBy: trackByCatalogo" class="profile-card">
+      <div class="profile-card-header">
+        <div class="profile-name cv-cursor-pointer"
+             role="button"
+             tabindex="0"
+             [attr.aria-expanded]="isCatalogoExpandido(c.codigo)"
+             [attr.aria-controls]="'catalogo-panel-' + c.codigo"
+             (click)="toggleCatalogoExpandido(c.codigo)"
+             (keydown.enter)="toggleCatalogoExpandido(c.codigo)"
+             (keydown.space)="$event.preventDefault(); toggleCatalogoExpandido(c.codigo)">
+          <i class="bi cv-chevron-muted" aria-hidden="true"
+             [class.bi-chevron-down]="!isCatalogoExpandido(c.codigo)"
+             [class.bi-chevron-up]="isCatalogoExpandido(c.codigo)"></i>
+          <code>{{ c.codigo }}</code>
+          <span class="badge rounded-pill ms-2" [class.badge-cv-publicado]="estaPersonalizado(c.codigo)" [class.cv-badge-neutral]="!estaPersonalizado(c.codigo)">
+            {{ estaPersonalizado(c.codigo) ? 'Personalizado' : 'Por defecto' }}
+          </span>
+        </div>
+        <div class="text-muted small">{{ c.descripcion }}</div>
+      </div>
+
+      <div *ngIf="isCatalogoExpandido(c.codigo)" [id]="'catalogo-panel-' + c.codigo" role="region" class="row g-3 px-1">
+        <div class="col-12">
+          <div class="fw-semibold small text-muted mb-1">Rol y contexto</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.rolContexto }}</pre>
+        </div>
+        <div class="col-12">
+          <div class="fw-semibold small text-muted mb-1">Tarea</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.tarea }}</pre>
+        </div>
+        <div class="col-12" *ngIf="c.reglas">
+          <div class="fw-semibold small text-muted mb-1">Reglas</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.reglas }}</pre>
+        </div>
+        <div class="col-12">
+          <div class="fw-semibold small text-muted mb-1">Formato de salida</div>
+          <pre class="border rounded-3 p-3 bg-light mb-0 small text-wrap">{{ c.formatoSalida }}</pre>
+        </div>
+      </div>
+
+      <div *ngIf="isCatalogoExpandido(c.codigo)" class="perfil-action-row">
+        <button type="button" class="btn btn-outline-primary px-4" *ngIf="!estaPersonalizado(c.codigo)" (click)="usarComoBase(c)">
+          <i class="bi bi-copy me-2"></i>Usar como base
+        </button>
+        <span *ngIf="estaPersonalizado(c.codigo)" class="text-muted small">
+          <i class="bi bi-info-circle me-1"></i>Ya tenés tu propia versión -- la encontrás arriba, en "Prompts personalizados".
+        </span>
+      </div>
+    </div>
+  </div>
+</ng-container>

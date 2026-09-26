@@ -2,6 +2,8 @@ import { mapEditorToCvDetalleDto } from './map-editor-to-cv-detalle-dto';
 import type {
   ExperienciaDto,
   FormacionDto,
+  HabilidadDto,
+  PerfilDto,
   PresentacionCvDto,
   ProyectoDto,
   ReferenciaDto,
@@ -57,6 +59,18 @@ describe('mapEditorToCvDetalleDto', () => {
     expect(dto.experiencias[0].empresa).toBe('Visible SA');
   });
 
+  it('oculta experiencia/aspiracion salarial del perfil segun sus propios interruptores', () => {
+    const perfiles: PerfilDto[] = [{
+      perfilId: 1, nombrePerfil: 'Backend', descripcionPerfil: null, esActivo: true,
+      experienciaPerfilAnios: 7, aspiracionSalarialPesos: 8000000, aspiracionSalarialDolares: 2000,
+      mostrarExperienciaPerfil: false, mostrarAspiracionSalarial: true,
+    }];
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), perfiles, [], [], [], [], [], []);
+
+    expect(dto.perfiles[0].experienciaPerfilAnios).toBeNull();
+    expect(dto.perfiles[0].aspiracionSalarialPesos).toBe(8000000);
+  });
+
   it('referencia Laboral ligada a empleo oculto no aparece; Laboral con empleo visible sí', () => {
     const referencias: ReferenciaDto[] = [
       {
@@ -73,6 +87,7 @@ describe('mapEditorToCvDetalleDto', () => {
         relacion: null,
         observaciones: null,
         adjuntoSoporte: null,
+        mostrarEnCv: true,
         fechaRegistro: '2026-01-01T00:00:00Z',
       },
       {
@@ -89,6 +104,7 @@ describe('mapEditorToCvDetalleDto', () => {
         relacion: null,
         observaciones: null,
         adjuntoSoporte: null,
+        mostrarEnCv: true,
         fechaRegistro: '2026-01-01T00:00:00Z',
       },
     ];
@@ -124,6 +140,7 @@ describe('mapEditorToCvDetalleDto', () => {
         relacion: null,
         observaciones: null,
         adjuntoSoporte: null,
+        mostrarEnCv: true,
         fechaRegistro: '2026-01-01T00:00:00Z',
       },
     ];
@@ -157,6 +174,7 @@ describe('mapEditorToCvDetalleDto', () => {
         relacion: null,
         observaciones: null,
         adjuntoSoporte: null,
+        mostrarEnCv: true,
         fechaRegistro: '2026-01-01T00:00:00Z',
       },
     ];
@@ -173,6 +191,49 @@ describe('mapEditorToCvDetalleDto', () => {
     );
     expect(dto.referencias.length).toBe(1);
     expect(dto.referencias[0].tipoReferencia).toBe('Personal');
+  });
+
+  it('excluye referencias con mostrarEnCv false del detalle', () => {
+    const referencias: ReferenciaDto[] = [
+      {
+        referenciaId: 40,
+        tipoReferencia: 'Laboral',
+        experienciaId: null,
+        nombre: 'Visible',
+        apellido: null,
+        email: null,
+        telefono: null,
+        parentesco: null,
+        cargo: null,
+        empresa: null,
+        relacion: null,
+        observaciones: null,
+        adjuntoSoporte: null,
+        mostrarEnCv: true,
+        fechaRegistro: '2026-01-01T00:00:00Z',
+      },
+      {
+        referenciaId: 41,
+        tipoReferencia: 'Laboral',
+        experienciaId: null,
+        nombre: 'Oculta',
+        apellido: null,
+        email: null,
+        telefono: null,
+        parentesco: null,
+        cargo: null,
+        empresa: null,
+        relacion: null,
+        observaciones: null,
+        adjuntoSoporte: null,
+        mostrarEnCv: false,
+        fechaRegistro: '2026-01-01T00:00:00Z',
+      },
+    ];
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], [], referencias, []);
+    const ids = dto.referencias.map(r => r.referenciaId);
+    expect(ids).toContain(40);
+    expect(ids).not.toContain(41);
   });
 
   it('excluye formaciones con mostrarEnCv false', () => {
@@ -210,6 +271,39 @@ describe('mapEditorToCvDetalleDto', () => {
     const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], formaciones, [], [], [], []);
     expect(dto.formaciones.length).toBe(1);
     expect(dto.formaciones[0].formacionId).toBe(1);
+  });
+
+  it('excluye habilidades con mostrarEnCv false', () => {
+    const habilidades = [
+      {
+        habilidadId: 20,
+        nombre: 'Visible',
+        tipo: 'Tecnica',
+        nivel: 'Avanzado',
+        descripcion: null,
+        nivelLectura: null,
+        nivelEscritura: null,
+        nivelEscucha: null,
+        nivelHabla: null,
+        mostrarEnCv: true,
+      },
+      {
+        habilidadId: 21,
+        nombre: 'Oculta',
+        tipo: 'Tecnica',
+        nivel: 'Avanzado',
+        descripcion: null,
+        nivelLectura: null,
+        nivelEscritura: null,
+        nivelEscucha: null,
+        nivelHabla: null,
+        mostrarEnCv: false,
+      },
+    ] as HabilidadDto[];
+
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], habilidades, [], [], []);
+    expect(dto.habilidades.length).toBe(1);
+    expect(dto.habilidades[0].habilidadId).toBe(20);
   });
 
   it('excluye proyectos con mostrarEnCv false', () => {

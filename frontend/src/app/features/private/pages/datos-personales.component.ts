@@ -4,6 +4,7 @@ import { CvEditorService, PersonalesDto, UpsertPersonalesRequest } from '../../.
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { FORM_MESSAGES } from '../../../core/constants/form-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { PersonalesFotoRefreshService } from '../../../core/services/private/personales-foto-refresh.service';
 import {
   extractApiErrorMessage,
   getTodayDateString,
@@ -46,20 +47,29 @@ export class DatosPersonalesComponent implements OnInit {
     tipoSangre: null, eps: null, pencion: null, cesantias: null,
     email: null, celular: null, telefonoFijo: null,
     pais: null, departamento: null, ciudad: null, barrio: null, codigoPostal: null,
-    direccion: null, tipoResidencia: null, fotoUrl: null
+    direccion: null, tipoResidencia: null
   };
+
+  /** Foto actual (o `null`): separada de `p` porque ya no se edita como texto -- se
+   * sube/elimina con endpoints propios, ver onFotoSeleccionada/eliminarFoto. */
+  fotoUrlActual: string | null = null;
+  subiendoFoto = false;
+  private static readonly FOTO_TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+  private static readonly FOTO_MAX_BYTES = 1024 * 1024;
 
   constructor(
     private cvEditorService: CvEditorService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private personalesFotoRefresh: PersonalesFotoRefreshService
   ) {}
 
   ngOnInit(): void {
     this.loading = true;
     this.cvEditorService.getPersonales().subscribe({
       next: (data: PersonalesDto) => {
-        const { personalesId: _personalesId, curriculumId: _curriculumId, ...rest } = data;
+        const { personalesId: _personalesId, curriculumId: _curriculumId, fotoUrl, ...rest } = data;
         this.p = rest;
+        this.fotoUrlActual = fotoUrl;
         this.loading = false;
       },
       error: () => {
@@ -128,8 +138,9 @@ export class DatosPersonalesComponent implements OnInit {
     this.guardadoOk = false;
     this.cvEditorService.upsertPersonales(payload).subscribe({
       next: (data: PersonalesDto) => {
-        const { personalesId: _personalesId, curriculumId: _curriculumId, ...rest } = data;
+        const { personalesId: _personalesId, curriculumId: _curriculumId, fotoUrl, ...rest } = data;
         this.p = rest;
+        this.fotoUrlActual = fotoUrl;
         this.guardando = false;
         this.guardadoOk = true;
         this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
@@ -142,6 +153,53 @@ export class DatosPersonalesComponent implements OnInit {
         // No registrar el payload en consola (datos personales); el usuario ya ve el error en pantalla.
         console.error('Error guardando datos personales', error);
       }
+    });
+  }
+
+  onFotoSeleccionada(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    input.value = ''; // permite volver a elegir el mismo archivo despues (ej. tras un error)
+    if (!archivo) return;
+
+    if (!DatosPersonalesComponent.FOTO_TIPOS_PERMITIDOS.includes(archivo.type)) {
+      this.notificationService.warning('Formato no soportado. Usa JPG, PNG o WEBP.');
+      return;
+    }
+    if (archivo.size > DatosPersonalesComponent.FOTO_MAX_BYTES) {
+      this.notificationService.warning('La foto no puede superar 1 MB.');
+      return;
+    }
+
+    this.subiendoFoto = true;
+    this.cvEditorService.uploadFotoPersonales(archivo).subscribe({
+      next: data => {
+        this.fotoUrlActual = data.fotoUrl;
+        this.subiendoFoto = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+        this.personalesFotoRefresh.requestRefresh();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoFoto = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  eliminarFoto(): void {
+    if (this.subiendoFoto) return;
+    this.subiendoFoto = true;
+    this.cvEditorService.eliminarFotoPersonales().subscribe({
+      next: data => {
+        this.fotoUrlActual = data.fotoUrl;
+        this.subiendoFoto = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+        this.personalesFotoRefresh.requestRefresh();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoFoto = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
     });
   }
 }

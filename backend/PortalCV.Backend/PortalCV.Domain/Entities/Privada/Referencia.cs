@@ -18,6 +18,9 @@ public class Referencia
     public string? Relacion { get; set; }
     public string? Observaciones { get; set; }
     public string? AdjuntoSoporte { get; set; }
+    /// <summary>Incluir esta referencia laboral en Mi CV y en el detalle público (mismo patrón
+    /// que Experiencia/Formacion/Proyecto/RedSocial).</summary>
+    public bool MostrarEnCv { get; set; } = true;
 
     public DateTime FechaRegistro { get; set; }
 

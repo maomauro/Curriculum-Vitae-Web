@@ -1,0 +1,156 @@
+<div class="cv-mi-letter-wrap" *ngIf="contenido as cv">
+  <div
+    *ngIf="mostrarControlesZoom"
+    class="cv-mi-zoom-bar cv-mi-screen-only d-flex flex-wrap align-items-center gap-2"
+    role="toolbar"
+    aria-label="Zoom de la vista previa del CV">
+    <span class="small text-muted text-nowrap mb-0">
+      <i class="bi bi-aspect-ratio me-1" aria-hidden="true"></i>
+      Zoom
+    </span>
+    <div class="d-inline-flex align-items-center gap-1 cv-mi-zoom-stepper">
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm cv-mi-zoom-btn"
+        (click)="alejarZoom()"
+        [disabled]="nivelZoom <= zoomMin"
+        aria-label="Alejar vista">
+        <i class="bi bi-zoom-out" aria-hidden="true"></i>
+      </button>
+      <span class="small cv-mi-zoom-pct text-muted text-center">{{ etiquetaZoom }}</span>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm cv-mi-zoom-btn"
+        (click)="acercarZoom()"
+        [disabled]="nivelZoom >= zoomMax"
+        aria-label="Acercar vista">
+        <i class="bi bi-zoom-in" aria-hidden="true"></i>
+      </button>
+    </div>
+    <button
+      type="button"
+      class="btn btn-link btn-sm py-0 text-decoration-none"
+      (click)="restablecerZoom()"
+      [disabled]="nivelZoom === 1"
+      title="Volver a 100%">
+      Restablecer
+    </button>
+  </div>
+
+  <div class="cv-mi-letter-zoom-root" role="region" aria-label="Vista previa del CV, desplácese para ver todo el contenido">
+    <div class="cv-mi-letter-zoom-frame" [style.zoom]="nivelZoom">
+      <div [class]="previewRootClass">
+        <div class="cv-mi-preview-stack">
+          <!-- Corporativo no usa el encabezado estándar -- su identidad va en la barra lateral oscura. -->
+          <div
+            *ngIf="plantillaCodigo !== 'corporativo'"
+            class="cv-preview-header d-flex align-items-start"
+            [class.text-white]="plantillaCodigo === 'clasico'">
+            <div class="d-flex align-items-start w-100 cv-preview-header-body">
+              <div *ngIf="attrSafe('datos-personales', 'foto')" class="cv-mi-photo-slot me-3">
+                <img *ngIf="fotoHeaderUrl" [src]="fotoHeaderUrl" alt="Foto de perfil" class="cv-mi-photo-img" />
+                <div *ngIf="!fotoHeaderUrl" class="cv-mi-photo-placeholder" aria-hidden="true">{{ inicialesFoto }}</div>
+              </div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-bold cv-preview-name">{{ nombreCompleto }}</div>
+                <div class="cv-preview-sub" *ngIf="perfilActivo">{{ perfilActivo.nombrePerfil }}</div>
+                <div class="d-flex flex-wrap mt-2 cv-preview-meta">
+                  <span *ngIf="mostrarEmail"><i class="bi bi-envelope-fill"></i>{{ personales?.email }}</span>
+                  <span *ngIf="mostrarTelefono"><i class="bi bi-telephone-fill"></i>{{ telefonoContacto }}</span>
+                  <span *ngIf="mostrarCiudadPais"><i class="bi bi-geo-alt-fill"></i>{{ ciudadPais }}</span>
+                  <span *ngFor="let red of redesConTexto" class="cv-preview-meta-red">
+                    <i class="bi" [ngClass]="red.icono"></i>{{ red.texto }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cv-mi-body" [style.grid-template-columns]="plantillaCodigo === 'corporativo' ? null : 'minmax(0, 1fr)'">
+            <div class="cv-preview-sidebar" *ngIf="plantillaCodigo === 'corporativo'">
+              <div class="cv-corp-identity">
+                <div class="cv-corp-name">{{ nombreCompleto }}</div>
+                <div class="cv-corp-role" *ngIf="perfilActivo">{{ perfilActivo.nombrePerfil }}</div>
+                <div class="cv-corp-contact">
+                  <div *ngIf="mostrarEmail"><i class="bi bi-envelope-fill me-1" aria-hidden="true"></i>{{ personales?.email }}</div>
+                  <div *ngIf="mostrarTelefono"><i class="bi bi-telephone-fill me-1" aria-hidden="true"></i>{{ telefonoContacto }}</div>
+                  <div *ngIf="mostrarCiudadPais"><i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>{{ ciudadPais }}</div>
+                  <div *ngFor="let red of redesConTexto">
+                    <i class="bi me-1" [ngClass]="red.icono" aria-hidden="true"></i>{{ red.texto }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="cv-mi-cv-section" *ngIf="habilidadesPorTipo('tecnica').length">
+                <div class="cv-mi-section-title">Habilidades Técnicas</div>
+                <div class="cv-mi-skill-item" *ngFor="let h of habilidadesPorTipo('tecnica')">
+                  <div class="cv-skill-line">{{ h }}</div>
+                </div>
+              </div>
+
+              <div class="cv-mi-cv-section" *ngIf="habilidadesPorTipo('blanda').length">
+                <div class="cv-mi-section-title">Habilidades Blandas</div>
+                <div class="cv-mi-skill-item" *ngFor="let h of habilidadesPorTipo('blanda')">
+                  <div class="cv-skill-line">{{ h }}</div>
+                </div>
+              </div>
+
+              <div class="cv-mi-cv-section" *ngIf="habilidadesPorTipo('idioma').length">
+                <div class="cv-mi-section-title">Idiomas</div>
+                <div class="cv-mi-skill-item" *ngFor="let h of habilidadesPorTipo('idioma')">
+                  <div class="cv-skill-line">{{ h }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cv-preview-main">
+              <div class="cv-mi-section" *ngIf="perfilActivo?.descripcionPerfil">
+                <div class="cv-mi-section-title">Perfil Profesional</div>
+                <p class="cv-mi-prose cv-summary-text">{{ perfilActivo?.descripcionPerfil }}</p>
+                <div class="cv-mi-profile-meta" *ngIf="perfilActivo?.experienciaPerfilAnios != null">
+                  <span class="text-muted">Experiencia (perfil)</span> · {{ perfilActivo?.experienciaPerfilAnios }} años
+                </div>
+                <div class="cv-mi-profile-meta" *ngIf="aspiracionTexto">
+                  <span class="text-muted">Aspiración salarial</span> · {{ aspiracionTexto }}
+                </div>
+              </div>
+
+              <div class="cv-mi-section" *ngIf="cv.experiencia.length">
+                <div class="cv-mi-section-title">Experiencia Laboral</div>
+                <div class="cv-mi-timeline">
+                  <div class="timeline-item" *ngFor="let exp of cv.experiencia">
+                    <div class="timeline-title">{{ exp.cabecera }}</div>
+                    <ul class="cv-pro-list mb-0 mt-1" *ngIf="exp.funciones.length">
+                      <li *ngFor="let f of exp.funciones">{{ f }}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cv-mi-section" *ngIf="cv.educacion.length">
+                <div class="cv-mi-section-title">Formación</div>
+                <ul class="cv-pro-list mb-0">
+                  <li *ngFor="let linea of cv.educacion">{{ linea }}</li>
+                </ul>
+              </div>
+
+              <div class="cv-mi-section" *ngIf="cv.proyectos.length">
+                <div class="cv-mi-section-title">Proyectos Destacados</div>
+                <ul class="cv-pro-list mb-0">
+                  <li *ngFor="let linea of cv.proyectos">{{ linea }}</li>
+                </ul>
+              </div>
+
+              <div class="cv-mi-section" *ngIf="plantillaCodigo !== 'corporativo' && cv.habilidades.length">
+                <div class="cv-mi-section-title">Habilidades</div>
+                <div class="cv-mi-tags">
+                  <span class="cv-mi-tag" *ngFor="let h of cv.habilidades">{{ h.nombre }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

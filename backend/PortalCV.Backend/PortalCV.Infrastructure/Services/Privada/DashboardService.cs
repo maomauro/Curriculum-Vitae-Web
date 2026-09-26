@@ -14,7 +14,7 @@ public class DashboardService : IDashboardService
         _context = context;
     }
 
-    // â”€â”€ HS-52: EstadÃ­sticas del dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── HS-52: Estadísticas del dashboard ────────────────────────────────────
 
     public async Task<DashboardStatsDto> GetStatsAsync(int curriculumId, CancellationToken ct = default)
     {
@@ -36,7 +36,7 @@ public class DashboardService : IDashboardService
             FechaActualizacion: stats?.FechaActualizacion ?? DateTime.UtcNow);
     }
 
-    // â”€â”€ HS-53: Lista de contactos recibidos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── HS-53: Lista de contactos recibidos ──────────────────────────────────
 
     public async Task<IReadOnlyList<ContactoDto>> GetContactosAsync(int curriculumId, CancellationToken ct = default)
     {
@@ -57,7 +57,7 @@ public class DashboardService : IDashboardService
             .ToListAsync(ct);
     }
 
-    // â”€â”€ HS-54: Marcar contacto como leÃ­do â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── HS-54: Marcar contacto como leído ────────────────────────────────────
 
     public async Task MarcarContactoLeidoAsync(int curriculumId, int contactoId, CancellationToken ct = default)
     {
@@ -77,7 +77,7 @@ public class DashboardService : IDashboardService
         await _context.SaveChangesAsync(ct);
     }
 
-    // â”€â”€ HS-55: Notificaciones (campanita) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── HS-55: Notificaciones (campanita) ────────────────────────────────────
 
     public async Task<NotificacionesResumenDto> GetNotificacionesAsync(
         int curriculumId, int limite = 10, CancellationToken ct = default)
@@ -102,7 +102,7 @@ public class DashboardService : IDashboardService
         return new NotificacionesResumenDto(conteoNoLeidas, recientes);
     }
 
-    // â”€â”€ CÃ¡lculo de completitud â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Cálculo de completitud ────────────────────────────────────────────────
 
     private async Task<int> CalcularCompletitudAsync(int curriculumId, CancellationToken ct)
     {

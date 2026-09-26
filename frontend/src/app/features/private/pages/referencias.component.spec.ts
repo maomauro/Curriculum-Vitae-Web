@@ -24,6 +24,7 @@ describe('ReferenciasComponent', () => {
     relacion: 'Colega',
     observaciones: null,
     adjuntoSoporte: null,
+    mostrarEnCv: true,
     fechaRegistro: '2026-01-01T00:00:00Z',
   };
   const laboral: ReferenciaDto = { ...personal, referenciaId: 2, tipoReferencia: 'Laboral', nombre: 'Carlos' };

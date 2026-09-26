@@ -61,6 +61,7 @@ Entities/
 | `Privada/` | `AlertaVisita.cs` | Notificación generada al recibir una visita o contacto |
 | `Privada/` | `EstadisticasPublicas.cs` | Totales acumulados de visitas/contactos por CV |
 | `Privada/` | `AuditoriaCv.cs` | Registro append-only de cambios sobre el CV desde el área privada |
+| `Privada/` | `PromptIa.cs` | Prompt del asistente de IA, propio de un CV y versionado: cada edición inserta una fila nueva y desactiva la anterior |
 | `Publica/` | `VisitanteContacto.cs` | Registro de cada mensaje enviado por un reclutador (origen: zona pública) |
 
 > `Enums/` está reservado para uso futuro. `Exceptions/` ya tiene contenido real: `ForbiddenOperationException.cs`.
@@ -93,6 +94,8 @@ Interfaces/
 | `Privada/` | `IRepository<T>` | Repositorio genérico: GetById, GetAll, Find, Add, Update, Remove |
 | `Privada/` | `IAlertaService` | Consultar y marcar alertas de visitas/contactos |
 | `Privada/` | `IDashboardService` | Estadísticas del dashboard del publicador |
+| `Privada/` | `IPromptIaRepository` | Acceso a datos de `PromptIa`, acotado al CV dueño; lee la versión activa con caché en memoria |
+| `Privada/` | `IPromptIaService` | Valida, ensambla `Contenido` y versiona los prompts de IA del CV autenticado |
 | *(raíz)* | `IAdminAuditoriaService` | Registrar, listar y purgar auditoría de administración |
 | *(raíz)* | `ICvAuditoriaService` | Registrar, listar y purgar auditoría de cambios del CV |
 
@@ -133,6 +136,7 @@ DTOs/
 | `VisibilidadDtos.cs` | `VisibilidadSeccionDto`, `UpdateVisibilidadRequest` |
 | `AlertasDtos.cs` | `AlertaVisitaDto` |
 | `DashboardDtos.cs` | `DashboardStatsDto`, `ContactoDto`, `NotificacionItemDto`, `NotificacionesResumenDto` |
+| `PromptIaDtos.cs` | `PromptIaListItemDto` (fila de la tabla: Código + versión activa), `PromptIaVersionDto` (una versión con su estructura completa), `CrearPromptIaRequest`, `CrearVersionPromptIaRequest` |
 
 ---
 
@@ -145,9 +149,18 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 | Archivo | Función |
 |---------|---------|
 | `PortalCvDbContext.cs` | DbContext principal de EF Core. Registra todos los `DbSet<T>` y aplica las configuraciones |
-| `Configurations/*.cs` | Una clase por entidad. Define mapeo a SQL Server: tabla, columnas, PK, FK, índices y constraints |
+| `Configurations/*.cs` | Una clase por entidad. Define mapeo a MariaDB: tabla, columnas, PK, FK, índices y constraints |
 
-> El proyecto **no usa migraciones** de EF Core. El DDL ejecutable está en **`scripts/manual/`** (local) y **`scripts/production/`** (Azure); ver `scripts/README_ProductionScripts.md` y `database/README.md`.
+> El proyecto **no usa migraciones** de EF Core. El DDL ejecutable está en **`database/01_CreateSchema.sql`**; ver `database/README.md`.
+
+> **Conector EF Core usado: `MySql.EntityFrameworkCore` (Oracle), no Pomelo.EntityFrameworkCore.MySql.**
+> Pomelo es el más recomendado específicamente para MariaDB, pero al momento de escribir esto no
+> tiene ninguna versión compatible con EF Core 10 (la última, 9.0.0, falla en runtime con
+> `MissingMethodException` al resolver el primer `DbContext` — incompatibilidad binaria real con
+> `Microsoft.EntityFrameworkCore.Abstractions` 10.x). El conector de Oracle sí publica versión
+> `10.0.x` en paralelo a cada versión de EF Core y fue probado contra MariaDB real (no solo MySQL).
+> Si Pomelo publica soporte para EF Core 10 más adelante, migrar es un cambio chico (mismo
+> `DbContext`, mismo esquema) — vale la pena revisar entonces.
 
 ### Repositorios (`Repositories/`)
 
@@ -155,6 +168,7 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 |---------|---------|
 | `GenericRepository<T>.cs` | Implementación base: GetByIdAsync, GetAllAsync, FindAsync, AddAsync, Update, Remove, SaveChangesAsync |
 | `CurriculumRepository.cs` | Extiende el genérico: cargar CV completo con eager loading, buscar por URL pública, paginación con filtros de ciudad/habilidad/palabra clave |
+| `PromptIaRepository.cs` | Todo acotado a `CurriculumId`. Lee la versión activa por (Curriculum, Código) desde `IMemoryCache` (30 min); guardar una nueva versión o activar una anterior invalida la caché del (Curriculum, Código) afectado |
 
 ### Servicios (`Services/`)
 
@@ -174,6 +188,7 @@ Services/
 | `Privada/` | `CvEditorService.cs` | CRUD completo de las 10 secciones del CV: Personales, Perfil, Experiencia, Formación, Habilidades, Proyectos, Referencias, Redes Sociales, Familiares, Visibilidad |
 | `Privada/` | `AlertaService.cs` | Listar alertas (paginado), marcar leída, marcar todas leídas, limpiar leídas, conteo no leídas; alineado con contactos cuando aplica |
 | `Privada/` | `DashboardService.cs` | Estadísticas agregadas del publicador: visitas, contactos y métricas del CV |
+| `Privada/` | `PromptIaService.cs` | Valida, ensambla `Contenido` (RolContexto+Tarea+Reglas+FormatoSalida+Ejemplos) y versiona los prompts de IA propios del CV; audita en `AuditoriaCv` |
 | `Publica/` | `PublicCvService.cs` | Búsqueda paginada, detalle (+ registrar visita), estadísticas, filtros disponibles, formulario de contacto |
 | `Publica/` | `PublicCvVisitaRegistroService.cs` | Registra la visita a un CV público en un scope de DI propio (usado por `PublicCvService`) |
 | *(raíz)* | `AdminAuditoriaService.cs` | Registra, lista y purga `AuditoriaAdmin` |
@@ -205,9 +220,9 @@ Controllers/
 |-------------|-----------|--------|----------|
 | `Admin/AdminController` | `/api/admin` | Solo Admin | Gestión de usuarios, roles y asignaciones; auditoría de administración/CV/autenticación (`/auditoria`, `/auditoria-cv`, `/auditoria-auth`, `/auditoria/purge`) |
 | `Auth/AuthController` | `/api/auth` | Público | Login, registro, me, recuperar contraseña |
-| `Publica/PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar |
+| `Publica/PublicController` | `/api/public` | Público | Buscar CVs, detalle, estadísticas, filtros, contactar, foto de perfil (`GET cvs/{urlPublica}/foto`) |
 | `Privada/CvControllerBase` | *(base)* | — | Clase base: extrae `UsuarioId` y `CurriculumId` del JWT |
-| `Privada/PersonalesController` | `/api/cv/personales` | Publicador/Admin | GET y PUT de datos personales |
+| `Privada/PersonalesController` | `/api/cv/personales` | Publicador/Admin | GET y PUT de datos personales; foto de perfil como binario (`PUT/DELETE/GET .../foto`, máx. 1 MB) |
 | `Privada/PerfilController` | `/api/cv/perfiles` | Publicador/Admin | CRUD de perfiles profesionales |
 | `Privada/ExperienciaController` | `/api/cv/experiencias` | Publicador/Admin | CRUD de experiencia laboral |
 | `Privada/FormacionController` | `/api/cv/formaciones` | Publicador/Admin | CRUD de formación académica |
@@ -221,6 +236,8 @@ Controllers/
 | `Privada/DashboardController` | `/api/dashboard` | Publicador/Admin | Estadísticas del dashboard |
 | `Privada/ContactosController` | `/api/contactos` | Publicador/Admin | Lista de contactos recibidos y marcar leído |
 | `Privada/NotificacionesController` | `/api/notificaciones` | Publicador/Admin | Notificaciones recientes |
+| `Privada/PromptsIaController` | `/api/prompts-ia` | Publicador/Admin | CRUD versionado de los prompts de IA propios del CV: listar (versión activa), historial por Código, crear Código nuevo, crear versión nueva, activar una versión anterior |
+| `Privada/ProveedorIaController` | `/api/cv/proveedor-ia` | Publicador/Admin | CRUD de conexiones a proveedores de IA propias del CV (varias guardadas, una activa), activar una conexión, probar conexión (nueva o ya guardada) — la clave de API nunca se devuelve, ni cifrada ni en texto plano |
 
 ### Contratos (`Contracts/Auth/`)
 
@@ -261,8 +278,8 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 
 > `Serilog`/`Logging`/`AllowedHosts` también están en `appsettings.json` con la configuración estándar de logging; se omiten aquí por brevedad.
 
-- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-app.azurestaticapps.net`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
-- **JWT / SQL**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
+- **`Cors:AllowedOrigins`**: en **Production** debe incluir al menos la URL del SPA (p. ej. `https://tu-subdominio.tu-dominio.com`). Si el array está vacío y el entorno no es Development, la API **no arranca**. En Development, si está vacío se usan orígenes locales típicos (`localhost:4200`, `localhost:3000`). Variables: `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, …
+- **JWT / MariaDB**: mismas reglas que antes; clave JWT ≥ 32 caracteres.
 
 ### Secretos locales
 
@@ -272,25 +289,34 @@ Modelos de entrada/salida propios de la capa API (distintos a los DTOs de Applic
 |---|---|---|
 | **Docker local** (`docker run --env-file`) | `docker/backend.local.env` | Sí |
 | **Nativo** (`dotnet run` / F5 en Visual Studio o Rider) | `dotnet user-secrets` (perfil del usuario del SO) | Sí (no está en el repo) |
-| **CI / Azure Container Apps** | Variables de entorno del runtime / Key Vault | N/A |
+| **CI / VPS de producción (Contabo)** | Variables de entorno del runtime | N/A |
 
 Variables sensibles que debes configurar localmente:
 
-- `ConnectionStrings__DefaultConnection` (solo si no usas `Trusted_Connection` de `launchSettings.json`)
-- `Jwt__Key` (mínimo 32 caracteres)
+- `ConnectionStrings:DefaultConnection` (cadena a MariaDB — `launchSettings.json` ya **no** trae un valor por defecto, así que sin esto el flujo nativo no puede conectar a la base)
+- `Jwt:Key` (mínimo 32 caracteres)
+- `Encryption:Key` (clave AES-256 de 32 bytes en base64 — cifra la clave de API de cada conexión en `ProveedorIa`, ver `AesGcmApiKeyCipher`). Sin ella, cualquier endpoint de `api/cv/proveedor-ia` responde 500 al construir el servicio.
 
-Para el flujo nativo, inicializa `user-secrets` una sola vez:
+Para el flujo nativo, inicializa `user-secrets` una sola vez. **Importante:** `dotnet user-secrets set` guarda en un JSON plano, así que la jerarquía va con **dos puntos** (`Seccion:Clave`) — la sintaxis con doble guion bajo (`Seccion__Clave`) es solo para variables de entorno (Docker, `launchSettings.json`, CI/VPS) y `dotnet user-secrets` la guarda tal cual, literal, sin traducirla, así que no la reconoce como configuración:
 
 ```bash
 cd backend/PortalCV.Backend/PortalCV.Api
 dotnet user-secrets init
-dotnet user-secrets set "Jwt__Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "server=localhost;port=3306;database=portalcv;user=portalcv_app;password=TU_PASSWORD;"
+dotnet user-secrets set "Jwt:Key" "TU_CLAVE_DE_AL_MENOS_32_CARACTERES"
+dotnet user-secrets set "Encryption:Key" "TU_CLAVE_AES256_DE_32_BYTES_EN_BASE64"
+```
+
+Para generar una clave AES-256 válida (32 bytes en base64) — `openssl rand -base64 32`, o en PowerShell:
+
+```powershell
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
 ```
 
 Para el flujo Docker, copia la plantilla y completa valores reales:
 
 ```bash
-Copy-Item docker/backend.local.env.example docker/backend.local.env
+Copy-Item docker/backend.local.env.mariadb.example docker/backend.local.env
 ```
 
 > Los valores sensibles **nunca** deben commitearse en `launchSettings.json`, `appsettings.*.json` ni en código fuente.
@@ -315,7 +341,7 @@ HTTP Request
 [Servicio / Repositorio]      ← Implementación en Infrastructure
     │
     ▼
-[PortalCvDbContext]            ← EF Core → SQL Server
+[PortalCvDbContext]            ← EF Core → MariaDB
     │
     ▼
 HTTP Response (DTO serializado como JSON)
@@ -339,7 +365,7 @@ HTTP Response (DTO serializado como JSON)
 
 ## Tests (`PortalCV.Api.Tests`)
 
-Proyecto **xUnit** con tests de integración que arrancan el host de la API en memoria usando `WebApplicationFactory<Program>` y sustituyen SQL Server por **EF Core InMemory** (sin dependencia de base de datos real).
+Proyecto **xUnit** con tests de integración que arrancan el host de la API en memoria usando `WebApplicationFactory<Program>` y sustituyen MariaDB por **EF Core InMemory** (sin dependencia de base de datos real).
 
 Cobertura actual:
 
@@ -349,7 +375,7 @@ Cobertura actual:
 | `AuthEndpointsTests.cs` | Login/logout, registro de auditoría de autenticación (incluye IP de origen), endpoints protegidos devuelven 401 sin token; forgot-password responde genérico |
 | `CvEditorEndpointsTests.cs` | Edición del CV por el publicador y registro de auditoría de cambios |
 | `AdminAuditoriaAuthEndpointsTests.cs` | Endpoints admin de auditoría de autenticación: listado, control de acceso por rol, validaciones de purga |
-| `TestWebApplicationFactory.cs` | Fixture compartida: aísla el provider interno de EF para evitar choque SqlServer/InMemory |
+| `TestWebApplicationFactory.cs` | Fixture compartida: aísla el provider interno de EF para evitar choque MySQL/InMemory |
 
 Ejecutar en local:
 

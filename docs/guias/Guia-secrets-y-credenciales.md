@@ -9,7 +9,7 @@ Definir una forma segura y consistente de manejar contraseñas, tokens y llaves 
 - Guardar secretos en:
   - `dotnet user-secrets` para desarrollo local.
   - GitHub Secrets/Environment Secrets para CI/CD.
-  - Variables de entorno del servicio en runtime (o Key Vault cuando aplique).
+  - Variables de entorno del servicio en runtime (archivo `env_file` no versionado en el VPS de producción).
 
 ## Clasificacion recomendada
 - **Secretos (sensibles):**

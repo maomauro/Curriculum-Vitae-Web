@@ -4,11 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DatosPersonalesComponent } from './datos-personales.component';
 import { CvEditorService, PersonalesDto } from '../../../core/services/private/cv-editor.service';
 import { NotificationService } from '../../../core/services/shared/notification.service';
+import { PersonalesFotoRefreshService } from '../../../core/services/private/personales-foto-refresh.service';
 
 describe('DatosPersonalesComponent', () => {
   let component: DatosPersonalesComponent;
   let cvEditorService: jasmine.SpyObj<CvEditorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let personalesFotoRefresh: jasmine.SpyObj<PersonalesFotoRefreshService>;
 
   const personales: PersonalesDto = {
     personalesId: 5, curriculumId: 1, tipoIdentificacion: 'CC', numeroDocumento: '123',
@@ -22,15 +24,19 @@ describe('DatosPersonalesComponent', () => {
   };
 
   function setup(getResult = of({ ...personales })): void {
-    cvEditorService = jasmine.createSpyObj('CvEditorService', ['getPersonales', 'upsertPersonales']);
+    cvEditorService = jasmine.createSpyObj('CvEditorService', [
+      'getPersonales', 'upsertPersonales', 'uploadFotoPersonales', 'eliminarFotoPersonales',
+    ]);
     cvEditorService.getPersonales.and.returnValue(getResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warning', 'info']);
+    personalesFotoRefresh = jasmine.createSpyObj('PersonalesFotoRefreshService', ['requestRefresh']);
 
     TestBed.configureTestingModule({
       providers: [
         DatosPersonalesComponent,
         { provide: CvEditorService, useValue: cvEditorService },
         { provide: NotificationService, useValue: notificationService },
+        { provide: PersonalesFotoRefreshService, useValue: personalesFotoRefresh },
       ],
     });
     component = TestBed.inject(DatosPersonalesComponent);
@@ -172,6 +178,94 @@ describe('DatosPersonalesComponent', () => {
 
       expect(component.guardando).toBeFalse();
       expect(notificationService.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('foto de perfil', () => {
+    function inputEventCon(archivo: File | null): Event {
+      const input = document.createElement('input');
+      input.type = 'file';
+      if (archivo) {
+        const dt = new DataTransfer();
+        dt.items.add(archivo);
+        input.files = dt.files;
+      }
+      return { target: input } as unknown as Event;
+    }
+
+    it('onFotoSeleccionada sube el archivo y actualiza fotoUrlActual', () => {
+      setup();
+      cvEditorService.uploadFotoPersonales.and.returnValue(of({ ...personales, fotoUrl: '/api/cv/personales/foto' }));
+      const archivo = new File(['x'], 'foto.jpg', { type: 'image/jpeg' });
+
+      component.onFotoSeleccionada(inputEventCon(archivo));
+
+      expect(cvEditorService.uploadFotoPersonales).toHaveBeenCalledWith(archivo);
+      expect(component.fotoUrlActual).toBe('/api/cv/personales/foto');
+      expect(component.subiendoFoto).toBeFalse();
+      expect(notificationService.success).toHaveBeenCalled();
+      expect(personalesFotoRefresh.requestRefresh).toHaveBeenCalled();
+    });
+
+    it('onFotoSeleccionada rechaza un tipo de archivo no soportado sin llamar al backend', () => {
+      setup();
+      const archivo = new File(['x'], 'documento.pdf', { type: 'application/pdf' });
+
+      component.onFotoSeleccionada(inputEventCon(archivo));
+
+      expect(cvEditorService.uploadFotoPersonales).not.toHaveBeenCalled();
+      expect(notificationService.warning).toHaveBeenCalled();
+    });
+
+    it('onFotoSeleccionada rechaza un archivo de mas de 1 MB sin llamar al backend', () => {
+      setup();
+      const archivo = new File([new Uint8Array(1024 * 1024 + 1)], 'foto.jpg', { type: 'image/jpeg' });
+
+      component.onFotoSeleccionada(inputEventCon(archivo));
+
+      expect(cvEditorService.uploadFotoPersonales).not.toHaveBeenCalled();
+      expect(notificationService.warning).toHaveBeenCalled();
+    });
+
+    it('onFotoSeleccionada no hace nada si no se elige ningun archivo', () => {
+      setup();
+
+      component.onFotoSeleccionada(inputEventCon(null));
+
+      expect(cvEditorService.uploadFotoPersonales).not.toHaveBeenCalled();
+    });
+
+    it('onFotoSeleccionada notifica error si falla la subida', () => {
+      setup();
+      cvEditorService.uploadFotoPersonales.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      const archivo = new File(['x'], 'foto.jpg', { type: 'image/jpeg' });
+
+      component.onFotoSeleccionada(inputEventCon(archivo));
+
+      expect(component.subiendoFoto).toBeFalse();
+      expect(notificationService.error).toHaveBeenCalled();
+    });
+
+    it('eliminarFoto llama al backend y limpia fotoUrlActual', () => {
+      setup();
+      cvEditorService.eliminarFotoPersonales.and.returnValue(of({ ...personales, fotoUrl: null }));
+      component.fotoUrlActual = '/api/cv/personales/foto';
+
+      component.eliminarFoto();
+
+      expect(cvEditorService.eliminarFotoPersonales).toHaveBeenCalled();
+      expect(component.fotoUrlActual).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+      expect(personalesFotoRefresh.requestRefresh).toHaveBeenCalled();
+    });
+
+    it('eliminarFoto no hace nada si ya hay una operacion de foto en curso', () => {
+      setup();
+      component.subiendoFoto = true;
+
+      component.eliminarFoto();
+
+      expect(cvEditorService.eliminarFotoPersonales).not.toHaveBeenCalled();
     });
   });
 });

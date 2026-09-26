@@ -17,10 +17,6 @@ import { clearSessionHint, hasSessionHint, markSessionHint } from './app/core/co
  * de forma síncrona en su constructor y los guards de rutas (authGuard, adminGuard,
  * publicadorGuard) sigan siendo síncronos sin tener que rediseñarlos como asíncronos.
  *
- * API_BASE_URL ya llega resuelto correctamente en este punto: index.html define
- * window.__PORTALCV_CONFIG__ (inyectado en build por deploy-frontend-swa.yml) antes
- * de evaluar este bundle. En dev (sin inyeccion) usa su fallback por hostname.
- *
  * Si no hay indicio de sesión previa (hasSessionHint), se omite la llamada a /me:
  * de otro modo el backend respondería 401 (correcto, pero es una petición de red
  * fallida que el navegador loguea igual, aunque el código la maneje bien).

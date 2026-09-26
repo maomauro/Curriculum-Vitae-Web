@@ -28,7 +28,7 @@ public class AuditoriaCvConfiguration : IEntityTypeConfiguration<AuditoriaCv>
 
         builder.Property(x => x.DetalleJson);
 
-        // NO ACTION: evita "multiple cascade paths" en SQL Server (Usuario → Curriculum CASCADE → AuditoriaCv
+        // NO ACTION: evita multiples rutas de cascada (Usuario → Curriculum CASCADE → AuditoriaCv
         // y a la vez Usuario → Actor en la misma tabla).
         builder.HasOne(x => x.Actor)
             .WithMany()

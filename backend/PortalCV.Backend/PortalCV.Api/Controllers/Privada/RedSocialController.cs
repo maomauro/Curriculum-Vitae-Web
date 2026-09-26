@@ -29,6 +29,14 @@ public class RedSocialController : CvControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpsertRedSocialRequest request, CancellationToken ct = default)
         => Ok(await _editor.UpdateRedSocialAsync(GetCurriculumId(), id, request, ct));
 
+    [HttpPatch("{id:int}/visibilidad")]
+    [HttpPut("{id:int}/visibilidad")]
+    public async Task<IActionResult> UpdateVisibilidad(
+        int id,
+        [FromBody] UpdateRedSocialVisibilidadRequest request,
+        CancellationToken ct = default)
+        => Ok(await _editor.UpdateRedSocialVisibilidadAsync(GetCurriculumId(), id, request, ct));
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
     {

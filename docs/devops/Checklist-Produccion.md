@@ -2,25 +2,31 @@
 
 Lista orientativa antes de exponer el portal a usuarios reales. Complementa [Integracion-SonarCloud.md](../produccion/Integracion-SonarCloud.md), [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md) y [Guia-git.md](../guias/Guia-git.md).
 
+> Infraestructura vigente: base de datos **MariaDB** (ver `database/README.md`),
+> hosting en **Contabo (VPS) + Cloudflare (DNS/proxy)** con frontend y backend
+> detrás del mismo subdominio — ver el detalle completo y las fases de
+> despliegue en [Plan-Trabajo-Produccion.md](../produccion/Plan-Trabajo-Produccion.md).
+> Este checklist es el repaso final antes de exponer el portal, no reemplaza
+> ese plan.
+
 Referencia de corte vigente para retomar trabajo:
-- [Estado-Actual-2026-08-07.md](../archivo/Estado-Actual-2026-08-07.md)
 - [Smoke-Test-Produccion.md](./Smoke-Test-Produccion.md)
 
 ---
 
 ## Configuración y secretos
 
-- [x] **Cadena SQL**: `ConnectionStrings__DefaultConnection` con `Encrypt=True` y certificados correctos en Azure SQL (no usar `TrustServerCertificate=True` en prod salvo criterio explícito).
+- [ ] **Cadena de conexión**: `ConnectionStrings__DefaultConnection` apuntando a la instancia MariaDB de producción, con usuario/permisos dedicados (no `root`).
 - [ ] **JWT**: `Jwt__Key` larga y aleatoria (≥ 32 caracteres); `Jwt__Issuer` y `Jwt__Audience` alineados con el despliegue. Rotación documentada.
 - [x] **CORS**: `Cors__AllowedOrigins__0` (y más índices si aplica) con la **URL exacta** del SPA (incluye `https://`, sin barra final salvo que el navegador la envíe así). En producción la API **falla al arrancar** si no hay orígenes configurados y `AllowedOrigins` está vacío en appsettings.
 - [ ] **Usuario demo** (`Auth__DemoUser`): deshabilitar o eliminar en producción si el endpoint no debe existir.
-- [x] **Variables**: ningún secreto en el repositorio; usar secretos del proveedor (Azure Key Vault, GitHub Secrets, variables de entorno de Azure Container Apps).
+- [x] **Variables**: ningún secreto en el repositorio; usar GitHub Secrets (para CI/CD) y un archivo de entorno en el VPS (`env_file` del compose de producción, no versionado).
 
 ---
 
 ## Base de datos
 
-- [x] **Base nueva (recomendado):** ejecutar `scripts/production/05_AzureSQL_CreateSchema.sql` una vez en Azure SQL (incluye esquema completo y roles base). **Local (SQL Server instalado):** ejecutar `scripts/manual/01_CreateSchema.sql` (y opcionalmente `02_InsertTestData.sql`) según `database/README.md`.
+- [ ] **Base nueva:** ejecutar `database/01_CreateSchema.sql` una vez contra la instancia MariaDB de producción (incluye esquema completo, índices, triggers y roles base) — ver `database/README.md`.
 - [ ] Revisar política de backups y retención definida por el equipo (documentar responsable, periodicidad y restauración).
 
 ---
@@ -29,7 +35,7 @@ Referencia de corte vigente para retomar trabajo:
 
 - [x] `ASPNETCORE_ENVIRONMENT=Production`.
 - [x] Swagger desactivado fuera de Development (comportamiento actual en `Program.cs`).
-- [x] HTTPS terminado correctamente (proxy / Container Apps); `UseHttpsRedirection` activo fuera de Development.
+- [x] HTTPS terminado correctamente (Nginx en el VPS + Cloudflare); `UseHttpsRedirection` activo fuera de Development.
 - [ ] Revisar `AllowedHosts` en `appsettings` si se desea restringir host headers.
 
 ---
@@ -37,7 +43,7 @@ Referencia de corte vigente para retomar trabajo:
 ## Frontend (Angular)
 
 - [x] Build de producción: `npm run build -- --configuration production`.
-- [x] El frontend publicado en SWA consume API productiva en ACA (configuración de runtime para host `*.azurestaticapps.net`).
+- [ ] El frontend y el backend quedan detrás del mismo subdominio (Nginx en el VPS enruta `/api/*` al backend, el resto sirve el build de Angular) — sin esto no hace falta CORS cross-origin ni `environment.prod.ts`.
 - [ ] Probar login, CV público, contacto, alertas y panel privado contra el entorno real.
 
 ---
@@ -45,7 +51,7 @@ Referencia de corte vigente para retomar trabajo:
 ## Observabilidad y seguridad
 
 - [ ] Logs (Serilog) hacia consola/sink adecuado en el entorno cloud.
-- [ ] Revisar CORS y cabeceras de seguridad en el frontal (CDN / Static Web Apps).
+- [ ] Revisar CORS y cabeceras de seguridad en el frontal (Cloudflare / Nginx).
 - [ ] Rate limiting / WAF según política de la organización (opcional en fase inicial).
 
 ---

@@ -65,6 +65,7 @@ export class ReferenciasComponent implements OnInit {
       relacion: r.relacion,
       observaciones: r.observaciones,
       adjuntoSoporte: r.adjuntoSoporte,
+      mostrarEnCv: r.mostrarEnCv,
     };
   }
 
@@ -83,6 +84,7 @@ export class ReferenciasComponent implements OnInit {
       relacion: null,
       observaciones: null,
       adjuntoSoporte: null,
+      mostrarEnCv: true,
       fechaRegistro: '',
       expanded: true,
       form: {
@@ -98,6 +100,7 @@ export class ReferenciasComponent implements OnInit {
         relacion: null,
         observaciones: null,
         adjuntoSoporte: null,
+        mostrarEnCv: true,
       },
     };
     this.referencias.unshift(nueva);

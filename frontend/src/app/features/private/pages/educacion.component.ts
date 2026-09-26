@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import {
   CvEditorService,
   FormacionDto,
@@ -27,6 +28,11 @@ export class EducacionComponent implements OnInit {
   guardando = false;
   todayDate = getTodayDateString();
   guardandoVisibilidadFormacionId: number | null = null;
+  guardandoVisibilidadBloque = false;
+  /** PUT/DELETE de soporte (PDF) desde el input "Soporte / diploma" de cada registro. */
+  subiendoAdjuntoFormacionId: number | null = null;
+  private static readonly ADJUNTO_TIPOS_PERMITIDOS = ['application/pdf'];
+  private static readonly ADJUNTO_MAX_BYTES = 3 * 1024 * 1024;
 
   /** Valores enviados al API (string libre en backend, máx. 50 caracteres). */
   readonly tipoFormacionOptions = [
@@ -38,11 +44,6 @@ export class EducacionComponent implements OnInit {
     { value: 'Certificacion', label: 'Certificación' },
     { value: 'Curso', label: 'Curso' },
   ] as const;
-
-  readonly hintAdjuntoSoporte =
-    'Próximamente podrás adjuntar el diploma o certificado; el campo está deshabilitado por ahora.';
-  readonly notaAdjuntoSoporte =
-    'La carga de archivos se habilitará próximamente; por ahora el CV no almacena el adjunto desde el navegador.';
 
   constructor(
     private cvEditorService: CvEditorService,
@@ -190,6 +191,59 @@ export class EducacionComponent implements OnInit {
     });
   }
 
+  get hayFormacionesGuardadas(): boolean {
+    return this.formaciones.some(f => f.formacionId !== 0);
+  }
+
+  get hayFormacionesOcultas(): boolean {
+    return this.formaciones.some(f => f.formacionId !== 0 && !f.form.mostrarEnCv);
+  }
+
+  get hayFormacionesVisibles(): boolean {
+    return this.formaciones.some(f => f.formacionId !== 0 && f.form.mostrarEnCv);
+  }
+
+  activarTodas(): void {
+    this.actualizarVisibilidadEnBloque(true);
+  }
+
+  inactivarTodas(): void {
+    this.actualizarVisibilidadEnBloque(false);
+  }
+
+  private actualizarVisibilidadEnBloque(mostrar: boolean): void {
+    if (this.guardandoVisibilidadBloque) {
+      return;
+    }
+    const objetivo = this.formaciones.filter(
+      f => f.formacionId !== 0 && f.form.mostrarEnCv !== mostrar
+    );
+    if (objetivo.length === 0) {
+      return;
+    }
+    this.guardandoVisibilidadBloque = true;
+    forkJoin(
+      objetivo.map(f =>
+        this.cvEditorService.updateFormacionVisibilidad(f.formacionId, { mostrarEnCv: mostrar })
+      )
+    ).subscribe({
+      next: actualizadas => {
+        actualizadas.forEach(actualizada => {
+          const edu = this.formaciones.find(f => f.formacionId === actualizada.formacionId);
+          if (edu) {
+            Object.assign(edu, actualizada, { expanded: edu.expanded, form: this.toForm(actualizada) });
+          }
+        });
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoVisibilidadBloque = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
   agregar(): void {
     if (this.formaciones.some(f => f.formacionId === 0)) {
       this.notificationService.warning(FORM_MESSAGES.educacion.completeNuevaAntesDeOtra);
@@ -217,7 +271,6 @@ export class EducacionComponent implements OnInit {
         fechaFin: null,
         tipoFormacion: 'Posgrado',
         descripcion: null,
-        adjuntoSoporte: null,
         fechaVigencia: null,
         duracionHoras: null,
         mostrarEnCv: true,
@@ -307,6 +360,51 @@ export class EducacionComponent implements OnInit {
         },
       });
     }
+  }
+
+  onAdjuntoSeleccionado(event: Event, edu: FormacionUI): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    input.value = ''; // permite volver a elegir el mismo archivo despues (ej. tras un error)
+    if (!archivo) return;
+
+    if (!EducacionComponent.ADJUNTO_TIPOS_PERMITIDOS.includes(archivo.type)) {
+      this.notificationService.warning('Formato no soportado. Solo se admiten archivos PDF.');
+      return;
+    }
+    if (archivo.size > EducacionComponent.ADJUNTO_MAX_BYTES) {
+      this.notificationService.warning('El archivo no puede superar 3 MB.');
+      return;
+    }
+
+    this.subiendoAdjuntoFormacionId = edu.formacionId;
+    this.cvEditorService.uploadAdjuntoFormacion(edu.formacionId, archivo).subscribe({
+      next: actualizada => {
+        Object.assign(edu, actualizada, { expanded: edu.expanded, form: this.toForm(actualizada) });
+        this.subiendoAdjuntoFormacionId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoAdjuntoFormacionId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  eliminarAdjunto(edu: FormacionUI): void {
+    if (this.subiendoAdjuntoFormacionId === edu.formacionId) return;
+    this.subiendoAdjuntoFormacionId = edu.formacionId;
+    this.cvEditorService.eliminarAdjuntoFormacion(edu.formacionId).subscribe({
+      next: actualizada => {
+        Object.assign(edu, actualizada, { expanded: edu.expanded, form: this.toForm(actualizada) });
+        this.subiendoAdjuntoFormacionId = null;
+        this.notificationService.success(NOTIFICATION_MESSAGES.saveSuccess);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.subiendoAdjuntoFormacionId = null;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
   }
 
   eliminar(edu: FormacionUI): void {

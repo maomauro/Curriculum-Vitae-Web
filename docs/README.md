@@ -10,8 +10,8 @@ Descripción general del sistema, modelo de datos y backlog.
 | Archivo | Contenido |
 |---|---|
 | [Documentacion.md](./arquitectura/Documentacion.md) | Descripción general del proyecto, stack tecnológico |
-| [Modelo.md](./arquitectura/Modelo.md) | Modelo de datos, diagrama de base de datos |
 | [Backlog.md](./arquitectura/Backlog.md) | Historias de usuario, tareas pendientes |
+| [adr/](./arquitectura/adr/) | Decisiones de arquitectura registradas (ADRs): contexto, alternativas consideradas, consecuencias |
 
 ---
 
@@ -48,13 +48,10 @@ Infraestructura, despliegue y políticas de mantenimiento.
 | Archivo | Contenido |
 |---|---|
 | [DevOps.md](./devops/DevOps.md) | Pipelines, CI/CD, configuración Docker |
-| [Despliegue.md](./devops/Despliegue.md) | Decisiones de infraestructura y arquitectura de despliegue |
-| [Runbook-Azure.md](./devops/Runbook-Azure.md) | Runbook ejecutable con comandos `az` para provisionar Azure desde cero |
 | [Smoke-Test-Produccion.md](./devops/Smoke-Test-Produccion.md) | Pasos de verificación manual post-despliegue en producción |
 | [Plan-Backup-Mantenimiento.md](./devops/Plan-Backup-Mantenimiento.md) | Plan de backup y mantenimiento |
 | [Politica-Proteccion-Ramas.md](./devops/Politica-Proteccion-Ramas.md) | Reglas de protección de ramas Git |
 | [Checklist-Produccion.md](./devops/Checklist-Produccion.md) | Verificación previa a publicar en producción |
-| [Checklist-Auditoria-Repositorio.md](./devops/Checklist-Auditoria-Repositorio.md) | Checklist de auditoría del repo (limpieza, estructura, docs vs. código) — 2026-08-18 |
 | [postman/](./devops/postman/) | Colección Postman de la API + entornos (local/producción) |
 
 ---
@@ -65,10 +62,10 @@ Guías de trabajo, convenciones del equipo y gestión de secretos.
 | Archivo | Contenido |
 |---|---|
 | [Guia-git.md](./guias/Guia-git.md) | Convenciones de ramas, commits y flujo de trabajo Git |
-| [Guia-secrets-y-credenciales.md](./guias/Guia-secrets-y-credenciales.md) | Política de secretos: dónde viven según entorno (local / CI / Azure) |
+| [Guia-secrets-y-credenciales.md](./guias/Guia-secrets-y-credenciales.md) | Política de secretos: dónde viven según entorno (local / CI / producción) |
 | [Guia-inventario-secrets-por-ambiente.md](./guias/Guia-inventario-secrets-por-ambiente.md) | Plantilla de inventario de secretos por entorno (sin valores reales) |
 | [Inventario-minimo-local.md](./guias/Inventario-minimo-local.md) | Identidades y secretos mínimos para arrancar el proyecto localmente |
-| [Plantilla-herramientas-por-ambiente.md](./guias/Plantilla-herramientas-por-ambiente.md) | Catálogo de herramientas por ambiente (SDK, Node, Docker, Azure) |
+| [Plantilla-herramientas-por-ambiente.md](./guias/Plantilla-herramientas-por-ambiente.md) | Catálogo de herramientas por ambiente (SDK, Node, Docker, Contabo, Cloudflare) |
 
 ---
 
@@ -77,21 +74,8 @@ Plan de salida a producción y configuración de calidad continua.
 
 | Archivo | Contenido |
 |---|---|
-| [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live en Azure (ACA + SWA + Azure SQL) |
+| [Plan-Trabajo-Produccion.md](./produccion/Plan-Trabajo-Produccion.md) | Tablero de fases hasta el go-live en Contabo (VPS) + Cloudflare, con MariaDB |
 | [Integracion-SonarCloud.md](./produccion/Integracion-SonarCloud.md) | Configuración de SonarCloud en CI, cobertura LCOV y variables requeridas |
-
----
-
-## 🗄️ archivo/
-Documentación retirada o de corte histórico. Se conserva como referencia de diseño, no describe el estado actual del código.
-
-| Archivo | Contenido |
-|---|---|
-| [Snapshot-JSON-ColdStart.md](./archivo/Snapshot-JSON-ColdStart.md) | ⚠️ Retirado (2026-08-18): diseño del fallback de snapshot ante cold-start, eliminado del código |
-| [Snapshot-JSON-Checklist-Implementacion.md](./archivo/Snapshot-JSON-Checklist-Implementacion.md) | ⚠️ Retirado (2026-08-18): checklist de implementación del snapshot |
-| [Validacion-Snapshot-ColdStart.md](./archivo/Validacion-Snapshot-ColdStart.md) | ⚠️ Retirado (2026-08-18): pruebas del fallback snapshot que ya no existe en el código |
-| [Estado-Actual-2026-08-07.md](./archivo/Estado-Actual-2026-08-07.md) | Corte de estado del proyecto al 2026-08-07 |
-| [Sprint-Cierre-GoLive-2026-08.md](./archivo/Sprint-Cierre-GoLive-2026-08.md) | Cierre del sprint de salida a producción (agosto 2026) |
 
 ---
 
@@ -103,6 +87,5 @@ Documentación específica de cada carpeta del monorepo. Se mantienen junto al c
 | [../README.md](../README.md) | README raíz del repositorio: visión general, inicio rápido y estructura |
 | [../backend/README.md](../backend/README.md) | Build/run de la API .NET, configuración de secretos locales (user-secrets / Docker) |
 | [../frontend/README.md](../frontend/README.md) | Build/run del frontend Angular, scripts de test y cobertura |
-| [../database/README.md](../database/README.md) | Scripts SQL Server locales (`scripts/manual/`) y su orden de ejecución |
-| [../scripts/README_ProductionScripts.md](../scripts/README_ProductionScripts.md) | Scripts SQL para Azure SQL (`scripts/production/`) |
+| [../database/README.md](../database/README.md) | Script SQL ejecutable (`01_CreateSchema.sql`) y modelo de datos (DBML + diccionario) de MariaDB |
 | [../.github/PULL_REQUEST_TEMPLATE/README.md](../.github/PULL_REQUEST_TEMPLATE/README.md) | Plantillas de descripción para Pull Requests |
