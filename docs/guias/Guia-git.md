@@ -270,6 +270,31 @@ git restore <archivo>                      # descartar cambios no staged de un a
 
 ---
 
+## 8. Operativa rápida del equipo
+
+Flujo mínimo recomendado para trabajar siempre igual:
+
+1. Crear rama desde `develop`: `feature/<nombre>` (o `fix/<nombre>`).
+2. Hacer commits pequeños y semánticos (`feat`, `fix`, `docs`, `chore`, etc.).
+3. Abrir PR hacia `develop` y esperar checks en verde (`Backend`, `Frontend`, `SonarCloud`).
+4. Mergear a `develop` solo con aprobación y conversación resuelta.
+5. Cuando `develop` esté estable, abrir PR `develop -> main` para release.
+
+**Regla de oro:** nunca hacer push directo a `develop` ni `main`.
+
+### Checklist rápido (antes de abrir PR)
+
+```
+[ ] Mi rama nace de `develop` (`feature/*` o `fix/*`)
+[ ] Commits semánticos y atómicos
+[ ] PR con destino correcto (`feature/* -> develop`)
+[ ] CI en verde (`Backend`, `Frontend`, `SonarCloud`)
+[ ] Review/aprobación y conversaciones resueltas
+[ ] Si aplica release: PR `develop -> main`
+```
+
+---
+
 ## Referencias del proyecto
 
 | Documento | Relación con esta guía |
