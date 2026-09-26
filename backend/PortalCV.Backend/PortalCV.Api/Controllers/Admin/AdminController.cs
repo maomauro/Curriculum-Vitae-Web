@@ -177,6 +177,35 @@ public class AdminController : ControllerBase
         var usuario = await _usuarioRepo.GetByIdAsync(id, ct);
         if (usuario is null) return NotFound(new { message = ApiMessages.Admin.UsuarioNoEncontrado });
 
+        if (!request.Activo)
+        {
+            var actorId = GetActorUsuarioId();
+            if (actorId.HasValue && actorId.Value == id)
+                return BadRequest(new { message = ApiMessages.Admin.NoPuedeDesactivarsePropiaCuenta });
+
+            var rolesDeEsteUsuario = await _usuarioRolRepo.FindAsync(ur => ur.UsuarioId == id, ct);
+            if (rolesDeEsteUsuario.Count > 0)
+            {
+                var roles = await _rolRepo.GetAllAsync(ct);
+                var rolAdmin = roles.FirstOrDefault(r => r.NombreRol.Equals("Admin", StringComparison.OrdinalIgnoreCase));
+                if (rolAdmin is not null && rolesDeEsteUsuario.Any(ur => ur.RolId == rolAdmin.RolId))
+                {
+                    var otrosAdminIds = (await _usuarioRolRepo.FindAsync(
+                        ur => ur.RolId == rolAdmin.RolId && ur.UsuarioId != id, ct))
+                        .Select(ur => ur.UsuarioId)
+                        .Distinct()
+                        .ToList();
+
+                    var hayOtroAdminActivo = otrosAdminIds.Count > 0 &&
+                        (await _usuarioRepo.FindAsync(
+                            u => otrosAdminIds.Contains(u.UsuarioId) && u.Estado == "Activo", ct)).Count > 0;
+
+                    if (!hayOtroAdminActivo)
+                        return BadRequest(new { message = ApiMessages.Admin.DebeQuedarAlMenosUnAdminActivo });
+                }
+            }
+        }
+
         var estadoAnterior = usuario.Estado;
         usuario.Estado = request.Activo ? "Activo" : "Inactivo";
         _usuarioRepo.Update(usuario);

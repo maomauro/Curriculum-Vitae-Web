@@ -53,6 +53,9 @@ public static class ApiMessages
         public const string UsuarioDebeEstarInactivoParaEliminar =
             "El usuario debe estar Inactivo para poder eliminarlo. Desactívalo primero.";
         public const string NoPuedeEliminarsePropiaCuenta = "No podés eliminar tu propia cuenta.";
+
+        public const string NoPuedeDesactivarsePropiaCuenta = "No podés desactivar tu propia cuenta.";
+        public const string DebeQuedarAlMenosUnAdminActivo = "Debe quedar al menos un Admin activo en el sistema.";
     }
 
     /// <summary>

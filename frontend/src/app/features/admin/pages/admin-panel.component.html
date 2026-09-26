@@ -162,7 +162,8 @@
                   class="btn btn-sm"
                   [class.btn-outline-danger]="u.estado === 'Activo'"
                   [class.btn-outline-success]="u.estado !== 'Activo'"
-                  [title]="u.estado === 'Activo' ? 'Desactivar' : 'Activar'"
+                  [disabled]="esPropiaCuenta(u)"
+                  [title]="esPropiaCuenta(u) ? 'No podés desactivar tu propia cuenta' : (u.estado === 'Activo' ? 'Desactivar' : 'Activar')"
                   (click)="toggleEstado(u)">
                   <i class="bi" [class.bi-person-x]="u.estado === 'Activo'" [class.bi-person-check]="u.estado !== 'Activo'"></i>
                 </button>
