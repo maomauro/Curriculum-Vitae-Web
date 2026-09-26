@@ -217,7 +217,7 @@
     Comparte este enlace para que otros puedan ver tu CV. El dominio es el de esta misma ventana (por ejemplo
     <code class="small">localhost</code> en desarrollo o tu sitio en producción); no hace falta configurarlo a mano.
   </p>
-  <div class="d-flex flex-column flex-sm-row gap-2">
+  <div class="d-flex flex-column flex-sm-row gap-2" *ngIf="!editandoUrl">
     <div class="input-group">
       <label class="visually-hidden" for="cfg_url_cv">URL pública del CV</label>
       <span class="input-group-text">
@@ -234,11 +234,63 @@
     <div class="d-flex gap-2 flex-shrink-0">
       <button
         type="button"
+        class="btn btn-outline-secondary btn-sm px-3"
+        [disabled]="!presentacionLista"
+        (click)="iniciarEdicionUrl()">
+        <i class="bi bi-pencil me-1"></i>
+        Editar
+      </button>
+      <button
+        type="button"
         class="btn btn-outline-primary btn-sm px-3"
         [disabled]="!urlCv"
         (click)="copiarUrl()">
         <i class="bi bi-clipboard me-1"></i>
         {{ copiado ? '¡Copiado!' : 'Copiar' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="editandoUrl">
+    <div class="d-flex flex-column flex-sm-row gap-2">
+      <div class="input-group">
+        <label class="visually-hidden" for="cfg_url_cv_editar">Editar URL pública del CV</label>
+        <span class="input-group-text text-muted small">{{ origenActual }}/cv/</span>
+        <input
+          id="cfg_url_cv_editar"
+          type="text"
+          class="form-control"
+          [(ngModel)]="slugEditado"
+          [disabled]="guardandoUrl"
+          placeholder="tu-nombre-apellido"
+          autocomplete="off">
+      </div>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm px-3"
+          [disabled]="guardandoUrl"
+          (click)="guardarUrlPublica()">
+          <span *ngIf="guardandoUrl" class="spinner-border spinner-border-sm me-1" role="status"></span>
+          Guardar
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm px-3"
+          [disabled]="guardandoUrl"
+          (click)="cancelarEdicionUrl()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+    <div class="form-text">Solo minúsculas, números y guiones — se ajusta automáticamente al formato válido.</div>
+
+    <div
+      *ngIf="sugerenciaUrl"
+      class="alert alert-warning d-flex align-items-center justify-content-between gap-2 mt-2 py-2 px-3 mb-0">
+      <span class="small">Esa URL ya está en uso. ¿Usar <strong>{{ sugerenciaUrl }}</strong> en su lugar?</span>
+      <button type="button" class="btn btn-sm btn-warning flex-shrink-0" (click)="aceptarSugerenciaUrl()">
+        Usar esta
       </button>
     </div>
   </div>
