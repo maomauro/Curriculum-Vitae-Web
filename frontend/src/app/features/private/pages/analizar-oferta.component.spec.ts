@@ -710,7 +710,7 @@ describe('AnalizarOfertaComponent', () => {
 
     it('enviarCorreo avisa si falta el destinatario', () => {
       setup();
-      (component as any).ofertaEnProgresoId = 5;
+      (component as unknown as { ofertaEnProgresoId: number | null }).ofertaEnProgresoId = 5;
       component.correoForm = { destinatario: '', asunto: 'Postulación', cuerpo: 'Cuerpo' };
 
       component.enviarCorreo();
@@ -721,7 +721,7 @@ describe('AnalizarOfertaComponent', () => {
 
     it('enviarCorreo envía el correo, recarga el historial y pasa al paso enviado', () => {
       setup();
-      (component as any).ofertaEnProgresoId = 5;
+      (component as unknown as { ofertaEnProgresoId: number | null }).ofertaEnProgresoId = 5;
       component.correoForm = { destinatario: 'reclutador@acme.com', asunto: 'Postulación', cuerpo: 'Cuerpo' };
       ofertaService.enviarCorreo.and.returnValue(of(ofertaDto({ ofertaId: 5, estado: 'EnviadaPorCorreo' })));
 
@@ -737,7 +737,7 @@ describe('AnalizarOfertaComponent', () => {
 
     it('enviarCorreo notifica error y se queda en el paso correo si falla (permite reintentar)', () => {
       setup();
-      (component as any).ofertaEnProgresoId = 5;
+      (component as unknown as { ofertaEnProgresoId: number | null }).ofertaEnProgresoId = 5;
       component.paso = 'correo';
       component.correoForm = { destinatario: 'reclutador@acme.com', asunto: 'Postulación', cuerpo: 'Cuerpo' };
       ofertaService.enviarCorreo.and.returnValue(
