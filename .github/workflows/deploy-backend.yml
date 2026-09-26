@@ -1,0 +1,39 @@
+name: Deploy backend to VPS
+
+# Despliega el backend en el VPS de produccion despues de que la imagen nueva
+# ya quedo publicada en GHCR (ver publish-backend-image.yml). Se conecta por
+# SSH al VPS, hace pull de la imagen y recrea el contenedor del backend.
+#
+# Requiere los secrets SSH_HOST, SSH_USER y SSH_PRIVATE_KEY (Settings ->
+# Secrets and variables -> Actions), con una llave dedicada para CI/CD
+# (no la personal), agregada a ~/.ssh/authorized_keys del usuario del VPS.
+
+on:
+  workflow_run:
+    workflows: ["Publish backend image to GHCR"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy backend
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/Curriculum-Vitae-Web
+            git fetch origin main
+            git checkout main
+            git pull origin main
+            docker compose -f docker-compose.prod.yml pull backend
+            docker compose -f docker-compose.prod.yml up -d --force-recreate backend
+            sleep 5
+            curl -skf https://localhost/health
