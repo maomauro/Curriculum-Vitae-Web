@@ -3,7 +3,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using PortalCV.Domain.Entities;
+using PortalCV.Infrastructure.Data;
 
 namespace PortalCV.Api.Tests;
 
@@ -169,5 +173,193 @@ public class AdminUsuariosRolesEndpointsTests : IClassFixture<TestWebApplication
             "/api/admin/usuarios/999999/roles/999999");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // ── DELETE /api/admin/usuarios/{id} ──────────────────────────────────────
+
+    [Fact]
+    public async Task EliminarUsuario_ComoAdmin_Inexistente_Retorna404()
+    {
+        var response = await CreateAdminClient().DeleteAsync("/api/admin/usuarios/999999");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EliminarUsuario_SinRolAdmin_Retorna403()
+    {
+        var response = await CreatePublicadorClient().DeleteAsync("/api/admin/usuarios/999999");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EliminarUsuario_UsuarioActivo_Retorna400()
+    {
+        var id = await SembrarUsuarioAsync("Activo");
+
+        var response = await CreateAdminClient().DeleteAsync($"/api/admin/usuarios/{id}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EliminarUsuario_PropiaCuenta_Retorna400()
+    {
+        var id = await SembrarUsuarioAsync("Inactivo");
+        var client = CreateClientWithRole("Admin", usuarioId: id);
+
+        var response = await client.DeleteAsync($"/api/admin/usuarios/{id}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EliminarUsuario_UltimoAdmin_Retorna400()
+    {
+        var id = await SembrarUsuarioAsync("Inactivo", rolAdmin: true);
+
+        var response = await CreateAdminClient().DeleteAsync($"/api/admin/usuarios/{id}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task EliminarUsuario_ComoAdmin_UsuarioInactivo_Elimina204YQuedaBorradoDeBD()
+    {
+        var id = await SembrarUsuarioAsync("Inactivo");
+
+        var response = await CreateAdminClient().DeleteAsync($"/api/admin/usuarios/{id}");
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+        Assert.Null(await db.Usuarios.FindAsync(id));
+    }
+
+    /// <summary>
+    /// Caso borde real: si el usuario a eliminar quedo como actor en AuditoriaCv o como
+    /// "actualizado por" en PromptIa de un CURRICULUM AJENO (no el suyo -- ese se elimina
+    /// solo via cascada), esas dos FK son ON DELETE NO ACTION y harian fallar el DELETE si
+    /// no se limpian antes. Verifica que EliminarUsuario las deja en null en vez de fallar.
+    /// </summary>
+    [Fact]
+    public async Task EliminarUsuario_LimpiaReferenciasCruzadasEnAuditoriaCvYPromptIa_AntesDeEliminar()
+    {
+        int idObjetivo;
+        int auditoriaCvId;
+        int promptIaId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+
+            var objetivo = new Usuario
+            {
+                Email = $"eliminar-cruzado-{Guid.NewGuid():N}@example.com",
+                PasswordHash = "no-se-usa-en-este-test",
+                Estado = "Inactivo",
+                FechaRegistro = DateTime.UtcNow,
+            };
+            db.Usuarios.Add(objetivo);
+            await db.SaveChangesAsync();
+            idObjetivo = objetivo.UsuarioId;
+
+            var otroUsuario = new Usuario
+            {
+                Email = $"otro-{Guid.NewGuid():N}@example.com",
+                PasswordHash = "no-se-usa-en-este-test",
+                Estado = "Activo",
+                FechaRegistro = DateTime.UtcNow,
+            };
+            var curriculumAjeno = new Curriculum
+            {
+                UrlPublica = $"cv-{Guid.NewGuid():N}",
+                Estado = "Borrador",
+                FechaCreacion = DateTime.UtcNow,
+                FechaActualizacion = DateTime.UtcNow,
+                Usuario = otroUsuario,
+            };
+            otroUsuario.Curriculums.Add(curriculumAjeno);
+            db.Usuarios.Add(otroUsuario);
+            await db.SaveChangesAsync();
+
+            var auditoria = new AuditoriaCv
+            {
+                FechaUtc = DateTime.UtcNow,
+                ActorUsuarioId = idObjetivo,
+                CurriculumId = curriculumAjeno.CurriculumId,
+                Accion = "test.accion",
+                EntidadTipo = "Test",
+            };
+            db.AuditoriasCv.Add(auditoria);
+
+            var prompt = new PromptIa
+            {
+                CurriculumId = curriculumAjeno.CurriculumId,
+                Codigo = "TEST_PROMPT",
+                Nombre = "Test",
+                RolContexto = "x",
+                Tarea = "x",
+                FormatoSalida = "x",
+                Contenido = "x",
+                FechaCreacion = DateTime.UtcNow,
+                ActualizadoPorUsuarioId = idObjetivo,
+            };
+            db.PromptsIa.Add(prompt);
+
+            await db.SaveChangesAsync();
+            auditoriaCvId = auditoria.AuditoriaCvId;
+            promptIaId = prompt.PromptIaId;
+        }
+
+        var response = await CreateAdminClient().DeleteAsync($"/api/admin/usuarios/{idObjetivo}");
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+
+        Assert.Null(await verifyDb.Usuarios.FindAsync(idObjetivo));
+
+        var auditoriaVerificada = await verifyDb.AuditoriasCv.FindAsync(auditoriaCvId);
+        Assert.NotNull(auditoriaVerificada);
+        Assert.Null(auditoriaVerificada!.ActorUsuarioId);
+
+        var promptVerificado = await verifyDb.PromptsIa.FindAsync(promptIaId);
+        Assert.NotNull(promptVerificado);
+        Assert.Null(promptVerificado!.ActualizadoPorUsuarioId);
+    }
+
+    private async Task<int> SembrarUsuarioAsync(string estado, bool rolAdmin = false)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+
+        var usuario = new Usuario
+        {
+            Email = $"eliminar-{Guid.NewGuid():N}@example.com",
+            PasswordHash = "no-se-usa-en-este-test",
+            Estado = estado,
+            FechaRegistro = DateTime.UtcNow,
+        };
+        db.Usuarios.Add(usuario);
+        await db.SaveChangesAsync();
+
+        if (rolAdmin)
+        {
+            var rolExistente = await db.Roles.FirstOrDefaultAsync(r => r.NombreRol == "Admin");
+            var rolId = rolExistente?.RolId;
+            if (rolId is null)
+            {
+                var rol = new Rol { NombreRol = "Admin", Descripcion = "Admin" };
+                db.Roles.Add(rol);
+                await db.SaveChangesAsync();
+                rolId = rol.RolId;
+            }
+            db.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuario.UsuarioId, RolId = rolId.Value });
+            await db.SaveChangesAsync();
+        }
+
+        return usuario.UsuarioId;
     }
 }

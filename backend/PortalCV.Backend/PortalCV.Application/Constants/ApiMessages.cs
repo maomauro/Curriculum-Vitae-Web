@@ -49,6 +49,10 @@ public static class ApiMessages
         public const string RolNoEncontrado = "Rol no encontrado.";
         public const string UsuarioYaTieneEseRol = "El usuario ya tiene ese rol.";
         public const string DebeQuedarAlMenosUnAdmin = "Debe quedar al menos un usuario con rol Admin.";
+
+        public const string UsuarioDebeEstarInactivoParaEliminar =
+            "El usuario debe estar Inactivo para poder eliminarlo. Desactívalo primero.";
+        public const string NoPuedeEliminarsePropiaCuenta = "No podés eliminar tu propia cuenta.";
     }
 
     /// <summary>
