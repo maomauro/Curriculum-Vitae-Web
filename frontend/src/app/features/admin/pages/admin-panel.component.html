@@ -168,11 +168,13 @@
                   <i class="bi" [class.bi-person-x]="u.estado === 'Activo'" [class.bi-person-check]="u.estado !== 'Activo'"></i>
                 </button>
                 <button
+                  *ngIf="esPublicador(u)"
                   type="button"
                   class="btn btn-sm"
                   [class.btn-outline-warning]="u.cvPublicado"
                   [class.btn-outline-primary]="!u.cvPublicado"
-                  [title]="u.cvPublicado ? 'Despublicar CV' : 'Publicar CV'"
+                  [disabled]="!puedePublicarCv(u)"
+                  [title]="u.estado !== 'Activo' ? 'Activá al usuario primero' : (u.cvPublicado ? 'Despublicar CV' : 'Publicar CV')"
                   [attr.aria-label]="u.cvPublicado ? 'Despublicar CV' : 'Publicar CV'"
                   (click)="toggleCvPublicacion(u)">
                   <i class="bi" [class.bi-eye-slash]="u.cvPublicado" [class.bi-eye]="!u.cvPublicado"></i>
@@ -180,7 +182,8 @@
                 <button
                   type="button"
                   class="btn btn-sm btn-outline-secondary"
-                  title="Gestionar roles"
+                  [disabled]="!puedeGestionarRoles(u)"
+                  [title]="puedeGestionarRoles(u) ? 'Gestionar roles' : 'Activá al usuario primero'"
                   (click)="abrirRoles(u)">
                   <i class="bi bi-shield-lock"></i>
                 </button>

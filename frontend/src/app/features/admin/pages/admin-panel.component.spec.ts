@@ -207,7 +207,7 @@ describe('AdminPanelComponent', () => {
   });
 
   it('toggleCvPublicacion pide confirmación al despublicar y respeta cancelación', () => {
-    setup(of([usuario({ cvPublicado: true })]));
+    setup(of([usuario({ cvPublicado: true, roles: [roles[1]] })]));
     component.ngOnInit();
     const u = component.usuarios[0];
     spyOn(globalThis, 'confirm').and.returnValue(false);
@@ -218,7 +218,7 @@ describe('AdminPanelComponent', () => {
   });
 
   it('toggleCvPublicacion publica sin pedir confirmación', () => {
-    setup(of([usuario({ cvPublicado: false })]));
+    setup(of([usuario({ cvPublicado: false, roles: [roles[1]] })]));
     component.ngOnInit();
     const u = component.usuarios[0];
     adminService.setCvPublicacion.and.returnValue(of({ usuarioId: u.usuarioId, cvPublicado: true }));
@@ -288,6 +288,49 @@ describe('AdminPanelComponent', () => {
     expect(component.fmtFecha('2026-03-05T12:00:00Z')).toBe('05/03/2026');
     expect(component.fmtFecha('')).toBe('—');
     expect(component.fmtFecha('no-es-fecha')).toBe('no-es-fecha');
+  });
+
+  describe('restricciones de Publicar CV y Gestionar roles', () => {
+    const publicadorRol: RolDto = { rolId: 2, nombreRol: 'Publicador', descripcion: null };
+
+    it('esPublicador es true solo si el usuario tiene el rol Publicador', () => {
+      setup();
+      expect(component.esPublicador(usuario({ roles: [publicadorRol] }))).toBeTrue();
+      expect(component.esPublicador(usuario({ roles: [] }))).toBeFalse();
+      expect(component.esPublicador(usuario({ roles: [roles[2]] }))).toBeFalse(); // solo Admin
+    });
+
+    it('puedePublicarCv exige rol Publicador y estado Activo', () => {
+      setup();
+      expect(component.puedePublicarCv(usuario({ estado: 'Activo', roles: [publicadorRol] }))).toBeTrue();
+      expect(component.puedePublicarCv(usuario({ estado: 'Inactivo', roles: [publicadorRol] }))).toBeFalse();
+      expect(component.puedePublicarCv(usuario({ estado: 'Activo', roles: [] }))).toBeFalse();
+    });
+
+    it('puedeGestionarRoles exige estado Activo', () => {
+      setup();
+      expect(component.puedeGestionarRoles(usuario({ estado: 'Activo' }))).toBeTrue();
+      expect(component.puedeGestionarRoles(usuario({ estado: 'Inactivo' }))).toBeFalse();
+    });
+
+    it('toggleCvPublicacion no hace nada si puedePublicarCv es false', () => {
+      setup();
+      component.toggleCvPublicacion(usuario({ estado: 'Inactivo', roles: [publicadorRol] }));
+      expect(adminService.setCvPublicacion).not.toHaveBeenCalled();
+    });
+
+    it('abrirRoles no hace nada si puedeGestionarRoles es false', () => {
+      setup();
+      component.abrirRoles(usuario({ estado: 'Inactivo' }));
+      expect(component.usuarioSeleccionado).toBeNull();
+    });
+
+    it('abrirRoles abre el modal si el usuario esta Activo', () => {
+      setup();
+      const u = usuario({ estado: 'Activo' });
+      component.abrirRoles(u);
+      expect(component.usuarioSeleccionado).toBe(u);
+    });
   });
 
   describe('eliminar usuario', () => {

@@ -142,6 +142,7 @@ export class AdminPanelComponent implements OnInit {
   }
 
   toggleCvPublicacion(u: UsuarioAdminDto): void {
+    if (!this.puedePublicarCv(u)) return;
     const nuevo = !u.cvPublicado;
     if (!nuevo) {
       const confirmar = globalThis.confirm(
@@ -160,7 +161,23 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
+  esPublicador(u: UsuarioAdminDto): boolean {
+    return u.roles.some(r => r.nombreRol === 'Publicador');
+  }
+
+  /** El botón de publicar/despublicar CV no aplica a cuentas sin rol Publicador
+   * (ej. un Admin puro no tiene hoja de vida) y solo se puede usar con la cuenta Activa. */
+  puedePublicarCv(u: UsuarioAdminDto): boolean {
+    return u.estado === 'Activo' && this.esPublicador(u);
+  }
+
+  /** Gestionar roles queda bloqueado mientras el usuario esté Inactivo. */
+  puedeGestionarRoles(u: UsuarioAdminDto): boolean {
+    return u.estado === 'Activo';
+  }
+
   abrirRoles(u: UsuarioAdminDto): void {
+    if (!this.puedeGestionarRoles(u)) return;
     this.usuarioSeleccionado = u;
     this.rolesError = null;
   }
