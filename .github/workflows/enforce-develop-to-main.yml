@@ -23,4 +23,5 @@ jobs:
           exit 1
       - name: Origen valido
         if: github.event.pull_request.head.ref == 'develop'
-        run: echo "OK: el PR viene de develop."
+        run: |
+          echo "OK: el PR viene de develop."
