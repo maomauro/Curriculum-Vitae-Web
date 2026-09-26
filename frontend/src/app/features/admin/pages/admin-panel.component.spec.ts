@@ -3,11 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AdminPanelComponent } from './admin-panel.component';
 import { AdminService, RolDto, UsuarioAdminDto } from '../../../core/services/admin/admin.service';
+import { AuthService, UserInfo } from '../../../core/services/auth/auth.service';
 import { NotificationService } from '../../../core/services/shared/notification.service';
 
 describe('AdminPanelComponent', () => {
   let component: AdminPanelComponent;
   let adminService: jasmine.SpyObj<AdminService>;
+  let authServiceMock: { currentUser: UserInfo | null };
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const roles: RolDto[] = [
@@ -39,15 +41,18 @@ describe('AdminPanelComponent', () => {
       'setCvPublicacion',
       'asignarRol',
       'quitarRol',
+      'eliminarUsuario',
     ]);
     adminService.getUsuarios.and.returnValue(getUsuariosResult);
     adminService.getRoles.and.returnValue(getRolesResult);
     notificationService = jasmine.createSpyObj('NotificationService', ['success', 'error']);
+    authServiceMock = { currentUser: { id: 999, nombre: 'Admin', email: 'admin@test.com', rol: 'Admin', roles: ['Admin'], curriculumId: 1 } };
 
     TestBed.configureTestingModule({
       providers: [
         AdminPanelComponent,
         { provide: AdminService, useValue: adminService },
+        { provide: AuthService, useValue: authServiceMock },
         { provide: NotificationService, useValue: notificationService },
       ],
     });
@@ -283,5 +288,118 @@ describe('AdminPanelComponent', () => {
     expect(component.fmtFecha('2026-03-05T12:00:00Z')).toBe('05/03/2026');
     expect(component.fmtFecha('')).toBe('—');
     expect(component.fmtFecha('no-es-fecha')).toBe('no-es-fecha');
+  });
+
+  describe('eliminar usuario', () => {
+    it('puedeEliminar es false si el usuario esta Activo', () => {
+      setup();
+      component.ngOnInit();
+      expect(component.puedeEliminar(usuario({ usuarioId: 1, estado: 'Activo' }))).toBeFalse();
+    });
+
+    it('puedeEliminar es false si es la propia cuenta, aunque este Inactivo', () => {
+      setup();
+      expect(component.puedeEliminar(usuario({ usuarioId: 999, estado: 'Inactivo' }))).toBeFalse();
+    });
+
+    it('puedeEliminar es true si esta Inactivo y no es la propia cuenta', () => {
+      setup();
+      expect(component.puedeEliminar(usuario({ usuarioId: 1, estado: 'Inactivo' }))).toBeTrue();
+    });
+
+    it('abrirEliminar no hace nada si puedeEliminar es false', () => {
+      setup();
+      component.abrirEliminar(usuario({ usuarioId: 1, estado: 'Activo' }));
+      expect(component.usuarioAEliminar).toBeNull();
+    });
+
+    it('abrirEliminar guarda el usuario y limpia el texto de confirmacion', () => {
+      setup();
+      const u = usuario({ usuarioId: 1, estado: 'Inactivo' });
+      component.confirmEliminarTexto = 'algo-viejo';
+
+      component.abrirEliminar(u);
+
+      expect(component.usuarioAEliminar).toBe(u);
+      expect(component.confirmEliminarTexto).toBe('');
+    });
+
+    it('cerrarEliminar limpia todo el estado del modal', () => {
+      setup();
+      component.usuarioAEliminar = usuario();
+      component.confirmEliminarTexto = 'ana@test.com';
+      component.eliminandoUsuario = true;
+
+      component.cerrarEliminar();
+
+      expect(component.usuarioAEliminar).toBeNull();
+      expect(component.confirmEliminarTexto).toBe('');
+      expect(component.eliminandoUsuario).toBeFalse();
+    });
+
+    it('puedeConfirmarEliminar exige el email exacto (sin distinguir mayusculas)', () => {
+      setup();
+      component.usuarioAEliminar = usuario({ email: 'Ana@Test.com' });
+
+      component.confirmEliminarTexto = 'otra-cosa';
+      expect(component.puedeConfirmarEliminar).toBeFalse();
+
+      component.confirmEliminarTexto = 'ana@test.com';
+      expect(component.puedeConfirmarEliminar).toBeTrue();
+    });
+
+    it('confirmarEliminarUsuario no llama al backend si el texto no coincide', () => {
+      setup();
+      component.usuarioAEliminar = usuario();
+      component.confirmEliminarTexto = 'no-coincide';
+
+      component.confirmarEliminarUsuario();
+
+      expect(adminService.eliminarUsuario).not.toHaveBeenCalled();
+    });
+
+    it('confirmarEliminarUsuario respeta la cancelación del confirm final', () => {
+      setup();
+      component.usuarioAEliminar = usuario();
+      component.confirmEliminarTexto = 'ana@test.com';
+      spyOn(globalThis, 'confirm').and.returnValue(false);
+
+      component.confirmarEliminarUsuario();
+
+      expect(adminService.eliminarUsuario).not.toHaveBeenCalled();
+    });
+
+    it('confirmarEliminarUsuario elimina, saca al usuario de la lista y notifica éxito', () => {
+      setup(of([usuario({ usuarioId: 1 }), usuario({ usuarioId: 2, email: 'otro@test.com' })]));
+      component.ngOnInit();
+      const objetivo = component.usuarios.find(u => u.usuarioId === 1)!;
+      component.usuarioAEliminar = objetivo;
+      component.confirmEliminarTexto = objetivo.email;
+      spyOn(globalThis, 'confirm').and.returnValue(true);
+      adminService.eliminarUsuario.and.returnValue(of(undefined));
+
+      component.confirmarEliminarUsuario();
+
+      expect(adminService.eliminarUsuario).toHaveBeenCalledWith(1);
+      expect(component.usuarios.map(u => u.usuarioId)).toEqual([2]);
+      expect(component.usuarioAEliminar).toBeNull();
+      expect(notificationService.success).toHaveBeenCalled();
+    });
+
+    it('confirmarEliminarUsuario notifica error y mantiene el modal abierto si falla el backend', () => {
+      setup();
+      component.usuarioAEliminar = usuario({ usuarioId: 1 });
+      component.confirmEliminarTexto = 'ana@test.com';
+      spyOn(globalThis, 'confirm').and.returnValue(true);
+      adminService.eliminarUsuario.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' }))
+      );
+
+      component.confirmarEliminarUsuario();
+
+      expect(notificationService.error).toHaveBeenCalled();
+      expect(component.usuarioAEliminar).not.toBeNull();
+      expect(component.eliminandoUsuario).toBeFalse();
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminService, UsuarioAdminDto, RolDto } from '../../../core/services/admin/admin.service';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { CV_ROL } from '../../../core/constants/cv-roles';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { NotificationService } from '../../../core/services/shared/notification.service';
@@ -25,8 +26,15 @@ export class AdminPanelComponent implements OnInit {
   rolesGuardando = false;
   rolesError: string | null = null;
 
+  /** Eliminar usuario: solo permitido si esta Inactivo. Confirmacion con el email exacto
+   * (mismo patron que la purga de auditoria) + un window.confirm final antes de enviar. */
+  usuarioAEliminar: UsuarioAdminDto | null = null;
+  confirmEliminarTexto = '';
+  eliminandoUsuario = false;
+
   constructor(
     private adminService: AdminService,
+    private authService: AuthService,
     private notificationService: NotificationService
   ) {}
 
@@ -160,6 +168,58 @@ export class AdminPanelComponent implements OnInit {
   cerrarRoles(): void {
     this.usuarioSeleccionado = null;
     this.rolesError = null;
+  }
+
+  esPropiaCuenta(u: UsuarioAdminDto): boolean {
+    return u.usuarioId === this.authService.currentUser?.id;
+  }
+
+  puedeEliminar(u: UsuarioAdminDto): boolean {
+    return u.estado !== 'Activo' && !this.esPropiaCuenta(u);
+  }
+
+  abrirEliminar(u: UsuarioAdminDto): void {
+    if (!this.puedeEliminar(u)) return;
+    this.usuarioAEliminar = u;
+    this.confirmEliminarTexto = '';
+  }
+
+  cerrarEliminar(): void {
+    this.usuarioAEliminar = null;
+    this.confirmEliminarTexto = '';
+    this.eliminandoUsuario = false;
+  }
+
+  get puedeConfirmarEliminar(): boolean {
+    return (
+      !!this.usuarioAEliminar &&
+      this.confirmEliminarTexto.trim().toLowerCase() === this.usuarioAEliminar.email.toLowerCase()
+    );
+  }
+
+  confirmarEliminarUsuario(): void {
+    const u = this.usuarioAEliminar;
+    if (!u || !this.puedeConfirmarEliminar || this.eliminandoUsuario) return;
+
+    const confirmar = globalThis.confirm(
+      `Esta acción es IRREVERSIBLE: se eliminará definitivamente la cuenta de ${u.email} ` +
+        'y todo su CV (datos personales, experiencias, formación, ofertas, etc.). ¿Continuar?'
+    );
+    if (!confirmar) return;
+
+    this.eliminandoUsuario = true;
+    this.adminService.eliminarUsuario(u.usuarioId).subscribe({
+      next: () => {
+        this.usuarios = this.usuarios.filter(x => x.usuarioId !== u.usuarioId);
+        this.ajustarPaginaTrasFiltro();
+        this.notificationService.success('Usuario eliminado correctamente.');
+        this.cerrarEliminar();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.eliminandoUsuario = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
   }
 
   toggleRol(u: UsuarioAdminDto, rol: RolDto): void {
