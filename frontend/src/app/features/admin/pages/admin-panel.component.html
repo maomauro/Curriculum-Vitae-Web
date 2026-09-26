@@ -183,6 +183,15 @@
                   (click)="abrirRoles(u)">
                   <i class="bi bi-shield-lock"></i>
                 </button>
+                <button
+                  *ngIf="puedeEliminar(u)"
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  title="Eliminar usuario"
+                  aria-label="Eliminar usuario"
+                  (click)="abrirEliminar(u)">
+                  <i class="bi bi-trash3"></i>
+                </button>
               </div>
             </td>
           </tr>
@@ -261,6 +270,58 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal eliminar usuario -->
+  <div *ngIf="usuarioAEliminar" class="modal-overlay" (click)="cerrarEliminar()" (keydown)="cerrarEliminar()">
+    <div class="modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="mb-0 fw-bold text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Eliminar usuario
+        </h6>
+        <button class="btn btn-sm btn-outline-secondary" (click)="cerrarEliminar()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <p class="small mb-2">
+        Vas a eliminar <strong>definitivamente</strong> la cuenta de
+        <strong>{{ usuarioAEliminar.email }}</strong> y todo su CV (datos personales,
+        experiencias, formación, ofertas, prompts de IA, etc.). Esta acción
+        <strong>no se puede deshacer</strong>.
+      </p>
+
+      <label class="form-label small mb-1" for="confirm_eliminar_email">
+        Para confirmar, escribí el email exacto del usuario:
+      </label>
+      <input
+        id="confirm_eliminar_email"
+        type="text"
+        class="form-control form-control-sm mb-2"
+        [(ngModel)]="confirmEliminarTexto"
+        [disabled]="eliminandoUsuario"
+        [placeholder]="usuarioAEliminar.email"
+        autocomplete="off" />
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="eliminandoUsuario"
+          (click)="cerrarEliminar()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-danger"
+          [disabled]="!puedeConfirmarEliminar || eliminandoUsuario"
+          (click)="confirmarEliminarUsuario()">
+          <span *ngIf="eliminandoUsuario" class="spinner-border spinner-border-sm me-1" role="status"></span>
+          Eliminar definitivamente
+        </button>
       </div>
     </div>
   </div>

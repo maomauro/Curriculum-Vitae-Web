@@ -125,6 +125,13 @@ export class AdminService {
     );
   }
 
+  /** Solo permitido si el usuario esta Inactivo; el backend valida ademas que no sea
+   * la propia cuenta ni el ultimo Admin. Elimina definitivamente al usuario y todo lo
+   * que cuelga de su Curriculum. */
+  eliminarUsuario(id: number): Observable<void> {
+    return this.http.delete<void>(`${BASE}/usuarios/${id}`);
+  }
+
   // Roles
   getRoles(): Observable<RolDto[]> {
     return this.http.get<RolDto[]>(`${BASE}/roles`);

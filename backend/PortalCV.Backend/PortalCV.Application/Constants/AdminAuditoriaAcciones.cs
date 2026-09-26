@@ -7,4 +7,5 @@ public static class AdminAuditoriaAcciones
     public const string UsuarioCvPublicacion = "usuario.cv_publicacion";
     public const string UsuarioRolAsignado = "usuario.rol_asignado";
     public const string UsuarioRolQuitado = "usuario.rol_quitado";
+    public const string UsuarioEliminado = "usuario.eliminado";
 }

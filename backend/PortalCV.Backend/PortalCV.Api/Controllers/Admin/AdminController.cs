@@ -19,6 +19,8 @@ public class AdminController : ControllerBase
     private readonly IRepository<Usuario> _usuarioRepo;
     private readonly IRepository<Rol> _rolRepo;
     private readonly IRepository<UsuarioRol> _usuarioRolRepo;
+    private readonly IRepository<AuditoriaCv> _auditoriaCvRepo;
+    private readonly IRepository<PromptIa> _promptIaRepo;
     private readonly ICurriculumRepository _curriculumRepo;
     private readonly ICvEditorService _cvEditor;
     private readonly IAdminAuditoriaService _auditoria;
@@ -29,6 +31,8 @@ public class AdminController : ControllerBase
         IRepository<Usuario> usuarioRepo,
         IRepository<Rol> rolRepo,
         IRepository<UsuarioRol> usuarioRolRepo,
+        IRepository<AuditoriaCv> auditoriaCvRepo,
+        IRepository<PromptIa> promptIaRepo,
         ICurriculumRepository curriculumRepo,
         ICvEditorService cvEditor,
         IAdminAuditoriaService auditoria,
@@ -38,6 +42,8 @@ public class AdminController : ControllerBase
         _usuarioRepo = usuarioRepo;
         _rolRepo = rolRepo;
         _usuarioRolRepo = usuarioRolRepo;
+        _auditoriaCvRepo = auditoriaCvRepo;
+        _promptIaRepo = promptIaRepo;
         _curriculumRepo = curriculumRepo;
         _cvEditor = cvEditor;
         _auditoria = auditoria;
@@ -311,6 +317,73 @@ public class AdminController : ControllerBase
                 },
                 ct);
         }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Elimina definitivamente un usuario Inactivo. El <c>Curriculum</c> propio y todo lo que
+    /// cuelga de él (Personales, Experiencias, Ofertas, PromptIa, auditoría de ese CV, etc.) se
+    /// eliminan solos vía cascada de FK. No se puede eliminar la propia cuenta ni al último Admin.
+    /// </summary>
+    [HttpDelete("usuarios/{id:int}")]
+    public async Task<IActionResult> EliminarUsuario(int id, CancellationToken ct = default)
+    {
+        var usuario = await _usuarioRepo.GetByIdAsync(id, ct);
+        if (usuario is null) return NotFound(new { message = ApiMessages.Admin.UsuarioNoEncontrado });
+
+        if (!string.Equals(usuario.Estado, "Inactivo", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = ApiMessages.Admin.UsuarioDebeEstarInactivoParaEliminar });
+
+        var actorId = GetActorUsuarioId();
+        if (actorId.HasValue && actorId.Value == id)
+            return BadRequest(new { message = ApiMessages.Admin.NoPuedeEliminarsePropiaCuenta });
+
+        var rolesDeEsteUsuario = await _usuarioRolRepo.FindAsync(ur => ur.UsuarioId == id, ct);
+        if (rolesDeEsteUsuario.Count > 0)
+        {
+            var roles = await _rolRepo.GetAllAsync(ct);
+            var rolAdmin = roles.FirstOrDefault(r => r.NombreRol.Equals("Admin", StringComparison.OrdinalIgnoreCase));
+            if (rolAdmin is not null && rolesDeEsteUsuario.Any(ur => ur.RolId == rolAdmin.RolId))
+            {
+                var otrosAdmins = await _usuarioRolRepo.FindAsync(
+                    ur => ur.RolId == rolAdmin.RolId && ur.UsuarioId != id, ct);
+                if (otrosAdmins.Count == 0)
+                    return BadRequest(new { message = ApiMessages.Admin.DebeQuedarAlMenosUnAdmin });
+            }
+        }
+
+        // Limpieza defensiva de las 2 FK "ON DELETE NO ACTION" hacia Usuario (ambas nullable).
+        // Las filas de AuditoriaCv/PromptIa del PROPIO curriculum de este usuario ya se eliminan
+        // solas via la cascada Usuario -> Curriculum -> (CASCADE); esto cubre el caso borde de
+        // que el id quede referenciado desde el curriculum de OTRO usuario.
+        var auditoriasComoActor = await _auditoriaCvRepo.FindAsync(a => a.ActorUsuarioId == id, ct);
+        foreach (var a in auditoriasComoActor)
+        {
+            a.ActorUsuarioId = null;
+            _auditoriaCvRepo.Update(a);
+        }
+        if (auditoriasComoActor.Count > 0) await _auditoriaCvRepo.SaveChangesAsync(ct);
+
+        var promptsActualizadosPor = await _promptIaRepo.FindAsync(p => p.ActualizadoPorUsuarioId == id, ct);
+        foreach (var p in promptsActualizadosPor)
+        {
+            p.ActualizadoPorUsuarioId = null;
+            _promptIaRepo.Update(p);
+        }
+        if (promptsActualizadosPor.Count > 0) await _promptIaRepo.SaveChangesAsync(ct);
+
+        var emailEliminado = usuario.Email;
+        _usuarioRepo.Remove(usuario);
+        await _usuarioRepo.SaveChangesAsync(ct);
+
+        await _auditoria.RegistrarAsync(
+            actorId,
+            AdminAuditoriaAcciones.UsuarioEliminado,
+            "Usuario",
+            id,
+            new Dictionary<string, string> { ["emailEliminado"] = emailEliminado },
+            ct);
 
         return NoContent();
     }
