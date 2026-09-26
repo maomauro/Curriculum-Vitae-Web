@@ -497,6 +497,52 @@ Flujo:
 
 ---
 
+### 6.3 Autenticación SSH y Certificado TLS de Origen (Despliegue en VPS)
+
+Dos flujos criptográficos distintos, con dos pares de llaves distintos, usados en el despliegue de producción (ver `docs/produccion/Plan-Trabajo-Produccion.md`):
+
+**Autenticación SSH al VPS (par de llaves del operador, no del dominio)**
+
+```mermaid
+sequenceDiagram
+    participant PC as PC del operador
+    participant Panel as Panel Contabo
+    participant VPS as VPS (servidor)
+
+    Note over PC: Genera el par de llaves<br/>id_ed25519 (privada)<br/>id_ed25519.pub (pública)
+    PC->>Panel: Pega la llave PÚBLICA
+    Panel->>VPS: Guarda la pública en<br/>~/.ssh/authorized_keys
+
+    Note over PC,VPS: --- Al conectarse por SSH ---
+    PC->>VPS: "Quiero conectarme, esta es mi llave pública"
+    VPS->>VPS: Genera un reto aleatorio
+    VPS->>PC: Envía el reto cifrado con la llave pública
+    PC->>PC: Firma el reto con la llave PRIVADA (nunca sale del PC)
+    PC->>VPS: Devuelve la respuesta firmada
+    VPS->>VPS: Verifica la firma con la llave pública guardada
+    VPS-->>PC: Acceso concedido (solo quien tiene la privada)
+```
+
+**Certificado TLS de Origen (par de llaves del dominio, entre Cloudflare y el VPS)**
+
+```mermaid
+sequenceDiagram
+    participant V as Visitante (navegador)
+    participant CF as Cloudflare
+    participant VPS as VPS (Nginx)
+
+    V->>CF: HTTPS a portalcv.sitiosapps.com
+    Note over V,CF: Cloudflare presenta su propio<br/>certificado público (confiado por cualquiera)
+    CF->>VPS: HTTPS al origen (modo Full)
+    Note over CF,VPS: Cloudflare valida que el VPS tenga<br/>el certificado de Origen de Cloudflare instalado:<br/>portalcv.sitiosapps.com.pem (certificado)<br/>portalcv.sitiosapps.com.key (clave privada, permisos 600)
+    VPS-->>CF: Responde cifrado con ese certificado
+    CF-->>V: Respuesta final al visitante
+```
+
+La llave SSH identifica a un operador humano frente al servidor; el certificado TLS de Origen identifica y cifra la comunicación del servidor frente a Cloudflare. No están relacionados entre sí.
+
+---
+
 ## 7. MAPA DE NAVEGACIÓN
 
 ### 7.1 Estructura de Navegación

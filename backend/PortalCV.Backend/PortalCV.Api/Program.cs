@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -233,16 +234,17 @@ namespace PortalCV.Api
 
             // Detrás del reverse proxy (Nginx en el VPS de Contabo, delante de Cloudflare) la IP
             // real del visitante viaja en X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress
-            // solo vería la IP interna del proxy. KnownNetworks/KnownProxies quedan sin restringir
-            // por ahora -- una vez que exista el Nginx de produccion (ver
-            // docs/produccion/Plan-Trabajo-Produccion.md Fase 3), conviene restringir esto a la
-            // IP/red real de ese Nginx en vez de confiar en cualquier origen.
+            // solo vería la IP interna del proxy. Restringido a la subred fija de la red de
+            // Docker Compose de produccion (portalcv-net-prod, 172.28.0.0/24 -- ver
+            // docker-compose.prod.yml), el unico origen valido de ese header: si algun dia
+            // cambia la subred del compose, hay que actualizarla tambien aqui.
             var forwardedHeadersOptions = new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             };
             forwardedHeadersOptions.KnownIPNetworks.Clear();
             forwardedHeadersOptions.KnownProxies.Clear();
+            forwardedHeadersOptions.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("172.28.0.0"), 24));
             app.UseForwardedHeaders(forwardedHeadersOptions);
 
             app.UseMiddleware<GlobalExceptionMiddleware>();

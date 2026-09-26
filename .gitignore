@@ -7,6 +7,9 @@
 docker/backend.local.env
 # Variables reales para el contenedor MariaDB del docker-compose.yml local
 docker/mariadb.local.env
+# Variables reales de produccion (ver docker-compose.prod.yml, Plan-Trabajo-Produccion.md Fase 5)
+docker/backend.prod.env
+docker/mariadb.prod.env
 
 # ── .NET / Backend ───────────────────────────────────────────────────────────
 backend/**/bin/

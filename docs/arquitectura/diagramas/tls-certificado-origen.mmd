@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant V as Visitante (navegador)
+    participant CF as Cloudflare
+    participant VPS as VPS (Nginx)
+
+    V->>CF: HTTPS a portalcv.sitiosapps.com
+    Note over V,CF: Cloudflare presenta su propio<br/>certificado público (confiado por cualquiera)
+    CF->>VPS: HTTPS al origen (modo Full)
+    Note over CF,VPS: Cloudflare valida que el VPS tenga<br/>el certificado de Origen instalado:<br/>portalcv.sitiosapps.com.pem (certificado)<br/>portalcv.sitiosapps.com.key (clave privada, permisos 600)
+    VPS-->>CF: Responde cifrado con ese certificado
+    CF-->>V: Respuesta final al visitante
