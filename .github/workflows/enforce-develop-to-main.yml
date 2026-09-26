@@ -1,0 +1,26 @@
+name: Enforce develop -> main
+
+# GitHub no permite restringir de forma nativa desde que rama puede abrirse
+# un pull request (ni en branch protection classic ni en rulesets). Este
+# workflow reemplaza esa restriccion: falla si un PR contra main no viene
+# de develop, y se agrega como status check obligatorio en la regla de
+# proteccion de main.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-source-branch:
+    name: Verificar rama de origen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Solo se permite develop -> main
+        if: github.event.pull_request.head.ref != 'develop'
+        run: |
+          echo "::error::Los pull requests hacia main solo pueden venir de la rama 'develop'. Rama detectada: ${{ github.event.pull_request.head.ref }}"
+          exit 1
+      - name: Origen valido
+        if: github.event.pull_request.head.ref == 'develop'
+        run: echo "OK: el PR viene de develop."
