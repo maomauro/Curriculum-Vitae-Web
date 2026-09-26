@@ -74,6 +74,15 @@ export class ConfiguracionComponent implements OnInit {
   urlCvCargando = true;
   copiado = false;
 
+  /** Edición de la URL pública (slug). */
+  editandoUrl = false;
+  slugActual = '';
+  slugEditado = '';
+  guardandoUrl = false;
+  sugerenciaUrl: string | null = null;
+  /** Origen del navegador (para mostrar "{origen}/cv/" como prefijo fijo al editar). */
+  origenActual = '';
+
   /** Curriculum en estado Publicado (visible en API pública). */
   cvPublicado = false;
   presentacionLista = false;
@@ -264,8 +273,11 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.origenActual = typeof window !== 'undefined' ? window.location.origin.replace(/\/$/, '') : '';
+
     this.cvEditorService.getPresentacion().subscribe({
       next: p => {
+        this.slugActual = (p.urlPublica ?? '').trim();
         this.urlCv = this.construirUrlCvPublico(p.urlPublica);
         this.cvPublicado = !!p.publicado;
         this.urlCvCargando = false;
@@ -573,6 +585,81 @@ export class ConfiguracionComponent implements OnInit {
     navigator.clipboard.writeText(u);
     this.copiado = true;
     setTimeout(() => (this.copiado = false), 2000);
+  }
+
+  iniciarEdicionUrl(): void {
+    if (!this.presentacionLista) return;
+    this.slugEditado = this.slugActual;
+    this.sugerenciaUrl = null;
+    this.editandoUrl = true;
+  }
+
+  cancelarEdicionUrl(): void {
+    this.editandoUrl = false;
+    this.slugEditado = this.slugActual;
+    this.sugerenciaUrl = null;
+  }
+
+  aceptarSugerenciaUrl(): void {
+    if (!this.sugerenciaUrl) return;
+    this.slugEditado = this.sugerenciaUrl;
+    this.sugerenciaUrl = null;
+  }
+
+  guardarUrlPublica(): void {
+    const propuesta = this.normalizarSlug(this.slugEditado);
+
+    if (!propuesta) {
+      this.notificationService.warning('Ingresá una URL válida (letras, números y guiones).');
+      return;
+    }
+    if (propuesta === this.slugActual) {
+      this.cancelarEdicionUrl();
+      return;
+    }
+    if (
+      !window.confirm(
+        'Los enlaces que ya compartiste con tu URL actual dejarán de funcionar (van a mostrar un error). ' +
+          '¿Querés continuar con el cambio?'
+      )
+    ) {
+      return;
+    }
+
+    this.guardandoUrl = true;
+    this.sugerenciaUrl = null;
+    this.cvEditorService.actualizarUrlPublica(propuesta).subscribe({
+      next: res => {
+        this.guardandoUrl = false;
+        if (res.disponible && res.presentacion) {
+          this.slugActual = res.presentacion.urlPublica;
+          this.urlCv = this.construirUrlCvPublico(this.slugActual);
+          this.editandoUrl = false;
+          this.notificationService.success('URL pública actualizada correctamente.');
+        } else {
+          this.sugerenciaUrl = res.sugerencia;
+          this.notificationService.warning('Esa URL ya está en uso. Te sugerimos una alternativa disponible.');
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.guardandoUrl = false;
+        this.notificationService.error(extractApiErrorMessage(error) || NOTIFICATION_MESSAGES.saveError);
+      },
+    });
+  }
+
+  /** Misma normalización que aplica el backend al generar el slug (AuthService.NormalizarSlug):
+   * minúsculas, sin tildes/ñ, espacios y guiones bajos a guion, colapsa guiones repetidos. */
+  private normalizarSlug(valor: string): string {
+    return (valor ?? '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 
   /**

@@ -9,6 +9,7 @@ using PortalCV.Domain.Entities;
 using PortalCV.Domain.Exceptions;
 using PortalCV.Infrastructure.Data;
 using PortalCV.Infrastructure.Helpers;
+using PortalCV.Infrastructure.Utils;
 
 namespace PortalCV.Infrastructure.Services;
 
@@ -812,6 +813,53 @@ public class CvEditorService : ICvEditorService
             new Dictionary<string, string> { ["publicado"] = publicado ? "true" : "false" }, ct);
 
         return await GetPresentacionAsync(curriculumId, ct);
+    }
+
+    public async Task<ActualizarUrlPublicaResultDto> ActualizarUrlPublicaAsync(
+        int curriculumId, string urlPublicaPropuesta, CancellationToken ct = default)
+    {
+        var propuesta = SlugHelper.Normalizar(urlPublicaPropuesta ?? string.Empty);
+        if (propuesta.Length < 3)
+            throw new ArgumentException(ApiMessages.Cv.UrlPublicaInvalida);
+
+        var c = await _context.Curriculums
+            .FirstOrDefaultAsync(x => x.CurriculumId == curriculumId, ct)
+            ?? throw new KeyNotFoundException($"Curriculum {curriculumId} no encontrado.");
+
+        if (propuesta == c.UrlPublica)
+        {
+            return new ActualizarUrlPublicaResultDto(true, null, await GetPresentacionAsync(curriculumId, ct));
+        }
+
+        var ocupada = await _context.Curriculums
+            .AnyAsync(x => x.UrlPublica == propuesta && x.CurriculumId != curriculumId, ct);
+
+        if (ocupada)
+        {
+            var sugerencia = await GenerarSugerenciaUrlPublicaAsync(propuesta, curriculumId, ct);
+            return new ActualizarUrlPublicaResultDto(false, sugerencia, null);
+        }
+
+        c.UrlPublica = propuesta;
+        c.FechaActualizacion = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+        await RegistrarCvAsync(curriculumId, CvAuditoriaAcciones.PresentacionUrlPublica, "Curriculum", curriculumId,
+            new Dictionary<string, string> { ["urlPublica"] = propuesta }, ct);
+
+        return new ActualizarUrlPublicaResultDto(true, null, await GetPresentacionAsync(curriculumId, ct));
+    }
+
+    private async Task<string> GenerarSugerenciaUrlPublicaAsync(
+        string baseSlug, int curriculumIdActual, CancellationToken ct)
+    {
+        var candidato = baseSlug;
+        var counter = 1;
+        while (await _context.Curriculums
+            .AnyAsync(x => x.UrlPublica == candidato && x.CurriculumId != curriculumIdActual, ct))
+        {
+            candidato = $"{baseSlug}-{counter++}";
+        }
+        return candidato;
     }
 
     // --- Ofertas analizadas ---

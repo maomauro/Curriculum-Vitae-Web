@@ -48,4 +48,20 @@ public class PresentacionController : CvControllerBase
             return BadRequest(new { message = ApiMessages.Cv.SesionSinCurriculumValido });
         return Ok(await _editor.UpdateCurriculumPublicacionAsync(id, request.Publicado, ct));
     }
+
+    /// <summary>
+    /// Cambia la URL pública (slug) del CV. Si la propuesta ya está en uso por otro CV, devuelve
+    /// 200 con <c>disponible: false</c> y una <c>sugerencia</c> libre en vez de fallar — el
+    /// frontend la ofrece para aceptarla con un clic.
+    /// </summary>
+    [HttpPut("url-publica")]
+    public async Task<IActionResult> UpdateUrlPublica(
+        [FromBody] ActualizarUrlPublicaRequest request,
+        CancellationToken ct = default)
+    {
+        var id = GetCurriculumId();
+        if (id <= 0)
+            return BadRequest(new { message = ApiMessages.Cv.SesionSinCurriculumValido });
+        return Ok(await _editor.ActualizarUrlPublicaAsync(id, request.UrlPublica, ct));
+    }
 }
