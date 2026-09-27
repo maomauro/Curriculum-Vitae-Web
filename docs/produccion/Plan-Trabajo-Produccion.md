@@ -111,7 +111,11 @@ que ASP.NET Core lee automaticamente con `ASPNETCORE_ENVIRONMENT=Production`.
 
 - [ ] Levantar el contenedor MariaDB en el VPS con volumen persistente
 - [ ] Ejecutar `database/01_CreateSchema.sql` contra la base nueva (arranca
-  vacia; no se migran datos de desarrollo/local)
+  vacia; no se migran datos de desarrollo/local) -- este paso manual es
+  unicamente para la creacion inicial. Cambios de esquema posteriores
+  (una vez la base ya tiene datos reales) los aplica automaticamente
+  `SchemaMigrationRunner` al arrancar el backend, sin pasos manuales --
+  ver CLAUDE.md, seccion "Migraciones de esquema".
 - [ ] Automatizar backup diario (`mariadb-dump` o `mariabackup`) via cron —
   procedimiento ya documentado en `docs/devops/Plan-Backup-Mantenimiento.md`
   - Criterio de cierre: existe al menos un backup automatico verificado
