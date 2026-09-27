@@ -151,7 +151,7 @@ Implementación concreta de todas las interfaces. Aquí viven el acceso a base d
 | `PortalCvDbContext.cs` | DbContext principal de EF Core. Registra todos los `DbSet<T>` y aplica las configuraciones |
 | `Configurations/*.cs` | Una clase por entidad. Define mapeo a MariaDB: tabla, columnas, PK, FK, índices y constraints |
 
-> El proyecto **no usa migraciones** de EF Core. El DDL ejecutable está en **`database/01_CreateSchema.sql`**; ver `database/README.md`.
+> El proyecto **no usa migraciones de EF Core**. El DDL ejecutable de una base nueva está en **`database/01_CreateSchema.sql`**; ver `database/README.md`. Los cambios de esquema incrementales contra una base ya existente (dev con datos, o producción) los aplica automáticamente `SchemaMigrationRunner` (`PortalCV.Infrastructure/Services`) al arrancar la API, a partir de los scripts numerados de `database/migrations/` — ver CLAUDE.md, sección "Migraciones de esquema".
 
 > **Conector EF Core usado: `MySql.EntityFrameworkCore` (Oracle), no Pomelo.EntityFrameworkCore.MySql.**
 > Pomelo es el más recomendado específicamente para MariaDB, pero al momento de escribir esto no

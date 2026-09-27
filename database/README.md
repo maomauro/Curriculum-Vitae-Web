@@ -11,6 +11,7 @@ Script y modelo de base de datos del portal (motor: **MariaDB**). Todo lo relaci
 | `01_CreateSchema.dbml` | Modelo de datos en [DBML](https://dbml.dbdiagram.io/) para visualizar en [dbdiagram.io](https://dbdiagram.io). Define todas las tablas, índices y relaciones. |
 | `DiccionarioDeDatos.md` | Diccionario de datos con descripción y reglas de cada columna. |
 | `portalcv-er-diagram.html` | Diagrama entidad-relación interactivo (requiere zoom/pan para leerse cómodo — ver nota abajo). |
+| `portalcv_local_dump.sql` | Volcado (`mariadb-dump`) de la base local de desarrollo, con datos reales — **ignorado por git**, nunca se versiona. Regenerar con `docker exec portalcv-mariadb mariadb-dump -uroot -p"$MARIADB_ROOT_PASSWORD" portalcv > database/portalcv_local_dump.sql` cuando haga falta un respaldo/restauración local. |
 
 `01_CreateSchema.dbml` y `DiccionarioDeDatos.md` están pensados para reflejar el esquema, pero **pueden quedar desactualizados** respecto a `01_CreateSchema.sql` — tratá el script SQL como la fuente de verdad, no estos documentos, y verificá antes de confiar en cualquiera de los dos.
 
