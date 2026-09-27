@@ -45,6 +45,7 @@ public class ProveedorIaService : IProveedorIaService
             Modelo = string.IsNullOrWhiteSpace(r.Modelo) ? null : r.Modelo.Trim(),
             Endpoint = string.IsNullOrWhiteSpace(r.Endpoint) ? null : r.Endpoint.Trim(),
             ApiKeyCifrada = string.IsNullOrWhiteSpace(r.ApiKey) ? null : _cipher.Encrypt(r.ApiKey.Trim()),
+            Descripcion = string.IsNullOrWhiteSpace(r.Descripcion) ? null : r.Descripcion.Trim(),
             EsActivo = esPrimera,
             FechaCreacion = DateTime.UtcNow,
             FechaActualizacion = DateTime.UtcNow,
@@ -67,6 +68,7 @@ public class ProveedorIaService : IProveedorIaService
         e.Endpoint = string.IsNullOrWhiteSpace(r.Endpoint) ? null : r.Endpoint.Trim();
         if (!string.IsNullOrWhiteSpace(r.ApiKey))
             e.ApiKeyCifrada = _cipher.Encrypt(r.ApiKey.Trim());
+        e.Descripcion = string.IsNullOrWhiteSpace(r.Descripcion) ? null : r.Descripcion.Trim();
         e.FechaActualizacion = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
@@ -161,5 +163,5 @@ public class ProveedorIaService : IProveedorIaService
     }
 
     private static ProveedorIaDto Map(ProveedorIa e) => new(
-        e.ProveedorIaId, e.Proveedor, e.Nombre, e.Modelo, e.Endpoint, e.EsActivo, e.FechaActualizacion);
+        e.ProveedorIaId, e.Proveedor, e.Nombre, e.Modelo, e.Endpoint, e.Descripcion, e.EsActivo, e.FechaActualizacion);
 }

@@ -18,6 +18,7 @@ public class ProveedorIaConfiguration : IEntityTypeConfiguration<ProveedorIa>
         builder.Property(p => p.Modelo).HasMaxLength(100);
         builder.Property(p => p.Endpoint).HasMaxLength(500);
         builder.Property(p => p.ApiKeyCifrada).HasColumnType("longtext");
+        builder.Property(p => p.Descripcion).HasColumnType("text");
         builder.Property(p => p.EsActivo).HasDefaultValue(false);
         builder.Property(p => p.FechaCreacion).HasDefaultValueSql("UTC_TIMESTAMP()");
         builder.Property(p => p.FechaActualizacion).HasDefaultValueSql("UTC_TIMESTAMP()");

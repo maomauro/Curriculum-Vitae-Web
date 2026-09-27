@@ -158,6 +158,17 @@
         autocomplete="off"
         [placeholder]="editandoId !== null ? 'Dejar en blanco para no cambiarla' : 'sk-ant-...'">
     </div>
+    <div class="col-12">
+      <label class="form-label" for="admin_ia_descripcion">
+        Notas <small class="text-muted fw-normal">(opcional, solo visibles para Admin)</small>
+      </label>
+      <textarea
+        id="admin_ia_descripcion"
+        class="form-control"
+        rows="3"
+        [(ngModel)]="form.descripcion"
+        placeholder="Plan contratado, crédito comprado, fecha de vencimiento, proyecto asociado, etc."></textarea>
+    </div>
 
     <div class="col-12 d-flex flex-wrap align-items-center gap-2">
       <button

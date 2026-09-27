@@ -430,6 +430,7 @@ Conexión con proveedores de IA **global de toda la plataforma** (no por CV) —
 | Modelo               | varchar(100)   | Modelo a usar (p. ej. `claude-opus-4-20250514`) | opcional, si se omite se usa el modelo por defecto del proveedor |
 | Endpoint             | varchar(500)   | URL del servidor                              | opcional; **obligatorio** para proveedores self-hosted (hoy, `ollama`) |
 | ApiKeyCifrada        | text           | Clave de API, cifrada con AES-256-GCM (`AesGcmApiKeyCipher`, clave en `Encryption:Key`) | opcional (Ollama local normalmente no la requiere); **nunca se devuelve al front-end** ni cifrada ni en texto plano; requerida para claude/openai/gemini |
+| Descripcion          | text           | Notas libres del Admin (plan contratado, crédito comprado, fecha de vencimiento, proyecto GCP, etc.) | opcional; no cifrada, se guarda y devuelve tal cual |
 | EsActivo             | boolean        | Si es la conexión activa de toda la plataforma | not null, default: 0, a lo sumo una activa (índice único filtrado) |
 | FechaCreacion        | datetime       | Momento en que se guardó esta conexión, en UTC | not null, default: now() |
 | FechaActualizacion   | datetime       | Momento del último guardado, en UTC          | not null, default: now() |

@@ -5,13 +5,15 @@ import { API_BASE_URL } from '../../constants/api-base-url';
 
 export type ProveedorIaCodigo = 'claude' | 'openai' | 'gemini' | 'groq' | 'ollama' | 'otro';
 
-/** Nunca incluye la clave de API — ni cifrada ni en texto plano. */
+/** Nunca incluye la clave de API — ni cifrada ni en texto plano. descripcion sí se
+ * devuelve tal cual (no es un secreto: notas del Admin sobre plan/crédito/vigencia). */
 export interface ProveedorIaDto {
   proveedorIaId: number;
   proveedor: ProveedorIaCodigo;
   nombre: string | null;
   modelo: string | null;
   endpoint: string | null;
+  descripcion: string | null;
   esActivo: boolean;
   fechaActualizacion: string;
 }
@@ -22,6 +24,7 @@ export interface CrearProveedorIaRequest {
   modelo?: string | null;
   endpoint?: string | null;
   apiKey?: string | null;
+  descripcion?: string | null;
 }
 
 /** apiKey null/vacío en una actualización = no cambiar la clave guardada. */
@@ -31,6 +34,7 @@ export interface ActualizarProveedorIaRequest {
   modelo?: string | null;
   endpoint?: string | null;
   apiKey?: string | null;
+  descripcion?: string | null;
 }
 
 export interface ProbarConexionIaRequest {
