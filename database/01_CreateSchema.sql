@@ -604,6 +604,7 @@ CREATE TABLE ProveedorIa (
     Modelo             VARCHAR(100) NULL,
     Endpoint           VARCHAR(500) NULL,
     ApiKeyCifrada      LONGTEXT NULL,
+    Descripcion        TEXT NULL,
     EsActivo           TINYINT(1) NOT NULL DEFAULT 0,
     FechaCreacion      DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
     FechaActualizacion DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()) ON UPDATE CURRENT_TIMESTAMP,

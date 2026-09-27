@@ -371,6 +371,7 @@ Table ProveedorIa {
   Modelo varchar(100)
   Endpoint varchar(500) [note: 'URL del servidor; obligatorio para proveedores self-hosted (ollama)']
   ApiKeyCifrada text [note: 'AES-256-GCM (AesGcmApiKeyCipher); opcional (ollama local no siempre la requiere); nunca se devuelve al front-end']
+  Descripcion text [note: 'Notas libres del Admin (plan, credito, fecha de vencimiento, proyecto GCP, etc.) -- no cifrada, se devuelve tal cual']
   EsActivo boolean [not null, default: false, note: 'Solo una activa a la vez en TODA la plataforma -- conexion global, no por CV, administrada solo por Admin']
   FechaCreacion datetime [not null, default: `now()`]
   FechaActualizacion datetime [not null, default: `now()`]
