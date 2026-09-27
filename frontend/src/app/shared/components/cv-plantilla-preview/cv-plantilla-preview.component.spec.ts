@@ -230,6 +230,58 @@ describe('CvPlantillaPreviewComponent', () => {
     expect(component.formacionesCurso.map(f => f.formacionId)).toEqual([4]);
   });
 
+  describe('formacionesCertificacionAgrupadas (compactar credenciales del mismo tema)', () => {
+    it('compacta varias certificaciones Scrum del mismo proveedor en un solo grupo', () => {
+      component.vm = vmBase({
+        formaciones: [
+          { formacionId: 1, titulo: 'Certificación Scrum Master', institucion: 'Certmind', tipoFormacion: 'Certificacion', fechaInicio: null, fechaFin: '2025-01-01' },
+          { formacionId: 2, titulo: 'Certificación Scrum Fundamentals', institucion: 'Certmind', tipoFormacion: 'Certificacion', fechaInicio: null, fechaFin: '2025-06-01' },
+          { formacionId: 3, titulo: 'Google Cloud Computing Foundations', institucion: 'Coursera', tipoFormacion: 'Certificacion', fechaInicio: null, fechaFin: '2025-01-01' },
+        ],
+      });
+
+      const grupos = component.formacionesCertificacionAgrupadas;
+      expect(grupos.length).toBe(2);
+      expect(grupos[0].prefijoComun).toBe('Certificación Scrum');
+      expect(grupos[0].items.length).toBe(2);
+      expect(grupos[1].prefijoComun).toBeNull();
+    });
+
+    it('bloquesFormacionCompacta solo incluye los 3 bloques que tienen datos', () => {
+      component.vm = vmBase({
+        formaciones: [
+          { formacionId: 1, titulo: 'Cert A', institucion: 'X', tipoFormacion: 'Certificacion', fechaInicio: null, fechaFin: null },
+        ],
+      });
+
+      const bloques = component.bloquesFormacionCompacta;
+      expect(bloques.map(b => b.titulo)).toEqual(['Certificaciones']);
+      expect(bloques[0].grupos.length).toBe(1);
+    });
+
+    it('prefijoVisible quita la palabra genérica redundante con el título de la sección', () => {
+      component.vm = vmBase();
+      expect(component.prefijoVisible('Certificación Scrum')).toBe('Scrum');
+    });
+
+    it('diferenciadorTitulo quita el prefijo y anioGrupoFormacion solo devuelve año si todos coinciden', () => {
+      component.vm = vmBase();
+      expect(component.diferenciadorTitulo('Certificación Scrum Master', 'Certificación Scrum')).toBe('Master');
+      expect(component.diferenciadorTitulo(null, null)).toBe('');
+
+      const mismoAnio = [
+        { fechaInicio: null, fechaFin: '2025-01-01' } as any,
+        { fechaInicio: null, fechaFin: '2025-06-01' } as any,
+      ];
+      const distintoAnio = [
+        { fechaInicio: null, fechaFin: '2024-01-01' } as any,
+        { fechaInicio: null, fechaFin: '2025-06-01' } as any,
+      ];
+      expect(component.anioGrupoFormacion(mismoAnio)).toBe('(2025)');
+      expect(component.anioGrupoFormacion(distintoAnio)).toBe('');
+    });
+  });
+
   it('redesSociales expone todas las redes del vm (no solo LinkedIn/GitHub)', () => {
     component.vm = vmBase({
       redesSociales: [
