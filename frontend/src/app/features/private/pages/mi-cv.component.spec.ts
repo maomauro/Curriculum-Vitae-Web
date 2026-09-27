@@ -228,6 +228,7 @@ describe('MiCvComponent', () => {
       ] as VisibilidadSeccionDto[]));
       component.abrirCvPerfil(cvGeneradoDto());
 
+      expect(component.fotoVisible).toBeFalse();
       expect(component.fotoHeaderUrl).toBeNull();
       expect(component.mostrarEmail).toBeFalse();
       expect(component.mostrarTelefono).toBeTrue();

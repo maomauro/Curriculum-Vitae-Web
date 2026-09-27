@@ -139,7 +139,7 @@
               class="cv-preview-header d-flex align-items-start"
               [class.text-white]="plantillaCodigo === 'clasico'">
               <div class="d-flex align-items-start w-100 cv-preview-header-body">
-                <div class="cv-mi-photo-slot me-3">
+                <div class="cv-mi-photo-slot me-3" *ngIf="fotoVisible">
                   <img *ngIf="fotoHeaderUrl" [src]="fotoHeaderUrl" alt="Foto de perfil" class="cv-mi-photo-img" />
                   <div *ngIf="!fotoHeaderUrl" class="cv-mi-photo-placeholder" aria-hidden="true">{{ inicialesFoto }}</div>
                 </div>
