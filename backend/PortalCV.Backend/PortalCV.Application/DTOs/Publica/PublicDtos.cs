@@ -40,8 +40,17 @@ public record CvDetalleDto(
     bool DashboardPublicoActivo,
     /// <summary>Métricas en dashboard público (maestro ∧ <c>dashboard.metricas</c>).</summary>
     bool DashboardMostrarMetricas,
-    /// <summary>Gráficas en dashboard público (maestro ∧ <c>dashboard.graficas</c>).</summary>
+    /// <summary>Gráficas en dashboard público (maestro ∧ <c>dashboard.graficas</c>). Sigue existiendo
+    /// como "hay al menos una gráfica visible" -- las 4 de abajo son el detalle por categoría.</summary>
     bool DashboardMostrarGraficas,
+    /// <summary>Gráfica de Experiencia (maestro ∧ <c>dashboard.graficas</c> ∧ <c>dashboard.graficas.experiencia</c>).</summary>
+    bool DashboardMostrarGraficaExperiencia,
+    /// <summary>Gráfica de Formación (maestro ∧ <c>dashboard.graficas</c> ∧ <c>dashboard.graficas.formacion</c>).</summary>
+    bool DashboardMostrarGraficaFormacion,
+    /// <summary>Gráfica de Proyectos (maestro ∧ <c>dashboard.graficas</c> ∧ <c>dashboard.graficas.proyectos</c>).</summary>
+    bool DashboardMostrarGraficaProyectos,
+    /// <summary>Gráfica de Habilidades (maestro ∧ <c>dashboard.graficas</c> ∧ <c>dashboard.graficas.habilidades</c>).</summary>
+    bool DashboardMostrarGraficaHabilidades,
     /// <summary>Pestaña "Información profesional" del CV público (VisibilidadSeccion <c>profesional.publico</c>).</summary>
     bool InformacionProfesionalPublicaActiva,
     /// <summary>Pestaña "Hoja de vida" del CV público (VisibilidadSeccion <c>hoja-de-vida.publico</c>).</summary>

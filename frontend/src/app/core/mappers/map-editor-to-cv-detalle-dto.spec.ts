@@ -7,6 +7,7 @@ import type {
   PresentacionCvDto,
   ProyectoDto,
   ReferenciaDto,
+  VisibilidadSeccionDto,
 } from '../services/private/cv-editor.service';
 
 function basePresentacion(over: Partial<PresentacionCvDto> = {}): PresentacionCvDto {
@@ -52,6 +53,7 @@ describe('mapEditorToCvDetalleDto', () => {
       [],
       [],
       [],
+      [],
       []
     );
     expect(dto.experiencias.length).toBe(1);
@@ -65,7 +67,7 @@ describe('mapEditorToCvDetalleDto', () => {
       experienciaPerfilAnios: 7, aspiracionSalarialPesos: 8000000, aspiracionSalarialDolares: 2000,
       mostrarExperienciaPerfil: false, mostrarAspiracionSalarial: true,
     }];
-    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), perfiles, [], [], [], [], [], []);
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), perfiles, [], [], [], [], [], [], []);
 
     expect(dto.perfiles[0].experienciaPerfilAnios).toBeNull();
     expect(dto.perfiles[0].aspiracionSalarialPesos).toBe(8000000);
@@ -117,6 +119,7 @@ describe('mapEditorToCvDetalleDto', () => {
       [],
       [],
       referencias,
+      [],
       []
     );
     const ids = dto.referencias.map(r => r.referenciaId);
@@ -153,6 +156,7 @@ describe('mapEditorToCvDetalleDto', () => {
       [],
       [],
       referencias,
+      [],
       []
     );
     expect(dto.referencias.some(r => r.referenciaId === 20)).toBeTrue();
@@ -187,6 +191,7 @@ describe('mapEditorToCvDetalleDto', () => {
       [],
       [],
       referencias,
+      [],
       []
     );
     expect(dto.referencias.length).toBe(1);
@@ -230,7 +235,7 @@ describe('mapEditorToCvDetalleDto', () => {
         fechaRegistro: '2026-01-01T00:00:00Z',
       },
     ];
-    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], [], referencias, []);
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], [], referencias, [], []);
     const ids = dto.referencias.map(r => r.referenciaId);
     expect(ids).toContain(40);
     expect(ids).not.toContain(41);
@@ -268,7 +273,7 @@ describe('mapEditorToCvDetalleDto', () => {
       },
     ] as FormacionDto[];
 
-    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], formaciones, [], [], [], []);
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], formaciones, [], [], [], [], []);
     expect(dto.formaciones.length).toBe(1);
     expect(dto.formaciones[0].formacionId).toBe(1);
   });
@@ -301,7 +306,7 @@ describe('mapEditorToCvDetalleDto', () => {
       },
     ] as HabilidadDto[];
 
-    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], habilidades, [], [], []);
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], habilidades, [], [], [], []);
     expect(dto.habilidades.length).toBe(1);
     expect(dto.habilidades[0].habilidadId).toBe(20);
   });
@@ -334,8 +339,57 @@ describe('mapEditorToCvDetalleDto', () => {
       },
     ] as ProyectoDto[];
 
-    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], proyectos, [], []);
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], proyectos, [], [], []);
     expect(dto.proyectos.length).toBe(1);
     expect(dto.proyectos[0].proyectoId).toBe(10);
+  });
+
+  describe('flags de visibilidad del Dashboard (mismos que ve un visitante)', () => {
+    function dtoConVisibilidad(visibilidad: VisibilidadSeccionDto[]) {
+      return mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], [], [], [], visibilidad);
+    }
+
+    it('sin filas de visibilidad, todo queda visible por defecto', () => {
+      const dto = dtoConVisibilidad([]);
+
+      expect(dto.dashboardPublicoActivo).toBeTrue();
+      expect(dto.dashboardMostrarMetricas).toBeTrue();
+      expect(dto.dashboardMostrarGraficas).toBeTrue();
+      expect(dto.dashboardMostrarGraficaExperiencia).toBeTrue();
+      expect(dto.dashboardMostrarGraficaFormacion).toBeTrue();
+      expect(dto.dashboardMostrarGraficaProyectos).toBeTrue();
+      expect(dto.dashboardMostrarGraficaHabilidades).toBeTrue();
+    });
+
+    it('apagar solo una gráfica no afecta a las demás ni al agregado', () => {
+      const dto = dtoConVisibilidad([{ seccion: 'dashboard.graficas.proyectos', visible: false }]);
+
+      expect(dto.dashboardMostrarGraficaProyectos).toBeFalse();
+      expect(dto.dashboardMostrarGraficaExperiencia).toBeTrue();
+      expect(dto.dashboardMostrarGraficaFormacion).toBeTrue();
+      expect(dto.dashboardMostrarGraficaHabilidades).toBeTrue();
+      expect(dto.dashboardMostrarGraficas).toBeTrue();
+    });
+
+    it('apagar el maestro de gráficas apaga las 4, aunque sus filas digan true', () => {
+      const dto = dtoConVisibilidad([
+        { seccion: 'dashboard.graficas', visible: false },
+        { seccion: 'dashboard.graficas.experiencia', visible: true },
+      ]);
+
+      expect(dto.dashboardMostrarGraficas).toBeFalse();
+      expect(dto.dashboardMostrarGraficaExperiencia).toBeFalse();
+    });
+
+    it('apagar el dashboard completo apaga métricas y las 4 gráficas', () => {
+      const dto = dtoConVisibilidad([{ seccion: 'dashboard.publico', visible: false }]);
+
+      expect(dto.dashboardPublicoActivo).toBeFalse();
+      expect(dto.dashboardMostrarMetricas).toBeFalse();
+      expect(dto.dashboardMostrarGraficaExperiencia).toBeFalse();
+      expect(dto.dashboardMostrarGraficaFormacion).toBeFalse();
+      expect(dto.dashboardMostrarGraficaProyectos).toBeFalse();
+      expect(dto.dashboardMostrarGraficaHabilidades).toBeFalse();
+    });
   });
 });

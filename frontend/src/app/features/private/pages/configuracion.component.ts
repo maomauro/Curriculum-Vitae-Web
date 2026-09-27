@@ -216,7 +216,12 @@ export class ConfiguracionComponent implements OnInit {
           icon: 'bi-pie-chart-fill',
           iconStyle: 'vis-icon--proyectos',
           visible: true,
-          atributos: [],
+          atributos: [
+            { key: 'dashboard.graficas.experiencia', label: 'Experiencia', visible: true },
+            { key: 'dashboard.graficas.formacion', label: 'Formación', visible: true },
+            { key: 'dashboard.graficas.proyectos', label: 'Proyectos', visible: true },
+            { key: 'dashboard.graficas.habilidades', label: 'Habilidades', visible: true },
+          ],
         },
       ],
     },
@@ -259,6 +264,23 @@ export class ConfiguracionComponent implements OnInit {
       return !maestro?.visible;
     }
     return false;
+  }
+
+  /** Cada gráfica del Dashboard depende de que su categoría tenga al menos un ítem visible
+   * en Información Profesional -- no tiene sentido graficar una categoría vacía. */
+  interruptorAtributoDeshabilitado(attr: ConfigVisAtributo): boolean {
+    switch (attr.key) {
+      case 'dashboard.graficas.experiencia':
+        return !this.hayExperienciasVisibles;
+      case 'dashboard.graficas.formacion':
+        return !this.hayFormacionesVisibles;
+      case 'dashboard.graficas.proyectos':
+        return !this.hayProyectosVisibles;
+      case 'dashboard.graficas.habilidades':
+        return !this.hayHabilidadesVisibles;
+      default:
+        return false;
+    }
   }
 
   constructor(
@@ -317,6 +339,8 @@ export class ConfiguracionComponent implements OnInit {
             campo.visible = false;
           }
         });
+        this.visibilidadCargada = true;
+        this.intentarSincronizarGraficas();
       },
       error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
@@ -337,9 +361,54 @@ export class ConfiguracionComponent implements OnInit {
         this.formaciones = formaciones;
         this.proyectos = proyectos;
         this.habilidades = habilidades;
+        this.listasProfesionalCargadas = true;
+        this.intentarSincronizarGraficas();
       },
       error: () => this.notificationService.error(NOTIFICATION_MESSAGES.loadError),
     });
+  }
+
+  private visibilidadCargada = false;
+  private listasProfesionalCargadas = false;
+
+  private intentarSincronizarGraficas(): void {
+    if (this.visibilidadCargada && this.listasProfesionalCargadas) {
+      this.sincronizarGraficasConCategoriasVacias();
+    }
+  }
+
+  /** Apaga (y persiste) la gráfica de cada categoría que se quedó sin ítems visibles.
+   * Nunca prende una gráfica sola -- si vuelve a haber datos, el interruptor solo se
+   * desbloquea; el usuario decide si la vuelve a activar. */
+  private sincronizarGraficasConCategoriasVacias(): void {
+    const graficasItem = this.visibilidadGrupos
+      .flatMap(g => g.items)
+      .find(i => i.key === 'dashboard.graficas');
+    if (!graficasItem) return;
+
+    const hayVisiblesPorClave: Record<string, boolean> = {
+      'dashboard.graficas.experiencia': this.hayExperienciasVisibles,
+      'dashboard.graficas.formacion': this.hayFormacionesVisibles,
+      'dashboard.graficas.proyectos': this.hayProyectosVisibles,
+      'dashboard.graficas.habilidades': this.hayHabilidadesVisibles,
+    };
+
+    const cambios: { seccion: string; visible: boolean }[] = [];
+    for (const attr of graficasItem.atributos) {
+      if (attr.visible && hayVisiblesPorClave[attr.key] === false) {
+        attr.visible = false;
+        cambios.push({ seccion: attr.key, visible: false });
+      }
+    }
+
+    if (cambios.length === 0) return;
+
+    if (graficasItem.visible && !graficasItem.atributos.some(a => a.visible)) {
+      graficasItem.visible = false;
+      cambios.push({ seccion: graficasItem.key, visible: false });
+    }
+
+    this.guardarVisibilidad(cambios);
   }
 
   private actualizarVisibilidadEnBloque<T extends { mostrarEnCv: boolean }>(
@@ -361,6 +430,7 @@ export class ConfiguracionComponent implements OnInit {
         guardando(false);
         this.notificationService.success(NOTIFICATION_MESSAGES.updateSuccess);
         this.previewPanel?.recargar();
+        this.sincronizarGraficasConCategoriasVacias();
       },
       error: (error: HttpErrorResponse) => {
         guardando(false);

@@ -371,4 +371,73 @@ public class PublicCvDetalleProfesionalTests : IClassFixture<TestWebApplicationF
         var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(JsonValueKind.Null, dto.GetProperty("hojaDeVidaContenido").ValueKind);
     }
+
+    [Fact]
+    public async Task GetDetalle_SinFilasDeVisibilidad_LasCuatroGraficasActivasPorDefecto()
+    {
+        var slug = await CrearCurriculumPublicadoAsync("public-graficas-default");
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(dto.GetProperty("dashboardMostrarGraficas").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaExperiencia").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaFormacion").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaProyectos").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaHabilidades").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetDetalle_ConUnaGraficaApagada_SoloEsaQuedaEnFalse()
+    {
+        var slug = await CrearCurriculumPublicadoAsync(
+            "public-graficas-una-off", ("dashboard.graficas.experiencia", false));
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaExperiencia").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaFormacion").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaProyectos").GetBoolean());
+        Assert.True(dto.GetProperty("dashboardMostrarGraficaHabilidades").GetBoolean());
+        // El agregado solo depende del interruptor maestro "dashboard.graficas", no de las 4 hijas.
+        Assert.True(dto.GetProperty("dashboardMostrarGraficas").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetDetalle_ConGraficasMaestroEnFalse_LasCuatroQuedanEnFalseAunqueSusFilasDiganTrue()
+    {
+        var slug = await CrearCurriculumPublicadoAsync(
+            "public-graficas-maestro-off",
+            ("dashboard.graficas", false),
+            ("dashboard.graficas.experiencia", true),
+            ("dashboard.graficas.formacion", true));
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(dto.GetProperty("dashboardMostrarGraficas").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaExperiencia").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaFormacion").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaProyectos").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaHabilidades").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetDetalle_ConDashboardPublicoEnFalse_LasCuatroGraficasQuedanEnFalse()
+    {
+        var slug = await CrearCurriculumPublicadoAsync("public-graficas-dashboard-off", ("dashboard.publico", false));
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/public/cvs/{slug}");
+
+        var dto = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaExperiencia").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaFormacion").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaProyectos").GetBoolean());
+        Assert.False(dto.GetProperty("dashboardMostrarGraficaHabilidades").GetBoolean());
+    }
 }

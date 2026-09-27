@@ -172,8 +172,16 @@ export interface CvDetalleDto {
   dashboardPublicoActivo?: boolean;
   /** Métricas (3 tarjetas) en el dashboard público. */
   dashboardMostrarMetricas?: boolean;
-  /** Gráficas (4) en el dashboard público. */
+  /** Gráficas (4) en el dashboard público: "hay al menos una visible" (interruptor maestro). */
   dashboardMostrarGraficas?: boolean;
+  /** Gráfica de Experiencia. */
+  dashboardMostrarGraficaExperiencia?: boolean;
+  /** Gráfica de Formación. */
+  dashboardMostrarGraficaFormacion?: boolean;
+  /** Gráfica de Proyectos. */
+  dashboardMostrarGraficaProyectos?: boolean;
+  /** Gráfica de Habilidades. */
+  dashboardMostrarGraficaHabilidades?: boolean;
   /** Pestaña "Información profesional" del CV público (default true si la API no envía el campo). */
   informacionProfesionalPublicaActiva?: boolean;
   /** Pestaña "Hoja de vida" del CV público (default true si la API no envía el campo). */
