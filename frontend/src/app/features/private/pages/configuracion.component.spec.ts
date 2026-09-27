@@ -55,6 +55,9 @@ describe('ConfiguracionComponent', () => {
     cvEditorService.getFormaciones.and.returnValue(of([]));
     cvEditorService.getProyectos.and.returnValue(of([]));
     cvEditorService.getHabilidades.and.returnValue(of([]));
+    // Default: las 4 categorías cargan vacías en los tests -> dispara la sincronización
+    // automática de gráficas (sincronizarGraficasConCategoriasVacias) en cada ngOnInit.
+    cvEditorService.updateVisibilidad.and.returnValue(of([]));
     authService = jasmine.createSpyObj('AuthService', ['changePassword']);
     configuracionCorreoService = jasmine.createSpyObj('ConfiguracionCorreoService', ['getConfig', 'guardarConfig']);
     configuracionCorreoService.getConfig.and.returnValue(configuracionCorreoResult);
@@ -770,5 +773,121 @@ describe('ConfiguracionComponent', () => {
       expect(component.guardandoVisibilidadBloqueFormacion).toBeFalse();
       expect(notificationService.error).toHaveBeenCalled();
     });
+  });
+
+  describe('gráficas del Dashboard sincronizadas con categorías vacías', () => {
+    function graficasItem() {
+      return component.visibilidadGrupos
+        .flatMap(g => g.items)
+        .find(i => i.key === 'dashboard.graficas')!;
+    }
+
+    it('interruptorAtributoDeshabilitado refleja si la categoría tiene ítems visibles', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expDto(), mostrarEnCv: true }]));
+      component.ngOnInit();
+
+      const [exp, form, proy, hab] = graficasItem().atributos;
+      expect(component.interruptorAtributoDeshabilitado(exp)).toBeFalse();
+      expect(component.interruptorAtributoDeshabilitado(form)).toBeTrue();
+      expect(component.interruptorAtributoDeshabilitado(proy)).toBeTrue();
+      expect(component.interruptorAtributoDeshabilitado(hab)).toBeTrue();
+    });
+
+    it('interruptorAtributoDeshabilitado es false para claves que no son de gráficas', () => {
+      setup();
+      expect(component.interruptorAtributoDeshabilitado({ key: 'otra.cosa', label: 'x', visible: true })).toBeFalse();
+    });
+
+    it('al cargar con las 4 categorías vacías, apaga y persiste las 4 gráficas y el padre', () => {
+      setup();
+      component.ngOnInit();
+
+      const item = graficasItem();
+      expect(item.atributos.every(a => !a.visible)).toBeTrue();
+      expect(item.visible).toBeFalse();
+      expect(cvEditorService.updateVisibilidad).toHaveBeenCalledWith([
+        { seccion: 'dashboard.graficas.experiencia', visible: false },
+        { seccion: 'dashboard.graficas.formacion', visible: false },
+        { seccion: 'dashboard.graficas.proyectos', visible: false },
+        { seccion: 'dashboard.graficas.habilidades', visible: false },
+        { seccion: 'dashboard.graficas', visible: false },
+      ]);
+    });
+
+    it('no toca la gráfica de una categoría que sí tiene ítems visibles', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expDto(), mostrarEnCv: true }]));
+      component.ngOnInit();
+
+      const [exp] = graficasItem().atributos;
+      expect(exp.visible).toBeTrue();
+    });
+
+    it('no llama al backend si ninguna gráfica encendida quedó sin categoría', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expDto(), mostrarEnCv: true }]));
+      cvEditorService.getFormaciones.and.returnValue(of([{ ...formDto(), mostrarEnCv: true }]));
+      cvEditorService.getProyectos.and.returnValue(of([{ ...proyDto(), mostrarEnCv: true }]));
+      cvEditorService.getHabilidades.and.returnValue(of([{ ...habDto(), mostrarEnCv: true }]));
+      component.ngOnInit();
+
+      expect(cvEditorService.updateVisibilidad).not.toHaveBeenCalled();
+    });
+
+    it('se desbloquea pero no se enciende sola al volver a haber ítems visibles', () => {
+      setup();
+      // Arranca vacía -> se apaga y bloquea.
+      component.ngOnInit();
+      const [exp] = graficasItem().atributos;
+      expect(component.interruptorAtributoDeshabilitado(exp)).toBeTrue();
+      expect(exp.visible).toBeFalse();
+
+      // Ahora sí hay una Experiencia visible (ej. el usuario activó una en otra pantalla).
+      component.experiencias = [{ ...expDto(), mostrarEnCv: true }];
+
+      expect(component.interruptorAtributoDeshabilitado(exp)).toBeFalse();
+      expect(exp.visible).toBeFalse(); // sigue apagada: el usuario debe prenderla a mano
+    });
+
+    it('sincronizarGraficasConCategoriasVacias también apaga el padre tras una acción en bloque', () => {
+      setup();
+      cvEditorService.getExperiencias.and.returnValue(of([{ ...expDto(), mostrarEnCv: true }]));
+      component.ngOnInit();
+      // Confirma que arrancó encendida por tener una Experiencia visible.
+      expect(graficasItem().atributos[0].visible).toBeTrue();
+
+      cvEditorService.updateExperienciaVisibilidad.and.returnValue(of({ ...expDto(), mostrarEnCv: false }));
+      component.inactivarTodasExperiencias();
+
+      expect(graficasItem().atributos[0].visible).toBeFalse();
+    });
+
+    function expDto(): ExperienciaDto {
+      return {
+        experienciaId: 1, empresa: 'Acme', cargo: 'Dev', sector: null, fechaInicio: null, fechaFin: null,
+        tipoContrato: null, motivoRetiro: null, funciones: null, esActual: false, mostrarEnCv: false,
+        adjuntoSoporte: null, fechaRegistro: '2026-01-01T00:00:00Z',
+      };
+    }
+    function formDto(): FormacionDto {
+      return {
+        formacionId: 1, titulo: 'Ing.', institucion: 'U', area: null, fechaInicio: null, fechaFin: null,
+        tipoFormacion: 'Pregrado', descripcion: null, adjuntoSoporte: null, fechaVigencia: null,
+        duracionHoras: null, mostrarEnCv: false,
+      };
+    }
+    function proyDto(): ProyectoDto {
+      return {
+        proyectoId: 1, nombreProyecto: 'X', rol: null, equipoTamano: null, duracionMeses: null,
+        stackTecnologico: null, aporte: null, logro: null, desafio: null, mostrarEnCv: false,
+      };
+    }
+    function habDto(): HabilidadDto {
+      return {
+        habilidadId: 1, nombre: 'Angular', tipo: 'Tecnica', nivel: null, descripcion: null,
+        nivelLectura: null, nivelEscritura: null, nivelEscucha: null, nivelHabla: null, mostrarEnCv: false,
+      };
+    }
   });
 });

@@ -26,8 +26,8 @@
   </div>
 </div>
 
-<div class="row g-3 mb-4" *ngIf="mostrarGraficas">
-  <div class="col-lg-6">
+<div class="row g-3 mb-4" *ngIf="mostrarGraficaExperiencia || mostrarGraficaFormacion">
+  <div class="col-lg-6" *ngIf="mostrarGraficaExperiencia">
     <div class="cv-chart-card">
       <div class="cv-ct-title">Experiencia laboral por empresa</div>
       <div class="cv-ct-subtitle">Duración aproximada en meses por empleador.</div>
@@ -40,7 +40,7 @@
       </div>
     </div>
   </div>
-  <div class="col-lg-6">
+  <div class="col-lg-6" *ngIf="mostrarGraficaFormacion">
     <div class="cv-chart-card">
       <div class="cv-ct-title">Educación por tipo de formación</div>
       <div class="cv-ct-subtitle">Cantidad de registros académicos agrupados por categoría.</div>
@@ -52,8 +52,8 @@
   </div>
 </div>
 
-<div class="row g-3 mb-5" *ngIf="mostrarGraficas">
-  <div class="col-lg-6">
+<div class="row g-3 mb-5" *ngIf="mostrarGraficaProyectos || mostrarGraficaHabilidades">
+  <div class="col-lg-6" *ngIf="mostrarGraficaProyectos">
     <div class="cv-chart-card">
       <div class="cv-ct-title">Tecnologías más usadas en proyectos</div>
       <div class="cv-ct-subtitle">
@@ -82,7 +82,7 @@
       </div>
     </div>
   </div>
-  <div class="col-lg-6">
+  <div class="col-lg-6" *ngIf="mostrarGraficaHabilidades">
     <div class="cv-chart-card">
       <div class="cv-ct-title">Mapa estratégico de capacidades</div>
       <div class="cv-ct-subtitle">Cobertura vs. madurez por grupo, dividido en cuadrantes según tu propio perfil.</div>

@@ -9,7 +9,49 @@ import type {
   ProyectoDto,
   RedSocialDto,
   ReferenciaDto,
+  VisibilidadSeccionDto,
 } from '../services/private/cv-editor.service';
+
+const DASH_PUBLICO = 'dashboard.publico';
+const DASH_METRICAS = 'dashboard.metricas';
+const DASH_GRAFICAS = 'dashboard.graficas';
+const DASH_GRAFICA_EXPERIENCIA = 'dashboard.graficas.experiencia';
+const DASH_GRAFICA_FORMACION = 'dashboard.graficas.formacion';
+const DASH_GRAFICA_PROYECTOS = 'dashboard.graficas.proyectos';
+const DASH_GRAFICA_HABILIDADES = 'dashboard.graficas.habilidades';
+
+function buscarVisible(vis: VisibilidadSeccionDto[], seccion: string): boolean | null {
+  const row = vis.find(v => v.seccion === seccion);
+  return row ? row.visible : null;
+}
+
+/** Misma lógica que PublicCvService.ResolverFlagsDashboardPublico (backend). Se duplica acá
+ * porque el Dashboard privado arma su CvDetalleDto a partir de los endpoints del editor
+ * (GetVisibilidadAsync), no del endpoint público que ya la devuelve resuelta -- así el
+ * Dashboard privado muestra exactamente lo mismo que ve un visitante, no todo sin filtrar. */
+function resolverFlagsDashboard(vis: VisibilidadSeccionDto[]): {
+  activo: boolean;
+  metricas: boolean;
+  graficas: boolean;
+  graficaExperiencia: boolean;
+  graficaFormacion: boolean;
+  graficaProyectos: boolean;
+  graficaHabilidades: boolean;
+} {
+  const master = buscarVisible(vis, DASH_PUBLICO) ?? true;
+  const metricas = buscarVisible(vis, DASH_METRICAS) ?? true;
+  const graficas = buscarVisible(vis, DASH_GRAFICAS) ?? true;
+  const mg = master && graficas;
+  return {
+    activo: master,
+    metricas: master && metricas,
+    graficas: mg,
+    graficaExperiencia: mg && (buscarVisible(vis, DASH_GRAFICA_EXPERIENCIA) ?? true),
+    graficaFormacion: mg && (buscarVisible(vis, DASH_GRAFICA_FORMACION) ?? true),
+    graficaProyectos: mg && (buscarVisible(vis, DASH_GRAFICA_PROYECTOS) ?? true),
+    graficaHabilidades: mg && (buscarVisible(vis, DASH_GRAFICA_HABILIDADES) ?? true),
+  };
+}
 
 /** Adapta respuestas del editor privado al DTO de detalle público (analíticas compartidas). */
 export function mapEditorToCvDetalleDto(
@@ -21,8 +63,10 @@ export function mapEditorToCvDetalleDto(
   habilidades: HabilidadDto[],
   proyectos: ProyectoDto[],
   referencias: ReferenciaDto[],
-  redes: RedSocialDto[]
+  redes: RedSocialDto[],
+  visibilidad: VisibilidadSeccionDto[]
 ): CvDetalleDto {
+  const dash = resolverFlagsDashboard(visibilidad);
   const experienciasVisibles = experiencias.filter(e => e.mostrarEnCv !== false);
   const formacionesVisibles = formaciones.filter(f => f.mostrarEnCv !== false);
   const habilidadesVisibles = habilidades.filter(h => h.mostrarEnCv !== false);
@@ -126,8 +170,12 @@ export function mapEditorToCvDetalleDto(
       linkPublico: r.linkPublico,
       usuarioContacto: r.usuarioContacto,
     })),
-    dashboardPublicoActivo: true,
-    dashboardMostrarMetricas: true,
-    dashboardMostrarGraficas: true,
+    dashboardPublicoActivo: dash.activo,
+    dashboardMostrarMetricas: dash.metricas,
+    dashboardMostrarGraficas: dash.graficas,
+    dashboardMostrarGraficaExperiencia: dash.graficaExperiencia,
+    dashboardMostrarGraficaFormacion: dash.graficaFormacion,
+    dashboardMostrarGraficaProyectos: dash.graficaProyectos,
+    dashboardMostrarGraficaHabilidades: dash.graficaHabilidades,
   };
 }

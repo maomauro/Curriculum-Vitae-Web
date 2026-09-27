@@ -338,6 +338,10 @@ public class PublicCvService : IPublicCvService
     private const string VisDashboardPublico = "dashboard.publico";
     private const string VisDashboardMetricas = "dashboard.metricas";
     private const string VisDashboardGraficas = "dashboard.graficas";
+    private const string VisDashboardGraficaExperiencia = "dashboard.graficas.experiencia";
+    private const string VisDashboardGraficaFormacion = "dashboard.graficas.formacion";
+    private const string VisDashboardGraficaProyectos = "dashboard.graficas.proyectos";
+    private const string VisDashboardGraficaHabilidades = "dashboard.graficas.habilidades";
     private const string VisProfesionalPublico = "profesional.publico";
     private const string VisHojaDeVidaPublico = "hoja-de-vida.publico";
     private const string VisPersonalesEmail = "datos-personales.email";
@@ -366,17 +370,36 @@ public class PublicCvService : IPublicCvService
             .ToList();
     }
 
-    private static (bool Activo, bool Metricas, bool Graficas) ResolverFlagsDashboardPublico(Curriculum c)
+    private static (
+        bool Activo,
+        bool Metricas,
+        bool Graficas,
+        bool GraficaExperiencia,
+        bool GraficaFormacion,
+        bool GraficaProyectos,
+        bool GraficaHabilidades) ResolverFlagsDashboardPublico(Curriculum c)
     {
         var vis = c.VisibilidadesSeccion ?? Array.Empty<VisibilidadSeccion>();
         bool? master = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardPublico)?.EsVisible;
         bool? met = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardMetricas)?.EsVisible;
         bool? graf = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardGraficas)?.EsVisible;
+        bool? grafExp = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardGraficaExperiencia)?.EsVisible;
+        bool? grafForm = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardGraficaFormacion)?.EsVisible;
+        bool? grafProy = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardGraficaProyectos)?.EsVisible;
+        bool? grafHab = vis.FirstOrDefault(v => v.NombreSeccion == VisDashboardGraficaHabilidades)?.EsVisible;
 
         var m = master ?? true;
         var me = met ?? true;
         var g = graf ?? true;
-        return (m, m && me, m && g);
+        var mg = m && g;
+        return (
+            m,
+            m && me,
+            mg,
+            mg && (grafExp ?? true),
+            mg && (grafForm ?? true),
+            mg && (grafProy ?? true),
+            mg && (grafHab ?? true));
     }
 
     /// <summary>URL efectiva de la foto: el endpoint binario si hay una subida, o la URL
@@ -511,6 +534,10 @@ public class PublicCvService : IPublicCvService
         dash.Activo,
         dash.Metricas,
         dash.Graficas,
+        dash.GraficaExperiencia,
+        dash.GraficaFormacion,
+        dash.GraficaProyectos,
+        dash.GraficaHabilidades,
         profesionalPublico,
         hojaDeVidaPublico,
         hojaDeVidaContenido,
