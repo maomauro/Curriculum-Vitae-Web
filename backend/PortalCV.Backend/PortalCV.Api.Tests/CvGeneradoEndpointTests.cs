@@ -295,6 +295,72 @@ public class CvGeneradoEndpointTests : IClassFixture<TestWebApplicationFactory>
     }
 
     [Fact]
+    public async Task GenerarCv_ConVariasCertificacionesDelMismoTemaYProveedor_LasEnviaAgrupadasALaIa()
+    {
+        var fake = new FakeAiProviderClient("claude") { Ok = true, Texto = RespuestaValida };
+        var factory = CreateFactory(fake);
+        var (client, curriculumId) = await AuthenticateAsync(factory, "cvgenperfil-agruparcert");
+        await AgregarProveedorActivoAsync(client);
+        var perfilId = await CrearPerfilAsync(client, "Backend .NET");
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+            var titulos = new[]
+            {
+                "Certificación Scrum Master (Spanish) CM-SMC",
+                "Certificación Scrum Product Owner (Spanish) CM-SPOC",
+                "Certificación Scrum Practitioner (Spanish) CM-SPC",
+                "Certificación Scrum Developer (Spanish) CM-SDC",
+                "Certificación Scrum Fundamentals (Spanish) CM-SFC",
+            };
+            foreach (var titulo in titulos)
+            {
+                db.Formaciones.Add(new Formacion
+                {
+                    CurriculumId = curriculumId,
+                    Titulo = titulo,
+                    Institucion = "Certmind",
+                    TipoFormacion = "Certificacion",
+                    FechaFin = new DateOnly(2025, 1, 1),
+                    MostrarEnCv = true,
+                });
+            }
+            db.Formaciones.Add(new Formacion
+            {
+                CurriculumId = curriculumId,
+                Titulo = "Google Cloud Computing Foundations",
+                Institucion = "Coursera",
+                TipoFormacion = "Certificacion",
+                FechaFin = new DateOnly(2025, 1, 1),
+                MostrarEnCv = true,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var response = await client.PostAsync($"/api/cv/perfiles/{perfilId}/generar-cv", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var prompt = fake.UltimoPromptRecibido!;
+        Assert.Contains("Scrum (5): Master (Spanish) CM-SMC, Product Owner (Spanish) CM-SPOC", prompt);
+        Assert.Contains("Google Cloud Computing Foundations", prompt);
+        // Certmind aparece una sola vez (el grupo consolidado), no 5 veces (una por credencial).
+        Assert.Equal(1, CountOccurrences(prompt, "\"institucion\":\"Certmind\""));
+    }
+
+    private static int CountOccurrences(string texto, string subcadena)
+    {
+        var count = 0;
+        var idx = 0;
+        while ((idx = texto.IndexOf(subcadena, idx, StringComparison.Ordinal)) != -1)
+        {
+            count++;
+            idx += subcadena.Length;
+        }
+        return count;
+    }
+
+    [Fact]
     public async Task ListarCvGenerado_SinNingunoGenerado_DevuelveListaVacia()
     {
         var (client, _) = await CreateClientAsync("cvgenperfil-listavacia", new FakeAiProviderClient("claude"));

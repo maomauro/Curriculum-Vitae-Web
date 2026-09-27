@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -132,7 +134,7 @@ public class CvGeneradoService : ICvGeneradoService
             })
             .ToListAsync(ct);
 
-        var formaciones = await _context.Formaciones.AsNoTracking()
+        var formacionesRaw = await _context.Formaciones.AsNoTracking()
             .Where(f => f.CurriculumId == curriculumId && f.MostrarEnCv
                 && (f.TipoFormacion == "Pregrado" || f.TipoFormacion == "Posgrado"
                     || f.TipoFormacion == "Diplomado" || f.TipoFormacion == "Certificacion"))
@@ -149,6 +151,11 @@ public class CvGeneradoService : ICvGeneradoService
                 f.Descripcion,
             })
             .ToListAsync(ct);
+
+        var formaciones = AgruparFormacionesPorTema(formacionesRaw
+            .Select(f => new FormacionParaIa(
+                f.Titulo, f.Institucion, f.Area, f.TipoFormacion, f.FechaInicio, f.FechaFin, f.DuracionHoras, f.Descripcion))
+            .ToList());
 
         var proyectos = await _context.Proyectos.AsNoTracking()
             .Where(p => p.CurriculumId == curriculumId && p.MostrarEnCv)
@@ -170,6 +177,138 @@ public class CvGeneradoService : ICvGeneradoService
             .ToListAsync(ct);
 
         return JsonSerializer.Serialize(new { experiencias, formaciones, proyectos, habilidades }, JsonOpciones);
+    }
+
+    private sealed record FormacionParaIa(
+        string? Titulo, string? Institucion, string? Area, string? TipoFormacion,
+        DateOnly? FechaInicio, DateOnly? FechaFin, int? DuracionHoras, string? Descripcion);
+
+    /// <summary>Palabras genéricas que no aportan al "tema" de una formación -- mismo
+    /// criterio que agrupar-formaciones.ts en el frontend (usado para compactar Diplomados/
+    /// Certificaciones repetidos en la pestaña "Información profesional"). Se replica acá
+    /// para que el CV redactado por IA en "Hoja de vida" también reciba una sola entrada
+    /// consolidada en vez de una fila por cada credencial del mismo tema (ej. 5
+    /// certificaciones Scrum del mismo proveedor).</summary>
+    private static readonly HashSet<string> ConectoresInicioFormacion = new(StringComparer.Ordinal)
+    {
+        "certificacion", "diplomado", "curso", "especializacion", "taller", "seminario",
+        "programa", "maestria", "en", "de", "del", "la", "el", "los", "las", "para", "y",
+    };
+
+    private static string Normalizar(string s)
+    {
+        var formD = s.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var c in formD)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        return sb.ToString();
+    }
+
+    private static string? PrimeraPalabraClave(string? titulo)
+    {
+        var palabras = Normalizar(titulo ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var p in palabras)
+        {
+            if (!ConectoresInicioFormacion.Contains(p) && p.Length >= 3) return p;
+        }
+        return null;
+    }
+
+    private static string PrefijoComunPalabras(List<string> titulos)
+    {
+        if (titulos.Count == 0) return string.Empty;
+        var listas = titulos.Select(t => t.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
+        var largoMinimo = listas.Min(l => l.Length);
+        var prefijo = new List<string>();
+        for (var i = 0; i < largoMinimo; i++)
+        {
+            var palabra = listas[0][i];
+            if (listas.All(l => string.Equals(l[i], palabra, StringComparison.OrdinalIgnoreCase)))
+                prefijo.Add(palabra);
+            else
+                break;
+        }
+        return string.Join(' ', prefijo);
+    }
+
+    private static string PrefijoVisiblePorTema(string prefijoComun)
+    {
+        var palabras = prefijoComun.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+        while (palabras.Count > 1 && ConectoresInicioFormacion.Contains(Normalizar(palabras[0])))
+        {
+            palabras.RemoveAt(0);
+        }
+        return palabras.Count > 0 ? string.Join(' ', palabras) : prefijoComun;
+    }
+
+    private static string DiferenciadorTitulo(string titulo, string prefijoComun)
+    {
+        var t = titulo.Trim();
+        if (string.IsNullOrEmpty(prefijoComun)) return t;
+        if (t.StartsWith(prefijoComun, StringComparison.OrdinalIgnoreCase))
+        {
+            var resto = t[prefijoComun.Length..].Trim();
+            return resto.Length > 0 ? resto : t;
+        }
+        return t;
+    }
+
+    /// <summary>Agrupa Diplomados/Certificaciones que comparten institución y tema en una
+    /// sola entrada consolidada (título: "Tema (N): diferenciador1, diferenciador2, ...").
+    /// Pregrado/Posgrado nunca se agrupan -- cada título profesional es único. Preserva el
+    /// orden original: el grupo aparece en la posición de su primer ítem.</summary>
+    private static List<FormacionParaIa> AgruparFormacionesPorTema(List<FormacionParaIa> items)
+    {
+        var resultado = new List<FormacionParaIa>();
+        var indicePorClave = new Dictionary<string, int>();
+        var itemsPorIndice = new Dictionary<int, List<FormacionParaIa>>();
+
+        foreach (var item in items)
+        {
+            var agrupable = item.TipoFormacion is "Diplomado" or "Certificacion";
+            var tema = agrupable ? PrimeraPalabraClave(item.Titulo) : null;
+            var institucion = (item.Institucion ?? string.Empty).Trim();
+
+            if (tema is null || institucion.Length == 0)
+            {
+                resultado.Add(item);
+                continue;
+            }
+
+            var clave = $"{item.TipoFormacion}::{Normalizar(institucion)}::{tema}";
+            if (!indicePorClave.TryGetValue(clave, out var idx))
+            {
+                idx = resultado.Count;
+                indicePorClave[clave] = idx;
+                resultado.Add(item);
+                itemsPorIndice[idx] = new List<FormacionParaIa> { item };
+            }
+            else
+            {
+                itemsPorIndice[idx].Add(item);
+            }
+        }
+
+        for (var i = 0; i < resultado.Count; i++)
+        {
+            if (!itemsPorIndice.TryGetValue(i, out var grupo) || grupo.Count < 2) continue;
+
+            var titulos = grupo.Select(g => g.Titulo ?? string.Empty).ToList();
+            var prefijoComun = PrefijoComunPalabras(titulos);
+            var prefijoVisible = PrefijoVisiblePorTema(prefijoComun);
+            var diferenciadores = titulos.Select(t => DiferenciadorTitulo(t, prefijoComun));
+            var tituloConsolidado = $"{prefijoVisible} ({grupo.Count}): {string.Join(", ", diferenciadores)}";
+
+            var anios = grupo.Select(g => g.FechaFin?.Year).Where(a => a.HasValue).Select(a => a!.Value).Distinct().ToList();
+            DateOnly? fechaFin = anios.Count == 1 ? new DateOnly(anios[0], 12, 31) : null;
+
+            resultado[i] = grupo[0] with { Titulo = tituloConsolidado, FechaFin = fechaFin, FechaInicio = null, Descripcion = null };
+        }
+
+        return resultado;
     }
 
     /// <summary>Nombre (recortado, sin distinguir mayúsculas) -> Tipo real de la
