@@ -231,10 +231,17 @@ export class MiCvComponent implements OnInit {
     return a + b || 'CV';
   }
 
+  /** Controla si se muestra el slot completo (foto o iniciales) -- sin esto, con el
+   * interruptor de Foto apagado, fotoHeaderUrl da null pero el círculo de iniciales
+   * seguía apareciendo igual, porque es el fallback cuando no hay URL. */
+  get fotoVisible(): boolean {
+    return this.visibilidad.visibleAtributoSafe('datos-personales', 'foto');
+  }
+
   get fotoHeaderUrl(): string | null {
     const u = this.personales?.fotoUrl?.trim();
     if (!u) return null;
-    return this.visibilidad.visibleAtributoSafe('datos-personales', 'foto') ? u : null;
+    return this.fotoVisible ? u : null;
   }
 
   get mostrarEmail(): boolean {
