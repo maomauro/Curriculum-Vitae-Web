@@ -15,10 +15,11 @@ interface ProveedorIaForm {
   modelo: string;
   endpoint: string;
   apiKey: string;
+  descripcion: string;
 }
 
 function proveedorIaFormVacio(): ProveedorIaForm {
-  return { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
+  return { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '', descripcion: '' };
 }
 
 const PROVEEDORES_SIN_API_KEY_OBLIGATORIA: readonly ProveedorIaCodigo[] = ['ollama', 'otro'];
@@ -131,6 +132,7 @@ export class AdminProveedoresIaComponent implements OnInit {
       modelo: p.modelo ?? '',
       endpoint: p.endpoint ?? '',
       apiKey: '',
+      descripcion: p.descripcion ?? '',
     };
     this.resultadoPrueba = null;
     this.mensajePrueba = null;
@@ -189,6 +191,7 @@ export class AdminProveedoresIaComponent implements OnInit {
       modelo: this.form.modelo.trim() || null,
       endpoint: this.form.endpoint.trim() || null,
       apiKey: this.form.apiKey.trim() || null,
+      descripcion: this.form.descripcion.trim() || null,
     };
 
     this.guardando = true;

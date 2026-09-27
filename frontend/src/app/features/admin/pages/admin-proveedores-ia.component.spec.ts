@@ -17,6 +17,7 @@ describe('AdminProveedoresIaComponent', () => {
       nombre: null,
       modelo: 'claude-opus-4-20250514',
       endpoint: null,
+      descripcion: null,
       esActivo: true,
       fechaActualizacion: '2026-08-19T00:00:00Z',
       ...over,
@@ -123,13 +124,14 @@ describe('AdminProveedoresIaComponent', () => {
 
   it('editarConexion precarga el formulario sin la clave', () => {
     setup();
-    const item = proveedorIaItem({ nombre: 'Cuenta de la plataforma', endpoint: null });
+    const item = proveedorIaItem({ nombre: 'Cuenta de la plataforma', endpoint: null, descripcion: 'Plan prepago' });
 
     component.editarConexion(item);
 
     expect(component.editandoId).toBe(item.proveedorIaId);
     expect(component.form).toEqual({
       proveedor: 'claude', nombre: 'Cuenta de la plataforma', modelo: 'claude-opus-4-20250514', endpoint: '', apiKey: '',
+      descripcion: 'Plan prepago',
     });
     expect(component.mostrarForm).toBeTrue();
   });
@@ -205,7 +207,7 @@ describe('AdminProveedoresIaComponent', () => {
 
     it('al crear, avisa si falta la clave de API para un proveedor que la requiere', () => {
       setup();
-      component.form = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
+      component.form = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '', descripcion: '' };
 
       component.guardarConexion();
 
@@ -215,14 +217,14 @@ describe('AdminProveedoresIaComponent', () => {
 
     it('crea una conexion nueva y recarga la lista', () => {
       setup();
-      component.form = { proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: '', apiKey: 'sk-ant-test' };
+      component.form = { proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: '', apiKey: 'sk-ant-test', descripcion: 'Plan prepago' };
       proveedorIaService.crearConfig.and.returnValue(of(proveedorIaItem()));
       proveedorIaService.getConfigs.and.returnValue(of([proveedorIaItem()]));
 
       component.guardarConexion();
 
       expect(proveedorIaService.crearConfig).toHaveBeenCalledWith({
-        proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: null, apiKey: 'sk-ant-test',
+        proveedor: 'claude', nombre: 'Cuenta A', modelo: 'claude-opus-4', endpoint: null, apiKey: 'sk-ant-test', descripcion: 'Plan prepago',
       });
       expect(component.guardando).toBeFalse();
       expect(component.mostrarForm).toBeFalse();
@@ -232,7 +234,7 @@ describe('AdminProveedoresIaComponent', () => {
     it('al editar, no exige la clave de API (se mantiene la anterior si se deja en blanco)', () => {
       setup();
       component.editandoId = 7;
-      component.form = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '' };
+      component.form = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: '', descripcion: '' };
       proveedorIaService.actualizarConfig.and.returnValue(of(proveedorIaItem()));
 
       component.guardarConexion();
@@ -243,7 +245,7 @@ describe('AdminProveedoresIaComponent', () => {
 
     it('notifica error si el backend rechaza la solicitud', () => {
       setup();
-      component.form = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: 'sk-ant-test' };
+      component.form = { proveedor: 'claude', nombre: '', modelo: '', endpoint: '', apiKey: 'sk-ant-test', descripcion: '' };
       proveedorIaService.crearConfig.and.returnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
 
       component.guardarConexion();

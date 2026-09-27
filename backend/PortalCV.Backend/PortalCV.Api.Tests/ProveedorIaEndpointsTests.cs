@@ -61,8 +61,8 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
 
-    private static object CrearBody(string proveedor, string? nombre = null, string? modelo = null, string? endpoint = null, string? apiKey = "clave-de-prueba") =>
-        new { proveedor, nombre, modelo, endpoint, apiKey };
+    private static object CrearBody(string proveedor, string? nombre = null, string? modelo = null, string? endpoint = null, string? apiKey = "clave-de-prueba", string? descripcion = null) =>
+        new { proveedor, nombre, modelo, endpoint, apiKey, descripcion };
 
     [Fact]
     public async Task GetAll_SinConexionesGuardadas_DevuelveListaVacia()
@@ -197,6 +197,48 @@ public class ProveedorIaEndpointsTests : IClassFixture<TestWebApplicationFactory
         var response = await client.PostAsJsonAsync("/api/admin/proveedor-ia", CrearBody("no-existe"), CamelCase);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Crear_ConDescripcion_SePersisteYSeDevuelveTalCual()
+    {
+        var (factory, client) = CreateFactoryWithAdminClient();
+        const string descripcion = "Gemini API — PortalCV (AI Studio). Plan: Prepago (Nivel 1).";
+
+        var response = await client.PostAsJsonAsync(
+            "/api/admin/proveedor-ia", CrearBody("gemini", descripcion: descripcion), CamelCase);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var dto = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(descripcion, dto.GetProperty("descripcion").GetString());
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+        var fila = await db.ProveedoresIa.AsNoTracking().SingleAsync();
+        Assert.Equal(descripcion, fila.Descripcion);
+    }
+
+    [Fact]
+    public async Task Actualizar_ConDescripcionVacia_LaLimpia()
+    {
+        var (factory, client) = CreateFactoryWithAdminClient();
+        var creado = await client.PostAsJsonAsync(
+            "/api/admin/proveedor-ia", CrearBody("claude", descripcion: "Nota inicial"), CamelCase);
+        var id = JsonDocument.Parse(await creado.Content.ReadAsStringAsync()).RootElement.GetProperty("proveedorIaId").GetInt32();
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/admin/proveedor-ia/{id}",
+            new { proveedor = "claude", nombre = (string?)null, modelo = (string?)null, endpoint = (string?)null, apiKey = (string?)null, descripcion = "  " },
+            CamelCase);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dto = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        Assert.Equal(JsonValueKind.Null, dto.GetProperty("descripcion").ValueKind);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PortalCvDbContext>();
+        var fila = await db.ProveedoresIa.AsNoTracking().SingleAsync();
+        Assert.Null(fila.Descripcion);
     }
 
     [Fact]

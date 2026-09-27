@@ -10,6 +10,7 @@ public class ProveedorIa
     public string? Modelo { get; set; }
     public string? Endpoint { get; set; }
     public string? ApiKeyCifrada { get; set; }
+    public string? Descripcion { get; set; }
     public bool EsActivo { get; set; }
     public DateTime FechaCreacion { get; set; }
     public DateTime FechaActualizacion { get; set; }
