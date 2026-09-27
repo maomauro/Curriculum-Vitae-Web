@@ -1148,14 +1148,6 @@ app-preview-publico-panel {
     }
   }
 
-  .cv-mi-timeline > .timeline-item.timeline-item--compact {
-    margin-bottom: 16px;
-
-    &::before {
-      top: 5px;
-    }
-  }
-
   .cv-mi-timeline .timeline-title {
     font-weight: 700;
     font-size: 0.9375rem;
@@ -1184,30 +1176,6 @@ app-preview-publico-panel {
     color: #495057;
   }
 
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline {
-    font-weight: 400;
-    margin-bottom: 6px;
-  }
-
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-titulo {
-    font-weight: 700;
-    color: #212529;
-  }
-
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-headline-sep {
-    color: #adb5bd;
-    font-weight: 400;
-  }
-
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-institucion {
-    font-weight: 400;
-    color: #495057;
-  }
-
-  .cv-mi-timeline .timeline-date.cv-mi-acad-graduacion {
-    line-height: 1.45;
-  }
-
   .cv-mi-timeline .timeline-sub {
     font-size: 0.84375rem;
     color: var(--cv-primary);
@@ -1229,36 +1197,6 @@ app-preview-publico-panel {
     color: #6c757d;
     line-height: 1.6;
     margin-top: 2px;
-  }
-
-  .cv-mi-timeline .timeline-inline {
-    font-size: 0.9375rem;
-    line-height: 1.5;
-  }
-
-  .cv-mi-timeline .timeline-inline .timeline-title {
-    display: inline;
-    font-size: inherit;
-    font-weight: 700;
-    letter-spacing: normal;
-  }
-
-  .cv-mi-timeline .timeline-inline .timeline-sep {
-    color: #adb5bd;
-    font-size: 0.84375rem;
-    font-weight: 400;
-  }
-
-  .cv-mi-timeline .timeline-inline .timeline-sub {
-    display: inline;
-    margin-bottom: 0;
-    font-size: 0.84375rem;
-  }
-
-  .cv-mi-timeline .timeline-inline .timeline-date {
-    display: inline;
-    margin-bottom: 0;
-    font-size: 0.75rem;
   }
 
   .cv-mi-prose {
@@ -1383,20 +1321,6 @@ app-preview-publico-panel {
   }
 
   .cv-mi-timeline .timeline-title.cv-mi-exp-headline .cv-mi-exp-empresa {
-    font-weight: 400;
-    color: #495057;
-  }
-
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline {
-    font-weight: 400;
-  }
-
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-titulo {
-    font-weight: 700;
-    color: #111;
-  }
-
-  .cv-mi-timeline .timeline-title.cv-mi-acad-headline .cv-mi-acad-institucion {
     font-weight: 400;
     color: #495057;
   }

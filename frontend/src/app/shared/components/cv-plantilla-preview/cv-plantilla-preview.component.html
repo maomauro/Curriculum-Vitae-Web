@@ -203,78 +203,49 @@
 
           <div class="cv-mi-section" *ngIf="formacionesAcademicas.length">
             <div class="cv-mi-section-title">Formación Académica</div>
-            <div class="cv-mi-timeline">
-              <div class="timeline-item" *ngFor="let edu of formacionesAcademicas">
-                <div
-                  class="timeline-title cv-mi-acad-headline"
-                  *ngIf="(edu.titulo || '').trim() || (edu.institucion || '').trim()">
-                  <strong class="cv-mi-acad-titulo" *ngIf="(edu.titulo || '').trim()">
-                    {{ edu.titulo }}
-                  </strong>
+            <ul class="cv-pro-list mb-0 mt-0">
+              <li *ngFor="let edu of formacionesAcademicas">
+                <ng-container *ngIf="(edu.titulo || '').trim() || (edu.institucion || '').trim()">
+                  <strong *ngIf="(edu.titulo || '').trim()">{{ edu.titulo }}</strong>
                   <ng-container *ngIf="(edu.institucion || '').trim()">
-                    <span
-                      *ngIf="(edu.titulo || '').trim()"
-                      class="cv-mi-acad-headline-sep"
-                      aria-hidden="true">
-                      {{ ' | ' }}
-                    </span>
-                    <span class="cv-mi-acad-institucion">{{ edu.institucion }}</span>
+                    <span *ngIf="(edu.titulo || '').trim()" aria-hidden="true"> | </span>
+                    {{ edu.institucion }}
                   </ng-container>
-                </div>
-                <div class="timeline-date cv-mi-acad-graduacion" *ngIf="textoGraduacionAcademica(edu) as gradTxt">
-                  {{ gradTxt }}
-                </div>
-              </div>
-            </div>
+                </ng-container>
+                <br *ngIf="textoGraduacionAcademica(edu)" />
+                <span class="text-muted small" *ngIf="textoGraduacionAcademica(edu) as gradTxt">{{ gradTxt }}</span>
+              </li>
+            </ul>
           </div>
 
-          <div class="cv-mi-section" *ngIf="formacionesDiplomado.length">
-            <div class="cv-mi-section-title">Diplomados</div>
-            <div class="cv-mi-timeline">
-              <div class="timeline-item timeline-item--compact" *ngFor="let edu of formacionesDiplomado">
-                <div class="timeline-inline">
-                  <span class="timeline-title">{{ edu.titulo }}</span>
-                  <span class="timeline-sep" *ngIf="edu.institucion"> — </span>
-                  <span class="timeline-sub">{{ edu.institucion }} </span>
-                  <span class="timeline-date" *ngIf="anioEntreParentesis(edu)">{{
-                    anioEntreParentesis(edu)
-                  }}</span>
-                </div>
-              </div>
-            </div>
+          <div class="cv-mi-section" *ngFor="let bloque of bloquesFormacionCompacta">
+            <div class="cv-mi-section-title">{{ bloque.titulo }}</div>
+            <ul class="cv-pro-list mb-0 mt-0">
+              <ng-container *ngFor="let grupo of bloque.grupos">
+                <ng-container *ngTemplateOutlet="itemFormacionCompacto; context: { grupo: grupo }"></ng-container>
+              </ng-container>
+            </ul>
           </div>
 
-          <div class="cv-mi-section" *ngIf="formacionesCertificacion.length">
-            <div class="cv-mi-section-title">Certificaciones</div>
-            <div class="cv-mi-timeline">
-              <div class="timeline-item timeline-item--compact" *ngFor="let edu of formacionesCertificacion">
-                <div class="timeline-inline">
-                  <span class="timeline-title">{{ edu.titulo }}</span>
-                  <span class="timeline-sep" *ngIf="edu.institucion"> — </span>
-                  <span class="timeline-sub">{{ edu.institucion }} </span>
-                  <span class="timeline-date" *ngIf="anioEntreParentesis(edu)">{{
-                    anioEntreParentesis(edu)
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="cv-mi-section" *ngIf="formacionesCurso.length">
-            <div class="cv-mi-section-title">Cursos</div>
-            <div class="cv-mi-timeline">
-              <div class="timeline-item timeline-item--compact" *ngFor="let edu of formacionesCurso">
-                <div class="timeline-inline">
-                  <span class="timeline-title">{{ edu.titulo }}</span>
-                  <span class="timeline-sep" *ngIf="edu.institucion"> — </span>
-                  <span class="timeline-sub">{{ edu.institucion }} </span>
-                  <span class="timeline-date" *ngIf="anioEntreParentesis(edu)">{{
-                    anioEntreParentesis(edu)
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Ítem individual (grupo.prefijoComun null) o bloque compactado por tema
+               (2+ credenciales del mismo proveedor, ej. varias certificaciones Scrum). -->
+          <ng-template #itemFormacionCompacto let-grupo="grupo">
+            <li *ngIf="!grupo.prefijoComun">
+              <strong>{{ grupo.items[0].titulo }}</strong>
+              <ng-container *ngIf="grupo.items[0].institucion"> — {{ grupo.items[0].institucion }}</ng-container>
+              <span class="text-muted" *ngIf="anioEntreParentesis(grupo.items[0])">
+                {{ anioEntreParentesis(grupo.items[0]) }}
+              </span>
+            </li>
+            <li *ngIf="grupo.prefijoComun">
+              <strong>{{ prefijoVisible(grupo.prefijoComun) }}</strong> ({{ grupo.items.length }}) — {{ grupo.items[0].institucion }}
+              <span class="text-muted" *ngIf="anioGrupoFormacion(grupo.items)">{{ anioGrupoFormacion(grupo.items) }}</span>
+              <br />
+              <span class="text-muted small">
+                <span *ngFor="let edu of grupo.items; let last = last">{{ diferenciadorTitulo(edu.titulo, grupo.prefijoComun) }}<ng-container *ngIf="!anioGrupoFormacion(grupo.items) && anioEntreParentesis(edu)"> {{ anioEntreParentesis(edu) }}</ng-container>{{ last ? '' : ', ' }}</span>
+              </span>
+            </li>
+          </ng-template>
 
           <div class="cv-mi-section" *ngIf="proyectos.length">
             <div class="cv-mi-section-title">Proyectos Destacados</div>
