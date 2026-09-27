@@ -1,0 +1,36 @@
+# Docker build context = raiz del repo (backend/Dockerfile necesita ver tambien
+# database/migrations/, ver PortalCV.Infrastructure.csproj). Este archivo evita que
+# Docker envie al daemon todo lo que no hace falta para compilar el backend --
+# especialmente node_modules/, .git/ y el dump local de MariaDB (pesa varios MB).
+
+# --- Todo el repo por defecto, se habilita explicitamente lo que se necesita ---
+*
+!backend/
+!database/
+
+# --- Dentro de backend/: solo codigo fuente, nunca build artifacts ni secretos ---
+backend/**/bin/
+backend/**/obj/
+backend/**/TestResults/
+backend/**/*.user
+backend/**/*.suo
+backend/**/.vs/
+backend/**/*.env
+backend/**/.env
+backend/**/.env.*
+backend/**/appsettings.Development.json
+backend/**/appsettings.Local.json
+backend/**/secrets.json
+backend/**/*.pfx
+backend/**/*.pem
+backend/**/*.key
+backend/**/*.crt
+backend/**/*.log
+
+# --- Dentro de database/: solo el esquema y las migraciones, nunca dumps con datos ---
+database/**/*.html
+database/**/*.dbml
+
+# --- Comunes ---
+.git/
+.gitignore
