@@ -352,10 +352,16 @@ describe('ExperienciaComponent', () => {
   });
 
   describe('duracionLabel', () => {
-    it('vacio si no hay fechaInicio o el empleo es actual', () => {
+    it('vacio si no hay fechaInicio', () => {
       setup();
       expect(component.duracionLabel({ ...empleo, fechaInicio: null })).toBe('');
-      expect(component.duracionLabel({ ...empleo, esActual: true })).toBe('');
+    });
+
+    it('si el empleo es actual, calcula la duracion hasta hoy en vez de quedar vacio', () => {
+      setup();
+      const hoy = new Date();
+      const inicioHaceDosMeses = new Date(hoy.getFullYear(), hoy.getMonth() - 2, 1).toISOString().slice(0, 10);
+      expect(component.duracionLabel({ ...empleo, fechaInicio: inicioHaceDosMeses, esActual: true })).toBe('2 meses');
     });
 
     it('guion si las fechas son invalidas', () => {

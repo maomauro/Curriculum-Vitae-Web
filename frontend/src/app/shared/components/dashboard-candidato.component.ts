@@ -20,6 +20,7 @@ import {
 } from '../../core/services/public/public.service';
 import { CvDetalleVistaContext } from '../contexts/cv-detalle-vista.context';
 import { cvPublicoMuestraPestanaDashboard } from '../../core/utils/cv-dashboard-publico.util';
+import { formatearDuracion, mesesEntreFechas } from '../utils/duracion';
 
 interface MetricaCard {
   label: string;
@@ -104,12 +105,10 @@ function parseDateOnly(s: string | null): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function monthsInclusive(start: Date, end: Date): number {
-  const total =
-    (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
-  return Math.max(0, total);
-}
-
+/** Mismo criterio que experiencia.component (editor) y cv-plantilla-preview (CV público)
+ * -- ver shared/utils/duracion.ts. Toda experiencia con fechas válidas suma al menos 1 mes
+ * (aunque el cálculo exacto dé 0, ej. entró y salió la misma semana), y se limita a 600
+ * meses (50 años) como tope de seguridad ante datos corruptos. */
 function mesesExperiencia(exp: ExperienciaPublicoDto): number {
   const start = parseDateOnly(exp.fechaInicio);
   if (!start) return 0;
@@ -118,19 +117,12 @@ function mesesExperiencia(exp: ExperienciaPublicoDto): number {
   let end = exp.esActual ? today : parseDateOnly(exp.fechaFin) ?? today;
   if (end > today) end = today;
   if (end < start) return 0;
-  let meses = monthsInclusive(start, end);
-  if (meses > 600) meses = 600;
-  return meses;
+  return Math.min(Math.max(1, mesesEntreFechas(start, end)), 600);
 }
 
 function formatTrayectoriaMeses(totalMeses: number): string {
   if (totalMeses <= 0) return '0';
-  const anios = Math.floor(totalMeses / 12);
-  const meses = totalMeses % 12;
-  const parts: string[] = [];
-  if (anios > 0) parts.push(`${anios} año${anios === 1 ? '' : 's'}`);
-  if (meses > 0) parts.push(`${meses} mes${meses === 1 ? '' : 'es'}`);
-  return parts.join(' ') || '0';
+  return formatearDuracion(totalMeses);
 }
 
 function nivelHabilidadANumero(nivel: string | null | undefined): number | null {
