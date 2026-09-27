@@ -550,6 +550,31 @@ export function buildHabilidadStrategicPoints(habs: HabilidadPublicoDto[]): Habi
     .sort((a, b) => b.total - a.total || b.madurezPromedio - a.madurezPromedio || a.grupo.localeCompare(b.grupo, 'es'));
 }
 
+export interface FlagsGraficasDashboard {
+  experiencia: boolean;
+  formacion: boolean;
+  proyectos: boolean;
+  habilidades: boolean;
+  /** true si al menos una de las 4 está visible -- gate rápido para armar datos/renderizar. */
+  alguna: boolean;
+}
+
+/** Cada campo falta (undefined) cuando el backend no lo envía (ej. área privada) -> visible
+ * por defecto, mismo criterio que el resto de los flags de visibilidad de este dashboard. */
+export function resolverFlagsGraficas(detalle: CvDetalleDto): FlagsGraficasDashboard {
+  const experiencia = detalle.dashboardMostrarGraficaExperiencia ?? true;
+  const formacion = detalle.dashboardMostrarGraficaFormacion ?? true;
+  const proyectos = detalle.dashboardMostrarGraficaProyectos ?? true;
+  const habilidades = detalle.dashboardMostrarGraficaHabilidades ?? true;
+  return {
+    experiencia,
+    formacion,
+    proyectos,
+    habilidades,
+    alguna: experiencia || formacion || proyectos || habilidades,
+  };
+}
+
 @Component({
   selector: 'app-dashboard-candidato',
   standalone: false,
@@ -590,9 +615,15 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
   habilidadStrategicPointsVisible: HabilidadStrategicPoint[] = [];
   tecnologiasProyectosVisible: TecnologiaProyectoRow[] = [];
 
-  /** En CV público: según visibilidad; en área privada siempre true. */
+  /** Según visibilidad configurada -- igual en público, vista previa y Dashboard privado. */
   mostrarMetricas = true;
+  /** true si hay al menos una de las 4 gráficas visible -- gate rápido para saltar todo
+   * el trabajo de armar datos/renderizar cuando las 4 están apagadas. */
   mostrarGraficas = true;
+  mostrarGraficaExperiencia = true;
+  mostrarGraficaFormacion = true;
+  mostrarGraficaProyectos = true;
+  mostrarGraficaHabilidades = true;
 
   /** Panel de vista previa en Configuración: respeta los switches de visibilidad igual
    * que el CV público real, pero sin el redirect si el dashboard completo queda oculto
@@ -606,23 +637,21 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     const detalle = this.shellCtx.cv;
     if (!detalle) return;
 
-    if (this.modoVistaPrevia) {
-      this.mostrarMetricas = detalle.dashboardMostrarMetricas ?? true;
-      this.mostrarGraficas = detalle.dashboardMostrarGraficas ?? true;
-    } else if (this.esRutaCvPublicoDashboard()) {
-      if (!cvPublicoMuestraPestanaDashboard(detalle)) {
-        const slug = this.slugCvPublicoDesdeUrl();
-        if (slug) {
-          void this.router.navigate(['/cv', slug], { replaceUrl: true });
-        }
-        return;
+    // El redirect solo aplica en la ficha pública real -- en la vista previa de
+    // Configuración y en el Dashboard privado no tiene sentido navegar fuera.
+    if (!this.modoVistaPrevia && this.esRutaCvPublicoDashboard() && !cvPublicoMuestraPestanaDashboard(detalle)) {
+      const slug = this.slugCvPublicoDesdeUrl();
+      if (slug) {
+        void this.router.navigate(['/cv', slug], { replaceUrl: true });
       }
-      this.mostrarMetricas = detalle.dashboardMostrarMetricas ?? true;
-      this.mostrarGraficas = detalle.dashboardMostrarGraficas ?? true;
-    } else {
-      this.mostrarMetricas = true;
-      this.mostrarGraficas = true;
+      return;
     }
+
+    // Mismas reglas de visibilidad en los tres contextos (público, vista previa y Dashboard
+    // privado): el dueño del CV ve exactamente lo mismo que vería un visitante, sin sorpresas
+    // al publicar.
+    this.mostrarMetricas = detalle.dashboardMostrarMetricas ?? true;
+    this.aplicarFlagsGraficas(detalle);
 
     this.rellenarDesdeCv(detalle);
     this.cdr.detectChanges();
@@ -631,6 +660,15 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyCharts();
+  }
+
+  private aplicarFlagsGraficas(detalle: CvDetalleDto): void {
+    const flags = resolverFlagsGraficas(detalle);
+    this.mostrarGraficaExperiencia = flags.experiencia;
+    this.mostrarGraficaFormacion = flags.formacion;
+    this.mostrarGraficaProyectos = flags.proyectos;
+    this.mostrarGraficaHabilidades = flags.habilidades;
+    this.mostrarGraficas = flags.alguna;
   }
 
   /** Tras *ngIf y ViewChild, Chart.js necesita DOM ya pintado (CD + siguiente frame). */
@@ -651,35 +689,35 @@ export class DashboardCandidatoComponent implements OnInit, OnDestroy {
     this.destroyCharts();
     this.metricas = this.mostrarMetricas ? buildMetricas(cv) : [];
     this.completitud = completitudAproximada(cv);
-    if (this.mostrarGraficas) {
-      this.expEmpresas = buildExpPorEmpresa(cv.experiencias ?? []);
-      this.timelineYearSeries = buildTimelineYearSeries(cv);
-      this.educacionTipoSeries = buildEducacionTipoSeries(cv.formaciones ?? []);
-      this.proyectosRawCount = cv.proyectos?.length ?? 0;
-      this.tecnologiasProyectos = buildTecnologiasProyectos(cv.proyectos ?? []);
-      this.tecnologiasProyectosVisible = buildTecnologiasProyectosDona(this.tecnologiasProyectos, this.tecnologiasProyectosMaxRows);
-      this.nivelPromedio = buildNivelPromedioPorTipo(cv.habilidades ?? []);
-      this.habilidadNivelSerie = buildHabilidadNivelSerie(cv.habilidades ?? []);
-      this.habilidadStrategicPoints = buildHabilidadStrategicPoints(cv.habilidades ?? []);
-      this.habilidadStrategicPointsVisible = this.habilidadStrategicPoints.slice(0, this.habilidadStrategicMaxRows);
-      this.chartExpHeightPx = Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80));
-      this.chartProyectosHeightPx = 320;
-      this.chartHabilidadesHeightPx = 360;
-    } else {
-      this.expEmpresas = [];
-      this.timelineYearSeries = { labels: [], edu: [], exp: [] };
-      this.educacionTipoSeries = { labels: [], values: [] };
-      this.proyectosRawCount = cv.proyectos?.length ?? 0;
-      this.tecnologiasProyectos = [];
-      this.tecnologiasProyectosVisible = [];
-      this.nivelPromedio = [];
-      this.habilidadNivelSerie = { labels: [], basico: [], intermedio: [], avanzado: [], experto: [] };
-      this.habilidadStrategicPoints = [];
-      this.habilidadStrategicPointsVisible = [];
-      this.chartExpHeightPx = 260;
-      this.chartProyectosHeightPx = 320;
-      this.chartHabilidadesHeightPx = 300;
-    }
+
+    this.expEmpresas = this.mostrarGraficaExperiencia ? buildExpPorEmpresa(cv.experiencias ?? []) : [];
+    this.chartExpHeightPx = this.mostrarGraficaExperiencia
+      ? Math.min(420, Math.max(200, this.expEmpresas.length * 40 + 80))
+      : 260;
+
+    this.timelineYearSeries = this.mostrarGraficas ? buildTimelineYearSeries(cv) : { labels: [], edu: [], exp: [] };
+
+    this.educacionTipoSeries = this.mostrarGraficaFormacion
+      ? buildEducacionTipoSeries(cv.formaciones ?? [])
+      : { labels: [], values: [] };
+
+    // Contador independiente de la gráfica de Proyectos (se usa también en las tarjetas de métricas).
+    this.proyectosRawCount = cv.proyectos?.length ?? 0;
+    this.tecnologiasProyectos = this.mostrarGraficaProyectos ? buildTecnologiasProyectos(cv.proyectos ?? []) : [];
+    this.tecnologiasProyectosVisible = this.mostrarGraficaProyectos
+      ? buildTecnologiasProyectosDona(this.tecnologiasProyectos, this.tecnologiasProyectosMaxRows)
+      : [];
+    this.chartProyectosHeightPx = 320;
+
+    this.nivelPromedio = this.mostrarGraficaHabilidades ? buildNivelPromedioPorTipo(cv.habilidades ?? []) : [];
+    this.habilidadNivelSerie = this.mostrarGraficaHabilidades
+      ? buildHabilidadNivelSerie(cv.habilidades ?? [])
+      : { labels: [], basico: [], intermedio: [], avanzado: [], experto: [] };
+    this.habilidadStrategicPoints = this.mostrarGraficaHabilidades
+      ? buildHabilidadStrategicPoints(cv.habilidades ?? [])
+      : [];
+    this.habilidadStrategicPointsVisible = this.habilidadStrategicPoints.slice(0, this.habilidadStrategicMaxRows);
+    this.chartHabilidadesHeightPx = this.mostrarGraficaHabilidades ? 360 : 300;
   }
 
   private esRutaCvPublicoDashboard(): boolean {

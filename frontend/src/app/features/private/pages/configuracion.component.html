@@ -127,11 +127,17 @@
           </div>
           <div class="vis-attr-list">
             <div class="vis-attr-row" *ngFor="let attr of campo.atributos">
-              <div class="vis-attr-name">{{ attr.label }}</div>
+              <div class="vis-attr-name">
+                {{ attr.label }}
+                <span *ngIf="interruptorAtributoDeshabilitado(attr)" class="text-muted small d-block">
+                  Sin ítems visibles en Información Profesional
+                </span>
+              </div>
               <div class="form-check form-switch mb-0">
                 <input class="form-check-input cv-switch-cursor" type="checkbox" role="switch"
                        [(ngModel)]="attr.visible" [id]="'vis_' + attr.key"
-                       [disabled]="interruptorVisibilidadDeshabilitado(campo) || (!campo.sinSwitchSeccion && !campo.visible)"
+                       [disabled]="interruptorVisibilidadDeshabilitado(campo) || (!campo.sinSwitchSeccion && !campo.visible) || interruptorAtributoDeshabilitado(attr)"
+                       [title]="interruptorAtributoDeshabilitado(attr) ? 'Activá ítems de esta categoría en Información Profesional para poder mostrarla' : ''"
                        (change)="onToggleAtributo(campo, attr)">
               </div>
             </div>

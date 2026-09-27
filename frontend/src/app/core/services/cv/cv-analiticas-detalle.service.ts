@@ -30,6 +30,7 @@ export class CvAnaliticasDetalleService {
       redes: this.cvEditor.getRedesSociales(),
       referencias: this.cvEditor.getReferencias(),
       presentacion: this.cvEditor.getPresentacion(),
+      visibilidad: this.cvEditor.getVisibilidad(),
     }).pipe(
       map(
         ({
@@ -42,6 +43,7 @@ export class CvAnaliticasDetalleService {
           redes,
           referencias,
           presentacion,
+          visibilidad,
         }) =>
           mapEditorToCvDetalleDto(
             personales,
@@ -52,7 +54,8 @@ export class CvAnaliticasDetalleService {
             habilidades,
             proyectos,
             referencias,
-            redes
+            redes,
+            visibilidad
           )
       )
     );

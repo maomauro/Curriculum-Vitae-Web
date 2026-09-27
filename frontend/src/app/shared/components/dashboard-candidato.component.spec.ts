@@ -9,8 +9,10 @@ import {
   contieneAlguno,
   normalizarNivelHabilidad,
   normalizarTipoFormacion,
+  resolverFlagsGraficas,
 } from './dashboard-candidato.component';
 import type {
+  CvDetalleDto,
   ExperienciaPublicoDto,
   FormacionPublicoDto,
   HabilidadPublicoDto,
@@ -332,6 +334,54 @@ describe('dashboard-candidato chart builders', () => {
       const dona = buildTecnologiasProyectosDona(rows, 1);
 
       expect(dona[1].proyectos).toEqual(['Portal CV']);
+    });
+  });
+
+  describe('resolverFlagsGraficas', () => {
+    function detalle(over: Partial<CvDetalleDto> = {}): CvDetalleDto {
+      return { ...over } as CvDetalleDto;
+    }
+
+    it('sin campos en el DTO, las 4 quedan visibles por defecto', () => {
+      const flags = resolverFlagsGraficas(detalle());
+
+      expect(flags).toEqual({ experiencia: true, formacion: true, proyectos: true, habilidades: true, alguna: true });
+    });
+
+    it('respeta cada flag individual que sí viene en el DTO', () => {
+      const flags = resolverFlagsGraficas(detalle({
+        dashboardMostrarGraficaExperiencia: false,
+        dashboardMostrarGraficaFormacion: true,
+        dashboardMostrarGraficaProyectos: false,
+        dashboardMostrarGraficaHabilidades: true,
+      }));
+
+      expect(flags.experiencia).toBeFalse();
+      expect(flags.formacion).toBeTrue();
+      expect(flags.proyectos).toBeFalse();
+      expect(flags.habilidades).toBeTrue();
+    });
+
+    it('"alguna" es true si al menos una de las 4 está visible', () => {
+      const flags = resolverFlagsGraficas(detalle({
+        dashboardMostrarGraficaExperiencia: false,
+        dashboardMostrarGraficaFormacion: false,
+        dashboardMostrarGraficaProyectos: false,
+        dashboardMostrarGraficaHabilidades: true,
+      }));
+
+      expect(flags.alguna).toBeTrue();
+    });
+
+    it('"alguna" es false solo si las 4 están apagadas', () => {
+      const flags = resolverFlagsGraficas(detalle({
+        dashboardMostrarGraficaExperiencia: false,
+        dashboardMostrarGraficaFormacion: false,
+        dashboardMostrarGraficaProyectos: false,
+        dashboardMostrarGraficaHabilidades: false,
+      }));
+
+      expect(flags.alguna).toBeFalse();
     });
   });
 });
