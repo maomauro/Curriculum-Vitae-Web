@@ -11,6 +11,12 @@ import type {
   CvPreviewVisibilidad,
   CvPreviewVm,
 } from '../../models/cv-preview-vm';
+import {
+  agruparFormacionesPorTema,
+  diferenciadorTitulo,
+  prefijoVisiblePorTema,
+  type GrupoFormacionVm,
+} from '../../utils/agrupar-formaciones';
 
 /** Icono por red social conocida (mismo criterio que redes-sociales.component.ts). */
 const ICONOS_RED: Record<string, string> = {
@@ -217,6 +223,50 @@ export class CvPlantillaPreviewComponent {
 
   get formacionesCurso(): CvPreviewFormacionVm[] {
     return this.formaciones.filter(f => (f.tipoFormacion ?? '').trim() === 'Curso');
+  }
+
+  /** Compacta credenciales del mismo tema (ej. varias certificaciones Scrum de un mismo
+   * proveedor) en un solo bloque -- ver agrupar-formaciones.ts. Se aplica solo a los
+   * bloques "compactos" (Diplomados/Certificaciones/Cursos); Formación Académica siempre
+   * son títulos únicos y no se agrupan. */
+  get formacionesDiplomadoAgrupadas(): GrupoFormacionVm<CvPreviewFormacionVm>[] {
+    return agruparFormacionesPorTema(this.formacionesDiplomado);
+  }
+
+  get formacionesCertificacionAgrupadas(): GrupoFormacionVm<CvPreviewFormacionVm>[] {
+    return agruparFormacionesPorTema(this.formacionesCertificacion);
+  }
+
+  get formacionesCursoAgrupadas(): GrupoFormacionVm<CvPreviewFormacionVm>[] {
+    return agruparFormacionesPorTema(this.formacionesCurso);
+  }
+
+  /** Los 3 bloques comparten exactamente el mismo layout (lista compacta agrupada por
+   * tema) -- se listan juntos para que el template itere una sola vez en vez de repetir
+   * el mismo bloque de HTML 3 veces. */
+  get bloquesFormacionCompacta(): { titulo: string; grupos: GrupoFormacionVm<CvPreviewFormacionVm>[] }[] {
+    return [
+      { titulo: 'Diplomados', grupos: this.formacionesDiplomadoAgrupadas },
+      { titulo: 'Certificaciones', grupos: this.formacionesCertificacionAgrupadas },
+      { titulo: 'Cursos', grupos: this.formacionesCursoAgrupadas },
+    ].filter(b => b.grupos.length > 0);
+  }
+
+  diferenciadorTitulo(titulo: string | null, prefijoComun: string | null): string {
+    return prefijoComun ? diferenciadorTitulo(titulo ?? '', prefijoComun) : (titulo ?? '');
+  }
+
+  /** Texto del prefijo a mostrar en el encabezado del grupo, sin la palabra genérica del
+   * tipo (ej. "Scrum" en vez de "Certificación Scrum" dentro de la sección "Certificaciones"). */
+  prefijoVisible(prefijoComun: string): string {
+    return prefijoVisiblePorTema(prefijoComun);
+  }
+
+  /** Año a mostrar junto al prefijo común del grupo -- solo cuando todos los ítems
+   * comparten el mismo año; si difieren, cada diferenciador lleva el suyo (ver template). */
+  anioGrupoFormacion(items: CvPreviewFormacionVm[]): string {
+    const anios = new Set(items.map(i => this.anioEntreParentesis(i)).filter(Boolean));
+    return anios.size === 1 ? [...anios][0] : '';
   }
 
   get redesSociales(): CvPreviewRedVm[] {
