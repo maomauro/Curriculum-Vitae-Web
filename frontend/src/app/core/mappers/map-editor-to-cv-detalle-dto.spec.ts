@@ -392,4 +392,13 @@ describe('mapEditorToCvDetalleDto', () => {
       expect(dto.dashboardMostrarGraficaHabilidades).toBeFalse();
     });
   });
+
+  it('expone visibilidadSeccion tal cual para que VisibilidadSeccionResolver funcione en las vistas previas privadas', () => {
+    const visibilidad: VisibilidadSeccionDto[] = [
+      { seccion: 'datos-personales.foto', visible: false },
+    ];
+    const dto = mapEditorToCvDetalleDto(null, basePresentacion(), [], [], [], [], [], [], [], visibilidad);
+
+    expect(dto.visibilidadSeccion).toEqual(visibilidad);
+  });
 });

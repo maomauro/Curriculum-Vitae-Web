@@ -177,5 +177,10 @@ export function mapEditorToCvDetalleDto(
     dashboardMostrarGraficaFormacion: dash.graficaFormacion,
     dashboardMostrarGraficaProyectos: dash.graficaProyectos,
     dashboardMostrarGraficaHabilidades: dash.graficaHabilidades,
+    // Sin esto, VisibilidadSeccionResolver (usado por el panel "Así lo ve un visitante" de
+    // Configuración, en Información profesional y en Hoja de vida) recibe un arreglo vacío y
+    // trata todo como visible por defecto -- los atributos finos (ej. Foto de Datos Personales)
+    // quedaban siempre encendidos ahí sin importar el interruptor real.
+    visibilidadSeccion: visibilidad,
   };
 }
