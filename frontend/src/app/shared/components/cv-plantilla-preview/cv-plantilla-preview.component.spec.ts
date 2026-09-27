@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { CvPlantillaPreviewComponent } from './cv-plantilla-preview.component';
-import type { CvPreviewVisibilidad, CvPreviewVm } from '../../models/cv-preview-vm';
+import type { CvPreviewFormacionVm, CvPreviewVisibilidad, CvPreviewVm } from '../../models/cv-preview-vm';
 
 describe('CvPlantillaPreviewComponent', () => {
   let component: CvPlantillaPreviewComponent;
@@ -269,14 +269,16 @@ describe('CvPlantillaPreviewComponent', () => {
       expect(component.diferenciadorTitulo('Certificación Scrum Master', 'Certificación Scrum')).toBe('Master');
       expect(component.diferenciadorTitulo(null, null)).toBe('');
 
-      const mismoAnio = [
-        { fechaInicio: null, fechaFin: '2025-01-01' } as any,
-        { fechaInicio: null, fechaFin: '2025-06-01' } as any,
-      ];
-      const distintoAnio = [
-        { fechaInicio: null, fechaFin: '2024-01-01' } as any,
-        { fechaInicio: null, fechaFin: '2025-06-01' } as any,
-      ];
+      const formacionAnio = (fechaFin: string): CvPreviewFormacionVm => ({
+        formacionId: 1,
+        titulo: 'X',
+        institucion: 'Y',
+        tipoFormacion: 'Certificacion',
+        fechaInicio: null,
+        fechaFin,
+      });
+      const mismoAnio = [formacionAnio('2025-01-01'), formacionAnio('2025-06-01')];
+      const distintoAnio = [formacionAnio('2024-01-01'), formacionAnio('2025-06-01')];
       expect(component.anioGrupoFormacion(mismoAnio)).toBe('(2025)');
       expect(component.anioGrupoFormacion(distintoAnio)).toBe('');
     });
