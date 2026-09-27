@@ -16,9 +16,6 @@ backend/**/bin/
 backend/**/obj/
 backend/**/*.user
 **/.vs/
-# Herramientas de consola de un solo uso (scripts/mariadb/tools/...)
-scripts/**/bin/
-scripts/**/obj/
 # Salidas locales de pruebas de compilación (no versionar)
 backend/_build_out*/
 
@@ -37,11 +34,10 @@ frontend/.angular/
 frontend/*.log
 
 # ── Datos sensibles ──────────────────────────────────────────────────────────
-# Dumps SQL de ejemplo con datos reales (documento, direccion, hash de password).
-# Nunca versionar: si necesitas un script de ejemplo para el equipo, usar datos ficticios.
-scripts/ejemplo/
-# Dump local de la base de datos (datos reales, generado con mariadb-dump) — nunca versionar.
-scripts/portalcv_local_dump.sql
+# Dump local de la base de datos (datos reales, generado con mariadb-dump) — nunca
+# versionar. Vive junto al resto de lo relacionado a base de datos (database/), no en
+# una carpeta scripts/ aparte.
+database/portalcv_local_dump.sql
 
 # ── Sistema operativo ────────────────────────────────────────────────────────
 .DS_Store
