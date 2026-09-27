@@ -39,16 +39,27 @@ Si la API no está en el puerto 5005, configurá `PORTALCV_API_PROXY_TARGET` ant
 
 ### Base de datos
 
-Motor: **MariaDB** (`MySql.EntityFrameworkCore`, el conector oficial de Oracle — no Pomelo, ver `backend/README.md` para por qué). No se usan migraciones de EF Core: el SQL está escrito a mano en `database/01_CreateSchema.sql` (esquema completo — DDL de todas las tablas, índices y triggers), y es la única fuente de verdad del esquema.
+Motor: **MariaDB** (`MySql.EntityFrameworkCore`, el conector oficial de Oracle — no Pomelo, ver `backend/README.md` para por qué). No se usan migraciones de EF Core: el SQL está escrito a mano en `database/01_CreateSchema.sql` (esquema completo — DDL de todas las tablas, índices y triggers), y es la única fuente de verdad del esquema **para una base creada desde cero**.
 
 `docker-compose.yml` monta ese mismo archivo como script de inicialización del contenedor `db` (`mariadb:11`) — corre solo la primera vez, con el volumen `portalcv_db_data` vacío. Para aplicarlo a mano contra un contenedor ya existente: `docker exec -i <contenedor_mariadb> mariadb -uroot -p"$PASSWORD" < database/01_CreateSchema.sql`.
 
 `database/01_CreateSchema.dbml` (visualizar en dbdiagram.io) y `database/DiccionarioDeDatos.md` están pensados para reflejar el esquema, pero **históricamente han quedado desactualizados** respecto a `database/01_CreateSchema.sql` — tratá ese script como la fuente de verdad, no estos documentos, y verificá antes de confiar en cualquiera de los dos.
 
+#### Migraciones de esquema (para una base ya existente, con datos)
+
+`01_CreateSchema.sql` solo corre en una base vacía. Para un cambio de esquema que tiene que llegar a una base **ya existente** (dev con datos reales, o producción), en vez de un `ALTER TABLE` manual por SSH, este proyecto usa un runner propio y liviano (no EF Core Migrations):
+
+1. Además de actualizar `01_CreateSchema.sql` (sigue siendo la fuente de verdad para una base nueva), agregá un archivo numerado en `database/migrations/` (`000N_descripcion_corta.sql`) con el cambio incremental, escrito de forma **idempotente** (`ADD COLUMN IF NOT EXISTS`, etc. — una base nueva ya tiene el cambio vía `01_CreateSchema.sql`, la migración tiene que poder correr igual sin fallar ahí).
+2. `SchemaMigrationRunner` (`PortalCV.Infrastructure/Services`) aplica automáticamente, al arrancar la API, cualquier migración de esa carpeta que no esté todavía en la tabla `SchemaMigrations` de esa base concreta — dev y producción, sin pasos manuales. Usa un candado de sesión de MariaDB (`GET_LOCK`) para que dos instancias arrancando a la vez no la corran en paralelo, y se salta por completo si el proveedor no es relacional (los tests de integración usan EF InMemory).
+3. Los `.sql` de `database/migrations/` se compilan **embebidos** en el binario del backend (`PortalCV.Infrastructure.csproj`, `EmbeddedResource`) — por eso el *build context* de Docker es la raíz del repo y no `backend/` (ver más abajo): esa carpeta vive fuera de `backend/` y el Dockerfile necesita poder copiarla. No hay una copia paralela de los scripts dentro de `backend/`.
+4. No editar ni borrar una migración ya commiteada, aunque todavía no haya llegado a producción — un error se corrige con una migración nueva.
+
 ### Docker (solo backend — así se despliega al VPS de Contabo)
 
 ```bash
-cd backend && docker build -f Dockerfile -t portalcv-backend:local .
+# Contexto = raiz del repo (no backend/): PortalCV.Infrastructure.csproj embebe los
+# .sql de database/migrations/ como recurso (ver "Migraciones de esquema" mas abajo).
+docker build -f backend/Dockerfile -t portalcv-backend:local .
 # copiar docker/backend.local.env.mariadb.example -> docker/backend.local.env (ignorado por git) y completar valores reales primero
 docker run --rm -p 5005:8080 --add-host=host.docker.internal:host-gateway --env-file docker/backend.local.env --name portalcv-api-local portalcv-backend:local
 curl http://localhost:5005/health

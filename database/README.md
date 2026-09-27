@@ -6,7 +6,8 @@ Script y modelo de base de datos del portal (motor: **MariaDB**). Todo lo relaci
 
 | Archivo | Descripción |
 |---|---|
-| `01_CreateSchema.sql` | **Fuente de verdad.** Script DDL ejecutable: esquema completo (todas las tablas, índices, triggers y roles base al final). Lo monta `docker-compose.yml` (servicio `db`) como script de inicialización de MariaDB — corre solo la primera vez, con el volumen de datos vacío. |
+| `01_CreateSchema.sql` | **Fuente de verdad para una base nueva.** Script DDL ejecutable: esquema completo (todas las tablas, índices, triggers y roles base al final). Lo monta `docker-compose.yml` (servicio `db`) como script de inicialización de MariaDB — corre solo la primera vez, con el volumen de datos vacío. |
+| `migrations/` | Cambios incrementales de esquema para una base **ya existente** (dev con datos, o producción) — ver sección de abajo. El backend los aplica solo al arrancar. |
 | `01_CreateSchema.dbml` | Modelo de datos en [DBML](https://dbml.dbdiagram.io/) para visualizar en [dbdiagram.io](https://dbdiagram.io). Define todas las tablas, índices y relaciones. |
 | `DiccionarioDeDatos.md` | Diccionario de datos con descripción y reglas de cada columna. |
 | `portalcv-er-diagram.html` | Diagrama entidad-relación interactivo (requiere zoom/pan para leerse cómodo — ver nota abajo). |
@@ -21,7 +22,13 @@ docker exec -i <contenedor_mariadb> mariadb -uroot -p"$PASSWORD" < database/01_C
 
 ## Agregar una tabla/columna nueva
 
-Editar directamente `01_CreateSchema.sql` y volver a levantar el contenedor con el volumen vacío (`docker compose down -v && docker compose up --build`) para probar el esquema desde cero. Si la base ya tiene datos reales que no se pueden perder, escribir el `ALTER TABLE`/`CREATE TABLE IF NOT EXISTS` correspondiente y aplicarlo a mano contra la base viva antes de actualizar este archivo.
+No hay un sistema de migraciones de EF Core (ver `backend/README.md`) — en su lugar, este proyecto usa un runner propio y liviano:
+
+1. Editar `01_CreateSchema.sql` (y `01_CreateSchema.dbml`/`DiccionarioDeDatos.md`) con el estado final del esquema — sigue siendo la fuente de verdad para una base creada desde cero.
+2. Agregar un archivo nuevo en `migrations/`, numerado secuencialmente (`000N_descripcion_corta.sql`), con el `ALTER TABLE`/`CREATE TABLE` incremental. Escribirlo de forma **idempotente** (`ADD COLUMN IF NOT EXISTS`, `CREATE TABLE IF NOT EXISTS`, etc.) — una base nueva ya tiene el cambio vía `01_CreateSchema.sql`, así que la migración debe poder correr igual sin fallar.
+3. No editar ni borrar migraciones ya commiteadas (aunque todavía no hayan llegado a producción) — si algo estaba mal, se corrige con una migración nueva.
+
+El backend (`SchemaMigrationRunner`, `PortalCV.Infrastructure`) aplica automáticamente, al arrancar, cualquier migración de `migrations/` que no esté todavía registrada en la tabla `SchemaMigrations` de esa base — dev, y eventualmente producción, sin pasos manuales de por medio. Los `.sql` se compilan embebidos en el binario del backend (no se leen del disco en tiempo de ejecución), por eso `database/migrations/` es la única carpeta real: no hay una copia paralela dentro de `backend/`.
 
 ## Cómo visualizar el modelo DBML
 

@@ -5,19 +5,24 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 # Directorio de trabajo dentro del contenedor
 WORKDIR /src
 
+# Contexto de build = raiz del repo (no backend/): PortalCV.Infrastructure.csproj
+# embebe los .sql de database/migrations/ como recurso (ver SchemaMigrationRunner.cs),
+# y esa carpeta vive fuera de backend/.
+
 # Copiamos primero archivos de solución y proyectos para aprovechar cache.
-COPY ["PortalCV.Backend/PortalCV.Backend.slnx", "PortalCV.Backend/"]
-COPY ["PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj", "PortalCV.Backend/PortalCV.Api/"]
-COPY ["PortalCV.Backend/PortalCV.Application/PortalCV.Application.csproj", "PortalCV.Backend/PortalCV.Application/"]
-COPY ["PortalCV.Backend/PortalCV.Domain/PortalCV.Domain.csproj", "PortalCV.Backend/PortalCV.Domain/"]
-COPY ["PortalCV.Backend/PortalCV.Infrastructure/PortalCV.Infrastructure.csproj", "PortalCV.Backend/PortalCV.Infrastructure/"]
-RUN dotnet restore "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj"
+COPY ["backend/PortalCV.Backend/PortalCV.Backend.slnx", "backend/PortalCV.Backend/"]
+COPY ["backend/PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj", "backend/PortalCV.Backend/PortalCV.Api/"]
+COPY ["backend/PortalCV.Backend/PortalCV.Application/PortalCV.Application.csproj", "backend/PortalCV.Backend/PortalCV.Application/"]
+COPY ["backend/PortalCV.Backend/PortalCV.Domain/PortalCV.Domain.csproj", "backend/PortalCV.Backend/PortalCV.Domain/"]
+COPY ["backend/PortalCV.Backend/PortalCV.Infrastructure/PortalCV.Infrastructure.csproj", "backend/PortalCV.Backend/PortalCV.Infrastructure/"]
+COPY ["database/migrations/", "database/migrations/"]
+RUN dotnet restore "backend/PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj"
 
 # Copiamos solo el codigo fuente del backend (evita copia recursiva del context).
-COPY PortalCV.Backend/ PortalCV.Backend/
+COPY backend/PortalCV.Backend/ backend/PortalCV.Backend/
 
 # Compilamos y publicamos en modo Release en la carpeta /app/publish
-RUN dotnet publish "PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "backend/PortalCV.Backend/PortalCV.Api/PortalCV.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 
 # ─── ETAPA 2: Ejecución ─────────────────────────────────────────────────────

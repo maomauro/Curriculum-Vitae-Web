@@ -17,6 +17,7 @@ on:
       - main
     paths:
       - "backend/**"
+      - "database/migrations/**"
       - ".github/workflows/publish-backend-image.yml"
   workflow_dispatch:
 
@@ -72,7 +73,10 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          # Contexto = raiz del repo (no ./backend): PortalCV.Infrastructure.csproj
+          # embebe los .sql de database/migrations/ como recurso -- ver
+          # SchemaMigrationRunner.cs y backend/Dockerfile.
+          context: .
           file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}

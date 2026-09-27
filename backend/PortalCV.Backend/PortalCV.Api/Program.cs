@@ -17,7 +17,7 @@ namespace PortalCV.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -231,6 +231,18 @@ namespace PortalCV.Api
                 .AddDbContextCheck<PortalCvDbContext>("database");
 
             var app = builder.Build();
+
+            // Aplica los cambios de esquema pendientes (database/migrations/) antes de
+            // aceptar tráfico -- reemplaza el paso manual de correr un ALTER TABLE a mano
+            // contra producción antes de desplegar un backend que ya espera una columna
+            // nueva. No hace nada si el proveedor no es relacional (tests, ver
+            // SchemaMigrationRunner).
+            using (var scope = app.Services.CreateScope())
+            {
+                var migrationRunner = scope.ServiceProvider
+                    .GetRequiredService<PortalCV.Application.Interfaces.ISchemaMigrationRunner>();
+                await migrationRunner.ApplyPendingMigrationsAsync();
+            }
 
             // Detrás del reverse proxy (Nginx en el VPS de Contabo, delante de Cloudflare) la IP
             // real del visitante viaja en X-Forwarded-For; sin esto, HttpContext.Connection.RemoteIpAddress

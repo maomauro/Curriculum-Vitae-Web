@@ -29,8 +29,11 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
+      # Contexto = raiz del repo (no ./backend): PortalCV.Infrastructure.csproj
+      # embebe los .sql de database/migrations/ como recurso -- ver
+      # SchemaMigrationRunner.cs y backend/Dockerfile.
+      context: .
+      dockerfile: backend/Dockerfile.dev
     container_name: portalcv-backend
     restart: unless-stopped
     depends_on:
@@ -39,7 +42,9 @@ services:
       - ./docker/backend.local.env
       - ./docker/mariadb.local.env
     volumes:
-      - ./backend/PortalCV.Backend:/src/PortalCV.Backend
+      # Se monta el repo completo (no solo backend/PortalCV.Backend) para que
+      # database/migrations/ sea visible en el mismo path relativo que en prod.
+      - .:/src
     ports:
       - "5005:8080"
     networks:

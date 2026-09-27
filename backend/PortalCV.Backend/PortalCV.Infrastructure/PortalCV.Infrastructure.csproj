@@ -26,4 +26,12 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <!-- database/migrations/ (raiz del repo) es la unica fuente real de los scripts de
+       migracion incremental; se embeben aca para viajar dentro del binario publicado
+       (ver SchemaMigrationRunner.cs), sin depender de que esa carpeta exista en el
+       sistema de archivos del contenedor en tiempo de ejecucion. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../../database/migrations/*.sql" LinkBase="Migrations" />
+  </ItemGroup>
+
 </Project>

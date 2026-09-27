@@ -619,6 +619,16 @@ CREATE TABLE ProveedorIa (
     CONSTRAINT UQ_ProveedorIa_Activo UNIQUE (EsActivoUnico)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Tabla de control del runner de migraciones (backend/.../SchemaMigrationRunner):
+-- registra que scripts de database/migrations/ ya se aplicaron contra esta base,
+-- para no volver a correrlos en cada arranque. La crea tambien el runner mismo
+-- (CREATE TABLE IF NOT EXISTS) si una base existente todavia no la tiene.
+CREATE TABLE SchemaMigrations (
+    MigrationId     VARCHAR(255) NOT NULL,
+    FechaAplicacion DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
+    CONSTRAINT PK_SchemaMigrations PRIMARY KEY (MigrationId)
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Configuracion SMTP para enviar correos a reclutadores (Analizar Oferta -> Enviar
 -- correo). Una por CV -- el remitente/login SMTP siempre es Personales.Email, no se
 -- guarda un usuario aparte. La contrasena se cifra igual que ApiKeyCifrada (AES-256-GCM).
