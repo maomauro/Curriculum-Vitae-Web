@@ -14,6 +14,7 @@ import { VisibilidadSeccionResolver } from '../../../core/utils/visibilidad-secc
 import { NotificationService } from '../../../core/services/shared/notification.service';
 import { NOTIFICATION_MESSAGES } from '../../../core/constants/notification-messages';
 import { extractApiErrorMessage } from '../../../core/utils/form-validation.util';
+import { perteneceCategoriaHabilidad, type CategoriaHabilidad } from '../../../shared/utils/habilidades';
 
 /** Icono por red social conocida (mismo criterio que cv-plantilla-preview.component.ts). */
 const ICONOS_RED: Record<string, string> = {
@@ -194,18 +195,10 @@ export class MiCvComponent implements OnInit {
 
   /** Nombres de las habilidades elegidas por la IA para el CV por perfil abierto, según
    * su tipo real -- usado por la plantilla Corporativo para agruparlas en la barra
-   * lateral (Técnicas/Blandas/Idiomas), igual que en Profesional. Sin tipo reconocido
-   * (o "Otra") cae en "tecnica", mismo criterio que CvPlantillaPreviewComponent. */
-  habilidadesPorTipo(tipo: 'tecnica' | 'blanda' | 'idioma'): string[] {
+   * lateral (Técnicas/Blandas/Idiomas), igual que en Profesional (ver shared/utils/habilidades.ts). */
+  habilidadesPorTipo(tipo: CategoriaHabilidad): string[] {
     const habilidades = this.cvPerfilAbierto?.contenido.habilidades ?? [];
-    return habilidades
-      .filter(h => {
-        const t = (h.tipo ?? '').trim();
-        if (tipo === 'blanda') return t === 'Blanda';
-        if (tipo === 'idioma') return t === 'Idioma';
-        return t === 'Tecnica' || t === 'Otra' || !t;
-      })
-      .map(h => h.nombre);
+    return habilidades.filter(h => perteneceCategoriaHabilidad(h.tipo, tipo)).map(h => h.nombre);
   }
 
   /** Datos del Perfil elegido tal cual están guardados (para años/aspiración salarial

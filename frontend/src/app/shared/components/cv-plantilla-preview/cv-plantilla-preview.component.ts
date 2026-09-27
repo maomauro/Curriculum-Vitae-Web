@@ -17,6 +17,8 @@ import {
   prefijoVisiblePorTema,
   type GrupoFormacionVm,
 } from '../../utils/agrupar-formaciones';
+import { perteneceCategoriaHabilidad } from '../../utils/habilidades';
+import { formatearDuracion, mesesEntreFechas } from '../../utils/duracion';
 
 /** Icono por red social conocida (mismo criterio que redes-sociales.component.ts). */
 const ICONOS_RED: Record<string, string> = {
@@ -111,12 +113,7 @@ export class CvPlantillaPreviewComponent {
   get trayectoriaCabecera(): string | null {
     const totalMeses = this.vm.experienciaLaboralMesesAcumulados ?? 0;
     if (totalMeses <= 0) return null;
-    const anios = Math.floor(totalMeses / 12);
-    const meses = totalMeses % 12;
-    const etiqueta = 'Experiencia laboral acumulada';
-    if (anios < 1) return `${etiqueta}: ${meses} mes${meses === 1 ? '' : 'es'}`;
-    if (meses === 0) return `${etiqueta}: ${anios} año${anios === 1 ? '' : 's'}`;
-    return `${etiqueta}: ${anios} año${anios === 1 ? '' : 's'} y ${meses} mes${meses === 1 ? '' : 'es'}`;
+    return `Experiencia laboral acumulada: ${formatearDuracion(totalMeses)}`;
   }
 
   get aspiracionTexto(): string | null {
@@ -198,15 +195,15 @@ export class CvPlantillaPreviewComponent {
   }
 
   get habilidadesTecnicas(): CvPreviewHabilidadVm[] {
-    return (this.vm.habilidades ?? []).filter(h => h.tipo === 'Tecnica' || h.tipo === 'Otra');
+    return (this.vm.habilidades ?? []).filter(h => perteneceCategoriaHabilidad(h.tipo, 'tecnica'));
   }
 
   get habilidadesBlandas(): CvPreviewHabilidadVm[] {
-    return (this.vm.habilidades ?? []).filter(h => h.tipo === 'Blanda');
+    return (this.vm.habilidades ?? []).filter(h => perteneceCategoriaHabilidad(h.tipo, 'blanda'));
   }
 
   get idiomas(): CvPreviewHabilidadVm[] {
-    return (this.vm.habilidades ?? []).filter(h => h.tipo === 'Idioma');
+    return (this.vm.habilidades ?? []).filter(h => perteneceCategoriaHabilidad(h.tipo, 'idioma'));
   }
 
   get formacionesAcademicas(): CvPreviewFormacionVm[] {
@@ -360,17 +357,14 @@ export class CvPlantillaPreviewComponent {
     return emp || tc;
   }
 
+  /** Mismo criterio que experiencia.component (editor) y dashboard-candidato (gráficas)
+   * -- ver shared/utils/duracion.ts. */
   duracionExperiencia(exp: CvPreviewExperienciaVm): string {
     if (!exp.fechaInicio) return '—';
     const start = new Date(exp.fechaInicio);
     const end = this.resolverFinExperiencia(exp, new Date());
     if (!end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return '—';
-    const months = this.diffInMonths(start, end);
-    const y = Math.floor(months / 12);
-    const m = months % 12;
-    if (y === 0) return `${m} mes${m === 1 ? '' : 'es'}`;
-    if (m === 0) return `${y} año${y === 1 ? '' : 's'}`;
-    return `${y} año${y === 1 ? '' : 's'} y ${m} mes${m === 1 ? '' : 'es'}`;
+    return formatearDuracion(mesesEntreFechas(start, end));
   }
 
   private resolverFinExperiencia(exp: CvPreviewExperienciaVm, referencia: Date): Date | null {
@@ -378,14 +372,6 @@ export class CvPlantillaPreviewComponent {
     const fin = exp.fechaFin?.trim();
     if (fin) return new Date(fin);
     return referencia;
-  }
-
-  private diffInMonths(start: Date, end: Date): number {
-    const years = end.getFullYear() - start.getFullYear();
-    const months = end.getMonth() - start.getMonth();
-    let total = years * 12 + months;
-    if (end.getDate() < start.getDate()) total -= 1;
-    return Math.max(0, total);
   }
 
   textoGraduacionAcademica(f: CvPreviewFormacionVm): string | null {

@@ -17,6 +17,7 @@ import {
   isValidEmail,
   normalizeDateOrNull,
 } from '../../../core/utils/form-validation.util';
+import { formatearDuracion, mesesEntreFechas } from '../../../shared/utils/duracion';
 
 interface ExperienciaUI extends ExperienciaDto {
   expanded: boolean;
@@ -364,31 +365,18 @@ export class ExperienciaComponent implements OnInit {
     );
   }
 
+  /** Mismo criterio que cv-plantilla-preview y dashboard-candidato (ver shared/utils/duracion.ts)
+   * -- un empleo "Actual" ahora sí muestra su duración hasta hoy, en vez de quedar en blanco. */
   duracionLabel(exp: ExperienciaDto): string {
-    if (!exp.fechaInicio || exp.esActual) {
+    if (!exp.fechaInicio) {
       return '';
     }
     const start = new Date(`${exp.fechaInicio}T12:00:00`);
-    const end = exp.fechaFin ? new Date(`${exp.fechaFin}T12:00:00`) : start;
+    const end = exp.esActual ? new Date() : exp.fechaFin ? new Date(`${exp.fechaFin}T12:00:00`) : start;
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return '—';
     }
-    let months =
-      (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-    if (months < 0) {
-      months = 0;
-    }
-    if (months < 12) {
-      return months <= 1 ? '1 mes' : `${months} meses`;
-    }
-    const years = Math.floor(months / 12);
-    const rest = months % 12;
-    const yearPart = years === 1 ? '1 año' : `${years} años`;
-    if (rest === 0) {
-      return yearPart;
-    }
-    const monthPart = rest === 1 ? '1 mes' : `${rest} meses`;
-    return `${yearPart} y ${monthPart}`;
+    return formatearDuracion(mesesEntreFechas(start, end));
   }
 
   cargar(): void {

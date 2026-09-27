@@ -159,49 +159,6 @@
   box-shadow: var(--cv-editor-card-shadow);
 }
 
-// ── Habilidades: niveles ───────────────────────────────────────────────────────
-.nivel-pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-.nivel-pill.basico {
-  background: #fef9c3;
-  color: #92400e;
-}
-.nivel-pill.intermedio {
-  background: #dbeafe;
-  color: #1e40af;
-}
-.nivel-pill.avanzado {
-  background: #d1fae5;
-  color: #065f46;
-}
-.nivel-pill.experto {
-  background: #ede9fe;
-  color: #5b21b6;
-}
-
-.cv-surface-soft {
-  background: #f8faff;
-  border: 1px solid #e4effd;
-}
-.cv-text-90 {
-  font-size: 0.9rem;
-}
-.cv-input-narrow {
-  max-width: 140px;
-}
-.cv-badge-soft-click {
-  background: #ebf3fb;
-  color: var(--cv-primary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
 // ── Admin panel ───────────────────────────────────────────────────────────────
 .admin-stat-icon {
   width: 48px;
@@ -220,10 +177,6 @@
 .admin-stat-icon--green {
   background: #d1fae5;
   color: #065f46;
-}
-.admin-stat-icon--red {
-  background: #fee2e2;
-  color: #991b1b;
 }
 .admin-stat-icon--amber {
   background: #fef3c7;
@@ -417,11 +370,6 @@
   background: #ebf2ff;
   color: var(--cv-primary);
 }
-.cv-icon-box--edu {
-  background: #ebf2ff;
-  color: var(--cv-primary);
-  font-size: 1.1rem;
-}
 .cv-icon-box--warning {
   background: #fef3c7;
   color: #d97706;
@@ -520,9 +468,6 @@ app-preview-publico-panel {
     overflow: visible;
   }
 }
-.cv-actions-row-soft {
-  border-top: 1px solid #f0f0f0;
-}
 .cv-badge-pill {
   font-size: 0.7rem;
   border-radius: 12px;
@@ -531,18 +476,6 @@ app-preview-publico-panel {
 .cv-badge-actual {
   background: #d1fae5;
   color: #065f46;
-}
-.cv-badge-pasado {
-  background: #f1f5f9;
-  color: #6c757d;
-}
-.cv-stack-tag {
-  background: #ebf2ff;
-  color: var(--cv-primary);
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
 }
 .badge-ref-type {
   font-size: 0.7rem;
@@ -564,30 +497,7 @@ app-preview-publico-panel {
   padding: 3px 10px;
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
-.stat-text-warning {
-  color: #fd7e14;
-}
-.stat-text-danger {
-  color: #dc3545;
-}
-.stat-text-teal {
-  color: #20c997;
-}
-.cv-progress-dashboard {
-  height: 10px;
-  border-radius: 6px;
-}
-
 // ── Configuración ─────────────────────────────────────────────────────────────
-.cv-icon-primary-sm {
-  color: var(--cv-primary);
-  font-size: 1rem;
-}
-.cv-label-medium {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
 .cv-switch-cursor {
   cursor: pointer;
 }
@@ -703,18 +613,6 @@ app-preview-publico-panel {
   background: #dbeafe;
   color: #1d4ed8;
 }
-.vis-icon--experiencia {
-  background: #fef3c7;
-  color: #b45309;
-}
-.vis-icon--educacion {
-  background: #ede9fe;
-  color: #7c3aed;
-}
-.vis-icon--habilidades {
-  background: #f0fdf4;
-  color: #166534;
-}
 .vis-icon--proyectos {
   background: #f1f5f9;
   color: #475569;
@@ -803,21 +701,6 @@ app-preview-publico-panel {
   font-size: 2.5rem;
   border: 4px solid #fff;
   box-shadow: 0 2px 12px rgba(44, 123, 229, 0.25);
-}
-.cv-skill-row-text {
-  font-size: 0.85rem;
-  color: #343a40;
-}
-.cv-progress-xs {
-  height: 7px;
-  border-radius: 4px;
-}
-.cv-progress-bar-primary {
-  background: var(--cv-primary);
-  width: 60%;
-}
-.cv-prose {
-  line-height: 1.75;
 }
 // ── Mi CV (preview) ───────────────────────────────────────────────────────────
 .cv-preview-header {
@@ -2158,54 +2041,6 @@ app-preview-publico-panel {
 .cv-analytics-lead {
   font-size: 0.9rem;
 }
-.cv-analytics-card-title {
-  font-size: 0.95rem;
-}
-.cv-analytics-card-desc {
-  font-size: 0.8rem;
-}
-.cv-analytics-row-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.cv-analytics-row-meta {
-  font-size: 0.8rem;
-}
-.cv-progress-analytics {
-  height: 10px;
-  border-radius: 6px;
-}
-.cv-progress-analytics-fill {
-  background: var(--cv-primary);
-  border-radius: 6px;
-}
-.cv-timeline-year {
-  width: 40px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.cv-timeline-dot {
-  width: 8px;
-  height: 8px;
-}
-.cv-timeline-desc {
-  font-size: 0.85rem;
-}
-.cv-progress-hab {
-  height: 8px;
-  border-radius: 6px;
-}
-.badge-hab-count {
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.cv-progress-hab-fill {
-  border-radius: 6px;
-}
-.cv-progress-nivel-fill {
-  background: #22c55e;
-  border-radius: 6px;
-}
 
 // ── Datos personales: ficha única (acordeones + guardar) ───────────────────────
 .datos-personales-nucleo {
@@ -2550,9 +2385,6 @@ app-preview-publico-panel {
   color: #6c757d;
   white-space: nowrap;
 }
-.job-badge-slot {
-  flex-shrink: 0;
-}
 .job-body {
   padding: 0 22px 22px;
   border-top: 1px solid #f0f0f0;
@@ -2584,50 +2416,6 @@ app-preview-publico-panel {
   color: #495057;
   margin-bottom: 12px;
 }
-.exp-ref-item {
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 12px 14px;
-  background: #fff;
-  margin-bottom: 10px;
-}
-.exp-ref-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-}
-.exp-ref-item-name {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #212529;
-}
-.exp-ref-item-detail {
-  font-size: 0.78rem;
-  color: #6c757d;
-}
-.exp-ref-delete {
-  background: none;
-  border: none;
-  color: #dc3545;
-  font-size: 0.75rem;
-  cursor: pointer;
-  padding: 3px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-.exp-ref-delete:hover {
-  background: #fff5f5;
-}
-.job-action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f0f0;
-}
-
 // ── Topbar / notificaciones dropdown ─────────────────────────────────────────
 .cv-topbar-user-hint {
   color: #ced4da;

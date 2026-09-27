@@ -215,6 +215,17 @@ describe('CvPlantillaPreviewComponent', () => {
     expect(component.idiomas.map(h => h.habilidadId)).toEqual([3]);
   });
 
+  it('una habilidad sin tipo (null) cae en habilidadesTecnicas, no desaparece', () => {
+    component.vm = vmBase({
+      habilidades: [
+        { habilidadId: 5, nombre: 'Sin tipo', tipo: null, nivel: null, descripcion: null, nivelLectura: null, nivelEscritura: null, nivelEscucha: null, nivelHabla: null },
+      ],
+    });
+    expect(component.habilidadesTecnicas.map(h => h.habilidadId)).toEqual([5]);
+    expect(component.habilidadesBlandas.length).toBe(0);
+    expect(component.idiomas.length).toBe(0);
+  });
+
   it('formaciones se filtran por tipoFormacion en las 4 categorías', () => {
     component.vm = vmBase({
       formaciones: [

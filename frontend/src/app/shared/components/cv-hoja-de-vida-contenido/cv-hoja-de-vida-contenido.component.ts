@@ -7,6 +7,7 @@ import type {
   RedSocialPublicoDto,
 } from '../../../core/services/public/public.service';
 import type { CvPreviewVisibilidad } from '../../models/cv-preview-vm';
+import { perteneceCategoriaHabilidad, type CategoriaHabilidad } from '../../utils/habilidades';
 
 /** Icono por red social conocida (mismo criterio que cv-plantilla-preview.component.ts). */
 const ICONOS_RED: Record<string, string> = {
@@ -147,16 +148,10 @@ export class CvHojaDeVidaContenidoComponent {
   }
 
   /** Nombres de habilidades por tipo real -- usado por la plantilla Corporativo para
-   * agruparlas en la barra lateral (Técnicas/Blandas/Idiomas), igual que en Mi CV. */
-  habilidadesPorTipo(tipo: 'tecnica' | 'blanda' | 'idioma'): string[] {
+   * agruparlas en la barra lateral (Técnicas/Blandas/Idiomas), igual que en Mi CV
+   * (ver shared/utils/habilidades.ts). */
+  habilidadesPorTipo(tipo: CategoriaHabilidad): string[] {
     const habilidades = this.contenido?.habilidades ?? [];
-    return habilidades
-      .filter(h => {
-        const t = (h.tipo ?? '').trim();
-        if (tipo === 'blanda') return t === 'Blanda';
-        if (tipo === 'idioma') return t === 'Idioma';
-        return t === 'Tecnica' || t === 'Otra' || !t;
-      })
-      .map(h => h.nombre);
+    return habilidades.filter(h => perteneceCategoriaHabilidad(h.tipo, tipo)).map(h => h.nombre);
   }
 }
