@@ -31,6 +31,8 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddMemoryCache();
 
+        services.AddScoped<ISchemaMigrationRunner, SchemaMigrationRunner>();
+
         // Repositorios genéricos
         services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
         services.AddScoped<ICurriculumRepository, CurriculumRepository>();

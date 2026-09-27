@@ -2,14 +2,16 @@
 # No reemplaza a backend/Dockerfile, que sigue siendo el build de produccion
 # usado para desplegar al VPS de Contabo.
 #
-# El codigo fuente real llega por bind mount en tiempo de ejecucion
-# (ver "volumes" del servicio backend en docker-compose.yml); esta imagen solo
-# necesita el SDK completo (no el runtime minimo) para que "dotnet watch" compile.
+# El codigo fuente real llega por bind mount en tiempo de ejecucion (ver "volumes"
+# del servicio backend en docker-compose.yml: se monta el repo completo en /src,
+# no solo backend/, porque PortalCV.Infrastructure.csproj embebe los .sql de
+# database/migrations/ como recurso -- ver SchemaMigrationRunner.cs). Esta imagen
+# solo necesita el SDK completo (no el runtime minimo) para que "dotnet watch" compile.
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
-WORKDIR /src/PortalCV.Backend
+WORKDIR /src/backend/PortalCV.Backend
 
-COPY entrypoint.dev.sh /entrypoint.dev.sh
+COPY backend/entrypoint.dev.sh /entrypoint.dev.sh
 RUN chmod +x /entrypoint.dev.sh
 
 EXPOSE 8080
