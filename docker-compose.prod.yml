@@ -54,6 +54,7 @@ services:
     volumes:
       # Certificado de Origen de Cloudflare, instalado a mano en el VPS (Fase 2).
       - /etc/nginx/ssl:/etc/nginx/ssl:ro
+      - ./docker/colfe.conf:/etc/nginx/conf.d/colfe.conf:ro
     networks:
       - portalcv-net-prod
 
