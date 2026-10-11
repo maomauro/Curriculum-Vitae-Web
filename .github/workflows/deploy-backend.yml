@@ -4,12 +4,14 @@ name: Deploy backend to VPS
 # ya quedo publicada en GHCR (ver publish-backend-image.yml). Se conecta por
 # SSH al VPS, hace pull de la imagen y recrea el contenedor del backend.
 #
-# Requiere los secrets SSH_HOST, SSH_USER y SSH_PRIVATE_KEY (Settings ->
-# Secrets and variables -> Actions), con una llave dedicada para CI/CD
-# (no la personal), agregada a ~/.ssh/authorized_keys del usuario del VPS.
+# Requiere los secrets SSH_HOST, SSH_USER, SSH_DEPLOY_KEY y SSH_KNOWN_HOSTS (Settings ->
+# Secrets and variables -> Actions). SSH_DEPLOY_KEY es una llave dedicada para CI/CD (no la personal) y esta
+# RESTRINGIDA en el servidor (restrict,command=/usr/local/sbin/portalcv-entrada.sh): solo puede ejecutar
+# `desplegar-backend` o `desplegar-frontend`, no abre una shell (deploy/entrada.sh, H-003).
 #
 # El pull de la imagen se autentica contra GHCR con el GITHUB_TOKEN efimero
-# de esta misma ejecucion (no un PAT de larga duracion). Un pull anonimo de
+# de esta misma ejecucion (no un PAT de larga duracion), que viaja por la entrada estandar de ssh y no queda en el
+# servidor. Un pull anonimo de
 # GHCR puede devolver un manifiesto obsoleto desde el CDN publico incluso
 # cuando el tag :latest ya se actualizo; autenticado evita ese cache.
 
@@ -30,25 +32,16 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
+      - name: Deploy via SSH (llave restringida)
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_ACTOR: ${{ github.actor }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: GHCR_TOKEN,GHCR_ACTOR
-          script: |
-            set -euo pipefail
-            cd ~/Curriculum-Vitae-Web
-            git fetch origin main
-            git checkout main
-            git pull origin main
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
-            docker compose -f docker-compose.prod.yml pull backend
-            docker logout ghcr.io
-            docker compose -f docker-compose.prod.yml up -d --force-recreate backend
-            sleep 5
-            curl -skf https://localhost/health
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 "$SSH_USER@$SSH_HOST" desplegar-backend
