@@ -53,7 +53,10 @@ trabajo=""
 desplegar_backend() {
     local token
     read -r token || { echo "Falta el token en la primera linea." >&2; exit 2; }
-    if ! [[ $token =~ ^([A-Za-z0-9_]{1,255}|-)$ ]]; then
+    # El token solo se usa como entrada estandar de docker login (nunca dentro de una orden de shell), asi que no hace
+    # falta una lista blanca de caracteres: el formato de los tokens de GitHub cambia. Se rechaza lo vacio, los espacios,
+    # los caracteres de control y lo desmesurado.
+    if [[ ${#token} -lt 1 || ${#token} -gt 4096 || $token == *[[:space:][:cntrl:]]* ]]; then
         echo "Token no valido." >&2
         exit 2
     fi
