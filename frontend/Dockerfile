@@ -21,4 +21,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # angular.json) deja el output bajo dist/<project>/browser.
 COPY --from=build /app/dist/portalcv-web/browser /usr/share/nginx/html
 
-EXPOSE 80 443
+EXPOSE 80

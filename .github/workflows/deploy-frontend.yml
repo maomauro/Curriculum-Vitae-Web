@@ -36,8 +36,8 @@ jobs:
             git fetch origin main
             git checkout main
             git pull origin main
-            docker compose -f docker-compose.prod.yml build --no-cache nginx
-            docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
+            docker compose -f docker-compose.prod.yml build --no-cache web
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps web
             sleep 3
-            # El nginx ya no publica puertos (los toma el gateway): se comprueba desde dentro del contenedor
-            docker compose -f docker-compose.prod.yml exec -T nginx wget --no-check-certificate -q -O /dev/null https://127.0.0.1/
+            # El contenedor web no publica puertos (el gateway llega por la red sitiosapps-edge): se comprueba desde dentro
+            docker compose -f docker-compose.prod.yml exec -T web wget -q -O /dev/null http://127.0.0.1/
