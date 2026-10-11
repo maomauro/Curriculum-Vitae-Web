@@ -40,4 +40,4 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
             sleep 3
             # El nginx ya no publica puertos (los toma el gateway): se comprueba desde dentro del contenedor
-            docker compose -f docker-compose.prod.yml exec -T nginx wget --no-check-certificate -q -O /dev/null https://localhost/
+            docker compose -f docker-compose.prod.yml exec -T nginx wget --no-check-certificate -q -O /dev/null https://127.0.0.1/
