@@ -48,9 +48,9 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "80:80"
-      - "443:443"
+    # Sin puertos publicados: el 80/443 del servidor lo toma el gateway de plataforma
+    # (repo sitiosapps-gateway, /srv/sitiosapps/gateway), que reenvia a este contenedor
+    # por la red portalcv-net-prod mientras dure la migracion.
     volumes:
       # Certificado de Origen de Cloudflare, instalado a mano en el VPS (Fase 2).
       - /etc/nginx/ssl:/etc/nginx/ssl:ro
