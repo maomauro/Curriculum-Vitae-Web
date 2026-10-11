@@ -5,12 +5,12 @@
 # Diferencias clave con el compose de desarrollo:
 #   - backend: usa la imagen ya publicada en GHCR (no build local)
 #   - db: sin exponer 3306 al exterior (solo accesible dentro de la red de compose)
-#   - nginx: sirve el build de produccion de Angular + hace de reverse proxy hacia el backend
+#   - web: sirve el build de produccion de Angular + hace de proxy de /api hacia el backend (TLS: lo hace el gateway)
 #
 # Uso en el VPS:
 #   1. Completar docker/backend.prod.env (secretos de produccion, NO versionado -- Fase 5)
 #   2. Completar docker/mariadb.prod.env (credenciales de produccion, NO versionado -- Fase 5)
-#   3. Confirmar que /etc/nginx/ssl/ ya tiene el certificado de Origen de Cloudflare instalado
+#   3. Confirmar que existe la red sitiosapps-edge (la crea el gateway de plataforma, /srv/sitiosapps/gateway)
 #   4. docker compose -f docker-compose.prod.yml up -d
 
 services:
@@ -40,25 +40,28 @@ services:
     networks:
       - portalcv-net-prod
 
-  nginx:
+  # Solo sirve el SPA y hace proxy de /api y /health hacia el backend. NO termina TLS ni publica puertos: el
+  # gateway de plataforma (repo sitiosapps-gateway) es el unico que atiende el 443 y llega aqui por la red
+  # sitiosapps-edge, con el alias portalcv-web. El backend y la base de datos solo viven en la red privada.
+  web:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: portalcv-nginx-prod
+    container_name: portalcv-web
     restart: unless-stopped
     depends_on:
       - backend
-    # Sin puertos publicados: el 80/443 del servidor lo toma el gateway de plataforma
-    # (repo sitiosapps-gateway, /srv/sitiosapps/gateway), que reenvia a este contenedor
-    # por la red portalcv-net-prod mientras dure la migracion.
-    volumes:
-      # Certificado de Origen de Cloudflare, instalado a mano en el VPS (Fase 2).
-      - /etc/nginx/ssl:/etc/nginx/ssl:ro
-      - ./docker/colfe.conf:/etc/nginx/conf.d/colfe.conf:ro
     networks:
-      - portalcv-net-prod
+      portalcv-net-prod: {}
+      edge:
+        aliases: [portalcv-web]
 
 networks:
+  # Creada por el compose del gateway de plataforma; aqui solo se une
+  edge:
+    external: true
+    name: sitiosapps-edge
+
   portalcv-net-prod:
     driver: bridge
     ipam:

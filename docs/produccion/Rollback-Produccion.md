@@ -32,14 +32,14 @@ Cada build en `main` publica dos tags en GHCR: `:latest` y `:sha-<commit-corto>`
 
 ## Frontend (build directo en el VPS, sin registry)
 
-El frontend **no** se versiona como imagen: `deploy-frontend.yml` hace `git checkout main` + `docker compose build --no-cache nginx` directamente en el VPS. El rollback exige mover el working copy del VPS a un commit anterior:
+El frontend **no** se versiona como imagen: `deploy-frontend.yml` hace `git checkout main` + `docker compose build --no-cache web` directamente en el VPS. El rollback exige mover el working copy del VPS a un commit anterior:
 
 ```bash
 cd ~/Curriculum-Vitae-Web
 git log --oneline -- frontend/   # localizar el commit bueno anterior
 git checkout <commit-anterior>   # HEAD detached, temporal
-docker compose -f docker-compose.prod.yml build --no-cache nginx
-docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
+docker compose -f docker-compose.prod.yml build --no-cache web
+docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps web
 curl -skf https://localhost/ > /dev/null
 ```
 
