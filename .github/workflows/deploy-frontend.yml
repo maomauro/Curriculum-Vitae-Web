@@ -6,8 +6,11 @@ name: Deploy frontend to VPS
 # directamente en el VPS (ver docs/produccion/Plan-Trabajo-Produccion.md
 # Fase 3/6).
 #
-# Requiere los mismos secrets SSH_HOST, SSH_USER y SSH_PRIVATE_KEY que
-# deploy-backend.yml.
+# Requiere los secrets SSH_HOST, SSH_USER, SSH_DEPLOY_KEY y SSH_KNOWN_HOSTS (los mismos que deploy-backend.yml).
+#
+# La llave SSH_DEPLOY_KEY esta RESTRINGIDA en el servidor (restrict,command=/usr/local/sbin/portalcv-entrada.sh):
+# solo puede ejecutar `desplegar-frontend` o `desplegar-backend`, no abre una shell. Lo que hace cada orden esta en
+# deploy/entrada.sh (H-003).
 
 on:
   push:
@@ -24,20 +27,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -euo pipefail
-            cd ~/Curriculum-Vitae-Web
-            git fetch origin main
-            git checkout main
-            git pull origin main
-            docker compose -f docker-compose.prod.yml build --no-cache web
-            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps web
-            sleep 3
-            # El contenedor web no publica puertos (el gateway llega por la red sitiosapps-edge): se comprueba desde dentro
-            docker compose -f docker-compose.prod.yml exec -T web wget -q -O /dev/null http://127.0.0.1/
+      - name: Deploy via SSH (llave restringida)
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 "$SSH_USER@$SSH_HOST" desplegar-frontend
