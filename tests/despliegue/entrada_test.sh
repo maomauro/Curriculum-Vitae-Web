@@ -67,13 +67,19 @@ registro_ok "$C exec -T web wget -q -O /dev/null http://127.0.0.1/health" "verif
 secuencia=$(grep -oE "login|pull backend|up -d" "$T/registro.txt" | tr '\n' ',')
 if [[ "$secuencia" == "login,pull backend,up -d," ]]; then ok "orden correcto: sesion, descarga, recreacion"; else falla "orden incorrecto: $secuencia"; fi
 
+# Los tokens reales de GitHub traen guiones, puntos y otros caracteres: deben pasar, y NO deben ejecutarse como shell
+# shellcheck disable=SC2016
+for token in "ghs_abc-DEF.123=" "ghs_$(printf 'a%.0s' $(seq 1 300))" "x;id" 'a$(id)'; do
+    if correr "desplegar-backend" "$token"$'
+' && [[ "$(cat "$T/registro.txt.stdin-login")" == "$token" ]]; then ok "token con caracteres variados llega intacto a docker login: ${token:0:16}"; else falla "token valido rechazado: ${token:0:16}"; fi
+done
+
 # "-" = sin sesion (pruebas)
 if correr "desplegar-backend" $'-
 ' && ! registro_tiene "login"; then ok "con token '-' no inicia sesion"; else falla "token '-' mal manejado"; fi
 
 # ---- tokens que se rechazan, sin tocar nada ----
-# shellcheck disable=SC2016
-for token in "" "a b" "x;id" 'a$(id)' "$(printf 'a%.0s' $(seq 1 256))"; do
+for token in "" "a b" $'a	b' "$(printf 'a%.0s' $(seq 1 4097))"; do
     if correr "desplegar-backend" "$token"$'\n' ; then falla "token invalido aceptado: ${token:0:20}"; elif sin_registro; then ok "token invalido rechazado sin tocar nada: '${token:0:12}'"; else falla "token invalido rechazado pero SE EJECUTO algo"; fi
 done
 if correr "desplegar-backend" ""; then falla "sin token debia fallar"; elif sin_registro; then ok "sin token (entrada vacia): rechazado sin tocar nada"; else falla "sin token pero se ejecuto algo"; fi
